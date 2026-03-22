@@ -1,3 +1,0 @@
-# Subagent Watcher
-
-Coming soon.

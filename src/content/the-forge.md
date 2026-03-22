@@ -1,3 +1,0 @@
-# The Forge
-
-Coming soon.

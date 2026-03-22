@@ -1,0 +1,33 @@
+---
+title: AgentMux Documentation
+description: Documentation for AgentMux — the agentic workflow environment.
+template: splash
+hero:
+  tagline: The agentic workflow environment for running, observing, and coordinating AI agents.
+  actions:
+    - text: Get Started
+      link: /getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/agentmuxai/agentmux
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="Multi-Agent Workspace" icon="laptop">
+    Run Claude, Codex, and Gemini in parallel panes. See every tool call, file write, and network request in real time.
+  </Card>
+  <Card title="The Forge" icon="setting">
+    Configure each agent with its own working directory, identity, MCP servers, and environment variables.
+  </Card>
+  <Card title="Interpane Comms" icon="rocket">
+    Agents communicate through reactive channels. One agent's output streams into another's input.
+  </Card>
+  <Card title="Cross-Platform" icon="open-book">
+    Native desktop app built on Rust (Tauri v2). Available for macOS, Windows, and Linux.
+  </Card>
+</CardGrid>

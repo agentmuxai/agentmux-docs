@@ -1,4 +1,6 @@
-# Installation
+---
+title: "Installation"
+---
 
 AgentMux is available for Windows, macOS, and Linux. Under 25MB installed, 35-125MB memory at runtime.
 

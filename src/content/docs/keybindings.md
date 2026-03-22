@@ -1,4 +1,6 @@
-# Keybindings
+---
+title: "Keybindings"
+---
 
 All keyboard shortcuts for AgentMux. On macOS, `Cmd` is used; on Windows/Linux, `Alt` is used instead.
 

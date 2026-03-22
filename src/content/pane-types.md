@@ -1,3 +1,0 @@
-# Pane Types
-
-Coming soon.

@@ -1,4 +1,6 @@
-# Getting Started with AgentMux
+---
+title: "Getting Started with AgentMux"
+---
 
 AgentMux is an agentic workflow environment — a desktop app for running, observing, and coordinating AI agents. Built on Rust (Tauri v2) with a TypeScript frontend.
 

@@ -1,4 +1,6 @@
-# Configuration
+---
+title: "Configuration"
+---
 
 AgentMux stores its configuration in a JSON settings file. You can edit it directly or through the Settings UI (`Ctrl+,` / `Cmd+,`).
 

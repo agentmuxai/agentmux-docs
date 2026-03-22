@@ -1,3 +1,0 @@
-# Interpane Communication
-
-Coming soon.

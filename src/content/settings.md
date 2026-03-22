@@ -1,3 +1,0 @@
-# Settings Reference
-
-Coming soon.
