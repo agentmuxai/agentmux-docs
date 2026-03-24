@@ -6,6 +6,15 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'AgentMux Docs',
+			logo: {
+				src: './src/assets/logo.svg',
+				alt: 'AgentMux',
+			},
+			head: [
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
+			],
+			customCss: ['./src/styles/custom.css'],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/agentmuxai/agentmux' },
 				{ icon: 'discord', label: 'Discord', href: 'https://discord.com/invite/96erama9Ar' },
