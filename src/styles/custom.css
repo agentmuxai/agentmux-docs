@@ -1,10 +1,14 @@
 /* AgentMux docs theme — synced with agentmux.ai landing page design tokens */
 
+/* Fonts (shared across modes) */
 :root {
   --sl-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --sl-font-mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
 
-  /* Dark mode (default) */
+/* Dark mode — gray scale runs light (gray-1) → dark (gray-6) */
+:root,
+:root[data-theme='dark'] {
   --sl-color-accent-low: #1e1b4b;
   --sl-color-accent: #6366f1;
   --sl-color-accent-high: #818cf8;
@@ -18,16 +22,19 @@
   --sl-color-black: #050508;
 }
 
-[data-theme='light'] {
+/* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
   --sl-color-accent-low: #eef2ff;
   --sl-color-accent: #6366f1;
   --sl-color-accent-high: #3730a3;
-  --sl-color-white: #ffffff;
-  --sl-color-gray-1: #f8fafc;
-  --sl-color-gray-2: #e2e8f0;
-  --sl-color-gray-3: #cbd5e1;
-  --sl-color-gray-4: #64748b;
-  --sl-color-gray-5: #1e293b;
-  --sl-color-gray-6: #f8fafc;
-  --sl-color-black: #0f172a;
+  --sl-color-white: #181926;
+  --sl-color-gray-1: #1e293b;
+  --sl-color-gray-2: #334155;
+  --sl-color-gray-3: #64748b;
+  --sl-color-gray-4: #94a3b8;
+  --sl-color-gray-5: #cbd5e1;
+  --sl-color-gray-6: #f1f5f9;
+  --sl-color-gray-7: #f8fafc;
+  --sl-color-black: #ffffff;
 }
