@@ -8,7 +8,7 @@ export default defineConfig({
 			title: 'AgentMux Docs',
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/agentmuxai/agentmux' },
-				{ icon: 'discord', label: 'Discord', href: 'https://discord.gg/96erama9Ar' },
+				{ icon: 'discord', label: 'Discord', href: 'https://discord.com/invite/96erama9Ar' },
 			],
 			sidebar: [
 				{
