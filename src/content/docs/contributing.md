@@ -2,6 +2,10 @@
 title: "Contributing"
 ---
 
+:::caution[Alpha Software]
+AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+:::
+
 We welcome contributions to AgentMux. Here's how to get involved.
 
 ## Ways to Contribute
