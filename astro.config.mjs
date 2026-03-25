@@ -55,6 +55,12 @@ export default defineConfig({
 						{ label: 'Contributing', slug: 'contributing' },
 					],
 				},
+				{
+					label: 'Help',
+					items: [
+						{ label: 'Report Issues', slug: 'report-issues' },
+					],
+				},
 			],
 		}),
 	],
