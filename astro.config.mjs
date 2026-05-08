@@ -30,6 +30,14 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Concepts',
+					items: [
+						{ label: 'Architecture overview', slug: 'architecture-overview' },
+						{ label: 'The reducer stack', slug: 'reducer-stack' },
+						{ label: 'Multi-instance & dev mode', slug: 'multi-instance' },
+					],
+				},
+				{
 					label: 'Features',
 					items: [
 						{ label: 'Pane Types', slug: 'pane-types' },
