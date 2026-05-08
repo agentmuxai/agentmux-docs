@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Rust API — AgentMux Docs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 720px; margin: 4rem auto; padding: 0 1rem; line-height: 1.55; color: #ddd; background: #1c1c1c; }
+        a { color: #ef9a40; }
+        code, pre { background: #2a2a2a; padding: 2px 6px; border-radius: 3px; }
+        pre { padding: 12px; overflow-x: auto; }
+        .note { background: #2a2310; border-left: 3px solid #ef9a40; padding: 12px 16px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Rust API reference</h1>
+    <p>This page is a placeholder. The full rustdoc-generated HTML for the AgentMux Rust crates is staged at this path during the release build via:</p>
+    <pre>npm run build:full</pre>
+    <p>If you're seeing this in production, the release build skipped the Rust step (cargo not on PATH, or submodule not initialized). Local dev uses <code>npm run build</code> which deliberately skips this stage so the docs site iterates without a Rust toolchain.</p>
+    <h2>Crates indexed when the build runs</h2>
+    <ul>
+        <li><code>agentmux-cef</code> — host (CEF native window + IPC + browser pane)</li>
+        <li><code>agentmux-srv</code> — sidecar (RPC engine + persistence + sagas)</li>
+        <li><code>agentmux-launcher</code> — launcher (process lifecycle, Win32 reconciliation)</li>
+        <li><code>agentmux-common</code> — shared utilities (data paths, runtime mode)</li>
+    </ul>
+    <p class="note">The TypeScript reference (frontend ViewModels, slice stores, command source) is published natively via Starlight at <a href="../typescript/">/api/typescript/</a>.</p>
+    <p><a href="/">← Back to AgentMux Docs</a></p>
+</body>
+</html>

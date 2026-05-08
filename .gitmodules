@@ -1,0 +1,4 @@
+[submodule "src/agentmux"]
+	path = src/agentmux
+	url = https://github.com/agentmuxai/agentmux.git
+	branch = main
