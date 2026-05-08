@@ -28,7 +28,7 @@ When AgentMux opens, you'll see a default terminal pane. The key areas are:
 
 ## 3. Open The Forge
 
-Click the hammer icon in the top bar (or press `Cmd+Shift+F` / `Alt+Shift+F`) to open [The Forge](/the-forge) — the agent configuration manager.
+Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar), then open the agent pane's settings panel (cog icon in the pane header) and switch to the **Forge** tab. See [The Forge](/the-forge/) for the full configuration surface.
 
 Click **+ New Agent** and fill in:
 
