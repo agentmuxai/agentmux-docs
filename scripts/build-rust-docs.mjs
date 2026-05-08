@@ -20,7 +20,7 @@
 
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
