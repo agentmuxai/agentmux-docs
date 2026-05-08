@@ -60,7 +60,7 @@ This split is what makes multi-instance work cleanly. Two AgentMux portables run
 | Edge | Mechanism | What flows |
 |---|---|---|
 | launcher ↔ host | Named pipe IPC | OS-level facts (window position, monitor topology, lifecycle) |
-| host ↔ sidecar | Local websocket (dynamic port) | RPC commands, event subscriptions, the wsh shell-integration channel |
+| host ↔ sidecar | Local websocket (dynamic port) | RPC commands, event subscriptions, shell-integration env passing |
 | host ↔ renderer | CEF JS bridge | Per-frame UI events (clicks, focus, resizes), pane lifecycle |
 | renderer ↔ sidecar | Local websocket (re-uses host's connection) | Frontend dispatches reach the sidecar through the host's bridge |
 
