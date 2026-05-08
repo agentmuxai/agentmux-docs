@@ -60,11 +60,21 @@ const cargoDocArgs = [
     ...CRATES.flatMap((c) => ["-p", c]),
 ];
 
-execSync(`cargo ${cargoDocArgs.join(" ")}`, {
-    cwd: submodule,
-    stdio: "inherit",
-    env: { ...process.env, RUSTDOCFLAGS: "--enable-index-page -Zunstable-options" },
-});
+// Run cargo doc on stable Rust — no nightly-only flags (the previous
+// `--enable-index-page -Zunstable-options` would have failed on stable
+// toolchains). Wrap in try/catch so a build failure here doesn't take
+// down the whole site build; we treat it the same as cargo-not-found.
+try {
+    execSync(`cargo ${cargoDocArgs.join(" ")}`, {
+        cwd: submodule,
+        stdio: "inherit",
+    });
+} catch (err) {
+    console.warn(`[build-rust-docs] cargo doc failed: ${err.message}`);
+    console.warn("[build-rust-docs]   Site build continues; /api/rust/ will show the placeholder.");
+    console.warn("[build-rust-docs]   For the full Rust reference, fix the build above and rerun `npm run build:rust-docs`.");
+    process.exit(0);
+}
 
 const generatedDir = resolve(submodule, "target", "doc");
 if (!existsSync(generatedDir)) {

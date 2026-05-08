@@ -4,11 +4,18 @@ dist
 .DS_Store
 npm-debug.log*
 
+# Env files — never commit, these can carry deploy keys / secrets.
+.env
+.env.production
+.env.local
+.env.*.local
+
 # Generated reference content — produced by `npm run build:full` from
 # the pinned `src/agentmux` submodule. Not committed because regenerating
-# from source is the canonical truth. The placeholder index.html files
+# from source is the canonical truth. The placeholder index files
 # (which explain how to populate these dirs) ARE committed.
-src/content/docs/api/typescript/
+src/content/docs/api/typescript/*
+!src/content/docs/api/typescript/index.md
 public/api/rust/agentmux_*/
 public/api/rust/static.files/
 public/api/rust/*.txt
