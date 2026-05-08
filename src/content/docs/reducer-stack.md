@@ -1,6 +1,6 @@
 ---
 title: The reducer stack
-description: How state flows through AgentMux — the 3-layer launcher / host / srv model, the frontend slice migration, sagas, and persistence.
+description: How state flows through AgentMux — the 4-layer launcher / host / srv / frontend-slice model, sagas, and persistence.
 ---
 
 AgentMux is built on a strict reducer model. Every cross-process state mutation goes through a single layer's reducer, emits events that other layers project, and is persisted by the layer that owns the truth. This page is the entry point into that model.
@@ -19,7 +19,7 @@ Three pressures drove it:
 
 ```
 Frontend (renderer / SolidJS)         per-process atoms        consumer
-   ▲ slice-based reducer migration (8 slices, in flight)
+   ▲ slice-based reducer migration (9 slices, in flight)
    ┃ CEF JS bridge ▲ events
 Host (agentmux-cef)                   FFI + UI thread           Layer 2
    ▲ pending_window_creations, active_drag, tear_off_hooks
