@@ -22,9 +22,10 @@ Set your API key in your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) or config
 
 ## Create an Agent in The Forge
 
-1. Open The Forge — click the hammer icon in the top bar or press `Cmd+Shift+F` / `Alt+Shift+F`
-2. Click **+ New Agent**
-3. Fill in the agent configuration:
+1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar.
+2. Open the agent pane's settings panel (cog icon in the pane header) and switch to the **Forge** tab.
+3. Click **+ New Agent**.
+4. Fill in the agent configuration:
 
 ### Basic Settings
 

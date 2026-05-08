@@ -14,14 +14,15 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 |------|------|---------|-------------|
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Browser** | globe | `browser` | Embedded web browser, native CefBrowserView |
-| **Agent** | sparkles | `agent` | AI agent session with streaming output |
-| **Forge** | hammer | `forge` | Agent configuration manager |
-| **Swarm** | diagram-project | `swarm` | Multi-agent orchestration and history |
+| **Agent** | sparkles | `agent` | AI agent session with streaming output (includes Forge config + Identity panels as in-pane subsections) |
+| **Editor** | file-code | `editor` | Code editor with syntax highlighting |
+| **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
 | **Subagent** | diagram-subtask | `subagent` | Monitor a specific sub-agent's activity |
-| **Sysinfo** | chart-line | `sysinfo` / `cpuplot` | Live system metrics graphs |
-| **Launcher** | — | `launcher` | Quick-launch widget picker |
-| **Identity** | — | `identity` | Agent identity management |
+| **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Help** | circle-question | `help` | Built-in documentation |
+| **DevTools** | code | `devtools` | Toggle Chromium DevTools |
+
+**Forge** and **Identity** are not standalone pane types — they're tabs inside the Agent pane (see the Agent section below). **Settings** is not a pane either — open it via the hamburger menu.
 
 ## Terminal
 
@@ -92,7 +93,7 @@ The agent pane runs an AI agent session. It displays:
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 
-Agent panes are configured through [The Forge](/the-forge), where you set the provider, working directory, environment, and MCP servers.
+Agent panes are configured through [The Forge](/the-forge/), accessible as a tab inside the agent pane (see Subsections below).
 
 Settings that affect agent panes:
 
@@ -103,15 +104,14 @@ Settings that affect agent panes:
 | `agent:showdiffs` | `true` | Show file diff overlay |
 | `agent:autoscroll` | `true` | Auto-scroll agent output |
 
-## Forge
+### Subsections
 
-The Forge is the agent configuration manager. It provides three views:
+The agent pane has built-in side panels — they used to be standalone pane types but are now in-pane tabs:
 
-- **List** — All configured agents, grouped by type (host, container, custom)
-- **Create/Edit** — Agent configuration form with content tabs (Soul, Instructions, MCP, Env)
-- **Detail** — Agent details with content, skills, and session history
+- **Forge** — agent configuration manager. Create / edit / view forge agents (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/the-forge/) page describes.
+- **Identity** — manage agent identities (provider accounts, OAuth tokens, per-agent credential mapping). Backed by `frontend/app/view/identity/`, surfaced as the Identity panel inside the agent pane's settings.
 
-See [The Forge](/the-forge) for full documentation.
+Both open from inside an active agent pane — there is no top-bar widget for either.
 
 ## Swarm
 

@@ -6,17 +6,28 @@ title: "Settings Reference"
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-Complete reference for all AgentMux settings. Settings are stored in `settings.json` and can be edited via the Settings UI (`Cmd+,` / `Alt+,`) or directly in the file.
+Complete reference for all AgentMux settings. Settings are stored in `settings.json` and edited directly in your default editor.
+
+## Opening Settings
+
+Settings is **not a pane** — there's no `defwidget@settings` widget anymore. Open `settings.json` from the **hamburger menu** in the top tab bar:
+
+1. Click the hamburger icon (≡) at the start of the tab bar.
+2. Select **Settings**.
+3. AgentMux opens `settings.json` in your default editor (via `ensure_settings_file` + `open_in_editor`).
+
+You can also use the command palette ("Open Settings File") if you prefer keyboard navigation.
 
 ## Settings File Location
 
-| Platform | Path |
-|----------|------|
-| Windows | `%APPDATA%\agentmux\settings.json` |
-| macOS | `~/Library/Application Support/agentmux/settings.json` |
-| Linux | `~/.config/agentmux/settings.json` |
+Settings are per-instance, under the unified data layout:
 
-Override with the `AGENTMUX_HOME` environment variable.
+| Mode | Path |
+|---|---|
+| Installed / Portable | `~/.agentmux/versions/<version>/config/settings.json` |
+| Dev (`task dev`) | `~/.agentmux/dev/<branch>/config/settings.json` |
+
+Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment variable (intended for tests). See [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Terminal Settings
 
@@ -156,19 +167,24 @@ AgentMux respects these environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `AGENTMUX_HOME` | Override the config directory path |
-| `AGENTMUX_DEV` | Enable development mode (uses `~/.agentmux-dev/`) |
+| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (intended for tests) |
+| `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
+| `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
 | `CLAUDE_API_KEY` | API key for Claude agent panes |
 | `OPENAI_API_KEY` | API key for Codex agent panes |
 | `GEMINI_API_KEY` | API key for Gemini agent panes |
 
 ## Data Directories
 
-| Purpose | Development | Production |
-|---------|------------|------------|
-| Config | `~/.agentmux-dev/` | `~/.agentmux/` |
-| Logs | `~/.agentmux-dev/agentmux.log` | `~/.agentmux/agentmux.log` |
-| Database | `~/.agentmux-dev/agentmux.db` | `~/.agentmux/agentmux.db` |
+All per-instance state lives under `<instance>/`, where `<instance>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+
+| Purpose | Path |
+|---|---|
+| Config (`settings.json`, etc.) | `<instance>/config/` |
+| Logs (rotated daily, 7-day retention) | `<instance>/logs/` |
+| SQLite stores (objects, filestore, sagas) | `<instance>/data/db/` |
+| Launcher event log (JSONL) | `<instance>/data/launcher-events.log` |
+| Account-wide state (cookies, OAuth) | `~/.agentmux/shared/` |
 
 ## See Also
 

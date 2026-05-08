@@ -10,11 +10,14 @@ AgentMux stores its configuration in a JSON settings file. You can edit it direc
 
 ## Settings File Location
 
-| Platform | Path |
-|----------|------|
-| Windows | `%APPDATA%\agentmux\settings.json` |
-| macOS | `~/Library/Application Support/agentmux/settings.json` |
-| Linux | `~/.config/agentmux/settings.json` |
+Settings are per-instance, under the unified data layout:
+
+| Mode | Path |
+|---|---|
+| Installed / Portable | `~/.agentmux/versions/<version>/config/settings.json` |
+| Dev (`task dev`) | `~/.agentmux/dev/<branch>/config/settings.json` |
+
+Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment variable (intended for tests). See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Core Settings
 
@@ -85,8 +88,9 @@ AgentMux respects these environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `AGENTMUX_HOME` | Override config directory |
-| `AGENTMUX_DEV` | Enable development mode |
+| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (intended for tests) |
+| `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
+| `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
 | `CLAUDE_API_KEY` | API key for Claude agent panes |
 | `OPENAI_API_KEY` | API key for Codex agent panes |
 | `GEMINI_API_KEY` | API key for Gemini agent panes |

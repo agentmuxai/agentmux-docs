@@ -35,6 +35,7 @@ export default defineConfig({
 						{ label: 'Architecture overview', slug: 'architecture-overview' },
 						{ label: 'The reducer stack', slug: 'reducer-stack' },
 						{ label: 'Multi-instance & dev mode', slug: 'multi-instance' },
+						{ label: 'Platform support', slug: 'platform-support' },
 						{ label: 'Window Reality Reconciliation', slug: 'wrr' },
 					],
 				},

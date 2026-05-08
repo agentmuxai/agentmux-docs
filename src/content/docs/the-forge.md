@@ -10,9 +10,11 @@ The Forge is AgentMux's agent configuration manager. It's where you create, conf
 
 ## Opening The Forge
 
-- Click the **hammer** icon in the top bar
-- Or press `Cmd+Shift+F` / `Alt+Shift+F`
-- Or right-click any pane header and select **Forge** from the widget menu
+The Forge isn't a standalone pane — it's a tab **inside the agent pane**. To open it:
+
+1. Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar).
+2. Open the agent pane's settings panel (cog icon in the pane header, or right-click the header → Settings).
+3. Switch to the **Forge** tab.
 
 ## Views
 

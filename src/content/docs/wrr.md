@@ -3,6 +3,10 @@ title: Window Reality Reconciliation (WRR)
 description: How AgentMux keeps its model of windows in sync with what Win32 actually thinks is happening — the drift kinds, the corrective actions, and how to read the reducer event log.
 ---
 
+:::note[Windows-only today]
+WRR hooks into Win32 (`WM_PAINT`, `SetWindowPos`, `GetForegroundWindow`). macOS and Linux equivalents are on the roadmap — see [Platform support](/platform-support/). Until they ship, `task dev` on those platforms runs without WRR drift detection.
+:::
+
 WRR — Window Reality Reconciliation — is the layer that keeps AgentMux's launcher reducer in sync with the OS. Win32 has a thousand quiet ways for window state to mutate without telling us: a different process steals focus, a monitor goes to sleep, the user drags a window across DPI boundaries, an OEM utility minimizes everything to clear the desktop, an Alt+Tab cycle reorders things mid-paint. WRR notices and corrects.
 
 This page is the model + glossary. The day-to-day "how do I find the WRR record for a specific event?" recipes live in [Debugging](/debugging/#wrr-drift-diagnostics).
