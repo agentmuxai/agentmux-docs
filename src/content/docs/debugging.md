@@ -51,7 +51,7 @@ When a question like "what mutated this state?" comes up, filter the ring for th
 
 ## WRR drift diagnostics
 
-[Window Reality Reconciliation](/multi-instance/#what-about-chromium-state) reconciles AgentMux's model against Win32 reality. When a window appears to "freeze" or windows mysteriously vanish, the launcher reducer's event log is the authority. Useful greps:
+[Window Reality Reconciliation](/wrr/) reconciles AgentMux's model against Win32 reality. When a window appears to "freeze" or windows mysteriously vanish, the launcher reducer's event log is the authority. Useful greps:
 
 ```bash
 grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pending=" \
