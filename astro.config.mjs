@@ -53,6 +53,7 @@ export default defineConfig({
 						{ label: 'Keybindings', slug: 'keybindings' },
 						{ label: 'Settings', slug: 'settings' },
 						{ label: 'Agent App API', slug: 'agent-app-api' },
+						{ label: 'Persistence', slug: 'persistence' },
 						{ label: 'System Metrics', slug: 'system-metrics' },
 						// Generated reference indexes — produced by
 						// `npm run build:typedoc` (writes into
@@ -78,6 +79,7 @@ export default defineConfig({
 					label: 'Development',
 					items: [
 						{ label: 'Building', slug: 'building' },
+						{ label: 'Debugging', slug: 'debugging' },
 						{ label: 'Contributing', slug: 'contributing' },
 					],
 				},
