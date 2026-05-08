@@ -34,7 +34,6 @@ High-level commands defined in [`agentmux-srv/src/server/app_api.rs`](https://gi
 | `agent.status` | Query an agent's current state — controller status, last activity, block id. |
 | `agent.list` | List every running agent across the workspace, with provider + status. |
 | `agent.output` | Fetch the last N lines of an agent's terminal output (post-stream-buffer). |
-| `agent.stream` | Subscribe to an agent's live stream — incoming chunks delivered as events. |
 
 ### Process tracking
 
@@ -51,7 +50,7 @@ The process tracker has three confidence levels (`high`, `best_effort`, `none`) 
 
 | Command | Description |
 |---|---|
-| `pane.open` | Open a pane of a specific view type (terminal, browser, file, sysinfo, …). Returns the new block id. |
+| `pane.open` | Open a pane of one of the supported view types: `editor` (requires `file`), `term`, `browser` (requires `url`), `sysinfo`, or `help`. Returns the new block id. |
 
 ### Sessions
 
@@ -152,9 +151,8 @@ A few commands return async streams instead of single responses:
 - `fileliststream` — directory entries progressively
 - `filereadstream` — file contents in chunks
 - `filestreamtar` — tar archive bytes
-- `agent.stream` — live agent output stream
 
-The frontend client surfaces these as `AsyncGenerator` objects; over the wire each chunk is a JSON-RPC notification on the same connection.
+The frontend client surfaces these as `AsyncGenerator` objects; over the wire each chunk is a JSON-RPC notification on the same connection. For live agent output, subscribe to the relevant agent block via `eventsub` rather than polling `agent.output`.
 
 ## See also
 
