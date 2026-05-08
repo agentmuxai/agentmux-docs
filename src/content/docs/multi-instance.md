@@ -34,9 +34,12 @@ A single tree at `~/.agentmux/`:
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `~/.agentmux/logs/` | Pointer files that resolve to per-instance log paths | All hosts (write-through) |
-| `~/.agentmux/launcher-events.log` | JSONL event log (durable Layer 1 reducer log) | The launcher |
-| `~/.agentmux/agentmux-launcher.log` | The launcher's stderr capture | The launcher |
+| `~/.agentmux/shared/` | Account-wide state (cookies, OAuth tokens, dictionary downloads) — version-independent | All hosts |
+| `~/.agentmux/logs/` | Global pointer files that resolve to per-instance log paths via absolute paths | All hosts (write-through) |
+| `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own startup-phase log (single file, no rotation) | The launcher |
+| `~/.agentmux/config.toml` | Account-wide launcher config (saga retention, etc.) | The launcher |
+
+The durable launcher reducer event log (`launcher-events.log`) is **per-instance** — it lives at `<instance>/data/launcher-events.log`, not in the shared tree. Each instance has its own.
 
 ## Log discovery
 

@@ -40,7 +40,7 @@ Persistence                                                      durability
 
 ### Layer 1 — Launcher
 
-Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. Reconciles AgentMux's own model against Win32 reality via WRR (Window Reality Reconciliation) hooks. Durable JSONL event log at `<root>/launcher-events.log`. **Status:** done.
+Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. Reconciles AgentMux's own model against Win32 reality via WRR (Window Reality Reconciliation) hooks. Durable JSONL event log at `<instance>/data/launcher-events.log` (per-instance). **Status:** done.
 
 ### Layer 2 — Host
 

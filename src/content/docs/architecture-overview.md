@@ -79,15 +79,19 @@ The full layout, slice list, and migration plan are in the [reducer stack page](
 
 ## Data layout on disk
 
-Every running instance writes to its own data directory:
+Every running instance resolves its paths through `agentmux-common::DataPaths` ([source](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs)). Resolution happens once in the launcher and is propagated to host + sidecar via the `AGENTMUX_*_DIR` env vars, so all three processes always agree.
 
-| Mode | Root | Data subpath |
-|---|---|---|
-| **Portable** | `<extracted-folder>/data/` (per portable instance) | maps to `<root>/versions/<version>/` internally |
-| **Installed** | `~/.agentmux/versions/<version>/` | same logical layout |
-| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` | one dir per checked-out branch — different branches don't collide |
+| Mode | Instance dir |
+|---|---|
+| **Installed** | `~/.agentmux/versions/<version>/` |
+| **Portable** | `~/.agentmux/versions/<version>/` (same as installed — multi-instance is keyed on version, not on which folder you ran the binary from) |
+| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` (one dir per checked-out branch — different branches don't collide) |
 
-The shared `~/.agentmux/logs/` directory holds **pointer files** that resolve to per-instance log paths. See [Multi-instance & dev mode](/multi-instance/) for the full discovery story.
+Inside each instance dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
+
+Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, version-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`.
+
+See [Multi-instance & dev mode](/multi-instance/) for the full layout, log discovery story, and per-instance vs shared boundary.
 
 ## Reading order
 
