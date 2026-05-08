@@ -16,8 +16,6 @@ The Forge isn't a standalone pane — it's a tab **inside the agent pane**. To o
 2. Open the agent pane's settings panel (cog icon in the pane header, or right-click the header → Settings).
 3. Switch to the **Forge** tab.
 
-This change landed when forge was folded into the agent pane to consolidate per-agent configuration alongside the agent itself; older builds had it as a top-bar widget.
-
 ## Views
 
 The Forge has three main views:
