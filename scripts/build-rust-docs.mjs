@@ -19,7 +19,7 @@
 // just 404s. CI should fail loudly; local dev should not be blocked.
 
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, cpSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, cpSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -83,8 +83,31 @@ if (!existsSync(generatedDir)) {
 }
 
 console.log(`[build-rust-docs] copying ${generatedDir} → ${target}`);
-rmSync(target, { recursive: true, force: true });
 mkdirSync(target, { recursive: true });
-cpSync(generatedDir, target, { recursive: true });
+
+// Preserve the committed `index.html` placeholder. cargo doc on stable
+// (without `--enable-index-page`, which is nightly-only) does NOT emit
+// a root index, so the placeholder is what serves `/api/rust/`. Only
+// remove entries that cargo is about to replace, by name.
+const generatedEntries = readdirSync(generatedDir);
+for (const name of generatedEntries) {
+    const dest = join(target, name);
+    if (existsSync(dest)) {
+        rmSync(dest, { recursive: true, force: true });
+    }
+    cpSync(join(generatedDir, name), dest, { recursive: true });
+}
+
+// Sanity check the placeholder survived — if cargo ever does start
+// emitting a root index.html that overwrites it (e.g. a future stable
+// release flips `--enable-index-page` on by default), we'd lose the
+// hand-written explainer silently. Assert here so the failure is loud.
+const placeholderPath = join(target, "index.html");
+if (!existsSync(placeholderPath)) {
+    console.error(`[build-rust-docs] placeholder ${placeholderPath} missing after copy.`);
+    console.error("[build-rust-docs]   This script assumed cargo doc would not produce a root index.html.");
+    console.error("[build-rust-docs]   Re-commit the placeholder or update this script.");
+    process.exit(1);
+}
 
 console.log("[build-rust-docs] done.");
