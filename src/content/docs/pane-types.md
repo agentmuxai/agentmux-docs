@@ -13,6 +13,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
+| **Browser** | globe | `browser` | Embedded web browser, native CefBrowserView |
 | **Agent** | sparkles | `agent` | AI agent session with streaming output |
 | **Forge** | hammer | `forge` | Agent configuration manager |
 | **Swarm** | diagram-project | `swarm` | Multi-agent orchestration and history |
@@ -27,22 +28,60 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 The terminal pane provides authentic terminal emulation powered by xterm.js and portable-pty on the backend.
 
 Features:
+
 - Real PTY with full ANSI support
 - Configurable font family and size
-- Per-pane zoom level
-- Shell integration via `wsh` binary
+- Per-pane zoom level (`Ctrl+/-` and `Ctrl+Scroll`)
+- Shell-integration env block (`AGENTMUX_BLOCKID`, `AGENTMUX_LOG_DIR`, `AGENTMUX_AGENT_ID`, …) with helper functions like `muxlog`
 - Remote connections (SSH)
 
 Open a terminal: `Cmd+N` / `Alt+N` or click the terminal icon in the top bar.
 
-### wsh Commands
+The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#shell-helpers) for the full list.
 
-From any terminal, use the `wsh` helper:
+## Browser
 
-| Command | Description |
-|---------|-------------|
-| `wsh view [file\|url]` | Preview a file, directory, or URL in a new pane |
-| `wsh edit [file]` | Open a file in the code preview pane |
+The browser pane embeds a native [CefBrowserView](https://bitbucket.org/chromiumembedded/cef/) at the OS-window level. It is **not** an iframe — the pane HWND sits as a child window of the AgentMux frame, which is why links, popups, and DRM content all work like a regular Chromium tab.
+
+| Control | Action |
+|---|---|
+| ← / → / ⟳ | Back / Forward / Reload |
+| Address bar | Enter URL or search query — defaults to a search if it doesn't parse as a URL |
+| Go | Navigate to the address-bar value |
+
+Header state syncs from the backend's `browser-pane-nav-state` event:
+
+- **Title** — updates as the page loads
+- **Favicon** — fetched from the page; falls back to the `globe` icon
+- **History** — back/forward enabled state, per-pane
+
+When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary — this is the same pattern the [debugging](/debugging/#reducer-dispatch-ring) page describes.)
+
+### IPC commands
+
+The host exposes the browser pane's lifecycle via these CEF commands (invoked through `invokeCommand` from the renderer):
+
+- `browser_pane_create` — instantiate the CefBrowserView; called on first mount
+- `browser_pane_navigate` — load a URL
+- `browser_pane_resize` — propagate Solid layout changes to the HWND
+- `browser_pane_reload` — reload the current page
+- `browser_pane_focus` — explicit focus handoff after a click
+- `browser_pane_close` — tear down on pane close
+
+If you need to drive the browser pane from an agent or saga, those are the commands. The frontend [BrowserViewModel](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/browser/browser-model.ts) shows the canonical sequencing.
+
+### Default URL
+
+Blank-spawned browser panes default to `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly. (Spec: `SPEC_BROWSER_PANE_DEFAULT_URL_AND_POPUP_2026_04_21.md`.)
+
+### Address-bar focus + click handoff
+
+The address bar and the embedded CEF pane each compete for keyboard focus. The pane HWND intercepts clicks at the Win32 level, so the renderer does not see DOM `click` events from inside the page. Two consequences:
+
+- Clicking the address bar releases pane focus to the input. Microsoft IME state is preserved.
+- Clicking back into the pane fires `browser_pane_focus` to hand keyboard focus back to the embedded HWND.
+
+The address-bar input uses `onMouseDown` (not `onMouseEnter`) for the click-to-focus handoff — hover-focus loops were the original failure mode this design corrects.
 
 ## Agent
 

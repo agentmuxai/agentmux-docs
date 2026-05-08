@@ -1,25 +1,74 @@
 ---
-title: "Agent App API"
+title: Agent App API
+description: The high-level intent-based API for driving AgentMux from an agent — agent.open, agent.send, pane.open — plus the low-level RPC catalog.
 ---
 
 :::caution[Alpha Software]
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux exposes an RPC API via WebSocket (JSON-RPC 2.0) for communication between the frontend, backend, and `wsh` shell helper. This page documents the key API commands.
+AgentMux exposes two layers of RPC surface: a **high-level App API** for agents and integrations, and a **low-level command catalog** for direct manipulation. Both transport over the same JSON-RPC 2.0 WebSocket and share the same auth.
+
+The App API is what you should reach for first. It expresses **intent** ("open this agent in a pane, idempotently") and orchestrates the underlying `CreateBlock` / `SetMeta` / `ControllerResync` calls. The low-level catalog is for cases that don't fit the intent shape (tooling, testing, custom panes).
 
 ## Transport
 
-- **Protocol:** WebSocket with JSON-RPC 2.0
-- **Backend:** agentmuxsrv-rs (Rust, Tokio + Axum)
-- **Client:** `WshClient` in the frontend, `wsh` binary on remote hosts
+- **Protocol:** WebSocket, JSON-RPC 2.0
+- **Server:** `agentmux-srv` (Rust, Tokio + Axum)
+- **Client:** `RpcApi` / `TabRpcClient` in the frontend (`frontend/app/store/rpc-api.ts`)
+- **Auth:** Token-based; pass via `authenticate` or `authenticatetoken` on connect
 
-## Command Categories
+The host auto-spawns a sidecar per instance on a dynamic port; terminals opened inside AgentMux receive `AGENTMUX_PORT` and an auth token via the [shell integration](/multi-instance/#shell-helpers) env block.
 
-### Block Management
+## App API
+
+High-level commands defined in [`agentmux-srv/src/server/app_api.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/app_api.rs). Idempotent, intent-based.
+
+### Agent lifecycle
 
 | Command | Description |
-|---------|-------------|
+|---|---|
+| `agent.open` | Open a forge-defined agent in a pane. Idempotent — if the agent already has a block in the target tab, returns it. Resolves provider, sets controller meta, registers the controller. |
+| `agent.send` | Send a message to a running agent. Honors the agent's CLI provider (Claude Code, Codex, Gemini CLI, Plandex, …). |
+| `agent.stop` | Cleanly stop an agent (asks the CLI to wrap up). |
+| `agent.status` | Query an agent's current state — controller status, last activity, block id. |
+| `agent.list` | List every running agent across the workspace, with provider + status. |
+| `agent.output` | Fetch the last N lines of an agent's terminal output (post-stream-buffer). |
+
+### Process tracking
+
+| Command | Description |
+|---|---|
+| `agent.process-list` | List every OS process currently tracked for a given agent block (PIDs, RSS, command line). |
+| `agent.tracked-blocks` | List every block the process tracker is following — for the swarm aggregate view. |
+| `agent.kill-process` | Terminate one PID, only if it's a tracked member of the named block (safety-checked). |
+| `agent.kill-tree` | Terminate the entire process tree for a given block. |
+
+The process tracker has three confidence levels (`high`, `best_effort`, `none`) that callers should respect when interpreting results.
+
+### Panes
+
+| Command | Description |
+|---|---|
+| `pane.open` | Open a pane of one of the supported view types: `editor` (requires `file`), `term`, `browser` (requires `url`), `sysinfo`, or `help`. Returns the new block id. |
+
+### Sessions
+
+| Command | Description |
+|---|---|
+| `session:archive` | Archive the current session state to a portable bundle. |
+| `session:restore` | Restore a previously archived session into a fresh workspace. |
+| `session:export` | Export a session digest (read-only, shareable). |
+| `session:digest` | Compute a digest of the current session for diff / hashing. |
+
+## Low-level RPC catalog
+
+The primitives the App API is built on. These are stable but lower-level — most consumers should prefer the App API where one exists.
+
+### Block management
+
+| Command | Description |
+|---|---|
 | `createblock` | Create a new block (pane) in a tab |
 | `createsubblock` | Create a sub-block within a parent block |
 | `deleteblock` | Delete a block |
@@ -27,20 +76,20 @@ AgentMux exposes an RPC API via WebSocket (JSON-RPC 2.0) for communication betwe
 | `blockinfo` | Get block metadata and file info |
 | `blockslist` | List all blocks, optionally filtered by window or workspace |
 
-### Block Control
+### Block control
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `controllerinput` | Send input to a block's controller (terminal input, signals, resize) |
 | `controllerresync` | Resync or restart a block's controller |
+| `controllerrestart` | Restart a block's controller |
 | `controllerstop` | Stop a block's controller |
-| `controllerappendoutput` | Append output to a block's controller |
 | `captureblockscreenshot` | Capture a screenshot of a block's content |
 
-### File Operations
+### File operations
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `fileread` | Read a file's contents |
 | `filewrite` | Write contents to a file |
 | `filecreate` | Create a new file |
@@ -56,10 +105,10 @@ AgentMux exposes an RPC API via WebSocket (JSON-RPC 2.0) for communication betwe
 | `fileinfo` | Get file metadata |
 | `filejoin` | Join file paths |
 
-### Event System
+### Event system
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `eventpublish` | Publish an event to the event bus |
 | `eventrecv` | Receive/handle an event |
 | `eventsub` | Subscribe to events by type and scope |
@@ -67,81 +116,48 @@ AgentMux exposes an RPC API via WebSocket (JSON-RPC 2.0) for communication betwe
 | `eventunsuball` | Unsubscribe from all subscriptions |
 | `eventreadhistory` | Read historical events |
 
-### Connection Management
+### Connection management
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `connconnect` | Connect to a remote host |
 | `conndisconnect` | Disconnect from a remote host |
 | `connensure` | Ensure a connection is established |
 | `connlist` | List active connections |
 | `connlistaws` | List available AWS connections |
 | `connstatus` | Get status of all connections |
-| `connreinstallwsh` | Reinstall wsh on a remote host |
-| `connupdatewsh` | Update wsh on a remote host |
 
-### AI / Agent
+### Metadata + configuration
 
 | Command | Description |
-|---------|-------------|
-| `aisendmessage` | Send a message to an AI agent |
-| `fetchsuggestions` | Get AI-generated suggestions |
-| `disposesuggestions` | Clean up suggestion resources |
-
-### Metadata and Configuration
-
-| Command | Description |
-|---------|-------------|
+|---|---|
 | `getmeta` | Get metadata for a wave object |
 | `setmeta` | Set metadata on a wave object |
+| `setview` | Set a block's view type |
 | `getfullconfig` | Get the complete configuration |
-| `getupdatechannel` | Get the current update channel |
-| `getvar` | Get a variable value |
-| `setvar` | Set a variable value |
-
-### Window and Tab Management
-
-| Command | Description |
-|---------|-------------|
-| `focuswindow` | Focus a specific window |
-| `gettab` | Get tab information |
+| `getvar` / `setvar` | Get / set a config variable |
 
 ### Authentication
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `authenticate` | Authenticate with a token string |
 | `authenticatetoken` | Authenticate with structured token data |
 
-### Activity Tracking
+## Streaming commands
 
-| Command | Description |
-|---------|-------------|
-| `activity` | Report activity metrics (foreground time, AI requests, block counts, etc.) |
+A few commands return async streams instead of single responses:
 
-## Streaming Commands
+- `fileliststream` — directory entries progressively
+- `filereadstream` — file contents in chunks
+- `filestreamtar` — tar archive bytes
 
-Some commands return async streams instead of single responses:
+The frontend client surfaces these as `AsyncGenerator` objects; over the wire each chunk is a JSON-RPC notification on the same connection. For live agent output, subscribe to the relevant agent block via `eventsub` rather than polling `agent.output`.
 
-- `fileliststream` — Stream directory entries progressively
-- `filereadstream` — Stream file contents in chunks
-- `filestreamtar` — Stream tar archive data
+## See also
 
-These use the `wshRpcStream` method and return `AsyncGenerator` objects.
-
-## wsh CLI
-
-The `wsh` binary provides shell-level access to the API:
-
-```bash
-wsh view myfile.txt       # Open file in a preview pane
-wsh edit myfile.txt       # Open file in editor pane
-```
-
-The `wsh` binary communicates with the backend over WebSocket and is automatically deployed to remote hosts on SSH connection.
-
-## See Also
-
-- [Interpane Communication](/interpane-comms) — Event pub-sub system
-- [Building from Source](/building) — Backend architecture
-- [Configuration](/config) — Settings and MCP configuration
+- [Interpane Communication](/interpane-comms/) — the event pub-sub system the `event*` commands plug into
+- [Persistence](/persistence/) — how state changes flow into SQLite
+- [Reducer stack](/reducer-stack/) — what's RPC-driven vs reducer-driven (migration in flight)
+- [Configuration](/config/) — settings + MCP config
+- [Building from Source](/building/) — backend architecture

@@ -35,6 +35,7 @@ export default defineConfig({
 						{ label: 'Architecture overview', slug: 'architecture-overview' },
 						{ label: 'The reducer stack', slug: 'reducer-stack' },
 						{ label: 'Multi-instance & dev mode', slug: 'multi-instance' },
+						{ label: 'Window Reality Reconciliation', slug: 'wrr' },
 					],
 				},
 				{
@@ -53,6 +54,7 @@ export default defineConfig({
 						{ label: 'Keybindings', slug: 'keybindings' },
 						{ label: 'Settings', slug: 'settings' },
 						{ label: 'Agent App API', slug: 'agent-app-api' },
+						{ label: 'Persistence', slug: 'persistence' },
 						{ label: 'System Metrics', slug: 'system-metrics' },
 						// Generated reference indexes — produced by
 						// `npm run build:typedoc` (writes into
@@ -78,6 +80,7 @@ export default defineConfig({
 					label: 'Development',
 					items: [
 						{ label: 'Building', slug: 'building' },
+						{ label: 'Debugging', slug: 'debugging' },
 						{ label: 'Contributing', slug: 'contributing' },
 					],
 				},
