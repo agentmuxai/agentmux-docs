@@ -46,6 +46,24 @@ export default defineConfig({
 						{ label: 'Settings', slug: 'settings' },
 						{ label: 'Agent App API', slug: 'agent-app-api' },
 						{ label: 'System Metrics', slug: 'system-metrics' },
+						// Generated reference indexes — produced by
+						// `npm run build:typedoc` (writes into
+						// src/content/docs/api/typescript/) and
+						// `npm run build:rust-docs` (writes into
+						// public/api/rust/). Both opt-in via
+						// `npm run build:full`; default `build` skips
+						// them so the docs site iterates without the
+						// Rust toolchain or a long typedoc pass.
+						{
+							label: 'TypeScript API',
+							link: '/api/typescript/',
+							badge: { text: 'typedoc', variant: 'note' },
+						},
+						{
+							label: 'Rust Crates',
+							link: '/api/rust/',
+							badge: { text: 'rustdoc', variant: 'note' },
+						},
 					],
 				},
 				{

@@ -1,21 +1,28 @@
-# build output
-dist/
-# generated types
-.astro/
-
-# dependencies
-node_modules/
-
-# logs
+.astro
+node_modules
+dist
+.DS_Store
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
-
-# environment variables
+# Env files — never commit, these can carry deploy keys / secrets.
 .env
 .env.production
+.env.local
+.env.*.local
 
-# macOS-specific files
-.DS_Store
+# Generated reference content — produced by `npm run build:full` from
+# the pinned `src/agentmux` submodule. Not committed because regenerating
+# from source is the canonical truth. The placeholder index files
+# (which explain how to populate these dirs) ARE committed.
+src/content/docs/api/typescript/*
+!src/content/docs/api/typescript/index.md
+public/api/rust/agentmux_*/
+public/api/rust/static.files/
+public/api/rust/*.txt
+public/api/rust/*.html
+public/api/rust/*.js
+public/api/rust/*.json
+public/api/rust/*.css
+public/api/rust/*.svg
+public/api/rust/*.woff*
+!public/api/rust/index.html

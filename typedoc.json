@@ -1,0 +1,18 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": [
+        "./src/agentmux/frontend/app/store/agent-document-store.ts",
+        "./src/agentmux/frontend/app/store/agent-pane-state-store.ts",
+        "./src/agentmux/frontend/app/store/launcher-event-reducer.ts",
+        "./src/agentmux/frontend/app/store/command-source.ts"
+    ],
+    "tsconfig": "./src/agentmux/tsconfig.json",
+    "out": "./src/content/docs/api/typescript",
+    "plugin": ["typedoc-plugin-markdown"],
+    "skipErrorChecking": true,
+    "excludeInternal": true,
+    "excludePrivate": true,
+    "readme": "none",
+    "githubPages": false,
+    "hideGenerator": true
+}
