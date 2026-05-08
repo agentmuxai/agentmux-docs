@@ -20,4 +20,9 @@ public/api/rust/agentmux_*/
 public/api/rust/static.files/
 public/api/rust/*.txt
 public/api/rust/*.html
+public/api/rust/*.js
+public/api/rust/*.json
+public/api/rust/*.css
+public/api/rust/*.svg
+public/api/rust/*.woff*
 !public/api/rust/index.html

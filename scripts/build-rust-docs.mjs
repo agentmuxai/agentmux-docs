@@ -19,7 +19,7 @@
 // just 404s. CI should fail loudly; local dev should not be blocked.
 
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, cpSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, readFileSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,10 +85,18 @@ if (!existsSync(generatedDir)) {
 console.log(`[build-rust-docs] copying ${generatedDir} → ${target}`);
 mkdirSync(target, { recursive: true });
 
-// Preserve the committed `index.html` placeholder. cargo doc on stable
-// (without `--enable-index-page`, which is nightly-only) does NOT emit
-// a root index, so the placeholder is what serves `/api/rust/`. Only
-// remove entries that cargo is about to replace, by name.
+// Capture the committed placeholder bytes BEFORE the copy so we can
+// detect overwrite-by-cargo (not just deletion). cargo doc on stable
+// without `--enable-index-page` does NOT emit a root index.html, but
+// a future release could flip that on, and a content check is the
+// only way to notice the silent overwrite.
+const placeholderPath = join(target, "index.html");
+const expectedPlaceholderBytes = existsSync(placeholderPath)
+    ? readFileSync(placeholderPath)
+    : null;
+
+// Only remove entries that cargo is about to replace, by name —
+// anything not produced by cargo (the placeholder) survives.
 const generatedEntries = readdirSync(generatedDir);
 for (const name of generatedEntries) {
     const dest = join(target, name);
@@ -98,16 +106,21 @@ for (const name of generatedEntries) {
     cpSync(join(generatedDir, name), dest, { recursive: true });
 }
 
-// Sanity check the placeholder survived — if cargo ever does start
-// emitting a root index.html that overwrites it (e.g. a future stable
-// release flips `--enable-index-page` on by default), we'd lose the
-// hand-written explainer silently. Assert here so the failure is loud.
-const placeholderPath = join(target, "index.html");
-if (!existsSync(placeholderPath)) {
-    console.error(`[build-rust-docs] placeholder ${placeholderPath} missing after copy.`);
-    console.error("[build-rust-docs]   This script assumed cargo doc would not produce a root index.html.");
-    console.error("[build-rust-docs]   Re-commit the placeholder or update this script.");
-    process.exit(1);
+// Verify the placeholder survived BIT-FOR-BIT. existsSync alone would
+// pass even if cargo overwrote the file with its own index.
+if (expectedPlaceholderBytes !== null) {
+    if (!existsSync(placeholderPath)) {
+        console.error(`[build-rust-docs] placeholder ${placeholderPath} missing after copy.`);
+        process.exit(1);
+    }
+    const actualBytes = readFileSync(placeholderPath);
+    if (!actualBytes.equals(expectedPlaceholderBytes)) {
+        console.error(`[build-rust-docs] placeholder ${placeholderPath} was OVERWRITTEN by cargo.`);
+        console.error("[build-rust-docs]   Cargo doc started emitting a root index.html. Update this script:");
+        console.error("[build-rust-docs]     - either remove the placeholder and use cargo's index, or");
+        console.error("[build-rust-docs]     - skip cargo's index in the copy loop above.");
+        process.exit(1);
+    }
 }
 
 console.log("[build-rust-docs] done.");
