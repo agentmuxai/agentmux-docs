@@ -104,7 +104,7 @@ Each can be backed up independently. None of them depend on a single point of fa
 
 ## Reading the source
 
-The TypeScript slice surface is generated as part of the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the [Rust API reference](/api/rust/) (regenerated from `cargo doc` against the pinned source).
+The TypeScript slice surface is documented in the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the upstream Rust source — `agentmux-launcher/src/reducer/`, `agentmux-cef/src/`, and `agentmux-srv/src/reducer/` in the [agentmux repo](https://github.com/agentmuxai/agentmux).
 
 For deep design docs:
 
