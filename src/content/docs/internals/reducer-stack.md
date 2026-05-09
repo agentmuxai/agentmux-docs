@@ -64,7 +64,7 @@ Per-pane state cells that project the layers above into Solid signals. Each slic
 | #6 — launcher-event-reducer | Mirrors launcher window state into the frontend | **shipped** |
 | #7 — tab-state-reducer | Active tab, tab order | spec done |
 | #8 — pane-tree-reducer | Cross-tab pane mapping | deferred |
-| #9 — browser-pane-state | Per-pane URL, title, favicon, history (proposed) | catalog + roadmap landed; migration in flight |
+| #9 — browser-pane-state | Per-pane `closed` / `loading` / `error` / `canGoBack` / `canGoForward` / `title` (cells migrated); `url`, `faviconUrl` pending | **partial**: 4 phases shipped (3a/b/c/e); danger-cell `url` migration (3d) + slot store + `recordDispatch` (4) pending |
 
 ## The pattern, end-to-end
 
@@ -72,8 +72,8 @@ A user clicks a link inside a browser pane. Here's what happens:
 
 1. **CEF** captures the click. Win32 `WM_LBUTTONDOWN` fires on the pane's HWND.
 2. **Host** emits `browser-pane-clicked` over the JS bridge. The launcher (Layer 1) records nothing — this is a renderer concern.
-3. **Frontend slice** receives the event. The browser-pane reducer dispatches a `Clicked` command, which emits a `focus-block` event.
-4. **Saga** turns the event into a side effect: `refocusNode(blockId)` updates the layout's focus state. The layout slice (#5) records the change.
+3. **Frontend slice** receives the event. The handler blurs any main-input that held stale DOM focus (so `giveFocus()` doesn't bounce OS focus back), then calls `refocusNode(blockId)`. _Today this is a direct call site; Phase 4 routes it through a `PaneClicked` reducer command + slot dispatch so the audit ring records every transition._
+4. **Saga** turns the event into a side effect: layout's focus state updates. The layout slice (#5) records the change.
 5. **Sidecar** persists the new layout via the persist subscriber. The next time the user opens the same workspace, the focus is restored.
 
 If any of those four hops fails — host doesn't emit, slice doesn't subscribe, saga drops the event, sidecar doesn't persist — there's exactly one place to look. That's the value the reducer stack delivers over the prior ad-hoc model.

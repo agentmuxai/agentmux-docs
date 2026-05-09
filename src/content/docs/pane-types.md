@@ -88,12 +88,18 @@ Blank-spawned browser panes default to `https://agentmux.ai`. To get a literally
 
 ### Address-bar focus + click handoff
 
-The address bar and the embedded CEF pane each compete for keyboard focus. The pane HWND intercepts clicks at the Win32 level, so the renderer does not see DOM `click` events from inside the page. Two consequences:
+The address bar and the embedded CEF pane each compete for keyboard focus across **two independent axes**:
 
-- Clicking the address bar releases pane focus to the input. Microsoft IME state is preserved.
-- Clicking back into the pane fires `browser_pane_focus` to hand keyboard focus back to the embedded HWND.
+1. **DOM focus** — `document.activeElement` in the main React webview. Owned by Chromium, updated on every focus/blur. The "DOM is the source of truth for where typing goes" rule from the [browser-pane state catalog](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/browser-pane-state-catalog.md) applies to this axis only.
+2. **Win32 OS focus** — which HWND receives keystrokes. Owned by the OS, set by `SetFocus`/`SetForegroundWindow`. The pane HWND is a child of the main window; clicking the pane intercepts the click at WndProc level *before* the renderer's React DOM ever sees it.
 
-The address-bar input uses `onMouseDown` (not `onMouseEnter`) for the click-to-focus handoff — hover-focus loops were the original failure mode this design corrects.
+When these two axes disagree, you get the classic "click X, type, characters land in Y" bug. Two specific paths matter:
+
+**Click into the page (e.g. google search):** The pane HWND captures the click via WndProc, `SetFocus`s itself, and emits `browser-pane-clicked` over IPC. The renderer's `BrowserViewModel` handler explicitly **blurs whatever main-window input held DOM focus** before calling `refocusNode(blockId)` — otherwise the subsequent `giveFocus()` flow sees the address bar's stale `activeElement` and tells the host to bounce OS focus back to the main window. (Diag log: `[browser-pane:diag] pane-click blur active=input.browser-address-bar`.)
+
+**Click into the address bar:** The `<input>` `onMouseDown` handler fires `main_window_focus` IPC *before* the focus event, so OS keyboard focus moves to the main webview HWND at click-start. Without this, the address bar's `onFocus` fires too late — DOM focus moves but OS focus stays on the pane HWND, and keystrokes still route to Chromium. Buttons in the same nav bar happen to work without an explicit IPC because CEF/Chromium internally calls `SetFocus(parent)` for native `<button>` controls; `<input>` doesn't get the same treatment when the parent webview lacks focus.
+
+`onMouseDown` (not `onMouseEnter`) is the click-to-focus trigger on both sides — hover-focus loops were the original failure mode the design corrects.
 
 ## Agent
 
