@@ -22,16 +22,16 @@ AgentMux is in **early alpha** and under heavy active development. Many features
 </Aside>
 
 <CardGrid stagger>
-  <Card title="Multi-Agent Workspace" icon="laptop">
-    Run Claude, Codex, and Gemini in parallel panes. See every tool call, file write, and network request in real time.
+  <Card title="Multi-Provider Agents" icon="laptop">
+    Run Claude Code, Codex, Gemini, OpenClaw, Kimi, GitHub Copilot, and Pi in parallel panes. See every tool call, file write, and network request in real time.
   </Card>
-  <Card title="The Forge" icon="setting">
-    Configure each agent with its own working directory, identity, MCP servers, and environment variables.
+  <Card title="Browser Pane" icon="external">
+    Native `CefBrowserView` embedded as a child window of the AgentMux frame — full Chromium fidelity for links, popups, and DRM, not an iframe.
   </Card>
-  <Card title="Interpane Comms" icon="rocket">
-    Agents communicate through reactive channels. One agent's output streams into another's input.
+  <Card title="Audited Dispatch" icon="setting">
+    A 4-layer reducer stack (launcher / host / sidecar / frontend slices) with structured event logs at every layer. "What mutated this state?" has exactly one place to look.
   </Card>
   <Card title="Cross-Platform" icon="open-book">
-    Native desktop app built on Rust (Tauri v2). Available for macOS, Windows, and Linux.
+    Native desktop app built on Rust with bundled Chromium 146 via CEF. Builds for Windows, macOS, and Linux.
   </Card>
 </CardGrid>

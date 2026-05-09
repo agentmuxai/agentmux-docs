@@ -6,15 +6,17 @@ title: "Building from Source"
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-Build AgentMux from source on Windows, macOS, or Linux. AgentMux is built on **Tauri v2** with a **100% Rust backend**.
+Build AgentMux from source on Windows, macOS, or Linux. AgentMux is a Rust desktop app with a SolidJS frontend, hosted in a bundled Chromium runtime via CEF (`cef-rs`).
 
 ## Prerequisites
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| **Node.js** | v22 LTS | Frontend build |
-| **Rust** | 1.77+ | Backend + Tauri |
+| **Node.js** | 22 LTS | Frontend build (Vite + SolidJS) |
+| **Rust** | 1.77+ | Backend, host, and launcher |
 | **[Task](https://taskfile.dev/)** | Latest | Build orchestration |
+| **CMake** | 3.20+ | Required by `cef-dll-sys` (CEF C wrapper) |
+| **Ninja** | 1.10+ | Required by `cef-dll-sys` |
 
 ### Platform-Specific Dependencies
 
@@ -22,22 +24,23 @@ Build AgentMux from source on Windows, macOS, or Linux. AgentMux is built on **T
 
 ```bash
 xcode-select --install
+brew install cmake ninja
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 #### Windows
 
-1. Install Rust from [rustup.rs](https://rustup.rs/)
-2. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) — select "Desktop development with C++"
-3. WebView2 is pre-installed on Windows 10/11
+1. Install Rust from [rustup.rs](https://rustup.rs/).
+2. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) — select "Desktop development with C++" (provides CMake and Ninja).
+3. Verify Ninja is on `PATH`. The Visual Studio install ships Ninja inside `Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/`; copy or symlink `ninja.exe` to a PATH entry. From Git Bash:
+   ```bash
+   cp "/c/Program Files/Microsoft Visual Studio/*/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" /c/Systems/bin/
+   ```
 
 #### Linux (Debian/Ubuntu)
 
 ```bash
-sudo apt install zip libwebkit2gtk-4.1-dev \
-  build-essential curl wget file libssl-dev \
-  libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-
+sudo apt install build-essential cmake ninja-build curl wget file libssl-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -50,7 +53,7 @@ brew install go-task/tap/go-task
 # Linux
 sudo snap install task --classic
 
-# Windows (PowerShell)
+# Windows
 winget install Task.Task
 ```
 
@@ -68,111 +71,98 @@ npm install
 task dev
 ```
 
-This starts the Tauri app in development mode with:
+This launches the four-process app with Vite hot reload. The frontend rebuilds on save (SolidJS HMR via Vite); changes to the Rust crates require a rebuild and restart.
 
-- Frontend hot reload (SolidJS HMR via Vite)
-- Tauri auto-rebuild on Rust changes
-- DevTools available (`Ctrl+Shift+I` / `Cmd+Option+I`)
-
-Always use `task dev` for development — never launch binaries from `target/` directly.
-
-### After Code Changes
+### After code changes
 
 | Changed | Action |
 |---------|--------|
-| Frontend (TypeScript/SolidJS) | Auto-reloads |
-| Tauri shell (`src-tauri/src/`) | Auto-rebuilds, process restarts |
-| Rust backend (`agentmuxsrv-rs/`) | Run `task build:backend`, then restart `task dev` |
-| Shell helper (`wsh-rs/`) | Run `task build:wsh`, then restart `task dev` |
+| Frontend (TypeScript / SolidJS) | Auto-reloads via Vite HMR |
+| Rust sidecar (`agentmux-srv/`) | `task build:backend`, then restart `task dev` |
+| Rust host (`agentmux-cef/`) | `task build:host`, then restart `task dev` |
+| Launcher (`agentmux-launcher/`) | `task package` (only relevant for portable / installed builds) |
 
 ## Build Commands
 
 | Command | Description |
 |---------|-------------|
-| `task dev` | Development mode with hot reload |
-| `task quickdev` | Fast dev (skips wsh build) |
-| `task build:backend` | Build Rust backend (agentmuxsrv-rs + wsh-rs) |
+| `task dev` | Development mode (CEF host + Vite hot reload) |
+| `task build:host` | Build the CEF host binary |
+| `task bundle` | Bundle CEF runtime DLLs |
+| `task build:backend` | Build `agentmux-srv` |
 | `task build:frontend` | Build frontend only |
-| `task package` | Production installer for current platform |
-| `task package:macos` | macOS .app + .dmg |
-| `task package:portable` | Windows portable ZIP |
-| `task package:portable:linux` | Linux AppImage |
-| `task test` | Run tests (vitest) |
+| `task package` | Package a portable build for the host platform |
+| `task package:macos` | macOS DMG |
+| `task package:linux` | Linux AppImage / .deb |
+| `task package:msix` | Windows MSIX installer |
+| `task test` | Run tests (`vitest`) |
 | `task clean` | Clean build artifacts |
-| `task storybook` | Run Storybook for UI components |
 
-## Architecture
+Run `task --list` to see every task.
+
+## Source Layout
 
 ```
 agentmux/
-├── src-tauri/          # Tauri v2 shell (Rust)
-├── agentmuxsrv-rs/     # Rust async backend (Tokio + Axum + SQLite)
-├── wsh-rs/             # Shell integration binary (Rust)
-├── frontend/           # SolidJS + TypeScript (Vite)
-├── schema/             # JSON schema definitions
-├── docs/               # Architecture docs and specs
-└── Taskfile.yml        # Build task definitions
+├── agentmux-launcher/   # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
+├── agentmux-cef/        # CEF host — embeds Chromium, owns the OS window
+├── agentmux-srv/        # Sidecar — RPC engine, SQLite persistence, sagas
+├── agentmux-common/     # Shared utilities (path resolution, runtime mode)
+├── frontend/            # SolidJS + TypeScript (Vite)
+├── docs/                # Architecture docs and specs
+├── specs/               # Top-level specs
+└── Taskfile.yml         # Build task definitions
 ```
 
-### Component Sizes
-
-| Component | Size | Purpose |
-|-----------|------|---------|
-| `agentmux` | ~14 MB | Tauri app (Rust + WebView) |
-| `agentmuxsrv-rs` | ~4 MB | Async backend server |
-| `wsh` | ~1.1 MB | Shell integration binary |
-| **Total** | ~19 MB | All components |
-
-### Communication Flow
+## Communication Flow
 
 ```
-Frontend (SolidJS)
-    ↕  Tauri IPC
-Tauri Shell (src-tauri)
-    ↕  WebSocket / JSON-RPC 2.0
-agentmuxsrv-rs (backend)
-    ↕  WebSocket / wshrpc
-wsh-rs (remote hosts)
+launcher ◀── named pipe ──▶ host (CEF)
+                              │
+                              ├── JS bridge ──▶ renderer (SolidJS)
+                              │
+                              ├── websocket ──▶ sidecar (agentmux-srv)
+                              │                   │
+                              │                   └── websocket / wshrpc ──▶ remote `wsh`
+                              │
+                              ▼
+                         OS window, browser panes
 ```
+
+See [Architecture overview](/architecture-overview/) for the full topology and what each edge carries.
 
 ## Debugging
 
 ### Frontend
 
-Open DevTools: `Ctrl+Shift+I` (Windows/Linux) or `Cmd+Option+I` (macOS).
+Open Chromium DevTools: click the **DevTools** widget (pinned by default) or use the keyboard shortcut. Reload the renderer with `Ctrl+R` / `Cmd+R`.
 
 ### Backend Logs
 
-```bash
-# Development
-tail -f ~/.agentmux-dev/agentmux.log
+Logs land in `<instance>/logs/` for the running instance. Use the `muxlog` shell helper from any AgentMux terminal:
 
-# Production
-tail -f ~/.agentmux/agentmux.log
+```bash
+muxlog host         # tail the current host log
+muxlog srv          # tail the sidecar log
+muxlog host '[fe]'  # filter the host log to frontend lines
+muxlog host cat     # full file contents
 ```
 
-### Tauri Logs
-
-Appear in the terminal where `task dev` is running.
+See [Multi-instance & dev mode](/multi-instance/) for the per-instance path layout and pointer-file resolution.
 
 ## Troubleshooting
 
-### Backend binary not found (ENOENT)
+### CMake / Ninja errors
 
-Rebuild and verify:
+If `cargo build` fails with "CMake was unable to find a build program corresponding to Ninja", verify `ninja --version` works on `PATH`. On Windows, see the install steps above.
 
-```bash
-task build:backend
-ls -lh src-tauri/binaries/
-```
+### Backend binary not found
 
-### Tauri build fails with linker errors
-
-Install platform dependencies (see Prerequisites above).
+Run `task build:backend` and verify the binary lands in `target/release/` (or the platform-equivalent location). The host auto-spawns the sidecar by absolute path.
 
 ### Frontend not loading
 
-Check port 1420 (Vite dev server). Clear and reinstall if needed:
+Check the Vite dev port (`task dev` prints it on startup) is not already in use. Clear and reinstall if needed:
 
 ```bash
 rm -rf node_modules package-lock.json
@@ -182,13 +172,12 @@ task dev
 
 ### Schema directory missing after clean
 
-Handled automatically by the build pipeline. If needed manually:
-
-```bash
-cp -r schema dist/schema
-```
+`dist/schema/` is wiped by `task clean` but automatically recreated by the `copy:schema` dependency in `dev`, `start`, and `package` tasks.
 
 ## See Also
 
-- [Contributing](/contributing) — Contribution guidelines
-- [Configuration](/config) — Settings file format
+- [Architecture overview](/architecture-overview/) — process topology and IPC edges
+- [Multi-instance & dev mode](/multi-instance/) — data layout, log discovery
+- [Reducer stack](/reducer-stack/) — how state flows across the four processes
+- [Contributing](/contributing) — contribution guidelines
+- [Configuration](/config) — settings file format

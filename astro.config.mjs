@@ -43,7 +43,10 @@ export default defineConfig({
 					label: 'Features',
 					items: [
 						{ label: 'Pane Types', slug: 'pane-types' },
+						{ label: 'Browser pane', slug: 'browser-pane' },
 						{ label: 'The Forge', slug: 'the-forge' },
+						{ label: 'Identity bundles', slug: 'identity' },
+						{ label: 'Memory bundles', slug: 'memory' },
 						{ label: 'Interpane Comms', slug: 'interpane-comms' },
 						{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
 					],
@@ -55,6 +58,7 @@ export default defineConfig({
 						{ label: 'Keybindings', slug: 'keybindings' },
 						{ label: 'Settings', slug: 'settings' },
 						{ label: 'Agent App API', slug: 'agent-app-api' },
+						{ label: 'Auth flows', slug: 'auth' },
 						{ label: 'Persistence', slug: 'persistence' },
 						{ label: 'System Metrics', slug: 'system-metrics' },
 						// Generated reference indexes — produced by

@@ -15,7 +15,7 @@ Communication flows through the backend via WebSocket using JSON-RPC 2.0:
 ```
 Pane A (Frontend)
     ↕  WebSocket / JSON-RPC 2.0
-agentmuxsrv-rs (Backend)
+agentmux-srv (Backend)
     ↕  WebSocket / JSON-RPC 2.0
 Pane B (Frontend)
 ```

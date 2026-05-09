@@ -10,19 +10,30 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-| Pane | Icon | View ID | Description |
-|------|------|---------|-------------|
-| **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
-| **Browser** | globe | `browser` | Embedded web browser, native CefBrowserView |
-| **Agent** | sparkles | `agent` | AI agent session with streaming output (includes Forge config + Identity panels as in-pane subsections) |
-| **Editor** | file-code | `editor` | Code editor with syntax highlighting |
-| **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
-| **Subagent** | diagram-subtask | `subagent` | Monitor a specific sub-agent's activity |
-| **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
-| **Help** | circle-question | `help` | Built-in documentation |
-| **DevTools** | code | `devtools` | Toggle Chromium DevTools |
+The widget bar has two tiers — pinned (visible directly in the bar) and **More** (overflow dropdown). Both are user-facing.
 
-**Forge** and **Identity** are not standalone pane types — they're tabs inside the Agent pane (see the Agent section below). **Settings** is not a pane either — open it via the hamburger menu.
+| Pane | Icon | View ID | Description | Tier |
+|------|------|---------|-------------|------|
+| **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Forge / Identity / Memory subsections via the cog → settings panel. | Pinned |
+| **Browser** | globe | `browser` | Embedded native `CefBrowserView` | Pinned |
+| **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js | Pinned |
+| **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs | Pinned |
+| **DevTools** | code | `devtools` | Toggle Chromium DevTools — does not open a pane | Pinned |
+| **Editor** | file-code | `editor` | Code editor with syntax highlighting | More |
+| **Swarm** | bee | `swarm` | Multi-agent orchestration and history | More |
+| **Help** | circle-question | `help` | Built-in documentation | More |
+
+### Not pane types
+
+These views exist in the codebase but are **not** opened directly from the widget bar:
+
+| Surface | How it's reached |
+|---|---|
+| **Forge** | Tab inside an Agent pane (cog → settings → Forge). Configure provider, soul, instructions, MCP, env. |
+| **Identity** | Tab inside an Agent pane (cog → settings → Identity). Manage credential bundle assigned to this agent. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Memory** | Tab inside an Agent pane (cog → settings → Memory). Manage personality/capability bundle. Same shape as Identity — view registered for programmatic access only. |
+| **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens `settings.json` in your default editor. |
+| **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
 
 ## Terminal
 
@@ -106,12 +117,13 @@ Settings that affect agent panes:
 
 ### Subsections
 
-The agent pane has built-in side panels — they used to be standalone pane types but are now in-pane tabs:
+The agent pane has three built-in side panels, opened via the cog → settings panel:
 
-- **Forge** — agent configuration manager. Create / edit / view forge agents (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/the-forge/) page describes.
-- **Identity** — manage agent identities (provider accounts, OAuth tokens, per-agent credential mapping). Backed by `frontend/app/view/identity/`, surfaced as the Identity panel inside the agent pane's settings.
+- **Forge** — agent configuration manager. Create / edit / view agent definitions (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/the-forge/) page describes.
+- **Identity** — manage Identity bundles (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …) for this agent instance. Backed by `frontend/app/view/identity/`, surfaced via `AgentIdentityPanel`. See [Identity](/identity/).
+- **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/).
 
-Both open from inside an active agent pane — there is no top-bar widget for either.
+All three open from inside an active agent pane — there are no widget-bar entries for them. The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the views, but the primary path is the agent-pane subsection.
 
 ## Swarm
 
@@ -125,7 +137,7 @@ Click any sub-agent in the overview to open a dedicated [Subagent](#subagent) pa
 
 ## Subagent
 
-A focused view of a single sub-agent's activity stream. Shows:
+A focused view of a single sub-agent's activity stream. **Not a widget-bar entry** — opened by clicking a sub-agent in the [Swarm pane's overview](#swarm). Shows:
 
 - Agent ID and slug
 - Status badge (active, completed, loading)
