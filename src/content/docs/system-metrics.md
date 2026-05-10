@@ -98,4 +98,4 @@ Remote and local metrics are kept separate — you can have multiple Sysinfo pan
 
 - [Pane Types](/pane-types) — Sysinfo pane overview
 - [Configuration](/config) — Settings that affect sysinfo display
-- [Interpane Communication](/interpane-comms) — Event system for metric streaming
+- [Interagent Communication](/interagent-comms) — Event system for metric streaming

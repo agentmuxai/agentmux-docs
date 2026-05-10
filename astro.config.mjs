@@ -13,6 +13,8 @@ export default defineConfig({
 		'/debugging': '/internals/debugging',
 		'/contributing': '/internals/contributing',
 		'/agent-app-api': '/internals/agent-app-api',
+		'/interpane-comms': '/internals/interagent-comms',
+		'/internals/interpane-comms': '/internals/interagent-comms',
 		'/the-forge': '/memory',
 	},
 	integrations: [
@@ -87,7 +89,7 @@ export default defineConfig({
 								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
-								{ label: 'Interpane event bus', slug: 'internals/interpane-comms' },
+								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
 								{ label: 'Platform support', slug: 'internals/platform-support' },
 							],

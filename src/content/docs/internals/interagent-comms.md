@@ -1,5 +1,5 @@
 ---
-title: "Interpane Communication"
+title: "Interagent Communication"
 ---
 
 :::caution[Alpha Software]
