@@ -32,10 +32,11 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 1. Install Rust from [rustup.rs](https://rustup.rs/).
 2. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) — select "Desktop development with C++" (provides CMake and Ninja).
-3. Verify Ninja is on `PATH`. The Visual Studio install ships Ninja inside `Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/`; copy or symlink `ninja.exe` to a PATH entry. From Git Bash:
+3. Verify Ninja is on `PATH`. The Visual Studio install ships Ninja inside `Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/`; copy or symlink `ninja.exe` to a PATH entry. From Git Bash (note: the `*` must be unquoted so the shell expands it):
    ```bash
-   cp "/c/Program Files/Microsoft Visual Studio/*/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" /c/Systems/bin/
+   cp /c/Program\ Files/Microsoft\ Visual\ Studio/*/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe /c/Systems/bin/
    ```
+   Or substitute the actual edition (`Community`, `Professional`, `Enterprise`) and year (`2022`, etc.) so no glob is needed.
 
 #### Linux (Debian/Ubuntu)
 
@@ -91,14 +92,12 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | `task bundle` | Bundle CEF runtime DLLs |
 | `task build:backend` | Build `agentmux-srv` |
 | `task build:frontend` | Build frontend only |
-| `task package` | Package a portable build for the host platform |
-| `task package:macos` | macOS DMG |
-| `task package:linux` | Linux AppImage / .deb |
-| `task package:msix` | Windows MSIX installer |
+| `task package` | Package a portable build for the host platform (Windows ZIP) |
+| `task package:linux` | Linux AppImage (writes to `~/Desktop` per `build-appimage-linux.sh`) |
 | `task test` | Run tests (`vitest`) |
 | `task clean` | Clean build artifacts |
 
-Run `task --list` to see every task.
+Run `task --list` to see every task. Note that `task package:macos` and `task package:msix` exist as TODO stubs in `Taskfile.yml` but do nothing — the full DMG / MSIX / .deb release artifact set is produced by [`agentmuxai/agentmux-builder`](https://github.com/agentmuxai/agentmux-builder), not local builds.
 
 ## Source Layout
 
