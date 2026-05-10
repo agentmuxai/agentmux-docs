@@ -19,7 +19,7 @@ Please respect our [Code of Conduct](https://github.com/agentmuxai/agentmux/blob
 
 ## Getting started
 
-1. [Build from source](/building/) — set up your dev environment
+1. [Build from source](/internals/building/) — set up your dev environment
 2. Create a feature branch from `main`
 3. Make your changes
 4. Submit a pull request
@@ -142,7 +142,7 @@ bump verify
 
 `bump --commit` stages and commits **only** the version files. Stage and commit code changes **first**, separately — otherwise they'll be silently dropped.
 
-See [Building from Source](/building/) for full version management details.
+See [Building from Source](/internals/building/) for full version management details.
 
 ## License
 
@@ -150,8 +150,8 @@ AgentMux is licensed under Apache-2.0. By contributing, you agree that your cont
 
 ## See also
 
-- [Architecture overview](/architecture-overview/) — what each crate owns
-- [Reducer stack](/reducer-stack/) — the state model new contributors hit first
-- [Debugging](/debugging/) — log discovery + drift diagnostics
-- [Building from Source](/building/) — environment setup
-- [Agent App API](/agent-app-api/) — RPC surface
+- [Architecture overview](/internals/architecture/) — what each crate owns
+- [Reducer stack](/internals/reducer-stack/) — the state model new contributors hit first
+- [Debugging](/internals/debugging/) — log discovery + drift diagnostics
+- [Building from Source](/internals/building/) — environment setup
+- [Agent App API](/internals/agent-app-api/) — RPC surface

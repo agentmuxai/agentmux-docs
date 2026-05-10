@@ -83,5 +83,5 @@ You can think of it as: **Memory is the definition; Forge is the form that edits
 ## See also
 
 - [Identity bundles](/identity/) — the other half of agent composition
-- [The Forge](/the-forge/) — agent configuration manager
+- [The Forge](/memory/) — agent configuration manager
 - [First Agent Setup](/first-agent/) — provider login flows

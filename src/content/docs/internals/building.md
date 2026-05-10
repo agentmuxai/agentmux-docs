@@ -128,7 +128,7 @@ launcher ◀── named pipe ──▶ host (CEF)
                          OS window, browser panes
 ```
 
-See [Architecture overview](/architecture-overview/) for the full topology and what each edge carries.
+See [Architecture overview](/internals/architecture/) for the full topology and what each edge carries.
 
 ## Debugging
 
@@ -175,8 +175,8 @@ task dev
 
 ## See Also
 
-- [Architecture overview](/architecture-overview/) — process topology and IPC edges
+- [Architecture overview](/internals/architecture/) — process topology and IPC edges
 - [Multi-instance & dev mode](/multi-instance/) — data layout, log discovery
-- [Reducer stack](/reducer-stack/) — how state flows across the four processes
+- [Reducer stack](/internals/reducer-stack/) — how state flows across the four processes
 - [Contributing](/contributing) — contribution guidelines
 - [Configuration](/config) — settings file format

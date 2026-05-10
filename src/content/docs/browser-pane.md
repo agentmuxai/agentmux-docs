@@ -56,7 +56,7 @@ The address-bar input uses `onMouseDown` (not `onMouseEnter`) for the click-to-f
 
 When you click inside the browser pane, the host fires `browser-pane-clicked` over the JS bridge. The frontend's browser-pane reducer (slice #9) dispatches a `Clicked` command, which emits a `focus-block` event. A saga turns the event into `refocusNode(blockId)`, updating the layout's focus state so keyboard shortcuts and split commands target the clicked pane.
 
-DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary. See [Reducer stack](/reducer-stack/) for the broader pattern.
+DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary. See [Reducer stack](/internals/reducer-stack/) for the broader pattern.
 
 ## Per-pane state
 
@@ -71,10 +71,10 @@ State persists across pane moves between tabs and windows — drag a browser pan
 
 ## Browser-pane reducer (slice #9)
 
-The browser pane is the subject of the in-flight reducer slice migration (frontend slice #9). Recent commits (`e3173631`, `ba843501`, `4cd960b2`, `540b1f4a`) move per-pane state cells (closed/loading/error → canGoBack/canGoForward → title) into the reducer model. See [Reducer stack](/reducer-stack/) for the slice list and migration plan.
+The browser pane is the subject of the in-flight reducer slice migration (frontend slice #9). Recent commits (`e3173631`, `ba843501`, `4cd960b2`, `540b1f4a`) move per-pane state cells (closed/loading/error → canGoBack/canGoForward → title) into the reducer model. See [Reducer stack](/internals/reducer-stack/) for the slice list and migration plan.
 
 ## See also
 
 - [Pane types](/pane-types/) — full pane catalog
-- [Reducer stack](/reducer-stack/) — slice #9 status
-- [Architecture overview](/architecture-overview/) — host / sidecar / renderer split
+- [Reducer stack](/internals/reducer-stack/) — slice #9 status
+- [Architecture overview](/internals/architecture/) — host / sidecar / renderer split

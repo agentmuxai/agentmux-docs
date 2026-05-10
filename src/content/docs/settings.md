@@ -186,7 +186,7 @@ The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by Ag
 
 ## Data Directories
 
-All per-instance state lives under `<instance>/`, where `<instance>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+All per-instance state lives under `<instance>/`, where `<instance>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 | Purpose | Path |
 |---|---|

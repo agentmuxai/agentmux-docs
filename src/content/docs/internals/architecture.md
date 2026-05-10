@@ -68,14 +68,14 @@ Every cross-process edge has its own event format, its own ack semantics, and it
 
 ## State ownership
 
-This is where the [reducer stack](/reducer-stack/) lives. Briefly:
+This is where the [reducer stack](/internals/reducer-stack/) lives. Briefly:
 
 - **Layer 1 — launcher reducer** owns process / OS / monitor / pool state. Single-writer; durable JSONL event log.
 - **Layer 2 — host reducer** (in flight) owns CEF-side coordination: pending window creations, active drag, lifecycle.
 - **Layer 3 — srv reducer** owns the app domain: workspaces, tabs, blocks, layouts, agents.
 - **Layer 4 — frontend slices** project the above into per-pane Solid signals via per-slice reducer modules.
 
-The full layout, slice list, and migration plan are in the [reducer stack page](/reducer-stack/).
+The full layout, slice list, and migration plan are in the [reducer stack page](/internals/reducer-stack/).
 
 ## Data layout on disk
 
@@ -99,6 +99,6 @@ If you're new, read in this order:
 
 1. **You're here.** This page.
 2. [Multi-instance & dev mode](/multi-instance/) — gets you to a running AgentMux you can poke at.
-3. [Reducer stack](/reducer-stack/) — explains how state actually flows through the four processes.
+3. [Reducer stack](/internals/reducer-stack/) — explains how state actually flows through the four processes.
 4. [Pane Types](/pane-types/) — the user-visible building blocks.
-5. The [Agent App API reference](/agent-app-api/) when you're ready to drive AgentMux from an agent.
+5. The [Agent App API reference](/internals/agent-app-api/) when you're ready to drive AgentMux from an agent.

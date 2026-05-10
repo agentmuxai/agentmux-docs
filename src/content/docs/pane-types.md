@@ -67,7 +67,7 @@ Header state syncs from the backend's `browser-pane-nav-state` event:
 - **Favicon** — fetched from the page; falls back to the `globe` icon
 - **History** — back/forward enabled state, per-pane
 
-When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary — this is the same pattern the [debugging](/debugging/#reducer-dispatch-ring) page describes.)
+When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/internals/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary — this is the same pattern the [debugging](/internals/debugging/#reducer-dispatch-ring) page describes.)
 
 ### IPC commands
 
@@ -104,7 +104,7 @@ The agent pane runs an AI agent session. It displays:
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 
-Agent panes are configured through [The Forge](/the-forge/), accessible as a tab inside the agent pane (see Subsections below).
+Agent panes are configured through [The Forge](/memory/), accessible as a tab inside the agent pane (see Subsections below).
 
 Settings that affect agent panes:
 
@@ -119,7 +119,7 @@ Settings that affect agent panes:
 
 The agent pane has three built-in side panels, opened via the cog → settings panel:
 
-- **Forge** — agent configuration manager. Create / edit / view agent definitions (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/the-forge/) page describes.
+- **Forge** — agent configuration manager. Create / edit / view agent definitions (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/memory/) page describes.
 - **Identity** — manage Identity bundles (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …) for this agent instance. Backed by `frontend/app/view/identity/`, surfaced via `AgentIdentityPanel`. See [Identity](/identity/).
 - **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/).
 

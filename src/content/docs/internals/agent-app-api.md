@@ -157,7 +157,7 @@ The frontend client surfaces these as `AsyncGenerator` objects; over the wire ea
 ## See also
 
 - [Interpane Communication](/interpane-comms/) — the event pub-sub system the `event*` commands plug into
-- [Persistence](/persistence/) — how state changes flow into SQLite
-- [Reducer stack](/reducer-stack/) — what's RPC-driven vs reducer-driven (migration in flight)
+- [Persistence](/internals/persistence/) — how state changes flow into SQLite
+- [Reducer stack](/internals/reducer-stack/) — what's RPC-driven vs reducer-driven (migration in flight)
 - [Configuration](/config/) — settings + MCP config
-- [Building from Source](/building/) — backend architecture
+- [Building from Source](/internals/building/) — backend architecture

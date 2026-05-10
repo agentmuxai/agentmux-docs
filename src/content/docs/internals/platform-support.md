@@ -39,11 +39,11 @@ Pages and admonitions in these docs that are Windows-specific are flagged with a
 
 The architecture is designed cross-platform from the start:
 
-- The four-process topology ([architecture overview](/architecture-overview/)) doesn't change per OS — same launcher / host / sidecar / renderer split.
+- The four-process topology ([architecture overview](/internals/architecture/)) doesn't change per OS — same launcher / host / sidecar / renderer split.
 - Path resolution ([multi-instance](/multi-instance/)) uses `~/.agentmux/` everywhere; the per-instance versioned subdirs are identical across OSes.
-- Persistence ([SQLite + JSONL](/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
-- Reducer state, sagas, and the frontend slice migration ([reducer stack](/reducer-stack/)) are pure logic with no OS-specific code.
-- App API ([agent-app-api](/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
+- Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
+- Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
+- App API ([agent-app-api](/internals/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
 
 ## Per-OS notes
 
@@ -51,7 +51,7 @@ The architecture is designed cross-platform from the start:
 
 - Path separators in commands and config are `\\`; the docs uses `/` for portability — both work in PowerShell and Git Bash.
 - Use **PowerShell 7+** or **Git Bash (MSYS2)** for the shell-integration scripts. CMD is not supported.
-- The `taskkill` recipes in the [debugging](/debugging/) page expect Windows.
+- The `taskkill` recipes in the [debugging](/internals/debugging/) page expect Windows.
 - `%APPDATA%`, `%LOCALAPPDATA%`, `%USERPROFILE%` resolve to the standard Windows paths.
 
 ### macOS (in progress)
@@ -98,7 +98,7 @@ Track progress on [GitHub Discussions](https://github.com/agentmuxai/agentmux/di
 
 ## See also
 
-- [Architecture overview](/architecture-overview/) — process topology (cross-platform)
+- [Architecture overview](/internals/architecture/) — process topology (cross-platform)
 - [Multi-instance & dev mode](/multi-instance/) — data layout (cross-platform)
-- [WRR](/wrr/) — Windows-only details
-- [Debugging](/debugging/) — log + crash-report recipes (mostly cross-platform; Windows-specific paths flagged)
+- [WRR](/internals/wrr/) — Windows-only details
+- [Debugging](/internals/debugging/) — log + crash-report recipes (mostly cross-platform; Windows-specific paths flagged)

@@ -94,7 +94,7 @@ For completeness, things that are NOT stored in these five files:
 
 ## See also
 
-- [Architecture overview](/architecture-overview/) — process topology
+- [Architecture overview](/internals/architecture/) — process topology
 - [Multi-instance & dev mode](/multi-instance/) — full data-dir layout
-- [Reducer stack](/reducer-stack/) — how persistence relates to the reducer model
-- [Debugging](/debugging/) — log discovery + diagnostic recipes
+- [Reducer stack](/internals/reducer-stack/) — how persistence relates to the reducer model
+- [Debugging](/internals/debugging/) — log discovery + diagnostic recipes
