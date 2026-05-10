@@ -24,20 +24,20 @@ You need at least one AI agent CLI installed. Each provider has its own login fl
 
 After completing the provider's login flow, AgentMux can launch agents using that provider. AgentMux isolates each provider's auth config to a per-instance subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable (see [Auth flows](/auth/) for the full list and isolation pattern).
 
-## Create an Agent in The Forge
+## Configure an Agent via Memory bundles
 
 1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar.
-2. Open the agent pane's settings panel (cog icon in the pane header) and switch to the **Forge** tab.
-3. Click **+ New Agent**.
-4. Fill in the agent configuration:
+2. Open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab.
+3. Click **+ New Memory** to create a new bundle (or pick an existing one to edit).
+4. Fill in the bundle configuration:
 
 ### Basic Settings
 
 | Field | Description |
 |-------|-------------|
 | **Name** | A human-readable name (e.g., `backend-claude`) |
-| **Agent Type** | `host` (runs on your machine) or `container` (Docker) |
-| **Provider** | Claude Code, Codex CLI, or Gemini CLI |
+| **Provider** | Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, or Pi |
+| **Model** | Model identifier passed to the provider (e.g., `claude-sonnet-4-6`) |
 | **Working Directory** | The project directory the agent works in |
 
 ### Provider Command
@@ -54,11 +54,11 @@ GitHub Copilot CLI: copilot --acp
 Pi:                 pi --json
 ```
 
-Three providers (OpenClaw, Copilot, Pi) use the Agent Client Protocol (ACP) over stdio; the others use streaming-JSON modes specific to each CLI. AgentMux's controller layer abstracts the difference. You can override `launchArgs` per agent in the Forge form.
+Three providers (OpenClaw, Copilot, Pi) use the Agent Client Protocol (ACP) over stdio; the others use streaming-JSON modes specific to each CLI. AgentMux's controller layer abstracts the difference. You can override `launchArgs` per Memory bundle.
 
-### Content Tabs
+### Bundle Content
 
-The Forge provides four content tabs per agent:
+A Memory bundle holds four kinds of content per agent:
 
 - **Soul** — The agent's system prompt and personality. Defines how the agent behaves and what it prioritizes.
 - **Instructions** — Project-specific instructions (equivalent to `CLAUDE.md` or similar). Loaded into the agent's context on launch.
@@ -67,7 +67,7 @@ The Forge provides four content tabs per agent:
 
 ## Launch the Agent
 
-From the Forge agent list, click on your agent's card and then click **Launch**. A new agent pane opens in your workspace.
+Open the Launch Agent modal (the same one you reach from the Agent picker), pick your Memory bundle, optionally pick an [Identity bundle](/identity/) for credentials, and click **Launch**. A new agent pane opens in your workspace.
 
 The agent pane shows:
 
@@ -88,11 +88,11 @@ Run inside Docker containers. AgentMux connects to the container and manages the
 
 ### Import from Claw
 
-If you use [Claw](https://github.com/a5af/claw) for container agent management, you can import existing agent configurations directly into The Forge. Click **Import from Claw** in the empty state or from the Forge header menu.
+If you use [Claw](https://github.com/a5af/claw) for container agent management, you can import existing agent configurations directly into Memory bundles. Click **Import from Claw** in the empty state or from the Memory pane's header menu.
 
 ## Skills
 
-Each agent can have custom skills — reusable prompt templates, commands, workflows, or MCP tool configurations. Manage skills from the agent's detail view in The Forge under the **Skills** tab.
+Each agent can have custom skills — reusable prompt templates, commands, workflows, or MCP tool configurations. Manage skills from the Memory bundle's detail view under the **Skills** tab.
 
 Skill types:
 
@@ -105,6 +105,6 @@ Skill types:
 
 ## Next Steps
 
-- [Memory bundles](/memory/) — Full Forge reference
+- [Memory bundles](/memory/) — full bundle reference (provider, model, instructions, MCP, skills)
 - [Pane Types](/pane-types) — All pane types including agent panes
 - [Configuration](/config) — Global and per-agent settings

@@ -16,8 +16,7 @@ AgentMux gives you a multiplexed workspace where multiple AI agents run in paral
 
 - **Panes** — Individual workspace units. Each pane has a type (`agent`, `browser`, `terminal`, `editor`, `swarm`, `sysinfo`, `help`, `devtools`).
 - **Identity bundles** — Named credential sets (GitHub PAT, AWS profile, Anthropic API key, …) you assign to an agent at launch. Survives renames; swappable without restart.
-- **Memory bundles** — Reusable agent personality + capability stacks (provider, model, instructions, MCP, skills) selectable at launch.
-- **The Forge** — A tab inside the Agent pane (cog → settings → Forge) where you configure the agent's launch parameters.
+- **Memory bundles** — Reusable agent personality + capability stacks (provider, model, instructions, MCP, skills). Manage via the Memory tab inside an Agent pane's settings panel; the launch-modal picker arrives with PR-F.4. Replaces the older "Forge" concept — `db_forge_agents` rows migrated into `db_memories` in the v7 schema.
 - **Interagent Comms** — Panes communicate via a backend pub-sub event system. An agent's output can stream into another pane's input.
 - **Subagent monitoring** — The Swarm pane provides a bird's-eye view of all sub-agents spawned by primary agents; clicking one opens a focused Subagent view.
 - **Reducer stack** — A 4-layer audited dispatch model (launcher / host / sidecar / frontend slices). Every state mutation is structured and logged.

@@ -74,11 +74,11 @@ updated_at      TEXT NOT NULL
 
 The migration that introduced this schema is v7. The Forge concept (predating Memory) was folded into Memory by the same migration: existing `db_forge_agents` rows migrated into `db_memories`.
 
-## Memory vs the Forge
+## Memory and per-instance overrides
 
-The Forge tab inside the Agent pane is the editor for Memory bundles plus the agent-instance-specific overrides on top of the bundle. A bundle is reusable across instances; the per-instance overrides on the Forge tab are not.
+A Memory bundle is the **definition** — reusable across many agent instances. The Memory tab inside an Agent pane is the editor for the bundle plus any per-instance overrides on top.
 
-You can think of it as: **Memory is the definition; Forge is the form that edits it (plus the per-instance launch settings).**
+When you launch an agent, AgentMux composes the bundle's settings with whatever overrides the running pane has accumulated, then spawns the provider's CLI with the resulting `launchArgs` and env. Two agents using the same Memory bundle but different overrides land on different actual configs at launch.
 
 ## See also
 
