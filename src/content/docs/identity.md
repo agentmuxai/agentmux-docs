@@ -65,6 +65,6 @@ The migration that introduced this schema is v7 (`feat(identity): v7 schema`). S
 ## See also
 
 - [Memory bundles](/memory/) — the other half of agent composition
-- [The Forge](/the-forge/) — agent configuration manager
 - [First Agent Setup](/first-agent/) — provider login flows
 - [Auth flows](/auth/) — per-provider auth-dir isolation
+- [Pane Types](/pane-types/) — where Identity bundles surface in the UI

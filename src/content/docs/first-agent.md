@@ -105,6 +105,6 @@ Skill types:
 
 ## Next Steps
 
-- [The Forge](/the-forge) — Full Forge reference
+- [Memory bundles](/memory/) — Full Forge reference
 - [Pane Types](/pane-types) — All pane types including agent panes
 - [Configuration](/config) — Global and per-agent settings

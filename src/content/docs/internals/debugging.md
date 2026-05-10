@@ -45,13 +45,13 @@ So:
 
 ## Reducer dispatch ring
 
-Every slice in the [reducer stack](/reducer-stack/) routes through `command-source.ts`'s `recordDispatch(...)` helper, which appends a structured record (slice name, key, command, emitted events, source, timestamp) to an in-memory ring buffer. The diagnostics panel surfaces this.
+Every slice in the [reducer stack](/internals/reducer-stack/) routes through `command-source.ts`'s `recordDispatch(...)` helper, which appends a structured record (slice name, key, command, emitted events, source, timestamp) to an in-memory ring buffer. The diagnostics panel surfaces this.
 
 When a question like "what mutated this state?" comes up, filter the ring for the relevant key — the answer is one entry. This was the discriminator in the SolidJS reactive-leak storm crashes that earlier attempts (PRs #708, #721, #722) chased the wrong way.
 
 ## WRR drift diagnostics
 
-[Window Reality Reconciliation](/wrr/) reconciles AgentMux's model against Win32 reality. When a window appears to "freeze" or windows mysteriously vanish, the launcher reducer's event log is the authority. Useful greps:
+[Window Reality Reconciliation](/internals/wrr/) reconciles AgentMux's model against Win32 reality. When a window appears to "freeze" or windows mysteriously vanish, the launcher reducer's event log is the authority. Useful greps:
 
 ```bash
 grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pending=" \
@@ -65,7 +65,7 @@ grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pendin
 The sidecar runs as a separate process auto-spawned by the host. If it crashes (e.g. a `0xC0000409` STACK_BUFFER_OVERRUN), the OS writes a minidump.
 
 :::note[Windows-only path]
-On Windows, dumps land at `%LOCALAPPDATA%\CrashDumps\agentmux-srv*.dmp` via Windows Error Reporting (WER). On macOS, the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux, the path depends on whether `systemd-coredump` or `apport` is installed. See [Platform support](/platform-support/) for the full per-OS table.
+On Windows, dumps land at `%LOCALAPPDATA%\CrashDumps\agentmux-srv*.dmp` via Windows Error Reporting (WER). On macOS, the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux, the path depends on whether `systemd-coredump` or `apport` is installed. See [Platform support](/internals/platform-support/) for the full per-OS table.
 :::
 
 WER configuration is part of AgentMux's installer; on a dev build, ensure the dump dir exists before reproducing. Open dumps in WinDbg (Windows) or `lldb` (macOS) / `gdb` (Linux) to inspect the crashing thread's stack.
@@ -122,8 +122,8 @@ If three checks haven't revealed the cause, **stop investigating in isolation**.
 
 ## See also
 
-- [Architecture overview](/architecture-overview/) — what each process owns
+- [Architecture overview](/internals/architecture/) — what each process owns
 - [Multi-instance & dev mode](/multi-instance/) — log path resolution
-- [Reducer stack](/reducer-stack/) — what the dispatch ring records
-- [Persistence](/persistence/) — where durable state lives
+- [Reducer stack](/internals/reducer-stack/) — what the dispatch ring records
+- [Persistence](/internals/persistence/) — where durable state lives
 - [Report Issues](/report-issues/) — when to file a bug

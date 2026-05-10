@@ -3,6 +3,20 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
+	redirects: {
+		'/architecture-overview': '/internals/architecture',
+		'/reducer-stack': '/internals/reducer-stack',
+		'/wrr': '/internals/wrr',
+		'/persistence': '/internals/persistence',
+		'/platform-support': '/internals/platform-support',
+		'/building': '/internals/building',
+		'/debugging': '/internals/debugging',
+		'/contributing': '/internals/contributing',
+		'/agent-app-api': '/internals/agent-app-api',
+		'/interpane-comms': '/internals/interagent-comms',
+		'/internals/interpane-comms': '/internals/interagent-comms',
+		'/the-forge': '/memory',
+	},
 	integrations: [
 		starlight({
 			title: 'AgentMux Docs',
@@ -21,78 +35,97 @@ export default defineConfig({
 			],
 			sidebar: [
 				{
-					label: 'Getting Started',
+					label: 'User Guide',
+					collapsed: false,
 					items: [
-						{ label: 'Introduction', slug: 'getting-started' },
-						{ label: 'Installation', slug: 'installation' },
-						{ label: 'First Agent Setup', slug: 'first-agent' },
-						{ label: 'Quickstart', slug: 'quickstart' },
-					],
-				},
-				{
-					label: 'Concepts',
-					items: [
-						{ label: 'Architecture overview', slug: 'architecture-overview' },
-						{ label: 'The reducer stack', slug: 'reducer-stack' },
-						{ label: 'Multi-instance & dev mode', slug: 'multi-instance' },
-						{ label: 'Platform support', slug: 'platform-support' },
-						{ label: 'Window Reality Reconciliation', slug: 'wrr' },
-					],
-				},
-				{
-					label: 'Features',
-					items: [
-						{ label: 'Pane Types', slug: 'pane-types' },
-						{ label: 'Browser pane', slug: 'browser-pane' },
-						{ label: 'The Forge', slug: 'the-forge' },
-						{ label: 'Identity bundles', slug: 'identity' },
-						{ label: 'Memory bundles', slug: 'memory' },
-						{ label: 'Interpane Comms', slug: 'interpane-comms' },
-						{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
-					],
-				},
-				{
-					label: 'Reference',
-					items: [
-						{ label: 'Configuration', slug: 'config' },
-						{ label: 'Keybindings', slug: 'keybindings' },
-						{ label: 'Settings', slug: 'settings' },
-						{ label: 'Agent App API', slug: 'agent-app-api' },
-						{ label: 'Auth flows', slug: 'auth' },
-						{ label: 'Persistence', slug: 'persistence' },
-						{ label: 'System Metrics', slug: 'system-metrics' },
-						// Generated reference indexes — produced by
-						// `npm run build:typedoc` (writes into
-						// src/content/docs/api/typescript/) and
-						// `npm run build:rust-docs` (writes into
-						// public/api/rust/). Both opt-in via
-						// `npm run build:full`; default `build` skips
-						// them so the docs site iterates without the
-						// Rust toolchain or a long typedoc pass.
+						{ label: 'Overview', slug: 'user-guide' },
 						{
-							label: 'TypeScript API',
-							link: '/api/typescript/',
-							badge: { text: 'typedoc', variant: 'note' },
+							label: 'Getting Started',
+							items: [
+								{ label: 'Introduction', slug: 'getting-started' },
+								{ label: 'Installation', slug: 'installation' },
+								{ label: 'Quickstart', slug: 'quickstart' },
+								{ label: 'First Agent Setup', slug: 'first-agent' },
+							],
 						},
 						{
-							label: 'Rust Crates',
-							link: '/api/rust/',
-							badge: { text: 'rustdoc', variant: 'note' },
+							label: 'Features',
+							items: [
+								{ label: 'Pane Types', slug: 'pane-types' },
+								{ label: 'Browser pane', slug: 'browser-pane' },
+								{ label: 'Memory bundles', slug: 'memory' },
+								{ label: 'Identity bundles', slug: 'identity' },
+								{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
+								{ label: 'Running multiple instances', slug: 'multi-instance' },
+							],
+						},
+						{
+							label: 'Configuration',
+							items: [
+								{ label: 'Settings reference', slug: 'settings' },
+								{ label: 'Configuration guide', slug: 'config' },
+								{ label: 'Keybindings', slug: 'keybindings' },
+								{ label: 'Auth flows', slug: 'auth' },
+								{ label: 'System Metrics', slug: 'system-metrics' },
+							],
+						},
+						{
+							label: 'Help',
+							items: [
+								{ label: 'Report Issues', slug: 'report-issues' },
+							],
 						},
 					],
 				},
 				{
-					label: 'Development',
+					label: 'Internals',
+					collapsed: false,
 					items: [
-						{ label: 'Building', slug: 'building' },
-						{ label: 'Debugging', slug: 'debugging' },
-						{ label: 'Contributing', slug: 'contributing' },
-					],
-				},
-				{
-					label: 'Help',
-					items: [
-						{ label: 'Report Issues', slug: 'report-issues' },
+						{ label: 'Overview', slug: 'internals' },
+						{
+							label: 'Architecture',
+							items: [
+								{ label: 'Architecture overview', slug: 'internals/architecture' },
+								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
+								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
+								{ label: 'Persistence', slug: 'internals/persistence' },
+								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
+								{ label: 'Data layout', slug: 'internals/data-layout' },
+								{ label: 'Platform support', slug: 'internals/platform-support' },
+							],
+						},
+						{
+							label: 'Building',
+							items: [
+								{ label: 'Building from source', slug: 'internals/building' },
+								{ label: 'Debugging', slug: 'internals/debugging' },
+								{ label: 'Contributing', slug: 'internals/contributing' },
+							],
+						},
+						{
+							label: 'API reference',
+							items: [
+								{ label: 'Agent App API', slug: 'internals/agent-app-api' },
+								// Generated reference indexes — produced by
+								// `npm run build:typedoc` (writes into
+								// src/content/docs/api/typescript/) and
+								// `npm run build:rust-docs` (writes into
+								// public/api/rust/). Both opt-in via
+								// `npm run build:full`; default `build` skips
+								// them so the docs site iterates without the
+								// Rust toolchain or a long typedoc pass.
+								{
+									label: 'TypeScript API',
+									link: '/api/typescript/',
+									badge: { text: 'typedoc', variant: 'note' },
+								},
+								{
+									label: 'Rust Crates',
+									link: '/api/rust/',
+									badge: { text: 'rustdoc', variant: 'note' },
+								},
+							],
+						},
 					],
 				},
 			],

@@ -4,12 +4,12 @@ description: How AgentMux keeps its model of windows in sync with what Win32 act
 ---
 
 :::note[Windows-only today]
-WRR hooks into Win32 (`WM_PAINT`, `SetWindowPos`, `GetForegroundWindow`). macOS and Linux equivalents are on the roadmap — see [Platform support](/platform-support/). Until they ship, `task dev` on those platforms runs without WRR drift detection.
+WRR hooks into Win32 (`WM_PAINT`, `SetWindowPos`, `GetForegroundWindow`). macOS and Linux equivalents are on the roadmap — see [Platform support](/internals/platform-support/). Until they ship, `task dev` on those platforms runs without WRR drift detection.
 :::
 
 WRR — Window Reality Reconciliation — is the layer that keeps AgentMux's launcher reducer in sync with the OS. Win32 has a thousand quiet ways for window state to mutate without telling us: a different process steals focus, a monitor goes to sleep, the user drags a window across DPI boundaries, an OEM utility minimizes everything to clear the desktop, an Alt+Tab cycle reorders things mid-paint. WRR notices and corrects.
 
-This page is the model + glossary. The day-to-day "how do I find the WRR record for a specific event?" recipes live in [Debugging](/debugging/#wrr-drift-diagnostics).
+This page is the model + glossary. The day-to-day "how do I find the WRR record for a specific event?" recipes live in [Debugging](/internals/debugging/#wrr-drift-diagnostics).
 
 ## Why WRR exists
 
@@ -73,7 +73,7 @@ grep -E "PoolWindowPromoted|ReportWindowOpened|just_promoted" \
 
 `WRR-DRIFT` lines include the connection id (`conn_id=`), the kind, the label, and the HWND — enough to correlate with what the host saw.
 
-See [Debugging](/debugging/) for live-tail recipes (`muxlog`, pointer files), and [Persistence](/persistence/) for the broader role of `launcher-events.log` in the durable log layer.
+See [Debugging](/internals/debugging/) for live-tail recipes (`muxlog`, pointer files), and [Persistence](/internals/persistence/) for the broader role of `launcher-events.log` in the durable log layer.
 
 ## Why this is hard to test offline
 
@@ -86,7 +86,7 @@ The bug pattern in PR #709 — a regression that only surfaced under specific mo
 
 ## See also
 
-- [Architecture overview](/architecture-overview/) — process topology
-- [Reducer stack](/reducer-stack/) — Layer 1 / Layer 2 split
-- [Debugging](/debugging/) — drift greps + log discovery
-- [Persistence](/persistence/) — `launcher-events.log` durability
+- [Architecture overview](/internals/architecture/) — process topology
+- [Reducer stack](/internals/reducer-stack/) — Layer 1 / Layer 2 split
+- [Debugging](/internals/debugging/) — drift greps + log discovery
+- [Persistence](/internals/persistence/) — `launcher-events.log` durability
