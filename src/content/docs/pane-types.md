@@ -110,7 +110,7 @@ The agent pane runs an AI agent session. It displays:
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 
-Agent panes are configured through [The Forge](/memory/), accessible as a tab inside the agent pane (see Subsections below).
+Agent panes are configured through [Memory bundles](/memory/), accessible as a tab inside the agent pane (see Subsections below).
 
 Settings that affect agent panes:
 
@@ -125,7 +125,7 @@ Settings that affect agent panes:
 
 The agent pane has three built-in side panels, opened via the cog → settings panel:
 
-- **Forge** — agent configuration manager. Create / edit / view agent definitions (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [The Forge](/memory/) page describes.
+- **Forge** — agent configuration manager. Create / edit / view agent definitions (host, container, custom), including their Soul, Instructions, MCP, and Env tabs. Same surface as [Memory bundles](/memory/) page describes.
 - **Identity** — manage Identity bundles (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …) for this agent instance. Backed by `frontend/app/view/identity/`, surfaced via `AgentIdentityPanel`. See [Identity](/identity/).
 - **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/).
 

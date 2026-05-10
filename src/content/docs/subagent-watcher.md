@@ -98,5 +98,5 @@ Data is persisted in JSONL files on disk, allowing history browsing even after s
 ## See Also
 
 - [Pane Types](/pane-types) — Swarm and Subagent pane details
-- [Interagent Communication](/interagent-comms) — Event system architecture
-- [The Forge](/the-forge) — Agent configuration
+- [Interagent Communication](/internals/interagent-comms/) — Event system architecture
+- [Memory bundles](/memory/) — Agent configuration (provider, model, instructions, MCP, skills)

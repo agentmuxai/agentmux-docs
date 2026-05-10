@@ -159,7 +159,7 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 }
 ```
 
-Per-agent MCP configuration in [The Forge](/the-forge) overrides global settings.
+Per-agent MCP configuration in [Memory bundles](/memory/) overrides global settings.
 
 ## Environment Variables
 
@@ -200,5 +200,5 @@ All per-instance state lives under `<instance>/`, where `<instance>` is `~/.agen
 
 - [Configuration](/config) — Settings overview with examples
 - [Keybindings](/keybindings) — Keyboard shortcuts
-- [The Forge](/the-forge) — Per-agent configuration
+- [Memory bundles](/memory/) — Per-agent configuration
 - [System Metrics](/system-metrics) — Telemetry settings explained

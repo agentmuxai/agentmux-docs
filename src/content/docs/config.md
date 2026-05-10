@@ -121,4 +121,4 @@ AgentMux supports Model Context Protocol (MCP) servers for extending agent capab
 
 - [Keybindings](/keybindings) — Customize keyboard shortcuts
 - [Settings Reference](/settings) — Complete settings list
-- [The Forge](/the-forge) — Per-agent configuration
+- [Memory bundles](/memory/) — Per-agent configuration
