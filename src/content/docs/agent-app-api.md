@@ -29,7 +29,7 @@ High-level commands defined in [`agentmux-srv/src/server/app_api.rs`](https://gi
 | Command | Description |
 |---|---|
 | `agent.open` | Open a forge-defined agent in a pane. Idempotent — if the agent already has a block in the target tab, returns it. Resolves provider, sets controller meta, registers the controller. |
-| `agent.send` | Send a message to a running agent. Honors the agent's CLI provider (Claude Code, Codex, Gemini CLI, Plandex, …). |
+| `agent.send` | Send a message to a running agent. Honors the agent's CLI provider (Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, Pi). |
 | `agent.stop` | Cleanly stop an agent (asks the CLI to wrap up). |
 | `agent.status` | Query an agent's current state — controller status, last activity, block id. |
 | `agent.list` | List every running agent across the workspace, with provider + status. |

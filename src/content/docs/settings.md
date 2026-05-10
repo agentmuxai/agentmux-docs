@@ -170,9 +170,19 @@ AgentMux respects these environment variables:
 | `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (intended for tests) |
 | `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
 | `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
-| `CLAUDE_API_KEY` | API key for Claude agent panes |
-| `OPENAI_API_KEY` | API key for Codex agent panes |
-| `GEMINI_API_KEY` | API key for Gemini agent panes |
+| `CLAUDE_CONFIG_DIR` | Per-instance Claude Code auth/config dir; AgentMux sets this automatically |
+| `CODEX_HOME` | Per-instance Codex CLI auth dir |
+| `GEMINI_CLI_HOME` | Per-instance Gemini CLI auth dir |
+| `GEMINI_FORCE_FILE_STORAGE` | `true` — required for Gemini CLI auth-dir isolation |
+| `OPENCLAW_HOME` | Per-instance OpenClaw auth dir |
+| `KIMI_SHARE_DIR` | Per-instance Kimi Code CLI auth dir |
+| `COPILOT_HOME` | Per-instance GitHub Copilot CLI auth dir |
+| `PI_HOME` | Per-instance Pi auth dir |
+| `CLAUDE_API_KEY` | Optional fallback for Claude agent panes (OAuth is the primary path) |
+| `OPENAI_API_KEY` | Optional fallback for Codex agent panes (OAuth is the primary path) |
+| `GEMINI_API_KEY` | Optional fallback for Gemini agent panes (OAuth is the primary path) |
+
+The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by AgentMux at launch (sourced from each provider's `authConfigDirEnvVar` field in `PROVIDERS`). Setting them manually is only useful when scripting an out-of-AgentMux workflow against the same auth dirs.
 
 ## Data Directories
 

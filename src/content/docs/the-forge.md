@@ -85,15 +85,19 @@ Session history for the agent. Shows past sessions with:
 
 ## Provider Configuration
 
-The Forge pre-configures launch commands for each provider:
+The Forge pre-configures launch arguments for each of the seven supported providers. Defaults come from `frontend/app/view/agent/providers/index.ts:PROVIDERS[id].launchArgs`:
 
-| Provider | Default Command |
-|----------|----------------|
-| **Claude Code** | `claude --output-format stream-json` |
-| **Codex CLI** | `codex --full-auto` |
-| **Gemini CLI** | `gemini --yolo` |
+| Provider | Default Launch Args | Auth | Controller |
+|----------|--------------------|------|------------|
+| **Claude Code** | `-p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions` | OAuth | subprocess |
+| **Codex CLI** | `exec --json --dangerously-bypass-approvals-and-sandbox -` | OAuth | subprocess |
+| **Gemini CLI** | `--output-format stream-json --yolo -p ""` | OAuth | subprocess |
+| **OpenClaw** | `--agent openclaw` (via `acpx`) | API key | ACP |
+| **Kimi Code CLI** | `--print --output-format stream-json --yolo -p ""` | API key | subprocess |
+| **GitHub Copilot CLI** | `--acp` | OAuth | ACP |
+| **Pi** | `--json` | API key | ACP |
 
-You can customize these commands in the agent edit form.
+You can override `launchArgs` per agent in the edit form. Three providers run under the Agent Client Protocol (ACP) over stdio; the others use provider-specific streaming-JSON modes. AgentMux's controller layer handles either model.
 
 ## MCP Server Configuration
 
