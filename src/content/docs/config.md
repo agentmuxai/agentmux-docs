@@ -97,7 +97,7 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-AgentMux supports Model Context Protocol (MCP) servers for extending agent capabilities. Configure them per-agent in The Forge or globally in settings:
+AgentMux supports Model Context Protocol (MCP) servers for extending agent capabilities. Configure them per-agent via the [Memory bundle](/memory/) (cog → settings → Memory inside an Agent pane) or globally in settings:
 
 ```jsonc
 {
