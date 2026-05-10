@@ -1,28 +1,28 @@
 {
-  "name": "agentmux-docs",
-  "type": "module",
-  "version": "0.0.15",
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build",
-    "build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
-    "build:rust-docs": "node scripts/build-rust-docs.mjs",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@astrojs/starlight": "^0.38.2",
-    "astro": "^6.0.1",
-    "sharp": "^0.34.2"
-  },
-  "overrides": {
-    "esbuild": "npm:esbuild-wasm@^0.27.3"
-  },
-  "devDependencies": {
-    "typedoc": "^0.28.19",
-    "typedoc-plugin-markdown": "^4.11.0",
-    "typescript": "^6.0.3"
-  }
+	"name": "agentmux-docs",
+	"type": "module",
+	"version": "0.0.16",
+	"scripts": {
+		"dev": "astro dev",
+		"start": "astro dev",
+		"build": "astro build",
+		"build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build",
+		"build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
+		"build:rust-docs": "node scripts/build-rust-docs.mjs",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"@astrojs/starlight": "^0.38.2",
+		"astro": "^6.0.1",
+		"sharp": "^0.34.2"
+	},
+	"overrides": {
+		"esbuild": "npm:esbuild-wasm@^0.27.3"
+	},
+	"devDependencies": {
+		"typedoc": "^0.28.19",
+		"typedoc-plugin-markdown": "^4.11.0",
+		"typescript": "^6.0.3"
+	}
 }

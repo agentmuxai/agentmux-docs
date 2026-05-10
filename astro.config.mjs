@@ -90,6 +90,7 @@ export default defineConfig({
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
 								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
+								{ label: 'Agent pane virtualization', slug: 'internals/agent-pane-virtualization' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
 								{ label: 'Platform support', slug: 'internals/platform-support' },
 							],
