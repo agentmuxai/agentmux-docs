@@ -36,10 +36,17 @@ Custom CSS overrides Starlight's CSS custom properties. Key details:
 No CDK. Static S3 + CloudFront, deployed manually:
 
 ```bash
-npm run build
+git submodule update --init --recursive   # one-time, makes src/agentmux available
+npm run build:full                         # build:typedoc + build:rust-docs + build
 aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
 aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS --paths "/*"
 ```
+
+**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content.
+
+`build:full` requires:
+- `cargo` on `PATH` (rustup minimal toolchain is enough). Without cargo, `build:rust-docs` warns and exits 0 — the site still builds but the rustdoc paths return 404 on prod.
+- The `src/agentmux` submodule initialized.
 
 - **S3 Bucket:** `agentmux-docs-prod`
 - **CloudFront:** `EF4XTPT79GHLS`
@@ -52,14 +59,17 @@ Documentation content is sourced from the main `agentmuxai/agentmux` repository 
 ## Build
 
 ```bash
-npm run build    # Full production build (outputs to dist/)
-npm run dev      # Local dev server
+npm run build       # Local/iterative build — skips typedoc + rustdoc
+npm run build:full  # Production build — runs typedoc + rustdoc, then build
+npm run dev         # Local dev server
 ```
+
+Use `build:full` before any production deploy. `build` is fine for iterating on docs site styling/structure.
 
 ## Review Checklist
 
 - Version bumped in package.json for code changes
-- `npm run build` passes (check page count in output)
+- `npm run build` passes (check page count in output); for prod-bound PRs, `npm run build:full` passes and `dist/api/{typescript,rust}/` contain real reference content (not just the umbrella index)
 - Both dark AND light mode tested when changing `custom.css`
 - Logo/image assets go in `src/assets/` (Astro optimizes them), not `public/`
 - Favicons go in `public/` (served as-is)
