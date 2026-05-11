@@ -154,8 +154,25 @@ A few commands return async streams instead of single responses:
 
 The frontend client surfaces these as `AsyncGenerator` objects; over the wire each chunk is a JSON-RPC notification on the same connection. For live agent output, subscribe to the relevant agent block via `eventsub` rather than polling `agent.output`.
 
+## Permission boundary
+
+Be aware of what the API currently does and does not enforce.
+
+By the [trust model](/security/trust-model/), agent processes are *sub-trusted*: they run as the user but are not given the sidecar's auth key. That's the intended boundary. The Agent App API is the narrow surface across that boundary — the only RPC entry points an agent can reach.
+
+In the current implementation, an agent that authenticates to the App API gets broad access to the workspace: spawn panes, mutate workspace state, send messages, read and write blocks. There is no per-tool permission scope, no allow-list of which RPCs a given agent may call, no rate limiting beyond what the underlying RPC machinery provides.
+
+**Concrete advice:**
+
+- Treat the Agent App API as a privilege boundary you opt into per agent. An agent you don't trust should not be given API access.
+- Default-deny in your own workflow: don't enable the API for agents whose Memory bundle isn't from a source you trust.
+- The audit endpoint logs every RPC call. If you're running a less-trusted agent, watch the log.
+
+A finer-grained permission model (per-agent allow-lists, scoped RPC capabilities) is on the roadmap. This page will be updated when it lands.
+
 ## See also
 
+- [Trust model](/security/trust-model/) — the broader trust boundaries this API sits inside
 - [Interagent Communication](/internals/interagent-comms/) — the event pub-sub system the `event*` commands plug into
 - [Persistence](/internals/persistence/) — how state changes flow into SQLite
 - [Reducer stack](/internals/reducer-stack/) — what's RPC-driven vs reducer-driven (migration in flight)

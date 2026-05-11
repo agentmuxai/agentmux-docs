@@ -78,6 +78,15 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Security & posture',
+					collapsed: false,
+					items: [
+						{ label: 'Trust model', slug: 'security/trust-model' },
+						{ label: 'Data sovereignty', slug: 'security/data-sovereignty' },
+						{ label: 'Update model', slug: 'security/update-model' },
+					],
+				},
+				{
 					label: 'Internals',
 					collapsed: false,
 					items: [
@@ -129,6 +138,7 @@ export default defineConfig({
 						},
 					],
 				},
+				{ label: 'Glossary', slug: 'glossary' },
 			],
 		}),
 	],
