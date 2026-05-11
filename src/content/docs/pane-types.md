@@ -111,6 +111,14 @@ The agent pane runs an AI agent session. It displays:
 
 Agent panes are configured through [Memory bundles](/memory/), accessible as a tab inside the agent pane (see Subsections below).
 
+### Rendering performance
+
+The agent message list is **virtualized**: only ~50 visible rows + 5-row overscan are mounted in the DOM at any moment, regardless of session length. A 2000-message session no longer means a 2000-element layout tree.
+
+The virtualization is **hybrid** — the trailing 50 rows (the streaming buffer) are always mounted in normal flex flow, never recycled. Older rows are virtualized via `@tanstack/solid-virtual` with absolute positioning and per-row `ResizeObserver` measurement. This split eliminates measurement lag during token streams, which would otherwise cause visible jitter as text grew.
+
+See [internals/agent-pane-virtualization](/internals/agent-pane-virtualization/) for the architecture and the spec at `docs/specs/SPEC_AGENT_PANE_VIRTUALIZATION_REDESIGN.md` in the main repo.
+
 Settings that affect agent panes:
 
 | Setting | Default | Description |
