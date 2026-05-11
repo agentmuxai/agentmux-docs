@@ -83,6 +83,9 @@ export default defineConfig({
 					items: [
 						{ label: 'Trust model', slug: 'security/trust-model' },
 						{ label: 'Data sovereignty', slug: 'security/data-sovereignty' },
+						{ label: 'Identity & credential storage', slug: 'security/identity-credential-storage' },
+						{ label: 'Network exposure', slug: 'security/network-exposure' },
+						{ label: 'Reactive event bus', slug: 'security/reactive-event-bus' },
 						{ label: 'Update model', slug: 'security/update-model' },
 					],
 				},
