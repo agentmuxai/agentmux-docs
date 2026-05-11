@@ -18,6 +18,11 @@ src/content/docs/api/typescript/*
 !src/content/docs/api/typescript/index.md
 public/api/rust/agentmux_*/
 public/api/rust/static.files/
+public/api/rust/src/
+public/api/rust/trait.impl/
+public/api/rust/type.impl/
+public/api/rust/search.index/
+public/api/rust/.lock
 public/api/rust/*.txt
 public/api/rust/*.html
 public/api/rust/*.js
