@@ -1,0 +1,137 @@
+# =============================================================================
+# Production deploy — agentmux-docs
+# =============================================================================
+#
+# Status: DORMANT (intentionally). The workflow body is complete but the
+# AWS auth side has not been wired up. Until a human does the steps in
+# §"Activation" below, this workflow only runs on manual dispatch and will
+# fail at the "Configure AWS credentials" step.
+#
+# Why is this file here at all?
+#   We want production deploys to stop depending on a workstation that
+#   happens to have Rust, the submodule, AWS creds, and an Anthropic
+#   employee at the keyboard. The full build + sync + invalidation logic
+#   is below; the only thing missing is the IAM trust that lets GitHub
+#   call AWS.
+#
+# What this workflow does once activated:
+#   1. Check out the repo with submodules (src/agentmux is required for
+#      build:typedoc and build:rust-docs).
+#   2. Set up Node 22 + a minimal Rust stable toolchain.
+#   3. Cache npm + cargo.
+#   4. npm ci
+#   5. npm run build:full   (typedoc → rustdoc → astro)
+#   6. Assume an AWS IAM role via GitHub OIDC.
+#   7. aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
+#   8. aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS \
+#                                          --paths "/*"
+#
+# =============================================================================
+# Activation (one-time, separate PRs)
+# =============================================================================
+#
+# 1. Shared infrastructure: add a GitHub OIDC identity provider to the AWS
+#    account (`token.actions.githubusercontent.com`, audience `sts.amazonaws.com`,
+#    standard GitHub Actions thumbprints). One provider per account, then
+#    reused by all repos. Recommend a new construct in shared-infrastructure.
+#
+# 2. Shared infrastructure: add an IAM role (e.g. `agentmux-docs-deploy`)
+#    with trust policy restricted to `repo:agentmuxai/agentmux-docs:ref:refs/heads/main`
+#    and `repo:agentmuxai/agentmux-docs:environment:production`. Permissions:
+#      - s3:ListBucket on agentmux-docs-prod
+#      - s3:GetObject, PutObject, DeleteObject on agentmux-docs-prod/*
+#      - cloudfront:CreateInvalidation on EF4XTPT79GHLS
+#
+# 3. This repo: set a repository variable `AWS_DEPLOY_ROLE_ARN` to the role
+#    ARN from step 2. Variables (not secrets) are fine — ARNs aren't sensitive.
+#
+# 4. This repo: uncomment the `push` trigger in `on:` below so merges to
+#    `main` auto-deploy. Until then, use the **Run workflow** button (manual
+#    dispatch) for any test runs.
+#
+# 5. (Optional) Create a `production` environment in the repo settings with
+#    a required reviewer if you want a human gate on every deploy.
+#
+# =============================================================================
+
+name: Deploy production
+
+on:
+  # Manual dispatch only while dormant. Uncomment the `push` block after the
+  # OIDC role is wired up (see activation steps above).
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+permissions:
+  # OIDC token request — required by aws-actions/configure-aws-credentials.
+  id-token: write
+  contents: read
+
+concurrency:
+  # Cancel in-flight deploys when a newer commit lands; we always want the
+  # most recent main to be what's on prod.
+  group: deploy-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+
+    steps:
+      - name: Check out (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          # The agentmux submodule is pinned by SHA in .gitmodules; we just
+          # need it present, not on a moving branch.
+          fetch-depth: 1
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Set up Rust (stable, minimal)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --profile minimal --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src/agentmux/target
+          # The src/agentmux pointer (a gitlink object) is part of the
+          # tree hash, so changes to the submodule SHA invalidate the cache.
+          key: cargo-${{ runner.os }}-${{ hashFiles('.gitmodules', 'src/agentmux/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
+
+      - name: Install npm deps
+        run: npm ci
+
+      - name: Build site (typedoc + rustdoc + astro)
+        run: npm run build:full
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          # CloudFront is global; us-east-1 is fine for the SDK endpoint.
+
+      - name: Sync to S3
+        run: aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id EF4XTPT79GHLS \
+            --paths "/*"
