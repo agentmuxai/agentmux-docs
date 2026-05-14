@@ -19,15 +19,17 @@ The mode is detected at startup. The instance directory then becomes the root fo
 
 ## What's per-instance
 
-Every running AgentMux owns its own:
+Every running AgentMux **instance** owns its own process tree (launcher + sidecar + host + renderer(s)) and Job Object. Per-version state — shared between same-version instances, isolated between versions — covers:
 
-- **Data** — workspaces, tabs, blocks, layouts, agent definitions
+- **Data** — workspaces, tabs, blocks, layouts, agent definitions (one SQLite database per version)
 - **Logs** — host + sidecar log files
 - **Browser state** — cookies, local storage, IndexedDB, service workers, browser DevTools settings
 - **Agent working dirs** — per-agent directories created by the Agent pane
-- **Per-provider auth dirs** — Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, and Pi each get their own auth state per AgentMux instance (see [Auth flows](/auth/))
+- **Per-provider auth dirs** — Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, and Pi each get their own auth state (see [Auth flows](/auth/))
 
-This means installing v0.33.10 doesn't disturb a running v0.33.9 portable. Switching between `task dev` branches doesn't mix branch A's data into branch B's. Two portables of the same version share the same instance dir (because the version key is the same) — which is intentional: they're the same logical instance, just relaunched from different folders.
+Two same-version instances (e.g. two portables launched from different folders) share all the per-version state above; two different-version instances share none of it.
+
+This means installing v0.33.10 doesn't disturb a running v0.33.9 portable. Switching between `task dev` branches doesn't mix branch A's data into branch B's. Two portables of the **same** version launched from different folders are two distinct [instances](/glossary/#instance) (each with its own launcher → sidecar → host → renderer process tree, its own Job Object, its own dynamic backend port) that **share the same on-disk data dir** — because the data dir is keyed by *version*, not by which folder you ran the binary from. Both can run; both see the same blocks.
 
 ## What's shared
 

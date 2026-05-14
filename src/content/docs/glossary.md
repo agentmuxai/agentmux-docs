@@ -15,17 +15,19 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **block** — An immutable persisted unit of pane state. A block is the smallest thing the reducer writes. Terminal output, code block, diff, chat message — each is one or more blocks. Layered structure with reducer-driven mutations. See [The reducer stack](/internals/reducer-stack/).
 
-**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
+<a id="browser-pane"></a>**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
 
 **CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium 146 runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
-**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher), spawns the [sidecar](#sidecar) and the Chromium subprocesses. See [Architecture overview](/internals/architecture/).
+<a id="host"></a>**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher), spawns the [sidecar](#sidecar) and the Chromium subprocesses. See [Architecture overview](/internals/architecture/).
 
 **Identity bundle** — A named credential set bound to an agent at launch. Decouples *who an agent acts as* (GitHub PAT, AWS profile, API keys) from *what an agent does* (the Memory bundle). The same Memory can run as multiple identities — work, personal, demo — without restart. See [Identity bundles](/identity/).
 
-**instance** — One AgentMux **process tree**, rooted at one [launcher](#launcher), with its own [sidecar](#sidecar), [host](#host), [renderer](#renderer)(s), data dir, and Job Object. Distinct AgentMux versions, dev + portable, etc. each get their own instance. Multiple instances run side-by-side (per-version isolation). The "other AgentMux instances on LAN" entries shown in the status bar each correspond to a separate instance. See [Multi-instance & dev mode](/multi-instance/).
+<a id="instance"></a>**instance** — One AgentMux **process tree**, rooted at one [launcher](#launcher), with its own [sidecar](#sidecar), [host](#host), [renderer](#renderer)(s), and Job Object. Each launch of `agentmux-launcher` creates a new instance. Multiple instances run side-by-side. The "other AgentMux instances on LAN" entries shown in the status bar each correspond to a separate instance. See [Multi-instance & dev mode](/multi-instance/).
 
 > Note: "instance" is *not* one process — a baseline single-window dev session has 4 processes ([launcher](#launcher) + [sidecar](#sidecar) + [host](#host) + 1 [renderer](#renderer)), plus shared GPU/utility Chromium subprocesses, plus more renderers as windows and browser panes are opened.
+
+> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by *version*, not by instance. Two same-version portables launched from different folders are two distinct instances (two process trees, two Job Objects) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-version split.
 
 **jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). The MCP tool `mcp__agentbus__inject_terminal` is the primary entry point.
 
@@ -41,11 +43,11 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **pane** — A UI slot in the workspace layout. Panes have types: terminal, agent, code editor, browser, swarm, subagent, system metrics, code preview. The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
 
-**process** — An OS process. **Avoid in user-facing copy** — one [instance](#instance) has 4+ processes ([launcher](#launcher), [sidecar](#sidecar), [host](#host), [renderer](#renderer)s, plus Chromium GPU/utility subprocesses), so "this AgentMux process" is ambiguous. Reserve "process" for internal docs that genuinely discuss the process tree.
+<a id="process"></a>**process** — An OS process. **Avoid in user-facing copy** — one [instance](#instance) has 4+ processes ([launcher](#launcher), [sidecar](#sidecar), [host](#host), [renderer](#renderer)s, plus Chromium GPU/utility subprocesses), so "this AgentMux process" is ambiguous. Reserve "process" for internal docs that genuinely discuss the process tree.
 
 **reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
 
-**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
+<a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
 **sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
 
@@ -55,9 +57,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **swarm** — The multi-agent orchestration view. Shows every active and completed [subagent](#subagent) across your workspace, with event counts, models, and last-activity timestamps.
 
-**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
+<a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
 
-**window rank** — A window's 1-based position within its [instance](#instance), shown after the version in the status bar as `(2)`, `(3)`, etc. when more than one window is open. Cosmetic only — the underlying identity of a window is the `windowId`, not the rank.
+<a id="window-rank"></a>**window rank** — A window's 1-based position within its [instance](#instance), shown after the version in the status bar as `(2)`, `(3)`, etc. when more than one window is open. Cosmetic only — the underlying identity of a window is the `windowId`, not the rank.
 
 **WRR (Window Reality Reconciliation)** — The launcher's loop that reconciles desired window state (what AgentMux *wants*) against actual OS state (what the OS *says*). Defends against state drift when external tools or the user move/resize/close windows. See [Window Reality Reconciliation](/internals/wrr/).
 
