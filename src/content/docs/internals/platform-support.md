@@ -18,7 +18,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 | Browser pane (CefBrowserView) | ✅ ships | 🟡 packaging | 🟡 packaging |
 | Terminal pane (PTY) | ✅ ConPTY | ✅ posix\_openpt | ✅ posix\_openpt |
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
-| Crashpad reports | ✅ `<instance>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
+| Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
 | Sidecar minidumps | ✅ WER → `%LOCALAPPDATA%\CrashDumps\` | ❌ uses macOS crash reporter (different path) | ❌ uses systemd-coredump or apport (different path) |
 | Portable distribution | ✅ ZIP build (`task package`) | 🟡 .app bundle planned | 🟡 AppImage (in progress) |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |

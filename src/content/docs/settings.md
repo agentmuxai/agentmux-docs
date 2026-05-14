@@ -194,14 +194,14 @@ The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by Ag
 
 ## Data Directories
 
-All per-instance state lives under `<instance>/`, where `<instance>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+All per-version state lives under `<data-dir>/`, where `<data-dir>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 | Purpose | Path |
 |---|---|
-| Config (`settings.json`, etc.) | `<instance>/config/` |
-| Logs (rotated daily, 7-day retention) | `<instance>/logs/` |
-| SQLite stores (objects, filestore, sagas) | `<instance>/data/db/` |
-| Launcher event log (JSONL) | `<instance>/data/launcher-events.log` |
+| Config (`settings.json`, etc.) | `<data-dir>/config/` |
+| Logs (rotated daily, 7-day retention) | `<data-dir>/logs/` |
+| SQLite stores (objects, filestore, sagas) | `<data-dir>/data/db/` |
+| Launcher event log (JSONL) | `<data-dir>/data/launcher-events.log` |
 | Account-wide state (cookies, OAuth) | `~/.agentmux/shared/` |
 
 ## See Also
