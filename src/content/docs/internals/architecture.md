@@ -89,7 +89,7 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 | **Portable** | `~/.agentmux/versions/<version>/` (same as installed — multi-instance is keyed on version, not on which folder you ran the binary from) |
 | **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` (one dir per checked-out branch — different branches don't collide) |
 
-Inside each instance dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
+Inside each data dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
 
 Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, version-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`.
 

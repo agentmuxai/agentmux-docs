@@ -15,7 +15,7 @@ This page explains how that works from a user's perspective. For the underlying 
 | **Portable** | Extracted ZIP, run from `<extracted-folder>/agentmux.exe` | Same versioned location as the installed copy of the same version |
 | **Dev** | `task dev` from a checked-out source tree | Per-branch dev location (one dir per checked-out branch) |
 
-The mode is detected at startup. The instance directory then becomes the root for everything that needs to be per-instance.
+The mode is detected at startup. The version's data directory then becomes the root for everything that's keyed per-version (see [What's per-instance vs per-version](#whats-per-instance-vs-per-version) below).
 
 ## What's per-instance vs per-version
 
@@ -50,7 +50,7 @@ A few things are version-independent and shared across all instances:
 
 You can:
 
-- Run a portable v0.33.10 *and* `task dev` simultaneously. Different instance dirs, different ports, different databases.
+- Run a portable v0.33.10 *and* `task dev` simultaneously. Different versions → different data dirs, different ports, different databases.
 - Run two portables of different versions side by side. v0.33.9 keeps its data; v0.33.10 starts fresh (or migrates if it's a meta-compat bump).
 - Test a feature branch against an installed AgentMux without leaving the running session — `task dev` from the branch gets its own per-branch dev directory.
 
