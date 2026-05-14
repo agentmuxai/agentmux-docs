@@ -33,9 +33,9 @@ For Claude / Codex / Gemini, an `*_API_KEY` env var (`CLAUDE_API_KEY`, `OPENAI_A
 
 Three providers (OpenClaw, Kimi, Pi) use API keys, configured by their own login subcommand. The key is stored under the provider's auth-config dir.
 
-## Per-instance auth-dir isolation
+## Per-version auth-dir isolation
 
-AgentMux sets each provider's `authConfigDirEnvVar` to a per-instance subdirectory under `<instance>/config/` (where `<instance>` is `~/.agentmux/versions/<version>/` for installed/portable, or `~/.agentmux/dev/<branch>/` for `task dev`). For example, in a v0.33.733 portable instance:
+AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the version's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/versions/<version>/` for installed/portable, or `~/.agentmux/dev/<branch>/` for `task dev`). For example, on v0.33.733 portable:
 
 ```
 ~/.agentmux/versions/0.33.733/config/auth/claude/
@@ -48,13 +48,13 @@ Per-provider:
 
 | Provider | Env var | Resolves to |
 |---|---|---|
-| Claude Code | `CLAUDE_CONFIG_DIR` | `<instance>/config/auth/claude/` |
-| Codex CLI | `CODEX_HOME` | `<instance>/config/auth/codex/` |
-| Gemini CLI | `GEMINI_CLI_HOME` | `<instance>/config/auth/gemini/` |
-| OpenClaw | `OPENCLAW_HOME` | `<instance>/config/auth/openclaw/` |
-| Kimi Code CLI | `KIMI_SHARE_DIR` | `<instance>/config/auth/kimi/` |
-| GitHub Copilot CLI | `COPILOT_HOME` | `<instance>/config/auth/copilot/` |
-| Pi | `PI_HOME` | `<instance>/config/auth/pi/` |
+| Claude Code | `CLAUDE_CONFIG_DIR` | `<data-dir>/config/auth/claude/` |
+| Codex CLI | `CODEX_HOME` | `<data-dir>/config/auth/codex/` |
+| Gemini CLI | `GEMINI_CLI_HOME` | `<data-dir>/config/auth/gemini/` |
+| OpenClaw | `OPENCLAW_HOME` | `<data-dir>/config/auth/openclaw/` |
+| Kimi Code CLI | `KIMI_SHARE_DIR` | `<data-dir>/config/auth/kimi/` |
+| GitHub Copilot CLI | `COPILOT_HOME` | `<data-dir>/config/auth/copilot/` |
+| Pi | `PI_HOME` | `<data-dir>/config/auth/pi/` |
 
 The `authDirName` field in `PROVIDERS` is what becomes the subdirectory name (`claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi` respectively).
 
@@ -66,7 +66,7 @@ With isolation:
 
 - v0.33.732 portable can keep its Claude OAuth token while you test v0.33.733 with a fresh login.
 - `task dev` from a feature branch gets its own auth state — login flows in the dev build don't disturb the installed build.
-- Two simultaneous portables of the same version share state (because they share the instance dir), which is the right answer because they're the same logical instance.
+- Two simultaneous portables of the same version share auth state because they share the data dir. They're separate [instances](/glossary/#instance) (separate process trees) but with one shared on-disk auth set per version, which is the right answer — there's only one set of provider tokens worth tracking per version.
 
 ## Identity bundles vs auth-dir isolation
 
