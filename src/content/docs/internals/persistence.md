@@ -15,7 +15,7 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 | `launcher-sagas.db` | SQLite | launcher | Launcher-side saga state (LSD-1 batch onward) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
-All five live under the per-instance data dir at `<instance>/data/` (i.e. `~/.agentmux/versions/<v>/data/` for installed/portable, `~/.agentmux/dev/<branch>/data/` for `task dev`). SQLite files are inside `data/db/`; the JSONL log is directly in `data/`.
+All five live under the per-version data dir at `<data-dir>/data/` (i.e. `~/.agentmux/versions/<v>/data/` for installed/portable, `~/.agentmux/dev/<branch>/data/` for `task dev`). SQLite files are inside `data/db/`; the JSONL log is directly in `data/`.
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
@@ -77,19 +77,19 @@ grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pendin
 
 Each file is independently restorable:
 
-- **Cold-copy the whole `<instance>/data/` directory** while AgentMux is closed — that's the simplest, most reliable backup.
+- **Cold-copy the whole `<data-dir>/data/` directory** while AgentMux is closed — that's the simplest, most reliable backup.
 - **Hot copy of an individual SQLite file** while AgentMux is open is supported because the writer holds short transactions; use `sqlite3 .backup`. JSONL log is append-only and safe to copy at any time.
 
-Re-importing into a fresh install: stop AgentMux, place the files at `<instance>/data/db/` (and the log at `<instance>/data/`), and launch. Bootstrap reads them.
+Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>/data/db/` (and the log at `<data-dir>/data/`), and launch. Bootstrap reads them.
 
 ## What's NOT here
 
 For completeness, things that are NOT stored in these five files:
 
-- **Settings** — JSON at `<instance>/config/settings.json`
-- **Forge agent definitions** — written by the forge into `<instance>/agents/`
+- **Settings** — JSON at `<data-dir>/config/settings.json`
+- **Forge agent definitions** — written by the forge into `<data-dir>/agents/`
 - **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version-independent)
-- **Chromium cache** — `<instance>/cef-cache/`
+- **Chromium cache** — `<data-dir>/cef-cache/`
 - **CLI provider configs** — auth-config-dir managed by each provider's CLI
 
 ## See also
