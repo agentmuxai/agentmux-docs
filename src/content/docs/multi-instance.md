@@ -66,7 +66,7 @@ You're probably running `task dev` from a different branch than the one that wro
 It isn't — it's still in v0.33.9's instance dir. The newer install made its own dir at v0.33.10. Roll back the install and your data comes back.
 
 **"Are running portables sharing state?"**
-Only if they're the same version. Different versions have different instance dirs. Same version, different extracted folders → same data dir, both can run, both see the same blocks (but each has its own host process and frontend).
+Only if they're the same version. Different versions have different [instance](/glossary/#instance) dirs. Same version, different extracted folders → same data dir, both can run, both see the same blocks. They're still distinct instances (each with its own launcher → sidecar → host → renderer process tree, its own Job Object) — only the on-disk SQLite database is shared.
 
 **"I can't find the log file."**
 Use the `muxlog` shell helper from any AgentMux terminal:
