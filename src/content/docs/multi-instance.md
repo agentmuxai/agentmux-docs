@@ -56,15 +56,15 @@ You can:
 
 Each new launch picks up its own dynamic backend port. There's no port to coordinate.
 
-## Browser state per instance
+## Browser state per version
 
-Each instance has its own browser cache. That means:
+Browser state lives on disk in the per-version data dir, so it follows the same axis as everything else listed under [per-version](#whats-per-instance-vs-per-version):
 
-- Cookies / local storage / IndexedDB / service workers are per-instance
-- Browser DevTools settings are per-instance
-- Cached JavaScript is per-instance
+- Cookies / local storage / IndexedDB / service workers are per-version (shared between same-version instances, isolated between versions)
+- Browser DevTools settings are per-version
+- Cached JavaScript is per-version
 
-If you need to wipe everything for one instance: delete its instance dir's `cef-cache/` and the browser pane comes up fresh next launch. ([Data layout](/internals/data-layout/) has the exact path.)
+If you need to wipe everything for a version: delete that version's `cef-cache/` and the browser pane comes up fresh on the next launch of any instance of that version. ([Data layout](/internals/data-layout/) has the exact path.)
 
 ## Common pitfalls
 
@@ -72,10 +72,10 @@ If you need to wipe everything for one instance: delete its instance dir's `cef-
 You're probably running `task dev` from a different branch than the one that wrote the meta. Each branch has its own data dir; switching branches and restarting `task dev` switches the data dir.
 
 **"My v0.33.9 database is gone after I installed v0.33.10."**
-It isn't — it's still in v0.33.9's instance dir. The newer install made its own dir at v0.33.10. Roll back the install and your data comes back.
+It isn't — it's still in v0.33.9's data dir. The newer install made its own dir at v0.33.10. Roll back the install and your data comes back.
 
 **"Are running portables sharing state?"**
-Only if they're the same version. Different versions have different [instance](/glossary/#instance) dirs. Same version, different extracted folders → same data dir, both can run, both see the same blocks. They're still distinct instances (each with its own launcher → sidecar → host → renderer process tree, its own Job Object) — only the on-disk SQLite database is shared.
+Only if they're the same version. Different versions have different data dirs. Same version, different extracted folders → same data dir, both can run, both see the same blocks. They're still distinct [instances](/glossary/#instance) (each with its own launcher → sidecar → host → renderer process tree, its own Job Object) — only the on-disk data dir is shared.
 
 **"I can't find the log file."**
 Use the `muxlog` shell helper from any AgentMux terminal:
