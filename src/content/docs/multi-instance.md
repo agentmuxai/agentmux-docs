@@ -3,7 +3,7 @@ title: Running multiple instances
 description: How AgentMux lets multiple installs and dev builds run side-by-side without colliding.
 ---
 
-AgentMux is designed for **multiple instances running side-by-side** — different versions, dev + portable, or several portable copies of the same version. Each instance has its own data, its own backend, and its own ports. Nothing is shared.
+AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — different versions, dev + portable, or several portable copies of the same version. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state (SQLite, logs, browser cache, auth dirs) is keyed by *version* — different versions never collide; same-version instances share an on-disk data dir but nothing else at runtime.
 
 This page explains how that works from a user's perspective. For the underlying data-directory layout, log-discovery mechanics, and per-store details, see [Data layout](/internals/data-layout/).
 
@@ -17,9 +17,16 @@ This page explains how that works from a user's perspective. For the underlying 
 
 The mode is detected at startup. The instance directory then becomes the root for everything that needs to be per-instance.
 
-## What's per-instance
+## What's per-instance vs per-version
 
-Every running AgentMux **instance** owns its own process tree (launcher + sidecar + host + renderer(s)) and Job Object. Per-version state — shared between same-version instances, isolated between versions — covers:
+Two axes of isolation, often confused:
+
+**Per-instance** (one launcher → sidecar → host → renderer(s) tree, plus a Job Object) — every running AgentMux owns its own:
+
+- Process tree, dynamic backend port, IPC pipe, Job Object
+- Renderer JS contexts (in-memory state in the running window(s))
+
+**Per-version** (one on-disk state set per version, shared by all same-version instances at runtime, isolated between versions):
 
 - **Data** — workspaces, tabs, blocks, layouts, agent definitions (one SQLite database per version)
 - **Logs** — host + sidecar log files
@@ -27,7 +34,7 @@ Every running AgentMux **instance** owns its own process tree (launcher + sideca
 - **Agent working dirs** — per-agent directories created by the Agent pane
 - **Per-provider auth dirs** — Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, and Pi each get their own auth state (see [Auth flows](/auth/))
 
-Two same-version instances (e.g. two portables launched from different folders) share all the per-version state above; two different-version instances share none of it.
+So: two same-version instances (e.g. two portables launched from different folders) share all the per-version state above but each runs as its own process tree. Two different-version instances share none of it.
 
 This means installing v0.33.10 doesn't disturb a running v0.33.9 portable. Switching between `task dev` branches doesn't mix branch A's data into branch B's. Two portables of the **same** version launched from different folders are two distinct [instances](/glossary/#instance) (each with its own launcher → sidecar → host → renderer process tree, its own Job Object, its own dynamic backend port) that **share the same on-disk data dir** — because the data dir is keyed by *version*, not by which folder you ran the binary from. Both can run; both see the same blocks.
 
