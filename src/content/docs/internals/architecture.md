@@ -40,9 +40,11 @@ AgentMux is a desktop application built around a small set of long-running proce
 | **launcher** | Sets DLL search path; spawns the host from `runtime/`; tracks WRR (Window Reality Reconciliation) via Win32 hooks; durable event log for OS-level facts. | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the OS window, the browser panes, the JS bridge, and IPC fan-out to the renderer. | `agentmux-cef` |
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Auto-spawned by the host on a dynamic port; users never run it directly. | `agentmux-srv` |
-| **renderer** | The SolidJS frontend that users actually see. Runs inside CEF. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
+| **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
 
 A fifth crate — `agentmux-common` — provides shared utilities (path resolution, runtime mode detection) that all the above consume.
+
+> The four processes above plus the Chromium subprocesses that the host transparently spawns (GPU, network, storage, …) are collectively one **[instance](/glossary/#instance)** — a process tree rooted at one launcher. A baseline single-window dev session runs as launcher + sidecar + host + 1 renderer = 4 processes; opening more windows or browser panes spawns additional renderers. Multiple instances (different versions, dev + portable) run side-by-side without colliding — see [Multi-instance & dev mode](/multi-instance/).
 
 ## Why three real processes plus Chromium?
 
@@ -87,7 +89,7 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 | **Portable** | `~/.agentmux/versions/<version>/` (same as installed — multi-instance is keyed on version, not on which folder you ran the binary from) |
 | **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` (one dir per checked-out branch — different branches don't collide) |
 
-Inside each instance dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
+Inside each data dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
 
 Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, version-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`.
 

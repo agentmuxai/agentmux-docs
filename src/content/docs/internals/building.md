@@ -138,7 +138,7 @@ Open Chromium DevTools: click the **DevTools** widget (pinned by default) or use
 
 ### Backend Logs
 
-Logs land in `<instance>/logs/` for the running instance. Use the `muxlog` shell helper from any AgentMux terminal:
+Logs land in `<data-dir>/logs/` for the running version. Use the `muxlog` shell helper from any AgentMux terminal:
 
 ```bash
 muxlog host         # tail the current host log

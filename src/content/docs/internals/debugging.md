@@ -9,12 +9,12 @@ This page is the practical "something's off, where do I look first" reference. A
 
 | Source | File | Tail recipe |
 |---|---|---|
-| Host (CEF) — includes frontend `[fe]` console | `<instance>/logs/agentmux-host-v<v>.log.<date>` | `muxlog host` (or `muxlog host '[fe]'` for frontend only) |
-| Sidecar (`agentmux-srv`) | `<instance>/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
+| Host (CEF) — includes frontend `[fe]` console | `<data-dir>/logs/agentmux-host-v<v>.log.<date>` | `muxlog host` (or `muxlog host '[fe]'` for frontend only) |
+| Sidecar (`agentmux-srv`) | `<data-dir>/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
 | Launcher (early-startup) | `~/.agentmux/logs/agentmux-launcher.log` | `cat "$AGENTMUX_LOG_DIR/agentmux-launcher.log"` |
-| Launcher reducer events | `<instance>/data/launcher-events.log` | `tail -F` directly (JSONL) |
+| Launcher reducer events | `<data-dir>/data/launcher-events.log` | `tail -F` directly (JSONL) |
 
-The launcher log is the only one outside the per-instance dir — it's the early-startup file the launcher writes before paths are fully resolved.
+The launcher log is the only one outside the per-version data dir — it's the early-startup file the launcher writes before paths are fully resolved.
 
 ### Pointer files
 
@@ -75,7 +75,7 @@ WER configuration is part of AgentMux's installer; on a dev build, ensure the du
 Renderer crashes come up as Crashpad reports. The host log captures the crash event; the dump itself lands in:
 
 ```
-<instance>/cef-cache/Crashpad/reports/
+<data-dir>/cef-cache/Crashpad/reports/
 ```
 
 For renderer-storm crashes (the screen flashes, panes blink, eventually CEF gives up): check the dispatch ring **first**, not the Crashpad stack. A reactive dependency leak in a shared utility produces the same symptoms as a real C++ crash but is diagnosed entirely from the ring. See PRs #708 / #721 / #722 for the specific `recordDispatch` pattern that caused it; instrument **effect-run count** before you fan out into hosts.
