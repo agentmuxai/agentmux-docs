@@ -30,7 +30,7 @@ Inside each data dir (shared by all same-version instances at runtime):
 | `<data-dir>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
 | `<data-dir>/agents/` | Per-agent working dirs created by the agent system |
 | `<data-dir>/config/` | Settings (`settings.json`) plus per-provider auth-config-dir homes (`config/auth/claude/`, `config/auth/codex/`, etc. — see [Auth flows](/auth/)) |
-| `<data-dir>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets); the lock file enforces single-launcher-per-version, so the second instance of the same version uses a distinct named pipe but shares the same data dir |
+| `<data-dir>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets) used by the launcher's single-instance / IPC machinery |
 
 See [Persistence](/internals/persistence/) for what each SQLite file holds and which process writes it.
 
