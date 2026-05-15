@@ -21,7 +21,7 @@ You can also use the command palette ("Open Settings File") if you prefer keyboa
 The hamburger menu also includes inline submenus for the most-changed preferences so you don't have to touch the file directly:
 
 - **Theme** ▸ Pick from `Default`, `Midnight`, `High Contrast`, `Monokai`, `Nord`, `Dracula`, `Tokyo Night`, `Catppuccin`, or `Gruvbox`. Selection persists across restart (writes `window:theme`).
-- **Opacity** ▸ Window translucency from 100% down to 35% in 5% steps (writes `window:opacity` + `window:transparent`).
+- **Opacity** ▸ Global window translucency from 100% down to 35% in 5% steps (writes `window:opacity` + `window:transparent`). For per-window control, use the InstancePanel slider — click the version chip in the status bar. See [Window appearance](/window-appearance/).
 
 Under `Midnight` specifically, the agent pane background is pure black; other panes use the theme's deep-navy `--main-bg-color`.
 
@@ -61,7 +61,7 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `window:theme` | string | `"default"` | UI color theme. One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `tokyo-night`, `catppuccin`, `gruvbox`. Easier to switch from the hamburger menu's `Theme` submenu. |
 | `window:transparent` | boolean | `false` | Enable window transparency |
 | `window:blur` | boolean | `false` | Blur background (macOS only) |
-| `window:opacity` | number | `1.0` | Window opacity (0.0–1.0). Adjustable from the hamburger menu's `Opacity` submenu. |
+| `window:opacity` | number | `1.0` | Window opacity (0.35–1.0). Adjustable from the hamburger menu's `Opacity` submenu (global) or the InstancePanel per-window slider. See [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color |
 | `window:zoom` | number | `1.0` | Global zoom factor |
 | `window:tilegapsize` | number | `3` | Gap between panes in pixels |
