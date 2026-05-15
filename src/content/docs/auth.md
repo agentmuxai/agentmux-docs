@@ -77,6 +77,27 @@ These are independent layers:
 
 You can run two agents inside the same AgentMux instance with different Identity bundles. Both share the same provider auth dirs (auth-dir isolation is per AgentMux instance, not per agent), but the env vars AgentMux injects per agent at spawn override per-account-scoped credentials.
 
+## Pre-launch OAuth panel
+
+The Launch Agent modal gates the **Launch** button on completed provider auth. If you select a provider that requires OAuth (or an API key) and you aren't authenticated yet, a **Pre-Launch Auth Panel** appears inline in the modal — between the provider/identity dropdowns and the Launch button — with one of four states:
+
+| State | What you see |
+|---|---|
+| **Unauthenticated / Expired** | A "Connect with [Provider]" button, e.g. *Connect to Claude Code*. Hint: "Opens browser → [Provider] login → returns to AgentMux." |
+| **Waiting** | "🔐 Waiting for OAuth…" with the auth URL (copyable) and a paste field to drop the redirect URL manually if the browser doesn't auto-open. Cancel button included. |
+| **Ready** | Green banner: "✓ Connected. Ready to launch." Launch button enables. |
+| **Failed** | Red error banner with a Retry button. |
+
+Internally the panel calls `auth.start` over RPC, which spawns the provider's CLI (`claude auth login` / `codex login` / etc.) under the per-version auth-dir env vars described above. The browser-based OAuth flow runs against that subprocess; the panel polls `auth.poll` once per second until the CLI reports success.
+
+For API-key providers (OpenClaw, Kimi, Pi), there is no browser; the panel either accepts a pasted key inline or, for Copilot's device-code path, displays a verification URL and one-time code.
+
+### Session-scoped today, bundle-scoped later
+
+In the current release (Phase B), a successful OAuth completion authenticates the **session** — the agent that's about to launch can use the credentials, but they are **not yet persisted into an Identity bundle**. The Identity dropdown stays on the blank singleton, and the next launch repeats the OAuth flow.
+
+Persistent bundle storage ("log in once, reuse across launches") is **Phase C** — still in design. Once it lands, completing the panel's OAuth will create or update a `db_identities` row and let you reuse the credentials by selecting the bundle on subsequent launches. Track progress against `SPEC_OAUTH_IN_IDENTITY_BUNDLES_2026_05_13.md` in the main repo.
+
 ## Manual login
 
 If you need to log in outside an Agent pane, set the env var first:
