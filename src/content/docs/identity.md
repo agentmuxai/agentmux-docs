@@ -43,6 +43,8 @@ The Launch Agent modal exposes a single **Identity** dropdown. The default selec
 
 You can swap Identity on a running agent by reopening the Identity tab and picking a different bundle — the spawn-time env injection re-applies on next turn.
 
+If the selected provider requires OAuth (or an API key) and isn't authenticated yet, the modal's [Pre-Launch Auth panel](/auth/#pre-launch-oauth-panel) appears inline and gates the Launch button. In the current release the OAuth result is session-scoped; persistent bundle storage that ties an OAuth login to a reusable Identity is Phase C and not yet shipped.
+
 ## Persistence
 
 Identity bundles live in two SQLite tables in the sidecar's `objects.db`:
