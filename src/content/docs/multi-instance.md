@@ -56,6 +56,24 @@ You can:
 
 Each new launch picks up its own dynamic backend port. There's no port to coordinate.
 
+## Tearing a tab into a new instance (Windows)
+
+You can spawn a fresh AgentMux instance directly from a running window by **dragging a tab below the tab bar**. The drag has to clear the tab bar by ~5px before it commits — pulling the tab back into the bar before that threshold cancels the gesture, as does pressing `Esc` mid-drag.
+
+What happens on a successful tear-off:
+
+- A new top-level AgentMux window spawns at the cursor, matching the source window's size and position across monitors (DPI-corrected).
+- The window paints live during the drag (Chrome-style follow), at full opacity.
+- The new window is a **full new instance**: own backend sidecar, own data dir, own workspace, own taskbar entry — same independence as launching AgentMux twice from the Start menu.
+
+Because the new window is a separate instance, all the per-instance/per-version rules above apply: same-version tear-offs share the per-version state (cookies, browser cache, SQLite stores), different-version tear-offs are fully isolated.
+
+**Platform support:** Windows only in the current release (v0.33). macOS and Linux are on the Phase 2 roadmap. There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
+
+**Known limitation:** Dropping the dragged tab into *another* running AgentMux instance's tab bar is not yet wired up — Phase 1 only supports tearing to the desktop, not cross-instance docking. That's planned for Phase 2.
+
+Floating panes (pop a single pane into its own owned window without spawning a new instance) are a separate feature; only the Phase 1 host primitive has shipped — there is no user-visible gesture yet.
+
 ## Browser state per version
 
 Browser state lives on disk in the per-version data dir, so it follows the same axis as everything else listed under [per-version](#whats-per-instance-vs-per-version):
