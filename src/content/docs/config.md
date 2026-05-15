@@ -26,7 +26,7 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 ```jsonc
 {
   // Enable window transparency (requires compositor support on Linux)
-  "window:transparency": false,
+  "window:transparent": false,
 
   // Window opacity (0.0 - 1.0, only when transparency is enabled)
   "window:opacity": 1.0,
