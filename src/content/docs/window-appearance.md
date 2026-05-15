@@ -15,16 +15,16 @@ Global opacity is set from the hamburger menu (≡) → **Opacity** and applies 
 
 This writes two settings into `settings.json`:
 
-| Key | Value |
+| Key | Value (via slider) |
 |-----|-------|
-| `window:opacity` | `0.35`–`1.0` (step 0.05) |
+| `window:opacity` | `0.35`–`1.0` in 5% steps |
 | `window:transparent` | `true` when opacity < 1.0, `false` at 100% |
 
-The minimum is **35%** — below that text becomes unreadable. Steps are 5%.
+The slider floor is **35%** — below that text becomes unreadable, so the UI clamps there. The underlying `window:opacity` key is unbounded in the schema; if you edit `settings.json` directly you can set values below 0.35 (at your own risk).
 
 Changes take effect immediately. When you restart AgentMux, opacity is restored from `settings.json` automatically.
 
-**Platform support:** Windows and macOS. On Linux, the setting is stored but translucency has no effect (compositor support varies).
+**Platform support:** Windows only. On macOS and Linux the value is stored in `settings.json` but produces no visible change — `set_window_transparency` in `agentmux-cef` is gated to `#[cfg(target_os = "windows")]` and the non-Windows path discards the args. macOS support is on the roadmap; Linux depends on compositor capability.
 
 ## Per-window opacity
 
@@ -37,21 +37,19 @@ Per-window opacity lets each window have a different translucency level. Use thi
 3. Under each window name, drag the **Opacity** slider — the window dims in real time.
 4. Release to confirm. The value persists across restarts.
 
-### Range and steps
+### Slider range
 
-- Minimum: **35%** (same floor as global opacity)
-- Maximum: **100%** (fully opaque — clears the transparency setting)
-- Step: **5%**
+The InstancePanel slider clamps to **35%–100%** in **5% steps**, matching the global Opacity submenu. The percentage label to the right of the slider updates live. At 100% the transparency setting is cleared and the window returns to fully opaque.
 
-The percentage label to the right of the slider updates live.
+As with global opacity, the underlying `window:opacity` key has no schema-level minimum — manual JSON edits to the window meta can go below 0.35, but the UI never produces those values.
 
 ### Persistence
 
 Per-window opacity is stored in the window's object meta:
 
-| Key | Value |
+| Key | Value (via slider) |
 |-----|-------|
-| `window:opacity` | `0.35`–`< 1.0`, or absent when 100% |
+| `window:opacity` | `0.35`–`< 1.0` (UI range), or absent when 100% |
 | `window:transparent` | `true` while opacity is active, `false` (or absent) at 100% |
 
 When you drag the slider to 100%, both keys are cleared — the window returns to fully opaque with no transparency layer active.
@@ -66,7 +64,7 @@ If you set a per-window opacity of 70% on Window A and set global opacity to 80%
 
 ### Platform support
 
-Per-window opacity uses Win32 `SetLayeredWindowAttributes` on Windows. It has no effect on Linux. macOS support is planned.
+Per-window opacity uses Win32 `SetLayeredWindowAttributes` and ships **Windows only**. On macOS and Linux the slider value is stored to the window meta but produces no visible change (the host's `set_window_transparency` command is `#[cfg(target_os = "windows")]`). macOS support is on the roadmap.
 
 ## See Also
 

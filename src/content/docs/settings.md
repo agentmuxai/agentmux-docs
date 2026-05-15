@@ -61,7 +61,7 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `window:theme` | string | `"default"` | UI color theme. One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `tokyo-night`, `catppuccin`, `gruvbox`. Easier to switch from the hamburger menu's `Theme` submenu. |
 | `window:transparent` | boolean | `false` | Enable window transparency |
 | `window:blur` | boolean | `false` | Blur background (macOS only) |
-| `window:opacity` | number | `1.0` | Window opacity (0.35–1.0). Adjustable from the hamburger menu's `Opacity` submenu (global) or the InstancePanel per-window slider. See [Window appearance](/window-appearance/). |
+| `window:opacity` | number | `1.0` | Window opacity (0.0–1.0). The hamburger menu's `Opacity` submenu (global) and the InstancePanel per-window slider both clamp to 0.35–1.0; direct edits to `settings.json` accept any number. Windows only — see [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color |
 | `window:zoom` | number | `1.0` | Global zoom factor |
 | `window:tilegapsize` | number | `3` | Gap between panes in pixels |
