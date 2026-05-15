@@ -120,9 +120,9 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 
 ## MCP Servers
 
-MCP servers are configured **per-agent** in a [Memory bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent** in a [Memory bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Memory bundles](/memory/) for the bundle schema and an example MCP block.
+See [Memory bundles](/memory/) for the bundle schema (including the `mcp_servers` field).
 
 ## Environment Variables
 

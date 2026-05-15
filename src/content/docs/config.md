@@ -79,9 +79,9 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-MCP servers are configured **per-agent** in a [Memory bundle](/memory/) (cog → settings → Memory inside an agent pane), not in `settings.json`. The agent runtime materializes the bundle's `mcp` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent** in a [Memory bundle](/memory/) (cog → settings → Memory inside an agent pane), not in `settings.json`. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Memory bundles](/memory/) for the full bundle schema and an example MCP block.
+See [Memory bundles](/memory/) for the full bundle schema (including the `mcp_servers` field).
 
 ## See Also
 
