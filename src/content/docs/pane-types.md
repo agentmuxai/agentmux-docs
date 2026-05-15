@@ -119,14 +119,7 @@ The virtualization is **hybrid** — the trailing 50 rows (the streaming buffer)
 
 See [internals/agent-pane-virtualization](/internals/agent-pane-virtualization/) for the architecture and the spec at `docs/specs/SPEC_AGENT_PANE_VIRTUALIZATION_REDESIGN.md` in the main repo.
 
-Settings that affect agent panes:
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `agent:defaultprovider` | `claude` | Default provider for new agent panes |
-| `agent:showtoolcalls` | `true` | Show tool calls in real time |
-| `agent:showdiffs` | `true` | Show file diff overlay |
-| `agent:autoscroll` | `true` | Auto-scroll agent output |
+Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours` and `term:agentidletimeoutmins` settings — see the [Settings Reference](/settings/#terminal-settings).
 
 ### Subsections
 

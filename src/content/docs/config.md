@@ -31,8 +31,8 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
   // Window opacity (0.0 - 1.0, only when transparency is enabled)
   "window:opacity": 1.0,
 
-  // Remember window position and size across sessions
-  "window:saveposition": true
+  // Restore last window size and position on launch
+  "window:savelastwindow": true
 }
 ```
 
@@ -40,35 +40,17 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 
 ```jsonc
 {
-  // Default shell (auto-detected if not set)
-  "term:shell": "",
+  // Path to the shell binary
+  "term:localshellpath": "/bin/bash",
 
   // Font family for terminal panes
-  "term:fontfamily": "JetBrains Mono, Cascadia Code, monospace",
+  "term:fontfamily": "JetBrains Mono",
 
   // Font size in pixels
-  "term:fontsize": 13,
+  "term:fontsize": 12,
 
-  // Terminal theme
-  "term:theme": "dark"
-}
-```
-
-### Agent Panes
-
-```jsonc
-{
-  // Default agent provider (claude, codex, gemini)
-  "agent:defaultprovider": "claude",
-
-  // Show tool calls in real time
-  "agent:showtoolcalls": true,
-
-  // Show file diff overlay for agent file writes
-  "agent:showdiffs": true,
-
-  // Auto-scroll agent output
-  "agent:autoscroll": true
+  // Terminal color theme
+  "term:theme": "default-dark"
 }
 ```
 
@@ -97,25 +79,9 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-AgentMux supports Model Context Protocol (MCP) servers for extending agent capabilities. Configure them per-agent via the [Memory bundle](/memory/) (cog → settings → Memory inside an Agent pane) or globally in settings:
+MCP servers are configured **per-agent** in a [Memory bundle](/memory/) (cog → settings → Memory inside an agent pane), not in `settings.json`. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-```jsonc
-{
-  "mcp:servers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/dir"]
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_..."
-      }
-    }
-  }
-}
-```
+See [Memory bundles](/memory/) for the full bundle schema (including the `mcp_servers` field).
 
 ## See Also
 

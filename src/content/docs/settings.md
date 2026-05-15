@@ -51,29 +51,8 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `term:disablewebgl` | boolean | `false` | Disable WebGL renderer (falls back to Canvas) |
 | `term:allowbracketedpaste` | boolean | `true` | Enable bracketed paste mode |
 | `term:shiftenternewline` | boolean | `false` | Shift+Enter creates newline |
-
-## AI Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `ai:preset` | string | `""` | Named AI preset ID |
-| `ai:apitype` | string | `"anthropic"` | API provider type |
-| `ai:baseurl` | string | `""` | Custom API endpoint URL |
-| `ai:apitoken` | string | `""` | Authentication token |
-| `ai:model` | string | `"claude-sonnet-4-6"` | Model identifier |
-| `ai:maxtokens` | number | `4096` | Max completion tokens |
-| `ai:timeoutms` | number | `60000` | Request timeout in milliseconds |
-| `ai:fontsize` | number | `14` | AI pane font size |
-| `ai:fixedfontsize` | number | `14` | Code block font size in AI pane |
-
-## Editor Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `editor:fontsize` | number | `14` | Editor font size |
-| `editor:minimapenabled` | boolean | `false` | Show minimap |
-| `editor:stickyscrollenabled` | boolean | `false` | Enable sticky scroll |
-| `editor:wordwrap` | boolean | `true` | Word wrap |
+| `term:agentmaxruntimehours` | number | `0` | Max runtime for an agent pane in hours (`0` = unlimited) |
+| `term:agentidletimeoutmins` | number | `0` | Idle timeout for an agent pane in minutes (`0` = unlimited) |
 
 ## Window Settings
 
@@ -94,6 +73,8 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `window:reducedmotion` | boolean | `false` | Reduce animations |
 | `window:magnifiedblockopacity` | number | `0.6` | Opacity of background when a pane is magnified |
 | `window:magnifiedblocksize` | number | `0.9` | Size of magnified pane (0.0–1.0) |
+| `window:magnifiedblockblurprimarypx` | integer | — | Primary blur radius (px) behind a magnified pane |
+| `window:magnifiedblockblursecondarypx` | integer | — | Secondary blur radius (px) behind a magnified pane |
 | `window:maxtabcachesize` | number | `10` | Maximum cached tabs |
 | `window:disablehardwareacceleration` | boolean | `false` | Disable GPU acceleration |
 
@@ -104,20 +85,13 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `app:globalhotkey` | string | `""` | Global activation hotkey |
 | `app:defaultnewblock` | string | `""` | Default pane type for new blocks |
 | `app:showoverlayblocknums` | boolean | `false` | Show block numbers as overlay |
+| `app:dismissarchitecturewarning` | boolean | `false` | Suppress the architecture-mismatch notice |
 
 ## Shell Environment
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `cmd:env` | object | `{}` | Environment variables passed to all shell processes |
-
-## Auto Update Settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `autoupdate:enabled` | boolean | `true` | Check for updates automatically |
-| `autoupdate:installonquit` | boolean | `true` | Install updates when quitting |
-| `autoupdate:channel` | string | `"latest"` | Release channel |
 
 ## Telemetry Settings
 
@@ -141,33 +115,14 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `widget:showhelp` | boolean | `true` | Show help widget in top bar |
 | `widget:icononly` | boolean | `false` | Icon-only widget bar (no labels) |
 | `blockheader:showblockids` | boolean | `false` | Display block IDs in pane headers |
-| `markdown:fontsize` | number | `14` | Font size for markdown rendering |
 | `preview:showhiddenfiles` | boolean | `false` | Show hidden files in file previews |
 | `tab:preset` | string | `""` | Default tab layout preset |
 
-## MCP Settings
+## MCP Servers
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `mcp:servers` | object | `{}` | Global MCP server configuration |
+MCP servers are configured **per-agent** in a [Memory bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-### MCP Server Format
-
-```jsonc
-{
-  "mcp:servers": {
-    "server-name": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-name", "/path"],
-      "env": {
-        "KEY": "value"
-      }
-    }
-  }
-}
-```
-
-Per-agent MCP configuration in [Memory bundles](/memory/) overrides global settings.
+See [Memory bundles](/memory/) for the bundle schema (including the `mcp_servers` field).
 
 ## Environment Variables
 
