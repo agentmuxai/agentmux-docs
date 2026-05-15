@@ -57,6 +57,7 @@ export default defineConfig({
 								{ label: 'Identity bundles', slug: 'identity' },
 								{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
 								{ label: 'Running multiple instances', slug: 'multi-instance' },
+								{ label: 'Window appearance', slug: 'window-appearance' },
 							],
 						},
 						{
