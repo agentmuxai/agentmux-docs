@@ -65,6 +65,7 @@ export default defineConfig({
 							items: [
 								{ label: 'Settings reference', slug: 'settings' },
 								{ label: 'Configuration guide', slug: 'config' },
+								{ label: 'Main menu & command palette', slug: 'main-menu' },
 								{ label: 'Keybindings', slug: 'keybindings' },
 								{ label: 'Auth flows', slug: 'auth' },
 								{ label: 'System Metrics', slug: 'system-metrics' },
@@ -102,6 +103,7 @@ export default defineConfig({
 								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
+								{ label: 'Modal system (modal-v2)', slug: 'internals/modal-system' },
 								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
 								{ label: 'Agent pane virtualization', slug: 'internals/agent-pane-virtualization' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
