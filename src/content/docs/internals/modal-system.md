@@ -84,6 +84,41 @@ The `kind` field discriminates which panel to render; add new variants in [`fron
 
 Examples in the codebase: `AgentLaunchModal.tsx`, `AgentInstallModal.tsx`.
 
+## Chained flows — `tabModal.replace(next)`
+
+When a modal completes and the natural next step is **another** modal in the same flow (install → launch, install → auth → launch, workflow setup → workflow run), use `tabModal.replace(next)` instead of `close()` followed by `open(next)`.
+
+```tsx
+const tabModal = useTabModal();
+
+// First modal opens cold — full entrance animation:
+tabModal.open({ kind: "install-agent", ... onInstalled: () => {
+    // Crossfade into the launch modal — backdrop + outer panel stay
+    // mounted; only the inner content remounts with a 140ms fade.
+    tabModal.replace({ kind: "launch-agent", ... });
+}});
+```
+
+What `replace` does differently from `open`:
+
+| | `open` | `replace` |
+|---|---|---|
+| Backdrop | Mounts fresh (fades in 120ms) | Stays mounted from prior modal — no flicker |
+| Outer panel | Mounts fresh (pops in 140ms) | Stays mounted — no entrance pop replay |
+| Inner content | Mounts with content-fade 140ms | Re-mounts via keyed `<Show>`, plays content-fade 140ms |
+| Panel size | Sized by new content immediately | Animated via `transition: min-height` 160ms |
+| `submitting` flag | Reset to `false` | Reset to `false` |
+
+If there's no current modal, `replace(next)` is equivalent to `open(next)` — the full entrance animation plays. So callers in chain-handoff code (like the install-modal's `onInstalled`) don't need to special-case "is anything open right now."
+
+Use `open` for **cold starts** (user click on a card, command palette dispatch). Use `replace` for **continuations** of the same user-perceived task.
+
+See [`SPEC_MODAL_TRANSITIONS_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_MODAL_TRANSITIONS_2026_05_18.md) for the full rationale and implementation notes.
+
+### What about `close()`?
+
+`tabModal.close()` is for **dismissal** — the user clicked Cancel, hit ESC, or clicked the backdrop. It tears down the modal instantly (no exit animation). Don't use `close()` as part of a chain — it leaves a gap where the backdrop disappears before the next modal opens, producing the visible jolt that `replace` was added to fix.
+
 ## Modal-specific styles go in component-scoped classes
 
 The CHROME stays universal. Modal-specific content (a form layout, an xterm container, a list of cards) uses its own component-scoped classes that DON'T duplicate header/title/body/footer.
