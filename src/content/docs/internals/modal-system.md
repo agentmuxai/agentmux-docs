@@ -119,6 +119,23 @@ See [`SPEC_MODAL_TRANSITIONS_2026_05_18.md`](https://github.com/agentmuxai/agent
 
 `tabModal.close()` is for **dismissal** — the user clicked Cancel, hit ESC, or clicked the backdrop. It tears down the modal instantly (no exit animation). Don't use `close()` as part of a chain — it leaves a gap where the backdrop disappears before the next modal opens, producing the visible jolt that `replace` was added to fix.
 
+## Paint gate — wait for content to settle
+
+The entrance animation doesn't fire until the modal subtree has painted once. `TabModalLayer` mounts the modal with `visibility: hidden` and animations suppressed, lets the browser run one full paint cycle (rAF×2 so `FitAddon`, autofocus, dropdown population, and any other synchronous-after-mount work finish their layout), then flips a `data-ready` attribute on the overlay → CSS reveals the modal and starts the entrance keyframes.
+
+Why this exists: without the gate, the install modal's xterm container is still 0×0 during the 140ms pop-in animation. The user sees the entrance play over a half-laid-out terminal that pops to its real size mid-animation. Other modals show similar flicker as form fields autofocus or selects populate. The gate moves all that work into a hidden frame and reveals the result.
+
+Two gates run in parallel:
+
+- **`data-ready`** — gates the backdrop + outer panel. Fires once per `tabModal.open(...)` (the cold-open path); persists across `tabModal.replace()` swaps.
+- **`data-content-ready`** — gates only the inner `.tab-modal-content`. Re-arms on every `replace()` so the swapped content also waits for paint before crossfading.
+
+A 200ms `setTimeout` failsafe forces both gates open if `requestAnimationFrame` stays parked (background tab, suspended renderer). Reduced-motion still respected — the gate still applies but the keyframes are suppressed regardless.
+
+Implementer's note: pane code that runs in `onMount` (xterm.open, FitAddon.fit, ResizeObserver, focus calls) doesn't need to do anything special. The gate handles the timing at the layer.
+
+See [`SPEC_MODAL_PAINT_GATE_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_MODAL_PAINT_GATE_2026_05_18.md) for the rAF×2 rationale and the visibility-hidden trick.
+
 ## Modal-specific styles go in component-scoped classes
 
 The CHROME stays universal. Modal-specific content (a form layout, an xterm container, a list of cards) uses its own component-scoped classes that DON'T duplicate header/title/body/footer.
