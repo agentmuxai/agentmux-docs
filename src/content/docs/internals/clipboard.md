@@ -23,7 +23,7 @@ Both functions invoke CEF IPC commands implemented in [`agentmux-cef/src/command
 - **macOS** — `pbcopy` / `pbpaste`.
 - **Linux** — `wl-copy` (Wayland) with `xclip` / `xsel` fallback (X11).
 
-Errors are best-effort: a failed write resolves cleanly so callers don't need to wrap in try/catch unless they need user feedback. A failed read returns the empty string.
+Errors propagate: `writeText` and `readText` reject when the underlying CEF IPC call fails (e.g. missing clipboard helpers on Linux, IPC token expired). Callers that don't want to surface the failure to the user should `.catch()` and log — see the reference implementation in [`termwrap.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/term/termwrap.ts) which logs to `console.log` so the failure shows up in the dev `[fe]` tail without blocking the UI.
 
 ### Rule: never call `navigator.clipboard.*` directly
 
@@ -35,9 +35,9 @@ A given copy action shows up in three places (one user-visible command, three di
 
 | Surface | How it fires |
 |---|---|
-| Keyboard | `Ctrl+C` (general), `Ctrl+Shift+C` (terminals), `Ctrl+S` (save), `Ctrl+Shift+E` (open in editor) |
-| Right-click | Context menu items: Copy, Copy All, Save Selection As…, Open in Editor |
-| Action bar | Hover-revealed `[ Copy | Save | Open ]` on long-output regions (terminals, log viewers) |
+| Keyboard | `Ctrl+C` (general), `Ctrl+Shift+C` (terminals), `Ctrl+S` (save) |
+| Right-click | Context menu items: Copy, Copy All, Save Selection As… |
+| Action bar | Hover-revealed `[ Copy | Save ]` on long-output regions (terminals, log viewers) |
 
 The intent of putting one command in three places: discoverability without re-implementing the action.
 
@@ -85,18 +85,19 @@ Both terminal consumers — the regular term pane ([`termwrap.ts`](https://githu
 
 Selection within xterm is managed by xterm.js itself, not by the browser — `xterm.css` sets `user-select: none` on the canvas. Use `terminal.getSelection()` to read it; never `window.getSelection()` on a terminal pane.
 
-## Save to file + open in editor (Phase γ)
+## Save to file (Phase γ)
 
-For long-output surfaces (install logs, terminal scrollback, agent transcripts), two extra actions:
+For long-output surfaces (install logs, terminal scrollback, agent transcripts), one extra action:
 
 - **Save Selection As…** — writes the selection (or `getAll()` if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
-- **Open in Editor** — saves to `~/.agentmux/clips/` and then spawns the user's configured editor. Setting: `editor:external` (default: `code` on Windows/Linux, falls back to OS default for `.txt`).
 
-Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. Backend handler is in [`agentmux-srv/src/server/file_handlers.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/file_handlers.rs). Open-in-editor uses the existing [`open_external`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/platform.rs) CEF command.
+Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. Backend handler will live in [`agentmux-srv/src/server/file_handlers.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/file_handlers.rs).
 
 Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
 
 > **As of 2026-05-18 Phase γ has not shipped yet.** Track the roadmap in [`SPEC_UNIFIED_CLIPBOARD_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_CLIPBOARD_2026_05_18.md) §4.
+>
+> "Open in editor" was originally scoped here but cut after design review — selecting text for copy/paste doesn't imply moving the whole buffer into an editor. If that capability is needed later, it can chain `RpcApi.OpenExternalCommand(path)` after the save.
 
 ## Adding clipboard to a new pane
 
