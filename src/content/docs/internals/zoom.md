@@ -3,7 +3,7 @@ title: Zoom system
 description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.platform.ts`, how it persists, and how new view types opt in.
 ---
 
-AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it; everything that scales — terminal font size, agent-pane content, chrome — reads back from the same persisted state.
+AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it. Per-pane zoom is persisted on block meta (`term:zoom`); chrome zoom is in-memory only (see the table below).
 
 ## Two zooms
 
@@ -22,7 +22,9 @@ Three files own the input plumbing:
 - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) — `Ctrl+/-/0` and `Cmd+/-/0` bindings call `zoomIn() / zoomOut() / zoomReset()`. Those resolve the focused block via `getFocusedBlockId()` and route to `zoomBlockIn/Out` for that block.
 - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) — `Ctrl+Wheel` listener at window scope. If the cursor is over chrome (`.window-header` / `.status-bar` / `.block-frame-default-header`), routes to `chromeZoomIn/Out`; otherwise probes `target.closest("[data-blockid]")` and routes to `zoomBlockIn/Out`.
 
-Both paths converge on `setBlockZoom(blockId, factor)` which writes `term:zoom` on the block's meta via `SetMeta` RPC. Other components read it back through their block atom.
+The **per-pane path** converges on `setBlockZoom(blockId, factor)` which writes `term:zoom` on the block's meta via `SetMeta` RPC. Other components read it back through their block atom.
+
+The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the `--zoomfactor` CSS variable in memory; it does NOT write block meta. Don't look for chrome zoom under `term:zoom` — it lives in the atom, scoped to the running renderer, and resets on reload.
 
 ## How to make a view type zoomable
 
