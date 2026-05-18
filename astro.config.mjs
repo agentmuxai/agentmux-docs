@@ -106,6 +106,7 @@ export default defineConfig({
 								{ label: 'Modal system (modal-v2)', slug: 'internals/modal-system' },
 								{ label: 'Error catalog', slug: 'internals/error-catalog' },
 								{ label: 'Clipboard & export', slug: 'internals/clipboard' },
+								{ label: 'Zoom system', slug: 'internals/zoom' },
 								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
 								{ label: 'Agent pane virtualization', slug: 'internals/agent-pane-virtualization' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
