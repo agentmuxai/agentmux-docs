@@ -10,7 +10,7 @@ AgentMux has **one** zoom framework, used by every pane type that supports zoomi
 | Mode | Scope | Persistence | Mechanism |
 |---|---|---|---|
 | **Per-pane** | One block | `term:zoom` on block meta | Terminal panes: `term.options.fontSize = base * zoom`. Other view types: CSS `zoom` on the view root. |
-| **Chrome** | Whole window | `--zoomfactor` on `:root` | Title bar + status bar use `calc(... * var(--zoomfactor))` for their dimensions and fonts. |
+| **Chrome** | Whole window | In-memory only — `chromeZoomAtom` + `--zoomfactor` on `:root`; reset on reload (`initChromeZoom()` reapplies `DEFAULT_ZOOM`, `loadZoom()` is a no-op today) | Title bar + status bar use `calc(... * var(--zoomfactor))` for their dimensions and fonts. |
 
 Per-pane is what users hit by default (zoom in/out adjusts the focused pane). Chrome zoom fires when the cursor is over the title bar / status bar / pane header during `Ctrl+Wheel`.
 
