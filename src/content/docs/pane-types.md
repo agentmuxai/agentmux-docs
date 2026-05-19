@@ -239,7 +239,7 @@ The shortcut is a no-op on pane types that don't support voice (Browser, Editor,
 |---|---|---|---|
 | `voice:enabled` | bool | `true` | When `false`, hides the mic button across all panes |
 
-Set in `~/.agentmux/settings.json`. Useful if your browser blocks the Web Speech API or you don't want voice input enabled by default.
+Set in your [settings.json](/settings/) (the path varies by install vs dev mode — see the Settings page for the exact location). Useful if your browser blocks the Web Speech API or you don't want voice input enabled by default.
 
 ### Browser permission
 
