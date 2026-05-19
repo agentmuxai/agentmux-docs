@@ -46,6 +46,7 @@ Features:
 - Per-pane zoom level (`Ctrl+/-` and `Ctrl+Scroll`)
 - Shell-integration env block (`AGENTMUX_BLOCKID`, `AGENTMUX_LOG_DIR`, `AGENTMUX_AGENT_ID`, …) with helper functions like `muxlog`
 - Remote connections (SSH)
+- [Voice input](#voice-input) — dictate commands into the PTY via the mic button in the pane header
 
 Open a terminal: `Cmd+N` / `Alt+N` or click the terminal icon in the top bar.
 
@@ -109,6 +110,7 @@ The agent pane runs an AI agent session. It displays:
 - **Tool calls** — Name, arguments, and result of each tool invocation
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
+- **[Voice input](#voice-input)** — dictate prompts into the composer via the mic button in the pane header
 
 Agent panes are configured through [Memory bundles](/memory/), accessible as a tab inside the agent pane (see Subsections below).
 
@@ -209,6 +211,41 @@ Live system metrics displayed as time-series line plots. Supports multiple plot 
 | CPU + Mem + Net | All three combined |
 
 Data streams via WebSocket events from the backend. Supports remote connections — view system metrics from SSH-connected hosts.
+
+## Voice input
+
+Speak into a pane instead of typing. Voice input is supported on **Terminal** and **Agent** panes; other pane types don't surface the mic button.
+
+### How it works
+
+Each supporting pane shows a microphone button in the **top-right of the pane header**, next to the maximize and close buttons. Click it to start dictating into that pane:
+
+- **Terminal panes** — the recognized text is streamed character-by-character into the PTY, exactly as if typed
+- **Agent panes** — the recognized text appends to the composer textarea (interim phrases preview as you speak; finalized phrases commit). You still press Enter to send
+
+The mic button pulses while listening. Clicking the mic on a **different** pane retargets the voice stream to that pane — only one pane receives output at a time. Clicking the active pane's mic again stops listening.
+
+### Keyboard shortcut
+
+| Action | Shortcut |
+|---|---|
+| Toggle voice on the focused pane | `Ctrl+Shift+V` |
+
+The shortcut is a no-op on pane types that don't support voice (Browser, Editor, etc.).
+
+### Settings
+
+| Key | Type | Default | Effect |
+|---|---|---|---|
+| `voice:enabled` | bool | `true` | When `false`, hides the mic button across all panes |
+
+Set in `~/.agentmux/settings.json`. Useful if your browser blocks the Web Speech API or you don't want voice input enabled by default.
+
+### Browser permission
+
+Voice input uses the browser's built-in [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API). The first time you click the mic, Chromium prompts for microphone permission. If you deny it (or revoke it later), AgentMux shows a notification — re-enable it in browser settings to recover.
+
+The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so this works for all users; in non-Chromium browsers the mic button would simply not appear (`voice.isAvailable()` returns false).
 
 ## Pane Management
 
