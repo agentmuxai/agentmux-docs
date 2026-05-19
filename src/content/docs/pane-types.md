@@ -21,7 +21,7 @@ The widget bar has two tiers — pinned (visible directly in the bar) and **More
 | **DevTools** | code | `devtools` | Toggle Chromium DevTools — does not open a pane | Pinned |
 | **Editor** | file-code | `editor` | Code editor with syntax highlighting | More |
 | **Swarm** | bee | `swarm` | Multi-agent orchestration and history | More |
-| **Workflows** | diagram-project | `workflows` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) | More |
+| **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) | More |
 | **Help** | circle-question | `help` | Built-in documentation | More |
 
 ### Not pane types
@@ -153,39 +153,41 @@ A focused view of a single sub-agent's activity stream. **Not a widget-bar entry
 
 Subagent panes auto-scroll by default. Scroll up to pause, and a "scroll to bottom" button appears.
 
-## Workflows
+## Drone
 
-The Workflows pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the **More** dropdown in the widget bar.
+The Drone pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the **More** dropdown in the widget bar.
+
+The name signals the pane's autonomous nature: a drone runs unattended on triggers, distinct from the interactive Agent pane.
 
 ### Block types
 
 | Block | Purpose |
 |---|---|
-| **Variables** | Declare workflow-scoped variables, read elsewhere via `{{var.name}}`. |
+| **Variables** | Declare drone-scoped variables, read elsewhere via `{{var.name}}`. |
 | **Agent** | Run an agent with a task prompt. Supports identity, memory, named-agent continuation, and working directory — the same controller the interactive Agent pane uses, invoked headlessly. |
 | **API** | Make HTTP requests (GET/POST/PUT/PATCH/DELETE). URL and body support `{{...}}` interpolation. |
 | **Condition** | Evaluate a boolean expression (e.g. `{{var.x}} > 10`); branches into true / false outputs. |
-| **Response** | Terminal output block. Exactly one is required per workflow — execution pauses until a Response is reached or an error occurs. |
+| **Response** | Terminal output block. Exactly one is required per drone — execution pauses until a Response is reached or an error occurs. |
 
-### Authoring a workflow
+### Authoring a drone
 
-1. Click **New** to start a blank workflow.
+1. Click **New** to start a blank drone.
 2. Click a block in the palette to add it to the canvas.
 3. Shift-click a source node, then a target node, to connect them.
 4. Click a node to open the inspector and configure its parameters.
-5. **Save** to persist the workflow to the backend.
+5. **Save** to persist the drone to the backend.
 
-### Running a workflow
+### Running a drone
 
-Click **Run**. The engine performs a topological sort over the DAG and executes blocks in dependency order, publishing `block_started` / `block_done` / `block_error` events. The bottom **Runs** panel shows recent executions; the right-hand inspector shows the last result for whichever block is selected (for Agent blocks, the final response text and cost in USD if available).
+Click **Run**. The engine performs a topological sort over the DAG and executes blocks in dependency order, publishing `block_started` / `block_done` / `block_error` events on the `dronerun:<id>` SSE topic. The bottom **Runs** panel shows recent executions; the right-hand inspector shows the last result for whichever block is selected (for Agent blocks, the final response text and cost in USD if available).
 
 ### Known limitations
 
-The Workflows pane is on a Phase 2 roadmap that adds the following — they are **not** available yet:
+The Drone pane is on a Phase 2 roadmap that adds the following — they are **not** available yet:
 
 - Drag-and-drop canvas (current canvas is click-to-add + Shift-click to connect)
 - Triggers (cron / webhook / dependency / schedule)
-- Sub-workflow invocation (one workflow calling another)
+- Subdrone invocation (one drone calling another)
 - Function blocks (sandboxed JS via `quickjs-rs`)
 - Streaming agent output live into the inspector (Phase 1.5 shows aggregated result only)
 - Run cancellation / abort
