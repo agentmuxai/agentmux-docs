@@ -1,0 +1,13 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/logo.svg';
+
+const { locale } = Astro.props;
+const href = locale ? `/${locale}/` : '/';
+---
+<a {href} class="site-title sl-flex">
+  <Image src={logo} alt="AgentMux" width={32} height={32} class="sl-logo" />
+  <span class="sl-site-title-text">
+    <span class="sl-site-title-agent">Agent</span>Mux
+  </span>
+</a>

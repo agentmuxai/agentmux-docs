@@ -24,6 +24,9 @@ export default defineConfig({
 				src: './src/assets/logo.svg',
 				alt: 'AgentMux',
 			},
+			components: {
+				SiteTitle: './src/components/SiteTitle.astro',
+			},
 			head: [
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
