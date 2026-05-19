@@ -20,14 +20,14 @@ Override Starlight's `SiteTitle` component with a custom Astro component at `src
 
 ### Component behavior
 - Renders the logo SVG (from `Astro.props.logo`) on the left
-- Renders `<span class="agent-text">Agent</span>Mux` as the wordmark
+- Renders `<span class="sl-site-title-agent">Agent</span>Mux` as the wordmark
 - "Agent" color: `var(--sl-color-accent-high)` (already defined in `custom.css` for both dark/light)
 - Wraps in an `<a>` pointing to site root
 
 ### CSS
 One rule added to `custom.css`:
 ```css
-.site-title-agent { color: var(--sl-color-accent-high); }
+.sl-site-title-agent { color: var(--sl-color-accent-high); }
 ```
 
 ## Files changed
