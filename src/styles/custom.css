@@ -1,5 +1,8 @@
 /* AgentMux docs theme — synced with agentmux.ai landing page design tokens */
 
+/* Two-tone "AgentMux" wordmark — matches landing page Nav.tsx */
+.sl-site-title-agent { color: var(--sl-color-accent-high); }
+
 /* Fonts (shared across modes) */
 :root {
   --sl-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
