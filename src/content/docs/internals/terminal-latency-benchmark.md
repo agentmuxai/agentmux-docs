@@ -68,8 +68,8 @@ Results saved to results.json
 The script reads `~/.agentmux/dev/<branch>/data/authkey.dev`, the per-session
 auth file that `task dev` writes at startup. It picks the newest file whose
 recorded `host_pid` is still alive. See
-[Test-harness access](/internals/debugging#test-harness-access) for the full
-format and security model.
+[`docs/specs/SPEC_TEST_API_ACCESS.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_TEST_API_ACCESS.md)
+§5–§6 for the full format and security model.
 
 For a release or portable instance you can pass credentials manually:
 
