@@ -121,6 +121,7 @@ export default defineConfig({
 							items: [
 								{ label: 'Building from source', slug: 'internals/building' },
 								{ label: 'Debugging', slug: 'internals/debugging' },
+								{ label: 'Terminal latency benchmark', slug: 'internals/terminal-latency-benchmark' },
 								{ label: 'Contributing', slug: 'internals/contributing' },
 							],
 						},
