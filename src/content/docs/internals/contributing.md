@@ -75,7 +75,7 @@ agentmux/
 ├── agentmux-srv/             # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
 ├── agentmux-common/          # Shared utilities: path resolution, runtime mode
 ├── frontend/                 # SolidJS + TypeScript renderer (Vite)
-│   ├── app/view/             # Pane view implementations (term, browser, agent, forge, …)
+│   ├── app/view/             # Pane view implementations (term, browser, agent, drone, …)
 │   ├── app/block/            # Block / pane rendering + registry
 │   ├── app/store/            # State management (jotai atoms, slice stores, RPC client)
 │   └── app/element/          # Reusable UI components

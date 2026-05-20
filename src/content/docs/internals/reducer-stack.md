@@ -48,7 +48,7 @@ CEF-side coordination: pending window creations, active drag operations, tear-of
 
 ### Layer 3 — Sidecar (srv)
 
-Owns the app domain — every workspace, tab, block, layout, agent identity, forge definition. Lives in `agentmux-srv/src/reducer.rs` plus the per-domain modules (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Saga coordinator handles cross-block lifecycle. Idempotent persist subscriber writes back to SQLite. **Status:** mostly done.
+Owns the app domain — every workspace, tab, block, layout, agent identity, agent definition. Lives in `agentmux-srv/src/reducer.rs` plus the per-domain modules (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Saga coordinator handles cross-block lifecycle. Idempotent persist subscriber writes back to SQLite. **Status:** mostly done.
 
 ### Layer 4 — Frontend slices
 
@@ -95,7 +95,7 @@ Each layer's persistence is independent:
 | Store | Writer | What |
 |---|---|---|
 | `objects.db` (SQLite) | sidecar | block / tab / window / workspace meta, layouts |
-| `filestore.db` (SQLite) | sidecar | per-block content blobs (forge agents, snapshots) |
+| `filestore.db` (SQLite) | sidecar | per-block content blobs (agent configs, snapshots) |
 | `sagas.db` (SQLite) | sidecar | saga state for crash-resume |
 | `launcher-sagas.db` (SQLite) | launcher | launcher-side saga state |
 | `launcher-events.log` (JSONL) | launcher | append-only event log; in-memory ring with disk overflow |

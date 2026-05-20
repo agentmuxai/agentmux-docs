@@ -55,7 +55,7 @@ If Memory is blank, the agent launches with the provider's defaults — no instr
 
 ## Persistence
 
-Memory bundles live in `db_memories` in the sidecar's `objects.db`:
+Memory bundles live in `db_memory_bundles` in the sidecar's `objects.db`:
 
 ```
 id              TEXT PRIMARY KEY
@@ -72,7 +72,7 @@ created_at      TEXT NOT NULL
 updated_at      TEXT NOT NULL
 ```
 
-The migration that introduced this schema is v7. The Forge concept (predating Memory) was folded into Memory by the same migration: existing `db_forge_agents` rows migrated into `db_memories`.
+`db_memory_bundles` is part of `objects.db`'s flat schema (`run_object_schema`). Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
 
 ## Memory and per-instance overrides
 

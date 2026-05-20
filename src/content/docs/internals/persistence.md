@@ -9,8 +9,8 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 
 | File | Format | Writer | Owns |
 |---|---|---|---|
-| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, controllers — the app-domain reducer state of record |
-| `filestore.db` | SQLite | sidecar | Per-block content blobs (forge agents, snapshots, file-pane content) |
+| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, controllers + the agent-definition / identity / memory / drone catalog — the app-domain reducer state of record |
+| `filestore.db` | SQLite | sidecar | Per-block content blobs (agent configs, snapshots, file-pane content) |
 | `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv saga coordinator (crash-resume) |
 | `launcher-sagas.db` | SQLite | launcher | Launcher-side saga state (LSD-1 batch onward) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
@@ -27,11 +27,19 @@ Stores every:
 
 - **Workspace** — top-level container, identity + window membership
 - **Tab** — per-window tab list with layout root pointer
-- **Block** — every pane (terminal, browser, agent, forge, file, system metrics, …) including its meta map (controller type, agent id, URL, scroll position, …)
+- **Block** — every pane (terminal, browser, agent, file, system metrics, …) including its meta map (controller type, agent id, URL, scroll position, …)
 - **Window** — OS-window record; the host reads this on launch to restore window geometry
 - **Layout** — per-tab pane tree (split orientation, focus path, sizes)
 - **Client** — per-CEF-session client record
 - **Controller** — block controller registration (shell, command runner, web view)
+
+It also holds the agent domain: **agent definitions** (the launchable agent
+catalog — formerly "Forge"), **identity** and **memory bundles**, per-launch
+**agent instances**, and **drone** definitions/runs.
+
+The schema is a single flat table set built by `run_object_schema`
+(`agentmux-srv/src/backend/storage/migrations.rs`) — no migration ladder. A
+`PRAGMA user_version` stamp acts as a downgrade tripwire.
 
 This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch comes up with a single empty workspace.
 
@@ -45,13 +53,13 @@ Migration status: workspaces are reducer-driven (E.2c.2 onward); tab + block wri
 
 ## `filestore.db` — content blobs
 
-Same writer (`agentmux-srv`), opened via `FileStore::open(<data-dir>/db/filestore.db)`. Where blob content lives: forge agents' generated config files, session archives, file-pane buffers, captured screenshots. `objects.db` holds the meta — `filestore.db` holds the bytes.
+Same writer (`agentmux-srv`), opened via `FileStore::open(<data-dir>/db/filestore.db)`. Where blob content lives: agents' generated config files, session archives, file-pane buffers, captured screenshots. `objects.db` holds the meta — `filestore.db` holds the bytes.
 
 You can rebuild `filestore.db` from scratch (you'll lose snapshots) without losing your workspace structure. The reverse is not true — `objects.db` references blobs by hash; deleting `filestore.db` while keeping `objects.db` leaves dangling references that the file pane will report as missing.
 
 ## `sagas.db` — sidecar saga coordinator
 
-Per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5), sagas coordinate cross-block side effects (e.g. "open a forge agent in a new pane and wait for the controller to come up"). `sagas.db` records each step's start, completion, retry, and final status.
+Per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5), sagas coordinate cross-block side effects (e.g. "open an agent in a new pane and wait for the controller to come up"). `sagas.db` records each step's start, completion, retry, and final status.
 
 On crash the saga coordinator reads back from `sagas.db` and resumes pending sagas from their last durable step — that's the point of having a durable log instead of in-memory state.
 
@@ -87,7 +95,7 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 For completeness, things that are NOT stored in these five files:
 
 - **Settings** — JSON at `<data-dir>/config/settings.json`
-- **Forge agent definitions** — written by the forge into `<data-dir>/agents/`
+- **Agent working directories** — per-agent workspace dirs under `<data-dir>/agents/` (the agent *definitions* themselves live in `objects.db`)
 - **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version-independent)
 - **Chromium cache** — `<data-dir>/cef-cache/`
 - **CLI provider configs** — auth-config-dir managed by each provider's CLI
