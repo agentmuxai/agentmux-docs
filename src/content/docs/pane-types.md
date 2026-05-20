@@ -18,7 +18,6 @@ The widget bar has two tiers — pinned (visible directly in the bar) and **More
 | **Browser** | globe | `browser` | Embedded native `CefBrowserView` | Pinned |
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js | Pinned |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs | Pinned |
-| **DevTools** | code | `devtools` | Toggle Chromium DevTools — does not open a pane | Pinned |
 | **Editor** | file-code | `editor` | Code editor with syntax highlighting | More |
 | **Swarm** | bee | `swarm` | Multi-agent orchestration and history | More |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) | More |
@@ -31,8 +30,9 @@ These views exist in the codebase but are **not** opened directly from the widge
 | Surface | How it's reached |
 |---|---|
 | **Identity** | Tab inside an Agent pane (cog → settings → Identity). Manage credential bundle assigned to this agent. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory** | Tab inside an Agent pane (cog → settings → Memory). Manage personality/capability bundle (provider, model, instructions, MCP, skills). Same shape as Identity — view registered for programmatic access only. Replaces the older Forge concept; `db_forge_agents` rows migrated into `db_memories` in the v7 schema. |
+| **Memory** | Tab inside an Agent pane (cog → settings → Memory). Manage personality/capability bundle (provider, model, instructions, MCP, skills). Same shape as Identity — view registered for programmatic access only. Replaces the older Forge concept. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens `settings.json` in your default editor. |
+| **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 | **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
 
 ## Terminal
@@ -129,7 +129,7 @@ Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours`
 The agent pane has two built-in side panels, opened via the cog → settings panel:
 
 - **Identity** — manage Identity bundles (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …) for this agent instance. Backed by `frontend/app/view/identity/`, surfaced via `AgentIdentityPanel`. See [Identity](/identity/).
-- **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/). Replaces the older Forge concept — `db_forge_agents` rows migrated into `db_memories` in the v7 schema; `view: "forge"` blocks are still redirected to `view: "agent"` by `block.tsx` for backward compatibility.
+- **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/). Replaces the older Forge concept; `view: "forge"` blocks are still redirected to `view: "agent"` by `block.tsx` for backward compatibility with already-persisted blocks.
 
 Both open from inside an active agent pane — there are no widget-bar entries for them. The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the views, but the primary path is the agent-pane subsection.
 

@@ -88,7 +88,7 @@ Terminals opened inside AgentMux get an `AGENTMUX_*` env block. The `muxlog` hel
 echo "$AGENTMUX_BLOCKID"      # which block this terminal is in
 echo "$AGENTMUX_LOG_DIR"      # where to look for host/srv logs
 echo "$AGENTMUX_VERSION"      # which version this terminal was launched against
-echo "$AGENTMUX_AGENT_ID"     # agent identity, if a forge agent owns the pane
+echo "$AGENTMUX_AGENT_ID"     # agent identity, if an agent owns the pane
 ```
 
 If a terminal is missing these, the shell-integration scripts at `~/.agentmux/shell/` weren't sourced — usually because the user opened the terminal outside AgentMux's spawn path.

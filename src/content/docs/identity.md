@@ -51,12 +51,12 @@ Identity bundles live in two SQLite tables in the sidecar's `objects.db`:
 
 | Table | Owns |
 |---|---|
-| `db_identities` | Bundle metadata: id, name, description, `is_blank` flag |
+| `db_identity_bundles` | Bundle metadata: id, name, description, `is_blank` flag |
 | `db_identity_bindings` | Per-provider binding: `(identity_id, provider) → account_id` |
 
-The actual credential records live in `db_identity_accounts` (the v6 individual-credentials table). `db_identity_bindings` is a junction between Identity bundles and that table.
+The actual credential records live in `db_identity_accounts` (the individual-credentials table). `db_identity_bindings` is a junction between Identity bundles and that table.
 
-The migration that introduced this schema is v7 (`feat(identity): v7 schema`). See [`SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md) for the canonical model and [`identity-forge-integration-and-vault-2026-05-08.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/identity-forge-integration-and-vault-2026-05-08.md) for the schema details.
+These tables are part of `objects.db`'s flat schema (`run_object_schema`). See [`SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md) for the canonical model.
 
 ## What Identity is not
 
