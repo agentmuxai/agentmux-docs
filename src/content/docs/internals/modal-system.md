@@ -1,15 +1,17 @@
 ---
-title: Modal system (modal-v2)
-description: How AgentMux renders dialogs — the universal `modal-v2` chrome classes plus the two rendering paths (top-level `<Modal>` and pane-scoped `TabModalLayer`).
+title: Modal system
+description: How AgentMux renders dialogs — the canonical `<Modal>` primitive with scope axis (window / tab / pane), shared chrome classes, and chained-flow transitions.
 ---
 
-AgentMux has **one** modal/dialog system. Don't invent ad-hoc `.foo-modal-header` / `.foo-modal-body` classes for new dialogs — reuse the universal chrome so every modal in the app looks and behaves the same.
+AgentMux has **one** modal system. Don't invent ad-hoc `.foo-modal-header` / `.foo-modal-body` classes for new dialogs — reuse the canonical chrome so every modal in the app looks and behaves the same.
 
 ## The system
 
-All dialog chrome lives in [`frontend/app/element/modal-v2.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-v2.scss) and the matching components in [`frontend/app/element/modal-v2.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-v2.tsx).
+Source: [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx) + [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss). No `modal-v2`, no `modal-v3`, no namespacing — just `modal`.
 
-Chrome classes (apply directly via JSX):
+### Chrome classes
+
+Apply directly via JSX:
 
 | Slot | Class | Purpose |
 |------|-------|---------|
@@ -19,20 +21,28 @@ Chrome classes (apply directly via JSX):
 | Content | `.modal-panel-body` | Padded body region for fields, lists, terminals, whatever the modal needs |
 | Actions | `.modal-panel-footer` | Right-aligned button row with top border + faint tinted background |
 
-There are also Solid components in `modal-v2.tsx` that wrap these classes: `<Modal>`, `<ModalHeader>`, `<ModalBody>`, `<ModalFooter>`. Use the components if you want managed Portal mounting + ESC/backdrop close. Use the bare CSS classes if you're already inside a container that owns those (see *Rendering paths* below).
+There are also Solid components in `modal.tsx` that wrap these classes: `<Modal>`, `<ModalHeader>`, `<ModalBody>`, `<ModalFooter>`. Use the components if you want managed Portal mounting + ESC/backdrop close. Use the bare CSS classes if you're already inside a container that owns those (see *Scope* below).
 
-## Rendering paths
+## Scope — what the modal locks
 
-There are two places a modal can render:
+The `scope` prop on `<Modal>` selects what region the modal locks. Mount point, backdrop extent, `inert` boundary, scroll lock, and the modal stack are all consequences of that scope.
 
-### 1. Top-level (window-scoped, portal'd)
+| Scope | Mounts into | Inert region | Backdrop covers | Used for |
+|---|---|---|---|---|
+| `window` (default) | The current window's `document.body` (Portal'd) | The whole body | Full window | App-wide dialogs (Confirm, About, Command palette, Bundle manager, Message, User input) |
+| `tab` | The active tab's content root (via `TabModalScope` context) | Just that tab's content | The tab's area only — title bar + tab bar stay live | Tab-coupled dialogs (Agent launch, Agent install, Create from template, OAuth pre-launch) |
+| `pane` | A single pane's root (via `PaneModalScope` context) | Just that pane | The pane's area only — everything outside it stays live | Pane-scoped dialogs. Infrastructure exists; pane-scoped modals plug in by adding `<PaneModalScope.Provider>` at the pane root. |
 
-The modal floats above the entire window. Use the `<Modal>` JSX component, which handles its own Portal, backdrop, ESC, and focus management.
+Falls back to `window` (with a console.warn) when `scope="tab"` is used but no `TabModalScope` provider is present. Same for `pane`.
+
+### Window-scope example
+
+The modal floats above the entire window. Use the `<Modal>` JSX component:
 
 ```tsx
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/element/modal-v2";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/element/modal";
 
-<Modal onClose={close}>
+<Modal onClose={close}>  {/* scope="window" is the default */}
     <ModalHeader title="Confirm deletion" />
     <ModalBody>Are you sure?</ModalBody>
     <ModalFooter>
@@ -44,11 +54,23 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/element/modal-v2";
 
 Examples in the codebase: `about.tsx`, `command-palette.tsx`, `messagemodal.tsx`, `userinputmodal.tsx`, `ImportPreviewModal.tsx`.
 
-### 2. Pane-scoped (tab-modal layer)
+### Tab-scope example
 
-The modal floats over the tab's content area only — the title bar and tab bar stay interactive. Used when the dialog is tightly coupled to a specific pane (e.g. Agent launch / install).
+The modal floats over the tab's content area only — the title bar and tab bar stay interactive. Used when the dialog is tightly coupled to a specific tab (e.g. Agent launch / install).
 
-For this path, return a **fragment** of `<header>`, `<div class="modal-panel-body">`, `<footer>` directly. The `tab-modal-panel` wrapper, backdrop, animations, and ESC handling come from `TabModalLayer` automatically.
+These modals run through `TabModalLayer`, which wraps every tab's tile layout, provides a `TabModalScope` for the mount point, and dispatches on a request kind. Triggering one:
+
+```tsx
+const tabModal = useTabModal();
+tabModal.open({
+    kind: "launch-agent",
+    agent,
+    originBlockId,
+    onSubmit: async (overrides) => { /* ... */ },
+});
+```
+
+The panel returns the chrome fragment directly — the layer renders it inside a `<Modal scope="tab">`:
 
 ```tsx
 return (
@@ -68,21 +90,26 @@ return (
 );
 ```
 
-To trigger one, dispatch through the tab-modal context:
+Add new request variants in [`frontend/app/tab/tab-modal.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/tab-modal.ts) and a matching `case` in `renderRequest()` of [`TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
 
-```tsx
-const tabModal = useTabModal();
-tabModal.open({
-    kind: "launch-agent",
-    agent,
-    originBlockId,
-    onSubmit: async (overrides) => { /* ... */ },
-});
-```
+Examples: `AgentLaunchModal.tsx`, `AgentInstallModal.tsx`, `AgentCreateFromTemplateModal.tsx`.
 
-The `kind` field discriminates which panel to render; add new variants in [`frontend/app/tab/tab-modal.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/tab-modal.ts) and a matching `case` in `renderRequest()` of [`TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
+### Pane-scope (when added)
 
-Examples in the codebase: `AgentLaunchModal.tsx`, `AgentInstallModal.tsx`.
+Same pattern as tab-scope but narrower. A pane (e.g., an agent pane) renders a `<PaneModalScope.Provider value={mountAccessor}>` around its content; an in-pane `<Modal scope="pane">` resolves its mount + inert boundary from that. Visual: backdrop covers only the pane's bounds, every other pane in the tab stays interactive.
+
+The infrastructure (context, mount resolution, inert region, stack accounting for non-overlapping pane locks) is in place; the first caller adds the provider and switches to `scope="pane"`.
+
+## Modal stack — how nested modals behave
+
+The stack records each open modal's `scope` and lock region. ESC and backdrop click target the "reachable topmost" — the highest-stacked modal that isn't contained by a higher one's lock region.
+
+Concrete behavior:
+- A `window` modal opened on top of a `tab` modal covers the whole window; ESC closes the window modal.
+- A `pane` modal opened in pane A and another `pane` modal opened in pane B coexist independently — they don't share a lock region. ESC in pane A closes A's modal; ESC in pane B closes B's. Backdrop click is scoped to the clicked pane's modal.
+- A `tab` modal opened with a `window` modal already on top: the tab modal stays inert until the window modal closes.
+
+`closeOnBackdropClick={false}` doesn't silently swallow backdrop clicks — it triggers a "nudge" animation on the panel's `[data-modal-dismiss]` control, signaling the user to cancel explicitly.
 
 ## Chained flows — `tabModal.replace(next)`
 
@@ -161,13 +188,18 @@ For example, the install modal has:
 
 — but no `.agent-install-modal-header` or `.agent-install-modal-title`. Those would be ad-hoc duplicates.
 
+## Browser-pane airspace clip
+
+Native browser-pane HWNDs composite above the HTML renderer, so CSS `z-index` can't stack a modal over a visible pane on its own. `<Modal>` registers its open rect with the backend via `usePaneOverlay`, which subtracts that rect from every pane's Win32 region — the pane's HWND paints transparent where the modal is. The clip is bound to the modal's open/close lifecycle (via `<Show>` so it registers only while visible). Same primitive used by `TokenBreakdownPopover` and `MoreDropdown` for the same reason. Spec: [`SPEC_MODAL_PANE_CLIP_2026_04_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_MODAL_PANE_CLIP_2026_04_24.md).
+
 ## When to NOT use this system
 
-Positioned popovers — cursor-anchored or element-anchored panels that follow a target, not a centered dialog. Examples: `typeaheadmodal.tsx`, `TokenBreakdownPopover.tsx`. These have their own positioning logic (`ResizeObserver` + manual coordinate math) and are intentionally outside `modal-v2`.
+Positioned popovers — cursor-anchored or element-anchored panels that follow a target, not a centered dialog. Examples: `typeaheadmodal.tsx`, `TokenBreakdownPopover.tsx`. These have their own positioning logic (`ResizeObserver` + manual coordinate math) and are intentionally outside the modal system.
 
 If you're building a centered dialog, you're in the system. If you're building a context popup that follows a target element, you're not.
 
 ## See also
 
 - [Architecture overview](/internals/architecture/) — where the modal layer sits in the four-process topology.
-- Source: [`frontend/app/element/modal-v2.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-v2.scss), [`frontend/app/element/modal-v2.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-v2.tsx), [`frontend/app/tab/TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
+- Source: [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss), [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx), [`frontend/app/tab/TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
+- Design spec for the scope axis: [`SPEC_UNIFIED_MODAL_SYSTEM_2026_05_21.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_MODAL_SYSTEM_2026_05_21.md).
