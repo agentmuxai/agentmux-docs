@@ -106,7 +106,7 @@ export default defineConfig({
 								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
-								{ label: 'Modal system (modal-v2)', slug: 'internals/modal-system' },
+								{ label: 'Modal system', slug: 'internals/modal-system' },
 								{ label: 'Error catalog', slug: 'internals/error-catalog' },
 								{ label: 'Clipboard & export', slug: 'internals/clipboard' },
 								{ label: 'Zoom system', slug: 'internals/zoom' },
