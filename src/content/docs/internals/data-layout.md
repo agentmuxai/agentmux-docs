@@ -5,7 +5,7 @@ description: The on-disk layout for AgentMux — per-channel data dirs, per-inst
 
 This page documents the on-disk layout AgentMux uses to isolate state across builds and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For the SQLite stores themselves, see [Persistence](/internals/persistence/).
 
-The on-disk layout is keyed by **channel** (per [`SPEC_DATA_CHANNELS_2026_05_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md)), not by version — every version within a channel reads and writes the same data dir, so My Agents / conversations / identity bundles persist across patch and minor bumps. Across channels (`stable`, `beta`, `dev-portable`, `dev-<branch>`) state is fully isolated.
+The on-disk layout is keyed by **channel** (per [`SPEC_DATA_CHANNELS_2026_05_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md)), not by version — every version within a channel reads and writes the same data dir, so My Agents / conversations / identity bundles persist across patch and minor bumps. Across channels (`stable`, `beta`, `dev-portable`, `dev-<branch>`) state is fully isolated. Dev mode adds a fourth axis below the channel — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
 
 ## Channels: what they replace
 
@@ -18,17 +18,51 @@ Earlier builds isolated by **version** — each new build got a fresh, empty `~/
 | **Installed** (production install) | `stable` | `~/.agentmux/channels/stable/` |
 | **Portable** (downloaded released ZIP) | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
 | **Portable** (local `task package` build) | `dev-portable` | `~/.agentmux/channels/dev-portable/` |
-| **Dev** (`task dev`) | `dev-<branch>` | `~/.agentmux/channels/dev-<branch>/` |
+| **Dev** (`task dev`) | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
+
+Dev mode lives outside `channels/` on purpose: branches are short-lived and numerous, so promoting each one to a first-class channel would clutter the namespace. The `<clone-id>` segment was added when [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) generalized Dev mode to also be per-clone — see [Per-clone isolation in Dev mode](#per-clone-isolation-in-dev-mode) below.
 
 The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`agentmux-common/src/runtime_mode.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs)). The channel is derived from the mode, with an override:
 
-- `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable.
+- `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't traverse `channels/`).
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths.
 
+### Per-clone isolation in Dev mode
+
+Dev mode is keyed by two segments under `~/.agentmux/dev/`:
+
+1. **`<branch>`** — the git branch you're on (`main`, `agentx/foo`, etc.), slugified. Two `task dev` sessions on different branches always isolate.
+2. **`<clone-id>`** — a 16-char FNV-1a hash of the clone's workspace-root absolute path. Two `task dev` sessions on the **same** branch but from different clones (e.g. `C:\repo1\agentmux` and `D:\repo2\agentmux`) get distinct subdirs and isolate fully.
+
+Without this second segment, two clones on the same branch would resolve to the same `~/.agentmux/dev/<branch>/` and silently collide on:
+
+- the single-instance lockfile,
+- the launcher's named-pipe IPC (the second clone's launcher would route opens into the first clone's window),
+- the data dir and logs.
+
+Each `task dev` derives its `clone-id` from `current_exe()` at launch, hashes the canonical lowercase path, and threads it into [`RuntimeMode::Dev { branch, clone_id }`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs). It travels to host and sidecar via `AGENTMUX_CLONE_ID`.
+
+`task dev` also derives a per-clone **Vite port** the same way (`5173 + cksum(workspace-root) % 200`), so the dev server doesn't fight `--strictPort` on a single hardcoded port either. Override with `AGENTMUX_VITE_PORT=<n> task dev` if you need a specific port.
+
+Legacy `dev/<branch>/` data from before [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) is left in place — it isn't auto-migrated into a clone-id subdir. If you launch a binary that doesn't supply `AGENTMUX_CLONE_ID`, path resolution falls back to the pre-PR two-level `dev/<branch>/` layout for back-compat.
+
 ### Schema safety lock + snapshots
 
-Migrations are **forward-only**. When a newer binary opens a channel whose schema is older, it runs the migrations on launch. When an *older* binary tries to open a channel whose schema is **newer** than it knows about, it refuses to open — protecting against downgrade corruption. Snapshots auto-save before any migration runs and the last 5 are kept; you can roll back manually if a migration produces bad state.
+Migrations are **forward-only**. When a newer binary opens a channel whose schema is older, it runs the migrations on launch. When an *older* binary tries to open a channel whose schema is **newer** than it knows about, it refuses to open with a `StoreError::SchemaTooNew` and an actionable error message — protecting against downgrade corruption.
+
+Pre-migration snapshots auto-save when an upgrade-with-migration is detected, then prune to the last 5 per channel:
+
+```
+~/.agentmux/snapshots/<channel>-pre-v<code-version>-<ISO8601>.bak/
+  ├── objects.db
+  ├── sagas.db
+  └── filestore.db
+```
+
+The snapshot is a `VACUUM INTO` copy of each SQLite store — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
+
+To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back over the channel's `data/db/` dir. There's no CLI for this yet — it's a planned follow-up.
 
 ## Per-channel contents
 
