@@ -58,11 +58,11 @@ Examples in the codebase: `about.tsx`, `command-palette.tsx`, `messagemodal.tsx`
 
 The modal floats over the tab's content area only — the title bar and tab bar stay interactive. Used when the dialog is tightly coupled to a specific tab (e.g. Agent launch / install).
 
-These modals run through `TabModalLayer`, which wraps every tab's tile layout, provides a `TabModalScope` for the mount point, and dispatches on a request kind. Triggering one:
+These modals run through `ModalLayer` (scoped to `"tab"` or `"pane"`), which wraps a tile layout (tab-scope) or a single pane (pane-scope), provides a `TabModalScope` or `PaneModalScope` for the mount point, and dispatches on a request kind. Triggering one:
 
 ```tsx
-const tabModal = useTabModal();
-tabModal.open({
+const modalLayer = useModalLayer();
+modalLayer.open({
     kind: "launch-agent",
     agent,
     originBlockId,
@@ -90,15 +90,108 @@ return (
 );
 ```
 
-Add new request variants in [`frontend/app/tab/tab-modal.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/tab-modal.ts) and a matching `case` in `renderRequest()` of [`TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
+Add new request variants in [`frontend/app/element/modal-layer.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-layer.ts) and a matching `case` in `renderRequest()` of [`ModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/ModalLayer.tsx).
 
 Examples: `AgentLaunchModal.tsx`, `AgentInstallModal.tsx`, `AgentCreateFromTemplateModal.tsx`.
 
-### Pane-scope (when added)
+### Pane-scope
 
-Same pattern as tab-scope but narrower. A pane (e.g., an agent pane) renders a `<PaneModalScope.Provider value={mountAccessor}>` around its content; an in-pane `<Modal scope="pane">` resolves its mount + inert boundary from that. Visual: backdrop covers only the pane's bounds, every other pane in the tab stays interactive.
+Same pattern as tab-scope but narrower. A pane (e.g., an agent pane or browser pane) wraps its content in `<ModalLayer scope="pane">`; an in-pane `useModalLayer()` call resolves its mount + inert boundary from that. Visual: backdrop covers only the pane's bounds, every other pane in the tab stays interactive.
 
-The infrastructure (context, mount resolution, inert region, stack accounting for non-overlapping pane locks) is in place; the first caller adds the provider and switches to `scope="pane"`.
+Live callers: agent panes (`frontend/app/view/agent/agent-view.tsx`) and browser panes (`frontend/app/view/browser/browser-view.tsx`) both wrap with `<ModalLayer scope="pane">`. Tab-scope `ModalLayer` lives in `frontend/app/tab/tabcontent.tsx`. The pane-scope path is what's exercised when you click "Install" on an agent definition card from inside an agent pane, or when a browser pane prompts for HTTP Basic Auth — the modal covers only that pane, not the whole tab.
+
+## Compact variant — narrow lock regions
+
+Tab- and pane-scoped modals render inside whatever rect their `ModalLayer` mount node is — which can be very small (a 240px three-pane browser column, a 320px agent pane in a narrow window). At those widths the standard panel chrome and per-modal min-widths don't fit. The compact variant rewrites the layout structurally so modals **hug the pane edge**, **never overflow horizontally**, and **size their content to whatever room they actually have**.
+
+### Trigger: CSS container queries
+
+`ModalLayer` declares the mount node as a CSS query container:
+
+```scss
+.modal-layer-mount {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    container-type: inline-size;
+    container-name: modal-mount;
+}
+```
+
+The compact rules sit inside a single `@container modal-mount (max-width: 400px) { … }` block in `modal.scss`. No JS observer, no class toggle — the browser drives the variant continuously as the mount rect changes (a near-threshold pane drag transitions smoothly, not a binary cliff).
+
+The 400px threshold matches the largest body min-width across the existing modals — anything narrower than that needs compact treatment.
+
+### What the compact block does
+
+Inside the `@container` rule:
+
+| Rule | Effect |
+|---|---|
+| `.modal-root { padding: 1px; }` | Reclaims 48px of horizontal real estate from the default 24px-each-side root padding. The panel border lands within 1px of the pane edge — drawer-style. |
+| `.modal-panel[data-size] { min-width: 0; width: 100%; max-width: 100%; }` | Panel fills the pane width regardless of its declared `data-size`. |
+| `.modal-panel { max-height: calc(100% - 2px); }` | Matches the new root padding so vertical real estate isn't wasted. |
+| `.modal-panel-body[class], .modal-panel-body[class] > * { min-width: 0; }` | Universal flex-shrink-trap break. Every modal body and its direct children can shrink below their intrinsic content width — no per-modal opt-in required. The `[class]` selector bumps specificity to `(0,2,0)` so it wins over per-modal `.agent-install-modal-body { min-width: 560px }` style declarations regardless of bundle import order. |
+| `.modal-panel-header / -title / -description / -body / -footer { padding/font-size shrunk }` | Compact chrome: shorter title, smaller body padding, footer stacks vertically with full-width buttons (mobile-pattern thumb-reachable order — Cancel on top, primary action at bottom). |
+
+Per-modal SCSS files can add their own `@container modal-mount (max-width: 400px) { … }` blocks for content-specific tweaks. Example from `_install-modal.scss`:
+
+```scss
+.agent-install-modal-body {
+    min-width: 560px;
+    max-width: 720px;
+
+    @container modal-mount (max-width: 400px) {
+        min-height: 200px;   // xterm needs vertical viewport
+    }
+}
+```
+
+The universal cascade handles `min-width: 0`; the per-modal block adds whatever content-specific overrides remain (here, a smaller minimum vertical viewport so the xterm log stays usable).
+
+### Width math without overflow — `width: min(<size>, 100%)`
+
+Panel widths are declared with `min()` instead of fixed pixels so the panel structurally cannot exceed its containing block:
+
+```scss
+.modal-panel {
+    &[data-size="sm"]  { width: min(360px, 100%); }
+    &[data-size="md"]  { width: min(520px, 100%); }
+    &[data-size="lg"]  { width: min(720px, 100%); }
+    &[data-size="xl"]  { width: min(960px, 100%); }
+    &[data-size="fit"] { width: auto; max-width: 100%; }
+}
+```
+
+This is independent of the compact rule — it applies at every width. A 600px-wide pane gets a panel sized to `min(720px, 600px) = 600px`, not an overflowing 720px panel that the modal-panel's `overflow: auto` would expose as a scrollbar.
+
+### Content-managed surfaces — xterm, monaco, canvas
+
+CSS alone can't shrink a child that draws to a `<canvas>` with explicit pixel dimensions. xterm.js defaults to `cols: 80, rows: 24` → renders a ~600px-wide canvas before any layout settles. In a narrow pane, that locked-in 600px paints first, the modal-panel sizes itself around it, and `overflow: auto` reserves a horizontal scrollbar before `FitAddon`'s first ResizeObserver tick can resize.
+
+The install modal works around this by booting xterm at the smallest viable size and letting `FitAddon` resize up:
+
+```ts
+terminal = new Terminal({
+    cols: 2,
+    rows: 2,
+    // ...
+});
+terminal.open(termRef);
+// FitAddon.fit() runs after open() and after fonts.ready, resizing
+// xterm to the actual container on the next animation frame.
+```
+
+The initial paint is tiny, the resize is upward, and the modal panel never sees a 600px canvas. Same approach applies to any future modal that hosts a pixel-sized content surface.
+
+### Modal stack & compact
+
+Compact behavior is independent of the modal stack. A `window`-scope modal inside a narrow window still gets compact treatment (its mount node — `document.body` — is the narrow window). A `tab`-scope modal in a narrow window gets compact. A `pane`-scope modal in a narrow pane gets compact. The `@container` selector resolves against the nearest containing-query ancestor (`.modal-layer-mount`) regardless of scope.
+
+Design history: `MODAL_COMPACT_VARIANT_ARCHITECTURE_2026_05_26.md` documents the six failure modes the variant addresses (per-body opt-in fragility, flex-shrink traps, content-managed widths, `size="fit"` content-driven sizing, bootstrap timing races, wasted edge padding) and the two-phase migration (Phase 1 = structural CSS + xterm deferral; Phase 2 = JS class-toggle → container queries).
 
 ## Modal stack — how nested modals behave
 
@@ -111,18 +204,18 @@ Concrete behavior:
 
 `closeOnBackdropClick={false}` doesn't silently swallow backdrop clicks — it triggers a "nudge" animation on the panel's `[data-modal-dismiss]` control, signaling the user to cancel explicitly.
 
-## Chained flows — `tabModal.replace(next)`
+## Chained flows — `modalLayer.replace(next)`
 
-When a modal completes and the natural next step is **another** modal in the same flow (install → launch, install → auth → launch, workflow setup → workflow run), use `tabModal.replace(next)` instead of `close()` followed by `open(next)`.
+When a modal completes and the natural next step is **another** modal in the same flow (install → launch, install → auth → launch, workflow setup → workflow run), use `modalLayer.replace(next)` instead of `close()` followed by `open(next)`.
 
 ```tsx
-const tabModal = useTabModal();
+const modalLayer = useModalLayer();
 
 // First modal opens cold — full entrance animation:
-tabModal.open({ kind: "install-agent", ... onInstalled: () => {
+modalLayer.open({ kind: "install-agent", ... onInstalled: () => {
     // Crossfade into the launch modal — backdrop + outer panel stay
     // mounted; only the inner content remounts with a 140ms fade.
-    tabModal.replace({ kind: "launch-agent", ... });
+    modalLayer.replace({ kind: "launch-agent", ... });
 }});
 ```
 
@@ -144,17 +237,17 @@ See [`SPEC_MODAL_TRANSITIONS_2026_05_18.md`](https://github.com/agentmuxai/agent
 
 ### What about `close()`?
 
-`tabModal.close()` is for **dismissal** — the user clicked Cancel, hit ESC, or clicked the backdrop. It tears down the modal instantly (no exit animation). Don't use `close()` as part of a chain — it leaves a gap where the backdrop disappears before the next modal opens, producing the visible jolt that `replace` was added to fix.
+`modalLayer.close()` is for **dismissal** — the user clicked Cancel, hit ESC, or clicked the backdrop. It tears down the modal instantly (no exit animation). Don't use `close()` as part of a chain — it leaves a gap where the backdrop disappears before the next modal opens, producing the visible jolt that `replace` was added to fix.
 
 ## Paint gate — wait for content to settle
 
-The entrance animation doesn't fire until the modal subtree has painted once. `TabModalLayer` mounts the modal with `visibility: hidden` and animations suppressed, lets the browser run one full paint cycle (rAF×2 so `FitAddon`, autofocus, dropdown population, and any other synchronous-after-mount work finish their layout), then flips a `data-ready` attribute on the overlay → CSS reveals the modal and starts the entrance keyframes.
+The entrance animation doesn't fire until the modal subtree has painted once. `ModalLayer` mounts the modal with `visibility: hidden` and animations suppressed, lets the browser run one full paint cycle (rAF×2 so `FitAddon`, autofocus, dropdown population, and any other synchronous-after-mount work finish their layout), then flips a `data-ready` attribute on the overlay → CSS reveals the modal and starts the entrance keyframes.
 
 Why this exists: without the gate, the install modal's xterm container is still 0×0 during the 140ms pop-in animation. The user sees the entrance play over a half-laid-out terminal that pops to its real size mid-animation. Other modals show similar flicker as form fields autofocus or selects populate. The gate moves all that work into a hidden frame and reveals the result.
 
 Two gates run in parallel:
 
-- **`data-ready`** — gates the backdrop + outer panel. Fires once per `tabModal.open(...)` (the cold-open path); persists across `tabModal.replace()` swaps.
+- **`data-ready`** — gates the backdrop + outer panel. Fires once per `modalLayer.open(...)` (the cold-open path); persists across `modalLayer.replace()` swaps.
 - **`data-content-ready`** — gates only the inner `.tab-modal-content`. Re-arms on every `replace()` so the swapped content also waits for paint before crossfading.
 
 A 200ms `setTimeout` failsafe forces both gates open if `requestAnimationFrame` stays parked (background tab, suspended renderer). Reduced-motion still respected — the gate still applies but the keyframes are suppressed regardless.
@@ -201,5 +294,6 @@ If you're building a centered dialog, you're in the system. If you're building a
 ## See also
 
 - [Architecture overview](/internals/architecture/) — where the modal layer sits in the four-process topology.
-- Source: [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss), [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx), [`frontend/app/tab/TabModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/tab/TabModalLayer.tsx).
+- Source: [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss), [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx), [`frontend/app/element/ModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/ModalLayer.tsx).
 - Design spec for the scope axis: [`SPEC_UNIFIED_MODAL_SYSTEM_2026_05_21.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_MODAL_SYSTEM_2026_05_21.md).
+- Compact-variant architecture: [`MODAL_COMPACT_VARIANT_ARCHITECTURE_2026_05_26.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/analysis/MODAL_COMPACT_VARIANT_ARCHITECTURE_2026_05_26.md).
