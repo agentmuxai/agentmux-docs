@@ -14,9 +14,11 @@ This page explains how that works from a user's perspective. For the underlying 
 | **Installed** | Normal MSI install | `stable` | `~/.agentmux/channels/stable/` |
 | **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
 | **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable` | `~/.agentmux/channels/dev-portable/` |
-| **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>` | `~/.agentmux/channels/dev-<branch>/` |
+| **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
-The mode is detected at startup; the channel is derived from the mode. The override is `AGENTMUX_CHANNEL=<name>` — pin a channel explicitly for parallel-channel testing or to make a dev build share state with a portable.
+Dev mode lives under `~/.agentmux/dev/` (outside `channels/`) and adds a per-clone segment so two checkouts of the same branch can run side-by-side. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones) below.
+
+The mode is detected at startup; the channel is derived from the mode. The override is `AGENTMUX_CHANNEL=<name>` — pin a channel explicitly for parallel-channel testing or to make a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't route through `channels/`).
 
 ## What's per-instance vs per-channel
 
@@ -64,6 +66,29 @@ You can:
 
 Each new launch picks up its own dynamic backend port. There's no port to coordinate.
 
+## Multiple `task dev` sessions from different clones
+
+Two checkouts of `agentmux` on the same host can each run `task dev` in parallel, even on the same branch. Every dev launch derives a stable **clone id** from a hash of its workspace-root path:
+
+- **Data dir:** `~/.agentmux/dev/<branch>/<clone-id>/` — distinct per clone, so lockfile, named-pipe IPC, CEF cache, and logs all isolate. (Without this, two clones on the same branch would silently share state — the second `task dev`'s launcher would attach to the first clone's running window.)
+- **Vite dev server port:** `5173 + cksum($PWD) % 200` — derived the same way. First clone often gets 5173; the second gets a different deterministic port from the same range (5173–5372).
+- **Sidecar TCP ports:** dynamic (OS-assigned), so always distinct without any keying.
+- **`target/` and `dist/cef-dev/`:** live inside each clone's working tree, so they're per-clone by construction.
+
+You don't need to configure anything — the derivation is automatic. If two clones happen to hash to the same Vite port (rare, but possible), override with `AGENTMUX_VITE_PORT=<free-port> task dev`. To force a specific clone identity for some external integration, set `AGENTMUX_CLONE_ID=<16-hex>` before launch.
+
+Switching branches within a clone still re-keys the data dir by `<branch>` — your `main` and `agentx/feature` dev sessions remain isolated from each other regardless of which clone they're in.
+
+## Environment variables
+
+| Variable | Effect |
+|---|---|
+| `AGENTMUX_CHANNEL=<name>` | Pin the channel explicitly for Installed / Portable runs. Lets you test a release candidate channel side-by-side with `stable` without touching `stable` state. No effect in Dev mode. |
+| `AGENTMUX_DEV_BRANCH=<name>` | Override the branch detection for Dev mode (CI-style). Useful when you're running a dev build from a CI worker that has no checked-out branch. |
+| `AGENTMUX_CLONE_ID=<16-hex>` | Override the auto-derived clone id. Mostly used by child processes (host, sidecar) that inherit it from the launcher; you'd rarely set it by hand. |
+| `AGENTMUX_VITE_PORT=<n>` | Override the auto-derived per-clone Vite port. Useful when the derivation collides or you need a specific port for an external integration. |
+| `AGENTMUX_HOME_OVERRIDE=<path>` | Test-only — replace `~/.agentmux/` as the root. Used by the test suite to keep tempdirs isolated. |
+
 ## Tearing a tab into a new instance (Windows)
 
 You can spawn a fresh AgentMux instance directly from a running window by **dragging a tab below the tab bar**. The drag has to clear the tab bar by ~5px before it commits — pulling the tab back into the bar before that threshold cancels the gesture, as does pressing `Esc` mid-drag.
@@ -95,7 +120,7 @@ If you need to wipe everything for a channel: delete that channel's `cef-cache/`
 ## Common pitfalls
 
 **"Why isn't my dev build picking up the meta?"**
-You're probably running `task dev` from a different branch than the one that wrote the meta. Each branch gets its own `dev-<branch>` channel; switching branches and restarting `task dev` switches the data dir.
+You're probably running `task dev` from a different branch — or a different clone — than the one that wrote the meta. Each (branch, clone) pair gets its own dev data dir at `~/.agentmux/dev/<branch>/<clone-id>/`. Switching branches restarts the session in a different dir; running from a separate checkout of the same branch also gets its own dir. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones).
 
 **"My v0.38.3 database is gone after I installed v0.38.4."**
 It's there — the `stable` channel data dir is shared by all `stable` versions, and the schema migrated forward in place. Open the new version and your existing My Agents / conversations / identity bundles are all there. (This is the channels design: per-version isolation was the *old* behavior; it's gone.)
