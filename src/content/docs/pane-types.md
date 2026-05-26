@@ -10,18 +10,19 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-The widget bar has two tiers — pinned (visible directly in the bar) and **More** (overflow dropdown). Both are user-facing.
+Every widget is pinned by default — the widget bar shows the full set directly, collapsing to icon-only when the title bar gets narrow. There's no overflow / More dropdown anymore (it existed in earlier builds but was removed; the `widget:icononly` setting force-collapses labels manually if you prefer).
 
-| Pane | Icon | View ID | Description | Tier |
-|------|------|---------|-------------|------|
-| **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. | Pinned |
-| **Browser** | globe | `browser` | Embedded native `CefBrowserView` | Pinned |
-| **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js | Pinned |
-| **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs | Pinned |
-| **Editor** | file-code | `editor` | Code editor with syntax highlighting | More |
-| **Swarm** | bee | `swarm` | Multi-agent orchestration and history | More |
-| **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) | More |
-| **Help** | circle-question | `help` | Built-in documentation | More |
+| Pane | Icon | View ID | Description |
+|------|------|---------|-------------|
+| **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. |
+| **Browser** | globe | `browser` | Embedded native `CefBrowserView` |
+| **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
+| **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
+| **Editor** | file-code | `editor` | Code editor with syntax highlighting |
+| **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
+| **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
+| **Help** | circle-question | `help` | Built-in documentation |
+| **Warden** | shield-halved | `warden` | Monitor and control agents across Host / LAN / Internet layers — see [Warden widget](/warden/) |
 
 ### Not pane types
 
@@ -157,7 +158,7 @@ Subagent panes auto-scroll by default. Scroll up to pause, and a "scroll to bott
 
 ## Drone
 
-The Drone pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the **More** dropdown in the widget bar.
+The Drone pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the widget bar.
 
 The name signals the pane's autonomous nature: a drone runs unattended on triggers, distinct from the interactive Agent pane.
 

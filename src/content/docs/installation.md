@@ -55,7 +55,7 @@ No system browser dependencies — the AppImage carries its own CEF runtime.
 
 ## Verify Installation
 
-After launching AgentMux, you should see the workspace with a default terminal pane and the widget bar at the top right. The widget bar's pinned tier (`Agent`, `Browser`, `Terminal`, `Sysinfo`, `DevTools`) appears directly; the rest (`Editor`, `Swarm`, `Help`) live in the **More** dropdown.
+After launching AgentMux, you should see the workspace with a default terminal pane and the widget bar at the top right. The widget bar lists every pinned widget — `Agent`, `Browser`, `Terminal`, `Sysinfo`, `Editor`, `Swarm`, `Drone`, `Help`, `Warden` — and collapses to icon-only when the title bar is narrow. **Settings** and **DevTools** are not widgets; both live in the **hamburger menu (≡)** at the top of the tab bar.
 
 ## Next Steps
 

@@ -134,7 +134,7 @@ See [Architecture overview](/internals/architecture/) for the full topology and 
 
 ### Frontend
 
-Open Chromium DevTools: click the **DevTools** widget (pinned by default) or use the keyboard shortcut. Reload the renderer with `Ctrl+R` / `Cmd+R`.
+Open Chromium DevTools from the **hamburger menu (≡)** in the top tab bar → **Dev Tools**, or use the keyboard shortcut. DevTools is no longer a widget-bar entry (moved to the hamburger menu — see [Pane types](/pane-types/)). Reload the renderer with `Ctrl+R` / `Cmd+R`.
 
 ### Backend Logs
 
