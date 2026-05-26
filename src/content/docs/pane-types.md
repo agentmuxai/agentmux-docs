@@ -18,7 +18,7 @@ Every widget is pinned by default — the widget bar shows the full set directly
 | **Browser** | globe | `browser` | Embedded native `CefBrowserView` |
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
-| **Editor** | file-code | `editor` | Code editor with syntax highlighting |
+| **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
@@ -102,6 +102,55 @@ When these two axes disagree, you get the classic "click X, type, characters lan
 **Click into the address bar:** The `<input>` `onMouseDown` handler fires `main_window_focus` IPC *before* the focus event, so OS keyboard focus moves to the main webview HWND at click-start. Without this, the address bar's `onFocus` fires too late — DOM focus moves but OS focus stays on the pane HWND, and keystrokes still route to Chromium. Buttons in the same nav bar happen to work without an explicit IPC because CEF/Chromium internally calls `SetFocus(parent)` for native `<button>` controls; `<input>` doesn't get the same treatment when the parent webview lacks focus.
 
 `onMouseDown` (not `onMouseEnter`) is the click-to-focus trigger on both sides — hover-focus loops were the original failure mode the design corrects.
+
+## Editor
+
+The editor pane is a [CodeMirror 6](https://codemirror.net/) workspace with a file-tree explorer down the left side. It covers quick edits, file viewing, and diffing inside a pane — it is not a standalone IDE; deep editing happens in your agent's terminal or via agent tool calls.
+
+Languages currently get syntax highlighting via lazy-loaded extensions: TypeScript / JavaScript, Python, Rust, HTML, CSS, JSON, Markdown. Other extensions fall back to plain text. `Ctrl+S` / `Cmd+S` saves the current file; unsaved changes mark the pane title with `*`.
+
+### File tree
+
+The tree column appears on the left, **expanded by default**, with three "roots" — your `$HOME` (auto-expanded so you don't have to drill in) plus every other drive (Windows) or mount (macOS `/Volumes`, Linux `/mnt` and `/media`, plus `/` itself). The drive that hosts `$HOME` is de-duplicated so it doesn't appear twice — UNIX `/` is the exception, always shown so you can reach `/etc`, `/opt`, etc.
+
+| Interaction | Behavior |
+|---|---|
+| Click a folder row | Expand if collapsed, collapse if expanded (lazy-loaded on first expand; cached after) |
+| Click a file row | Loads it into the editor. The active file's row carries a `circle-dot` icon and a highlight |
+| Hover the divider between tree and editor | Cursor flips to col-resize; drag to resize the tree column |
+| Symlinked rows | Followed automatically (matches VS Code), marked with a `↗` overlay |
+
+The tree column **width is persisted per pane** in block meta (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
+
+### Header chevron
+
+The pane header has a chevron next to the icon (`folder-tree` when expanded, `folder` when collapsed). Click it to hide the entire tree column and give CodeMirror the full pane width. The preference is **per pane** — `editor:tree_expanded` in block meta — so two editor panes in the same window can keep independent layouts (one tree-open for browsing, one full-width for diffs).
+
+### Toolbar
+
+Three small square buttons at the top of the tree, each with an **instant tooltip on hover** (zero delay — pure CSS reveal):
+
+| Button | Type | Behavior |
+|---|---|---|
+| 👁 / 👁‍🗨 | toggle | Show / hide hidden files. Off by default — dotfiles, `node_modules`, `.DS_Store`, `Thumbs.db`, `$RECYCLE.BIN` are filtered out. Persisted per pane as `editor:show_hidden` |
+| ⊟ | action | Collapse all folders to the top-level roots |
+| 🔄 | action | Re-fetch every currently expanded folder. Preserves expansion state. There's no background watcher; this is the explicit refresh path |
+
+### Open by path
+
+A path-input affordance lives at the bottom of the tree column when no file is open — handy when an LLM hands you an absolute path and you don't want to navigate the tree to find it. Once a file is open, the input is hidden to give the tree more vertical space.
+
+### What's not in the editor (yet)
+
+The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_FILE_TREE_2026-05-26.md) for the design. Not currently supported (each item listed there as future phases):
+
+- File watching for live tree updates — use the 🔄 button when something changes outside the app
+- Rename / delete / new-file from the tree — happens in your agent or terminal
+- Multi-root workspaces — single set of system roots is the only configuration
+- LSP-style symbol navigation, autocomplete, diagnostics
+- Tree-wide search / filter (the tree is read-only browse for now)
+
+10 MB file-size cap on read and write — over that, the editor refuses to load.
 
 ## Agent
 
