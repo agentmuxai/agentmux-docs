@@ -15,7 +15,7 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 | `launcher-sagas.db` | SQLite | launcher | Launcher-side saga state (LSD-1 batch onward) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
-All five live under the per-version data dir at `<data-dir>/data/` (i.e. `~/.agentmux/versions/<v>/data/` for installed/portable, `~/.agentmux/dev/<branch>/data/` for `task dev`). SQLite files are inside `data/db/`; the JSONL log is directly in `data/`.
+All five live under the channel's data dir at `<data-dir>/data/` (i.e. `~/.agentmux/channels/<channel>/data/` for installed/portable, `~/.agentmux/dev/<branch>/<clone-id>/data/` for `task dev`). SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<clone-id>` are derived.
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 

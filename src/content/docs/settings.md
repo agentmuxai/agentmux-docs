@@ -27,14 +27,14 @@ Under `Midnight` specifically, the agent pane background is pure black; other pa
 
 ## Settings File Location
 
-Settings are per-instance, under the unified data layout:
+Settings live under the channel's data dir, so every version that binds to the same channel reads and writes the same `settings.json`:
 
 | Mode | Path |
 |---|---|
-| Installed / Portable | `~/.agentmux/versions/<version>/config/settings.json` |
-| Dev (`task dev`) | `~/.agentmux/dev/<branch>/config/settings.json` |
+| Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
+| Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
-Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment variable (intended for tests). See [Multi-instance & dev mode](/multi-instance/) for the full layout.
+The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `dev-portable` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Terminal Settings
 
@@ -155,7 +155,7 @@ The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by Ag
 
 ## Data Directories
 
-All per-version state lives under `<data-dir>/`, where `<data-dir>` is `~/.agentmux/versions/<version>/` (installed / portable) or `~/.agentmux/dev/<branch>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+All channel state lives under `<data-dir>/`, where `<data-dir>` is `~/.agentmux/channels/<channel>/` (installed / portable) or `~/.agentmux/dev/<branch>/<clone-id>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 | Purpose | Path |
 |---|---|
