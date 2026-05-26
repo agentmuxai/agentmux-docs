@@ -209,7 +209,7 @@ Concrete behavior:
 When a modal completes and the natural next step is **another** modal in the same flow (install → launch, install → auth → launch, workflow setup → workflow run), use `modalLayer.replace(next)` instead of `close()` followed by `open(next)`.
 
 ```tsx
-const tabModal = useTabModal();
+const modalLayer = useModalLayer();
 
 // First modal opens cold — full entrance animation:
 modalLayer.open({ kind: "install-agent", ... onInstalled: () => {
