@@ -85,13 +85,15 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 
 | Mode | Instance dir |
 |---|---|
-| **Installed** | `~/.agentmux/versions/<version>/` |
-| **Portable** | `~/.agentmux/versions/<version>/` (same as installed — multi-instance is keyed on version, not on which folder you ran the binary from) |
-| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` (one dir per checked-out branch — different branches don't collide) |
+| **Installed** | `~/.agentmux/channels/<channel>/` (default channel: `stable`) |
+| **Portable** | `~/.agentmux/channels/<channel>/` — same as installed; instances on the same channel share an on-disk data dir but each runs as its own process tree. `stable` for downloaded releases, `dev-portable` for locally-packaged builds. |
+| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair, so two checkouts of the same branch don't collide. |
+
+Channels collapsed the old per-version `~/.agentmux/versions/<v>/` layout into one dir per channel — see [Data layout](/internals/data-layout/) and [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md) for the rationale and the per-clone Dev segment added in [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053).
 
 Inside each data dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
 
-Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, version-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`.
+Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, channel-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`. Pre-migration snapshots auto-save at `~/.agentmux/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 per channel kept).
 
 See [Multi-instance & dev mode](/multi-instance/) for the full layout, log discovery story, and per-instance vs shared boundary.
 

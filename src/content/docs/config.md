@@ -10,14 +10,14 @@ AgentMux stores its configuration in a JSON settings file. You can edit it direc
 
 ## Settings File Location
 
-Settings are per-instance, under the unified data layout:
+Settings live under the channel's data dir, so every version that binds to the same channel reads and writes the same `settings.json`:
 
 | Mode | Path |
 |---|---|
-| Installed / Portable | `~/.agentmux/versions/<version>/config/settings.json` |
-| Dev (`task dev`) | `~/.agentmux/dev/<branch>/config/settings.json` |
+| Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
+| Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
-Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment variable (intended for tests). See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `dev-portable` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Core Settings
 
