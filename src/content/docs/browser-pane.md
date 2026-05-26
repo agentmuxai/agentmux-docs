@@ -58,6 +58,12 @@ When you click inside the browser pane, the host fires `browser-pane-clicked` ov
 
 DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary. See [Reducer stack](/internals/reducer-stack/) for the broader pattern.
 
+## Pane-scope HTTP auth modal
+
+When a page in the browser pane requests HTTP Basic Auth (or similar challenges), the credential prompt appears as a modal **scoped to just this pane**, not the whole app. Other panes stay interactive; you can keep typing in a terminal next door while the auth challenge is up. The pane that's locked is the only one that goes modal.
+
+This is the same `ModalLayer` primitive the agent launch modal uses, parameterized over scope — the browser pane wraps its embedded `CefBrowserView` in a per-pane `ModalLayer`, so the lock region matches the pane bounds exactly. See [`SPEC_MODAL_LAYER_SCOPING`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs) for the underlying design.
+
 ## Per-pane state
 
 Each browser pane owns its own:

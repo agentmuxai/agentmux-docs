@@ -1,27 +1,38 @@
 ---
 title: Data layout
-description: The on-disk layout for AgentMux — per-version data dirs, per-instance runtime artifacts, account-wide shared state, pointer-file log discovery.
+description: The on-disk layout for AgentMux — per-channel data dirs, per-instance runtime artifacts, account-wide shared state, pointer-file log discovery.
 ---
 
-This page documents the on-disk layout AgentMux uses to isolate per-version state and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For the SQLite stores themselves, see [Persistence](/internals/persistence/).
+This page documents the on-disk layout AgentMux uses to isolate state across builds and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For the SQLite stores themselves, see [Persistence](/internals/persistence/).
 
-The on-disk layout is keyed by **version**, not by [instance](/glossary/#instance) — two same-version instances launched from different folders share the same data dir (see [Running multiple instances → What's per-instance vs per-version](/multi-instance/#whats-per-instance-vs-per-version)).
+The on-disk layout is keyed by **channel** (per [`SPEC_DATA_CHANNELS_2026_05_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md)), not by version — every version within a channel reads and writes the same data dir, so My Agents / conversations / identity bundles persist across patch and minor bumps. Across channels (`stable`, `beta`, `dev-portable`, `dev-<branch>`) state is fully isolated.
 
-## Three runtime modes, three data directories
+## Channels: what they replace
 
-| Mode | Data directory |
-|---|---|
-| **Installed** | `~/.agentmux/versions/<version>/` |
-| **Portable** | `~/.agentmux/versions/<version>/` (same as installed — keyed on version, not on which folder you ran the binary from; two same-version portables share this dir) |
-| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/` (one dir per checked-out branch — different branches don't collide) |
+Earlier builds isolated by **version** — each new build got a fresh, empty `~/.agentmux/versions/<version>/`. That cost was real: every `task package` bump reset My Agents and discarded conversation history. Channels collapse the per-version dirs back into one per-channel dir, so the only thing that changes across patch/minor bumps is whichever schema migrations run on launch.
 
-The mode is detected at startup by `agentmux-common`'s runtime-mode probe — see [`agentmux-common/src/runtime_mode.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs).
+## Runtime modes, channels, and data directories
+
+| Runtime mode | Default channel | Data directory |
+|---|---|---|
+| **Installed** (production install) | `stable` | `~/.agentmux/channels/stable/` |
+| **Portable** (downloaded released ZIP) | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
+| **Portable** (local `task package` build) | `dev-portable` | `~/.agentmux/channels/dev-portable/` |
+| **Dev** (`task dev`) | `dev-<branch>` | `~/.agentmux/channels/dev-<branch>/` |
+
+The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`agentmux-common/src/runtime_mode.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs)). The channel is derived from the mode, with an override:
+
+- `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable.
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths.
 
-## Per-version contents
+### Schema safety lock + snapshots
 
-Inside each data dir (shared by all same-version instances at runtime):
+Migrations are **forward-only**. When a newer binary opens a channel whose schema is older, it runs the migrations on launch. When an *older* binary tries to open a channel whose schema is **newer** than it knows about, it refuses to open — protecting against downgrade corruption. Snapshots auto-save before any migration runs and the last 5 are kept; you can roll back manually if a migration produces bad state.
+
+## Per-channel contents
+
+Inside each data dir (shared by every version of the same channel at runtime):
 
 | Path | Owns |
 |---|---|
@@ -36,17 +47,17 @@ See [Persistence](/internals/persistence/) for what each SQLite file holds and w
 
 ## Account-wide (shared) contents
 
-A single tree at `~/.agentmux/`:
+A single tree at `~/.agentmux/`, independent of channel:
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `~/.agentmux/shared/` | Account-wide state (cookies, OAuth tokens, dictionary downloads) — version-independent | All hosts |
+| `~/.agentmux/shared/` | Account-wide state (cookies, dictionary downloads) — shared across channels | All hosts |
 | `~/.agentmux/logs/current-host-v<version>.path` | Pointer file resolving to the running host's log path | Host (write-through) |
 | `~/.agentmux/logs/current-srv-v<version>.path` | Pointer file resolving to the running sidecar's log path | Sidecar (write-through) |
 | `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own startup-phase log (single file, no rotation) | Launcher |
 | `~/.agentmux/config.toml` | Account-wide launcher config (saga retention, etc.) | Launcher |
 
-The durable launcher reducer event log (`launcher-events.log`) lives at `<data-dir>/data/launcher-events.log`. With multiple same-version instances running, all of their launchers append to this single file.
+The durable launcher reducer event log (`launcher-events.log`) lives at `<data-dir>/data/launcher-events.log`. With multiple instances of the same channel running, all of their launchers append to this single file.
 
 ## Log discovery via pointer files
 
@@ -59,7 +70,7 @@ The host writes its own logs to `<data-dir>/logs/`. To make those discoverable f
 The pointer file's contents are the **absolute path** to the current log file:
 
 ```
-C:\Users\area54\.agentmux\versions\0.33.740\logs\agentmux-host-v0.33.740.log.2026-05-08
+C:\Users\area54\.agentmux\channels\stable\logs\agentmux-host-v0.38.4.log.2026-05-25
 ```
 
 So the canonical "find the running host's log" recipe is:

@@ -67,7 +67,14 @@ A Memory bundle holds four kinds of content per agent:
 
 ## Launch the Agent
 
-Open the Launch Agent modal (the same one you reach from the Agent picker), pick your Memory bundle, optionally pick an [Identity bundle](/identity/) for credentials, and click **Launch**. A new agent pane opens in your workspace.
+Open the Launch Agent modal (the same one you reach from the Agent picker). The picker is **two-tier**:
+
+- **My Agents** appears on top — every agent you've already created, sorted by recency. This is the fast path for re-launching something you've used before.
+- **+ New from template** below — opens the template gallery for spinning up a fresh agent. Templates are hidden until you explicitly open them (they were Phase-1 friction noise when the My Agents list grew).
+
+The modal also has a **Recent sessions** tab — re-attach to a prior conversation in a specific agent instead of starting a fresh turn. Useful when you closed a pane and want to pick up where you left off; the agent's history loads in the new pane and you continue from that point.
+
+Pick your Memory bundle (or accept the one the agent already has), optionally pick an [Identity bundle](/identity/) for credentials, and click **Launch**. A new agent pane opens in your workspace.
 
 The agent pane shows:
 
@@ -75,6 +82,7 @@ The agent pane shows:
 - **Tool calls** — Each tool invocation with name and arguments
 - **File diffs** — Side-by-side diffs when the agent modifies files
 - **Status** — Active, idle, or completed
+- **Disconnected banner** — surfaces if the WebSocket drops mid-turn; click to reconnect
 
 ## Agent Types
 

@@ -22,6 +22,16 @@ An Identity is a logical grouping of per-provider credentials:
 
 The set of providers in a bundle is open-ended — `AccountProvider` is `"github" | "aws" | "anthropic" | "custom"` today, with `custom` covering anything that doesn't fit a named slot.
 
+## OAuth credentials as bundle members
+
+Identity bundles now carry **OAuth credentials** as first-class members, not just API keys. Each bundle's Claude / Codex / Copilot OAuth login lives in its own auth-config directory, so two bundles for the same provider can hold genuinely distinct OAuth sessions (work account vs personal, etc.). The bundle stores a **pointer** to the directory plus a **status** field (`valid` / `expired` / `needs_reauth` / `unknown`) that surfaces in the bundle manager so credential health is visible without launching an agent.
+
+The OAuth invariant: a successful OAuth flow **always** lands bound to a bundle. If you start an OAuth flow without one selected, the system creates a new bundle on the spot rather than letting the credential live "ambient" — that ambient path used to silently let two named identities share `~/.claude`, with no actual isolation.
+
+Migration is automatic: any pre-bundles OAuth login becomes a synthesized **Default** identity bundle pointing at the existing `~/.claude` (or equivalent), no token movement required. The Default bundle behaves like any other — you can rename it, delete it, or swap an agent to a different bundle without losing the credential.
+
+For the spec, see [`SPEC_OAUTH_IDENTITY_BUNDLES_2026_05_22.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_OAUTH_IDENTITY_BUNDLES_2026_05_22.md) in the main repo.
+
 ## How Identity is reached
 
 Identity is **not a widget-bar entry.** Two paths reach it:
