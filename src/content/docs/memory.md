@@ -22,6 +22,14 @@ A **Memory bundle** is a reusable agent definition — everything that makes the
 
 A "vanilla CLI session" is a Memory bundle with all fields blank except `provider`. The singleton blank Memory at the top of the Launch modal selects exactly this case.
 
+## Session zones and default-continue
+
+A Memory bundle keeps a sequence of **session zones** — one per agent-anchored conversation thread. When you re-launch the same Memory bundle, the agent defaults to **continuing the most recent session** rather than starting fresh: previous turns load into the new pane, the agent's context carries over, and you pick up mid-thread.
+
+If you want a brand-new conversation instead, the Launch modal's **Recent sessions** tab lets you pick a specific older session to re-attach to (or click + to start a fresh zone). The default is "continue most recent" because that matches the workflow people actually have — close a pane, reopen, keep going.
+
+Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too. The Swarm pane's history tab is the canonical browser for zones across all your agents.
+
 ## How Memory is reached
 
 Memory is **not a widget-bar entry.** Two paths reach it:

@@ -33,16 +33,18 @@ For Claude / Codex / Gemini, an `*_API_KEY` env var (`CLAUDE_API_KEY`, `OPENAI_A
 
 Three providers (OpenClaw, Kimi, Pi) use API keys, configured by their own login subcommand. The key is stored under the provider's auth-config dir.
 
-## Per-version auth-dir isolation
+## Per-channel auth-dir isolation
 
-AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the version's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/versions/<version>/` for installed/portable, or `~/.agentmux/dev/<branch>/` for `task dev`). For example, on v0.33.733 portable:
+AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the channel's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/channels/<channel>/` — `stable` for installed and released portable, `dev-portable` for local `task package` builds, `dev-<branch>` for `task dev`). For example, on the `stable` channel:
 
 ```
-~/.agentmux/versions/0.33.733/config/auth/claude/
-~/.agentmux/versions/0.33.733/config/auth/codex/
-~/.agentmux/versions/0.33.733/config/auth/gemini/
+~/.agentmux/channels/stable/config/auth/claude/
+~/.agentmux/channels/stable/config/auth/codex/
+~/.agentmux/channels/stable/config/auth/gemini/
 …
 ```
+
+See [Data layout](/internals/data-layout/) for the broader channels model. The short version: every AgentMux build within a channel shares the same data dir (and therefore the same auth dirs), and different channels are isolated.
 
 Per-provider:
 
@@ -60,13 +62,13 @@ The `authDirName` field in `PROVIDERS` is what becomes the subdirectory name (`c
 
 ### Why isolate
 
-Without isolation, running two AgentMux instances of different versions side-by-side would mean both instances writing to the same `~/.claude/` (or equivalent) directory. Auth tokens, account state, and dictionary downloads would collide.
+Without isolation, running an installed AgentMux and a `task dev` build on the same machine would mean both writing to the same `~/.claude/` (or equivalent) directory. Auth tokens, account state, and dictionary downloads would collide.
 
-With isolation:
+With per-channel isolation:
 
-- v0.33.732 portable can keep its Claude OAuth token while you test v0.33.733 with a fresh login.
+- The `stable` channel keeps its Claude OAuth token while a `dev-<branch>` build does its own login flow against a separate auth dir.
 - `task dev` from a feature branch gets its own auth state — login flows in the dev build don't disturb the installed build.
-- Two simultaneous portables of the same version share auth state because they share the data dir. They're separate [instances](/glossary/#instance) (separate process trees) but with one shared on-disk auth set per version, which is the right answer — there's only one set of provider tokens worth tracking per version.
+- Two simultaneous portables of the same channel share auth state because they share the data dir. They're separate [instances](/glossary/#instance) (separate process trees) but one shared on-disk auth set per channel — there's only one set of provider tokens worth tracking per channel.
 
 ## Identity bundles vs auth-dir isolation
 
