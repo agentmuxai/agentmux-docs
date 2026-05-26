@@ -30,8 +30,8 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Tab inside an Agent pane (cog → settings → Identity). Manage credential bundle assigned to this agent. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory** | Tab inside an Agent pane (cog → settings → Memory). Manage personality/capability bundle (provider, model, instructions, MCP, skills). Same shape as Identity — view registered for programmatic access only. Replaces the older Forge concept. |
+| **Identity** | Per-agent: tab inside the Agent pane (cog → Identity). App-wide: hamburger menu (≡) → **Identity & Memory** opens the singleton bundle manager. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Memory** | Per-agent: tab inside the Agent pane (cog → Memory). App-wide: same hamburger menu (≡) → **Identity & Memory** entry — both bundles live side-by-side in the manager. Replaces the older Forge concept. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens `settings.json` in your default editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 | **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
@@ -112,8 +112,15 @@ The agent pane runs an AI agent session. It displays:
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 - **[Voice input](#voice-input)** — dictate prompts into the composer via the mic button in the pane header
+- **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
 Agent panes are configured through [Memory bundles](/memory/), accessible as a tab inside the agent pane (see Subsections below).
+
+### Activity indicator
+
+While an agent is actively streaming or tool-calling, the host signals the OS that the app is busy — Windows lights up the taskbar entry, macOS bounces the dock icon, Linux raises an urgency hint. The indicator clears as soon as the agent goes idle. Useful when you've shifted focus to another app and want to know when the agent has finished without polling the window.
+
+Activity is tracked per-pane and aggregated across panes, so the indicator reflects "at least one agent is busy" not "this specific agent". Implementation detail in `frontend/app/store/agentActivity.ts`.
 
 ### Rendering performance
 

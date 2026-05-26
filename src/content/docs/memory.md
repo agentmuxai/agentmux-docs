@@ -24,15 +24,23 @@ A "vanilla CLI session" is a Memory bundle with all fields blank except `provide
 
 ## How Memory is reached
 
-Memory is **not a widget-bar entry.** It's a tab inside an active Agent pane:
+Memory is **not a widget-bar entry.** Two paths reach it:
 
+**Per-agent (the original surface):**
 1. Open an Agent pane (pinned in the widget bar).
 2. Click the cog (⚙) in the pane header.
 3. Switch to the **Memory** tab.
 
 Same shape as the Identity tab — list of bundles on the left, detail editor on the right.
 
-The view registration (`view: "memory"`) and `MemoryPaneViewModel` exist so `pane.open` RPC and right-click menus can reach the view, but the primary path is the agent-pane subsection.
+**App-wide manager (hamburger menu):**
+1. Click the hamburger (≡) at the top of the tab bar.
+2. Choose **Identity & Memory**.
+3. The shared bundle manager opens — Memory and Identity bundles live side-by-side in the same modal.
+
+The hamburger path opens a singleton modal: if already open in another window, clicking focuses that window rather than spawning a duplicate.
+
+The view registration (`view: "memory"`) and `MemoryPaneViewModel` exist so `pane.open` RPC and right-click menus can reach the view, but the primary paths are the two above.
 
 ## Launch flow
 

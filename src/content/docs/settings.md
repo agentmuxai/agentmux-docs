@@ -108,6 +108,12 @@ Override the `~/.agentmux/` root with the `AGENTMUX_HOME_OVERRIDE` environment v
 | `conn:wshenabled` | boolean | `true` | Enable wsh shell integration on remote connections |
 | `conn:askbeforewshinstall` | boolean | `true` | Prompt before installing wsh on remote hosts |
 
+## Network Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `network:lan_discovery` | boolean | `false` | Advertise this instance + browse for peer AgentMux instances via mDNS. Off by default — on Windows, flipping it on triggers the firewall prompt for UDP 5353. See [LAN discovery](/lan-discovery/) for the toggle in the HostPopover (preferred over editing this file directly, since the UI flips the daemon live without a restart). |
+
 ## Other Settings
 
 | Setting | Type | Default | Description |
