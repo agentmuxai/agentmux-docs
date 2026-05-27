@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build",
+    "build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build && node scripts/normalize-mtimes.mjs",
     "build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
     "build:rust-docs": "node scripts/build-rust-docs.mjs",
     "preview": "astro preview",
@@ -27,10 +27,10 @@
   },
   "deployments": {
     "prod": {
-      "version": "0.0.47",
-      "commit": "d3a8df15e021",
-      "deployed_at": "2026-05-19T19:31:24.813Z",
-      "deployed_by": "claudius"
+      "version": "0.0.48",
+      "commit": "2be7d723b4a9",
+      "deployed_at": "2026-05-27T20:10:10.795Z",
+      "deployed_by": "agent1"
     }
   }
 }
