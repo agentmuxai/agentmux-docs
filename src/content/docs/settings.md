@@ -118,7 +118,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `widget:showhelp` | boolean | `true` | Show help widget in top bar |
+| `widget:showhelp` | boolean | `true` | Show Help widget in top bar |
 | `widget:icononly` | boolean | `false` | Icon-only widget bar (no labels) |
 | `blockheader:showblockids` | boolean | `false` | Display block IDs in pane headers |
 | `preview:showhiddenfiles` | boolean | `false` | Show hidden files in file previews |

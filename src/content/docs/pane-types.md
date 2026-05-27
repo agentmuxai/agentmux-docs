@@ -49,7 +49,7 @@ Features:
 - Remote connections (SSH)
 - [Voice input](#voice-input) — dictate commands into the PTY via the mic button in the pane header
 
-Open a terminal: `Cmd+N` / `Alt+N` or click the terminal icon in the top bar.
+Open a terminal: `Cmd+N` / `Alt+N` or click the **Terminal** icon in the top bar.
 
 The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#shell-helpers) for the full list.
 
