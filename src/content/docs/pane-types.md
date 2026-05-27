@@ -18,7 +18,7 @@ Every widget is pinned by default — the widget bar shows the full set directly
 | **Browser** | globe | `browser` | Embedded native `CefBrowserView` |
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
-| **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
+| **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
@@ -122,9 +122,11 @@ The tree column appears on the left, **expanded by default**, with three "roots"
 
 The tree column **width is persisted per pane** in block meta (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
 
-### Header chevron
+### Pane icon doubles as the tree toggle
 
-The pane header has a chevron next to the icon (`folder-tree` when expanded, `folder` when collapsed). Click it to hide the entire tree column and give CodeMirror the full pane width. The preference is **per pane** — `editor:tree_expanded` in block meta — so two editor panes in the same window can keep independent layouts (one tree-open for browsing, one full-width for diffs).
+The editor pane's header icon is the file-tree expand/collapse button. Click it to hide the entire tree column and give CodeMirror the full pane width; click again to bring it back. The glyph flips with state — `folder-tree` when the tree is open, `folder` when collapsed — and the tooltip mirrors that ("Hide file tree" / "Show file tree"). The preference is **per pane** — `editor:tree_expanded` in block meta — so two editor panes in the same window can keep independent layouts (one tree-open for browsing, one full-width for diffs).
+
+The pane **title shows the complete file path**, not just the basename, with a trailing `*` for unsaved changes. When several editor panes are open on similarly-named files (e.g. two `index.ts` in different directories), the title makes it unambiguous which one you're actually editing.
 
 ### Toolbar
 
@@ -140,14 +142,55 @@ Three small square buttons at the top of the tree, each with an **instant toolti
 
 A path-input affordance lives at the bottom of the tree column when no file is open — handy when an LLM hands you an absolute path and you don't want to navigate the tree to find it. Once a file is open, the input is hidden to give the tree more vertical space.
 
+### Language-server diagnostics (Phase 1)
+
+The editor speaks the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) for real, type-aware diagnostics. Phase 1 (shipped) covers **TypeScript and JavaScript** via [`typescript-language-server`](https://github.com/typescript-language-server/typescript-language-server); completion, hover, go-to-definition, and additional languages land in follow-up phases — see [`SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md).
+
+**Language servers are not bundled.** AgentMux follows the VS Code model: open a supported file, the editor looks for the server on your `PATH`, and either uses it or prompts you to install it.
+
+#### Install banner
+
+If the server binary isn't on `PATH` when you open a supported file, a yellow banner appears at the top of the editor pane with:
+
+- the server's name (e.g. *"TypeScript language server isn't installed"*),
+- the copy-paste install command (`npm install -g typescript-language-server typescript`),
+- a **Copy** button for the command,
+- a **Docs ↗** link to the upstream installation guide,
+- a × dismiss button (per-session — the banner reappears next time you open a server-supported file).
+
+Once you install the server and switch panes (or reopen the file), the banner is replaced by the running indicator.
+
+#### Status chip
+
+A small chip at the bottom of the editor shows the current server state — the chip colors track lifecycle:
+
+| Color | State |
+|---|---|
+| 🟡 yellow | Starting / initializing — child process spawned, awaiting `initialize` response |
+| 🟢 green | Ready — diagnostics streaming, `didChange` notifications going through |
+| 🔴 red | Crashed — server exited unexpectedly or the transport broke; the chip text shows the error |
+| ⚪ dimmed | Missing — server binary not on `PATH` (the install banner is also visible) |
+
+#### How it works
+
+- One supervisor process per **(workspace root, language)** lives on the backend. Two panes open on the same project share the same server (refcounted) — opening a second `.ts` file from the same repo costs zero new server processes.
+- The workspace root is detected by walking up the file's directory for `.git`, `Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`, `deno.json`, or `tsconfig.json` — whichever is closest wins. Files outside a project fall back to the parent directory.
+- Diagnostics arrive as gutter markers and underline squiggles, identical to CodeMirror's built-in lint surface. Severity follows the LSP spec: error → red, warning → yellow, info / hint → blue.
+- Edits debounce at **250 ms** before flowing to the server via `didChange`; that's deliberately conservative — most servers re-typecheck synchronously and a tighter window leaves the UI feeling laggy on big files.
+
+#### Kill switch
+
+Set `editor:lsp.enabled = false` in your settings to disable LSP across all editor panes. Useful if a misbehaving server is eating CPU and you want to roll back to syntax-only highlighting.
+
 ### What's not in the editor (yet)
 
-The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_FILE_TREE_2026-05-26.md) for the design. Not currently supported (each item listed there as future phases):
+The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_FILE_TREE_2026-05-26.md) for the file-tree design and [`SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md) for the language-server roadmap. Not currently supported (each item listed there as future phases):
 
 - File watching for live tree updates — use the 🔄 button when something changes outside the app
 - Rename / delete / new-file from the tree — happens in your agent or terminal
 - Multi-root workspaces — single set of system roots is the only configuration
-- LSP-style symbol navigation, autocomplete, diagnostics
+- LSP completion / hover / go-to-definition — Phase 2; only diagnostics ship today
+- LSP for languages other than TypeScript and JavaScript — Phase 3 (rust-analyzer, pyright, gopls, clangd are pre-wired in the install-hint table, just not surfaced yet)
 - Tree-wide search / filter (the tree is read-only browse for now)
 
 10 MB file-size cap on read and write — over that, the editor refuses to load.
