@@ -26,7 +26,7 @@ After completing the provider's login flow, AgentMux can launch agents using tha
 
 ## Configure an Agent via Memory bundles
 
-1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar.
+1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the **Agent** icon in the top bar.
 2. Open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab.
 3. Click **+ New Memory** to create a new bundle (or pick an existing one to edit).
 4. Fill in the bundle configuration:
