@@ -168,7 +168,7 @@ A small chip at the bottom of the editor shows the current server state — the 
 |---|---|
 | 🟡 yellow | Starting / initializing — child process spawned, awaiting `initialize` response |
 | 🟢 green | Ready — diagnostics streaming, `didChange` notifications going through |
-| 🔴 red | Crashed — server exited unexpectedly or the transport broke; the chip text shows the error |
+| 🔴 red | Crashed — server exited unexpectedly or the transport broke. The chip flips to `error`; the full reason is in the host log (`muxlog host LSP`) |
 | ⚪ dimmed | Missing — server binary not on `PATH` (the install banner is also visible) |
 
 #### How it works
