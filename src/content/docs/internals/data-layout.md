@@ -26,7 +26,7 @@ The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`age
 
 - `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't traverse `channels/`).
 
-Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths.
+Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths — with one carve-out: the sidecar's own log file is initialized to the shared `~/.agentmux/logs/` directly (see [Log discovery via pointer files](#log-discovery-via-pointer-files) below). The host log respects the per-channel `AGENTMUX_LOG_DIR`. PTY shells spawned by the sidecar also see `AGENTMUX_LOG_DIR=~/.agentmux/logs/`, so `muxlog` lookups resolve uniformly.
 
 ### Per-clone isolation in Dev mode
 
