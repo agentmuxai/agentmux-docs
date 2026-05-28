@@ -115,7 +115,14 @@ LOG="$(cat ~/.agentmux/logs/current-host-v<version>.path)"
 tail -F "$LOG"
 ```
 
-The sidecar uses the same pointer-file scheme but with a twist: its log file lives directly in `~/.agentmux/logs/` (hard-coded in `agentmux-srv` init, not under the per-channel data dir), so `current-srv-v<version>.path` stores just the basename. To resolve it: `tail -F "$AGENTMUX_LOG_DIR/$(cat $AGENTMUX_LOG_DIR/current-srv-v<version>.path)"`.
+The sidecar uses the same pointer-file scheme but with a twist: its log file lives directly in `~/.agentmux/logs/` (hard-coded in `agentmux-srv` init, not under the per-channel data dir), so `current-srv-v<version>.path` stores just the basename relative to that directory. The literal recipe:
+
+```bash
+LOG=~/.agentmux/logs/"$(cat ~/.agentmux/logs/current-srv-v<version>.path)"
+tail -F "$LOG"
+```
+
+(`$AGENTMUX_LOG_DIR` inside AgentMux-spawned terminals also points at `~/.agentmux/logs/` — the sidecar overrides it in `shell.rs` when spawning PTYs — but the launcher's process-level export is per-instance, so the literal path is the unambiguous form.)
 
 ### `muxlog` helper
 
