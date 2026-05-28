@@ -44,6 +44,8 @@ Click **Create**.
 
 In the Launch Agent modal, pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
 
+The first time you pick a provider, AgentMux installs that CLI for you — an inline install modal runs `npm install` and streams the output. No `npm install -g` step beforehand. Once installed, the binary is cached per AgentMux version and reused on every later launch.
+
 The agent starts in a new pane within your workspace. You'll see:
 
 - Real-time streaming output

@@ -15,6 +15,7 @@ AgentMux gives you a multiplexed workspace where multiple AI agents run in paral
 ## Key Concepts
 
 - **Panes** — Individual workspace units. Each pane has a type (`agent`, `browser`, `terminal`, `editor`, `swarm`, `drone`, `sysinfo`, `help`).
+- **Self-contained** — AgentMux bundles its own Chromium runtime and installs the agent CLIs for you on first use (in-pane install modal, per-version cache). No `npm install -g` step before launch.
 - **Identity bundles** — Named credential sets (GitHub PAT, AWS profile, Anthropic API key, …) you assign to an agent at launch. Survives renames; swappable without restart.
 - **Memory bundles** — Reusable agent personality + capability stacks (provider, model, instructions, MCP, skills). Manage via the Memory tab inside an Agent pane's settings panel. Replaces the older "Forge" concept.
 - **Interagent Comms** — Panes communicate via a backend pub-sub event system. An agent's output can stream into another pane's input.
