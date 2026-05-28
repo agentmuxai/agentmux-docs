@@ -26,7 +26,7 @@ The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`age
 
 - `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't traverse `channels/`).
 
-Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths.
+Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths — with one carve-out: the sidecar's own log file is initialized to the shared `~/.agentmux/logs/` directly (see [Log discovery via pointer files](#log-discovery-via-pointer-files) below). The host log respects the per-channel `AGENTMUX_LOG_DIR`. PTY shells spawned by the sidecar also see `AGENTMUX_LOG_DIR=~/.agentmux/logs/`, so `muxlog` lookups resolve uniformly.
 
 ### Per-clone isolation in Dev mode
 
@@ -86,8 +86,9 @@ A single tree at `~/.agentmux/`, independent of channel:
 | Path | Purpose | Owner |
 |---|---|---|
 | `~/.agentmux/shared/` | Account-wide state (cookies, dictionary downloads) — shared across channels | All hosts |
-| `~/.agentmux/logs/current-host-v<version>.path` | Pointer file resolving to the running host's log path | Host (write-through) |
-| `~/.agentmux/logs/current-srv-v<version>.path` | Pointer file resolving to the running sidecar's log path | Sidecar (write-through) |
+| `~/.agentmux/logs/current-host-v<version>.path` | Pointer file resolving to the running host's log path (absolute) | Host (write-through) |
+| `~/.agentmux/logs/agentmuxsrv-v<version>.log.<date>` | The sidecar's daily log file (lives directly in the shared dir, not the per-channel data dir) | Sidecar |
+| `~/.agentmux/logs/current-srv-v<version>.path` | Pointer file resolving to the running sidecar's log basename (relative to the same dir) | Sidecar (write-through) |
 | `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own startup-phase log (single file, no rotation) | Launcher |
 | `~/.agentmux/config.toml` | Account-wide launcher config (saga retention, etc.) | Launcher |
 
@@ -114,7 +115,14 @@ LOG="$(cat ~/.agentmux/logs/current-host-v<version>.path)"
 tail -F "$LOG"
 ```
 
-Same convention applies to the sidecar (`current-srv-v<version>.path`).
+The sidecar uses the same pointer-file scheme but with a twist: its log file lives directly in `~/.agentmux/logs/` (hard-coded in `agentmux-srv` init, not under the per-channel data dir), so `current-srv-v<version>.path` stores just the basename relative to that directory. The literal recipe:
+
+```bash
+LOG=~/.agentmux/logs/"$(cat ~/.agentmux/logs/current-srv-v<version>.path)"
+tail -F "$LOG"
+```
+
+(`$AGENTMUX_LOG_DIR` inside AgentMux-spawned terminals also points at `~/.agentmux/logs/` — the sidecar overrides it in `shell.rs` when spawning PTYs — but the launcher's process-level export is per-instance, so the literal path is the unambiguous form.)
 
 ### `muxlog` helper
 

@@ -9,23 +9,23 @@ This page is the practical "something's off, where do I look first" reference. A
 
 | Source | File | Tail recipe |
 |---|---|---|
-| Host (CEF) — includes frontend `[fe]` console | `<data-dir>/logs/agentmux-host-v<v>.log.<date>` | `muxlog host` (or `muxlog host '[fe]'` for frontend only) |
-| Sidecar (`agentmux-srv`) | `<data-dir>/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
+| Host (CEF) — includes frontend `[fe]` console | `<data-dir>/logs/agentmux-host-v<v>.log.<date>` | `muxlog host` (or `muxlog host '\[fe\]'` for frontend only) |
+| Sidecar (`agentmux-srv`) | `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
 | Launcher (early-startup) | `~/.agentmux/logs/agentmux-launcher.log` | `cat "$AGENTMUX_LOG_DIR/agentmux-launcher.log"` |
 | Launcher reducer events | `<data-dir>/data/launcher-events.log` | `tail -F` directly (JSONL) |
 
-The launcher log is the only one outside the per-version data dir — it's the early-startup file the launcher writes before paths are fully resolved.
+Only the host log lives in the per-version data dir — the sidecar and launcher both log directly to the shared `~/.agentmux/logs/`.
 
 ### Pointer files
 
-Daily log rotation means the active filename changes at UTC midnight. Rather than guessing, every host + sidecar process writes a **pointer file** with the current absolute path:
+Daily log rotation means the active filename changes at UTC midnight. Rather than guessing, both host and sidecar write a **pointer file** to the active log filename:
 
 ```bash
 LOG="$(cat ~/.agentmux/logs/current-host-v<version>.path)"
 tail -F "$LOG"
 ```
 
-The same convention applies for the sidecar (`current-srv-v<version>.path`). The pointer file is rewritten on each launch and on every rotation.
+The host pointer holds an absolute path (since the host log lives in the per-channel data dir). The sidecar pointer (`current-srv-v<version>.path`) holds just the basename, since the sidecar log lives directly in `~/.agentmux/logs/` next to it. Both pointers are rewritten on each launch and on every rotation.
 
 The shipped `muxlog` shell helper does this lookup for you and also handles the legacy basename-only pointer format used by older instances. See [Multi-instance & dev mode](/multi-instance/) for the full pointer story.
 

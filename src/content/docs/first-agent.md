@@ -8,25 +8,31 @@ AgentMux is in **early alpha** and under heavy active development. Many features
 
 This guide walks through connecting your first AI agent to AgentMux. AgentMux supports seven providers as first-class agent types — `claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, and `pi`. The full list lives in `frontend/app/view/agent/providers/index.ts:PROVIDERS` in the main repo.
 
-## Prerequisites
+## You don't need to preinstall the agent CLIs
 
-You need at least one AI agent CLI installed. Each provider has its own login flow:
+AgentMux is self-contained. Pick a provider in the Agent picker and — if the CLI isn't already in AgentMux's per-version cache — an **install modal** opens inline, runs the install for you, and streams the output in an xterm panel. Click **Install now** to start, **Continue to Launch** when it finishes. The cached binary is reused on subsequent launches for the same AgentMux version.
 
-| Provider | CLI Install | Auth | Login Command |
-|----------|------------|------|---------------|
-| **Claude Code** | `npm install -g @anthropic-ai/claude-code` (or `irm https://claude.ai/install.ps1 \| iex` on Windows / `curl -fsSL https://claude.ai/install.sh \| bash` on macOS / Linux) | OAuth | `claude auth login` |
-| **Codex CLI** | `npm install -g @openai/codex` | OAuth | `codex login` |
-| **Gemini CLI** | `npm install -g @google/gemini-cli` | OAuth | `gemini auth login` |
-| **OpenClaw** | `npm install -g @openclaw/acpx` | API key | `openclaw onboard` |
-| **Kimi Code CLI** | `pip install kimi-cli` | API key | `kimi login` |
-| **GitHub Copilot CLI** | `npm install -g @github/copilot` | OAuth | `copilot auth login` |
-| **Pi** | `npm install -g @mariozechner/pi-coding-agent` | API key | `pi config` |
+| Provider | Package | Install path |
+|---|---|---|
+| **Claude Code** | `@anthropic-ai/claude-code` | Auto-installed (npm) |
+| **Codex CLI** | `@openai/codex` | Auto-installed (npm, pinned) |
+| **Gemini CLI** | `@google/gemini-cli` | Auto-installed (npm, pinned) |
+| **OpenClaw** | `openclaw` | Auto-installed (npm) |
+| **GitHub Copilot CLI** | `@github/copilot` | Auto-installed (npm) |
+| **Pi** | `@mariozechner/pi-coding-agent` | Auto-installed (npm) |
+| **Kimi Code CLI** | `kimi-cli` (pip) | Manual today — `pip install kimi-cli`. In-app auto-install for pip-based providers is on the roadmap. |
 
-After completing the provider's login flow, AgentMux can launch agents using that provider. AgentMux isolates each provider's auth config to a per-instance subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable (see [Auth flows](/auth/) for the full list and isolation pattern).
+### System prerequisites
+
+A handful of providers (Claude Code, OpenClaw) need `git` available on your `PATH` at runtime. If it's missing when you launch, AgentMux opens a separate **prereq modal** with the upstream install link — install it on your machine, click **Refresh**, and proceed.
+
+### Auth happens inline too
+
+After the install completes (or immediately, when the CLI is already cached), AgentMux runs the provider's login flow inside the Launch modal via the **Pre-Launch Auth Panel** — OAuth in your browser for Claude / Codex / Gemini / Copilot, an inline key field for OpenClaw / Pi / Kimi. AgentMux isolates each provider's auth config to a per-channel subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable. See [Auth flows](/auth/) for the per-provider isolation map and OAuth state diagram.
 
 ## Configure an Agent via Memory bundles
 
-1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar.
+1. Open an agent pane: `Cmd+Shift+A` / `Alt+Shift+A`, or click the **Agent** icon in the top bar.
 2. Open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab.
 3. Click **+ New Memory** to create a new bundle (or pick an existing one to edit).
 4. Fill in the bundle configuration:

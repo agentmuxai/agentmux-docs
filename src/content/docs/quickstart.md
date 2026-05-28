@@ -28,7 +28,7 @@ When AgentMux opens, you'll see a default terminal pane. The key areas are:
 
 ## 3. Create a Memory bundle
 
-Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the agent icon in the top bar), then open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab. See [Memory bundles](/memory/) for the full configuration surface.
+Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the **Agent** icon in the top bar), then open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab. See [Memory bundles](/memory/) for the full configuration surface.
 
 Click **+ New Memory** and fill in:
 
@@ -43,6 +43,8 @@ Click **Create**.
 ## 4. Launch an Agent Session
 
 In the Launch Agent modal, pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
+
+The first time you pick a provider, AgentMux installs that CLI for you — an inline install modal runs `npm install` and streams the output. No `npm install -g` step beforehand. Once installed, the binary is cached per AgentMux version and reused on every later launch.
 
 The agent starts in a new pane within your workspace. You'll see:
 
