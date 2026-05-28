@@ -134,7 +134,7 @@ Use the `muxlog` shell helper from any AgentMux terminal:
 ```bash
 muxlog host         # tail the current host log
 muxlog srv          # tail the sidecar log
-muxlog host '[fe]'  # filter the host log to frontend lines
+muxlog host '\[fe\]'  # filter the host log to frontend lines
 muxlog host cat     # full file contents
 ```
 
