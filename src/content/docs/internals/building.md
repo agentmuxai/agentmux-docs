@@ -92,12 +92,23 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | `task bundle` | Bundle CEF runtime DLLs |
 | `task build:backend` | Build `agentmux-srv` |
 | `task build:frontend` | Build frontend only |
-| `task package` | Package a portable build for the host platform (Windows ZIP) |
+| `task package` | Package a **local** portable for the host platform (Windows ZIP) — ephemeral labeled build, see below |
+| `task package -- --fresh` | …with a throwaway data dir (clean-slate session) instead of the branch's persistent one |
 | `task package:linux` | Linux AppImage (writes to `~/Desktop` per `build-appimage-linux.sh`) |
 | `task test` | Run tests (`vitest`) |
 | `task clean` | Clean build artifacts |
 
 Run `task --list` to see every task. Note that `task package:macos` and `task package:msix` exist as TODO stubs in `Taskfile.yml` but do nothing — the full DMG / MSIX / .deb release artifact set is produced by [`agentmuxai/agentmux-builder`](https://github.com/agentmuxai/agentmux-builder), not local builds.
+
+### Local build labels
+
+`task package` is for **local** builds. It does **not** bump the version and does **not** touch git — the committed version moves only through `task release` (changesets). Each local build instead carries an ephemeral, traceable *label*:
+
+```
+agentmux-<version>+g<sha>[.dirty].<stamp>-x64-portable
+```
+
+Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10) — ignored for version precedence, so a local label can never collide with or reorder a release version. The `<sha>` ties the build back to its source commit, `.dirty` marks a build made from uncommitted changes, and `<stamp>` (a UTC build timestamp) makes every build's folder unique — so a running instance can never lock the next build's output folder. The data dir is keyed on the `dev-portable-<branch>` channel, so rebuilds of one branch share a session (agents/panes/auth persist across the iterate-rebuild loop); `--fresh` suffixes the channel with the stamp for a one-off clean slate. Full rationale: [`SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md).
 
 ## Source Layout
 

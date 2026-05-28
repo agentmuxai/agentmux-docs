@@ -35,7 +35,7 @@ Three providers (OpenClaw, Kimi, Pi) use API keys, configured by their own login
 
 ## Per-channel auth-dir isolation
 
-AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the channel's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/channels/<channel>/` — `stable` for installed and released portable, `dev-portable` for local `task package` builds, `dev-<branch>` for `task dev`). For example, on the `stable` channel:
+AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the channel's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/channels/<channel>/` — `stable` for installed and released portable, `dev-portable-<branch>` for local `task package` builds, `dev-<branch>` for `task dev`). For example, on the `stable` channel:
 
 ```
 ~/.agentmux/channels/stable/config/auth/claude/
