@@ -13,7 +13,7 @@ This page explains how that works from a user's perspective. For the underlying 
 |---|---|---|---|
 | **Installed** | Normal MSI install | `stable` | `~/.agentmux/channels/stable/` |
 | **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
-| **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable` | `~/.agentmux/channels/dev-portable/` |
+| **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` (per-branch; `-- --fresh` for a throwaway dir) |
 | **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
 Dev mode lives under `~/.agentmux/dev/` (outside `channels/`) and adds a per-clone segment so two checkouts of the same branch can run side-by-side. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones) below.
@@ -43,7 +43,7 @@ This means installing a new patch release of `stable` doesn't disturb your exist
 
 ## Channels replace per-version data dirs
 
-Earlier builds isolated by individual version (`~/.agentmux/versions/<version>/`). Every `task package` bump produced a fresh empty dir — My Agents reset, conversation history vanished. **Channels collapse that into one dir per channel**, with forward-only schema migrations on launch. A safety lock refuses to open a channel whose schema is newer than the running binary (so an older AgentMux can't downgrade-corrupt a channel a newer build wrote to). Pre-migration snapshots auto-save and the last 5 are kept.
+Earlier builds isolated by individual version (`~/.agentmux/versions/<version>/`), and `task package` bumped the version on every build, so each one produced a fresh empty dir — My Agents reset, conversation history vanished. **Channels collapse that into one dir per channel**, and `task package` no longer bumps (local builds carry an ephemeral label, not a new version), with forward-only schema migrations on launch. A safety lock refuses to open a channel whose schema is newer than the running binary (so an older AgentMux can't downgrade-corrupt a channel a newer build wrote to). Pre-migration snapshots auto-save and the last 5 are kept.
 
 See [Data layout → Schema safety lock + snapshots](/internals/data-layout/#schema-safety-lock--snapshots) and the [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md) spec for the design.
 

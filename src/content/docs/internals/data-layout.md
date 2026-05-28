@@ -5,11 +5,11 @@ description: The on-disk layout for AgentMux — per-channel data dirs, per-inst
 
 This page documents the on-disk layout AgentMux uses to isolate state across builds and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For the SQLite stores themselves, see [Persistence](/internals/persistence/).
 
-The on-disk layout is keyed by **channel** (per [`SPEC_DATA_CHANNELS_2026_05_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md)), not by version — every version within a channel reads and writes the same data dir, so My Agents / conversations / identity bundles persist across patch and minor bumps. Across channels (`stable`, `beta`, `dev-portable`, `dev-<branch>`) state is fully isolated. Dev mode adds a fourth axis below the channel — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
+The on-disk layout is keyed by **channel** (per [`SPEC_DATA_CHANNELS_2026_05_24.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md)), not by version — every version within a channel reads and writes the same data dir, so My Agents / conversations / identity bundles persist across patch and minor bumps. Across channels (`stable`, `beta`, `dev-portable-<branch>`, `dev-<branch>`) state is fully isolated. Dev mode adds a fourth axis below the channel — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
 
 ## Channels: what they replace
 
-Earlier builds isolated by **version** — each new build got a fresh, empty `~/.agentmux/versions/<version>/`. That cost was real: every `task package` bump reset My Agents and discarded conversation history. Channels collapse the per-version dirs back into one per-channel dir, so the only thing that changes across patch/minor bumps is whichever schema migrations run on launch.
+Earlier builds isolated by **version** — each new build got a fresh, empty `~/.agentmux/versions/<version>/`, and `task package` bumped the version on every build, so each portable reset My Agents and discarded conversation history. Channels collapse the per-version dirs into one per-channel dir, and `task package` no longer bumps at all — local builds carry an ephemeral *label*, not a new version (see [Building → local build labels](/internals/building/)). So the only thing that changes across rebuilds is whichever schema migrations run on launch.
 
 ## Runtime modes, channels, and data directories
 
@@ -17,7 +17,7 @@ Earlier builds isolated by **version** — each new build got a fresh, empty `~/
 |---|---|---|
 | **Installed** (production install) | `stable` | `~/.agentmux/channels/stable/` |
 | **Portable** (downloaded released ZIP) | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
-| **Portable** (local `task package` build) | `dev-portable` | `~/.agentmux/channels/dev-portable/` |
+| **Portable** (local `task package` build) | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` (branch-scoped, so rebuilds of one branch share a session; `task package -- --fresh` adds a per-build suffix for a clean slate) |
 | **Dev** (`task dev`) | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
 Dev mode lives outside `channels/` on purpose: branches are short-lived and numerous, so promoting each one to a first-class channel would clutter the namespace. The `<clone-id>` segment was added when [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) generalized Dev mode to also be per-clone — see [Per-clone isolation in Dev mode](#per-clone-isolation-in-dev-mode) below.

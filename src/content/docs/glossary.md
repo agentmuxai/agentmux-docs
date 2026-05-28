@@ -27,7 +27,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 > Note: "instance" is *not* one process — a baseline single-window dev session has 4 processes ([launcher](#launcher) + [sidecar](#sidecar) + [host](#host) + 1 [renderer](#renderer)), plus shared GPU/utility Chromium subprocesses, plus more renderers as windows and browser panes are opened.
 
-> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by *version*, not by instance. Two same-version portables launched from different folders are two distinct instances (two process trees, two Job Objects) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-version split.
+> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two Job Objects) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
 
 **jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). The MCP tool `mcp__agentbus__inject_terminal` is the primary entry point.
 
