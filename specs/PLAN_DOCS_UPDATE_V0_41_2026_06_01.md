@@ -175,3 +175,4 @@ Per `specs/PLAN_CROSS_PLATFORM_DOCS_2026_05_30.md`:
 8. **pane-types.md** (polish) — animation + floating-pane reliability
 
 All in one PR. Bump docs to v0.0.52 and deploy.
+
