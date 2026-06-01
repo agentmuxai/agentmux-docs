@@ -66,16 +66,25 @@ To roll back manually if a migration goes wrong, close AgentMux and copy the sna
 
 ## Per-channel contents
 
-Inside each data dir (shared by every version of the same channel at runtime):
+As of v0.41.1, installed and portable release builds split channel contents into **version-scoped** paths (one set per release) and **channel-wide** paths (shared across all versions of the same channel):
+
+**Version-scoped** — `channels/<channel>/versions/<version>/`
 
 | Path | Owns |
 |---|---|
-| `<data-dir>/data/` | SQLite stores (`db/objects.db`, `db/filestore.db`, `db/sagas.db`, `db/launcher-sagas.db`) and the launcher's JSONL event log (`launcher-events.log`) |
-| `<data-dir>/logs/` | Host + sidecar logs (rotated daily, 7-day retention) |
-| `<data-dir>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
-| `<data-dir>/agents/` | Per-agent working dirs created by the agent system |
-| `<data-dir>/config/` | Settings (`settings.json`) plus per-provider auth-config-dir homes (`config/auth/claude/`, `config/auth/codex/`, etc. — see [Auth flows](/auth/)) |
-| `<data-dir>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets) used by the launcher's single-instance / IPC machinery |
+| `versions/<v>/data/` | SQLite stores (`db/objects.db`, `db/filestore.db`, `db/sagas.db`, `db/launcher-sagas.db`) and the launcher's JSONL event log (`launcher-events.log`) |
+| `versions/<v>/logs/` | Host + sidecar logs (rotated daily, 7-day retention) |
+| `versions/<v>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
+| `versions/<v>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets) |
+
+**Channel-wide** — `channels/<channel>/`
+
+| Path | Owns |
+|---|---|
+| `agents/` | Per-agent working dirs — shared so agents survive version upgrades |
+| `config/` | Settings (`settings.json`) plus per-provider auth-config-dir homes (`config/auth/claude/`, `config/auth/codex/`, etc. — see [Auth flows](/auth/)) |
+
+In the table above, `<data-dir>` in older docs refers to the version-scoped root for data/logs/cef-cache and the channel root for agents/config. The distinction is handled automatically — you don't need to manage it manually.
 
 See [Persistence](/internals/persistence/) for what each SQLite file holds and which process writes it.
 
