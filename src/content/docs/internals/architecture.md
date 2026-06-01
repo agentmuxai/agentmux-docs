@@ -8,7 +8,7 @@ AgentMux is a desktop application built around a small set of long-running proce
 ## The four processes
 
 ```
-┌──────────────────┐        named pipe        ┌──────────────────┐
+┌──────────────────┐         named pipe        ┌──────────────────┐
 │  agentmux-       │ ◀────────────────────────▶│  agentmux-cef    │
 │  launcher.exe    │                          │  (the "host")    │
 │  (≈325 KB shim)  │                          │                  │
@@ -37,7 +37,7 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 | Process | Role | Crate |
 |---|---|---|
-| **launcher** | Sets DLL search path; spawns the host from `runtime/`; tracks WRR (Window Reality Reconciliation) via Win32 hooks; durable event log for OS-level facts. | `agentmux-launcher` |
+| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host from `runtime/`; durable event log for OS-level facts; version isolation (one single-instance domain per version). On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks (WindowProc, Win32 window events). macOS/Linux launcher integration shipped for `task dev` in v0.41.0; full feature parity is on the roadmap. | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the OS window, the browser panes, the JS bridge, and IPC fan-out to the renderer. | `agentmux-cef` |
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Auto-spawned by the host on a dynamic port; users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
@@ -50,7 +50,7 @@ A fifth crate — `agentmux-common` — provides shared utilities (path resoluti
 
 Each process owns one concern, end-to-end:
 
-- **The launcher** is the only process that survives an OS-level Win32 surprise (a window minimize event, a monitor disconnection, a focus theft). Its WRR layer reconciles AgentMux's own model against what Win32 actually thinks is happening.
+- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports (Win32 hooks, WindowProc). On macOS/Linux, the equivalent reconciliation layer is on the roadmap; `task dev` on those platforms runs through the launcher as of v0.41.0.
 - **The host** is the only process with a CEF context. Browser panes, drag/drop, OS focus, and renderer crashes all live or die in the host. Crashing the host kills the user-facing window; the launcher restarts it.
 - **The sidecar** is the only process that owns durable state. Closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.

@@ -53,6 +53,21 @@ Open a terminal: `Cmd+N` / `Alt+N` or click the **Terminal** icon in the top bar
 
 The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#shell-helpers) for the full list.
 
+### Predictive echo
+
+Characters appear locally the moment you type — before the PTY round-trip completes. The server echo is still authoritative; if it disagrees the local glyph is corrected instantly, so the visible buffer always matches what the shell actually received.
+
+Password prompts and TUI apps (vim, less, htop) are safe: the predictor observes echo state and disarms automatically when it detects echo is off or a full-screen app takes over.
+
+To disable: set `term:predictiveecho = false` in your settings. See [Settings Reference](/settings/).
+
+### File drag-and-drop
+
+- Drag a file from your file explorer onto a **terminal pane** to insert its path at the cursor (ready to use in shell commands like `cat`, `open`, or `vim`).
+- Drag a file onto an **agent pane** to attach its contents to the agent's context.
+
+Platform support: Windows (Phase 1, shipped v0.40.1). macOS and Linux Phase 2.
+
 ## Browser
 
 The browser pane embeds a native [CefBrowserView](https://bitbucket.org/chromiumembedded/cef/) at the OS-window level. It is **not** an iframe — the pane HWND sits as a child window of the AgentMux frame, which is why links, popups, and DRM content all work like a regular Chromium tab.
@@ -204,6 +219,7 @@ The agent pane runs an AI agent session. It displays:
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 - **[Voice input](#voice-input)** — dictate prompts into the composer via the mic button in the pane header
+- **Enter animation** — New messages animate into view as they stream in; set `window:reducedmotion = true` to disable.
 - **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
 Agent panes are configured through [Memory bundles](/memory/), accessible as a tab inside the agent pane (see Subsections below).
@@ -379,3 +395,7 @@ Rearrange panes by dragging their headers. You can:
 - Reorder panes within a tab
 - Move panes across tabs
 - Drag panes between windows (cross-window drag supported on all platforms)
+
+### Floating panes (tear-off)
+
+Drag a tab below the tab bar to tear it into a floating window. Floating panes are supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance-windows) for details.

@@ -81,7 +81,7 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | Frontend (TypeScript / SolidJS) | Auto-reloads via Vite HMR |
 | Rust sidecar (`agentmux-srv/`) | `task build:backend`, then restart `task dev` |
 | Rust host (`agentmux-cef/`) | `task build:host`, then restart `task dev` |
-| Launcher (`agentmux-launcher/`) | `task package` (only relevant for portable / installed builds) |
+| Launcher (`agentmux-launcher/`) | `task package` (portable / installed builds). Note: `task dev` now runs through the launcher on all platforms as of v0.41.0 — launcher changes are exercised by `task dev`, not just package builds. |
 
 ## Build Commands
 

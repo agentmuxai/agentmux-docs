@@ -53,6 +53,8 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 | `term:shiftenternewline` | boolean | `false` | Shift+Enter creates newline |
 | `term:agentmaxruntimehours` | number | `0` | Max runtime for an agent pane in hours (`0` = unlimited) |
 | `term:agentidletimeoutmins` | number | `0` | Idle timeout for an agent pane in minutes (`0` = unlimited) |
+| `term:predictiveecho` | boolean | `true` | Show typed characters locally before PTY echo confirms them. Disable for strict server-echo-only behavior. |
+| `term:predictiveecho:thresholdms` | number | `0` | Only predict when rolling p50 round-trip ≥ this value (ms). `0` = always predict once armed. |
 
 ## Window Settings
 

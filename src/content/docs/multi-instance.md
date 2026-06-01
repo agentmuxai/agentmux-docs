@@ -101,11 +101,17 @@ What happens on a successful tear-off:
 
 Because the new window is a separate instance, all the per-instance/per-channel rules above apply: a tear-off on the same channel shares the per-channel state (cookies, browser cache, SQLite stores), a tear-off into a different channel is fully isolated.
 
-**Platform support:** Windows only in the current release (v0.33). macOS and Linux are on the Phase 2 roadmap. There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
+**Platform support:** Windows ✅, macOS ✅ (v0.40+), Linux ✅ Phase A (v0.41+, Wayland). There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
 
 **Known limitation:** Dropping the dragged tab into *another* running AgentMux instance's tab bar is not yet wired up — Phase 1 only supports tearing to the desktop, not cross-instance docking. That's planned for Phase 2.
 
 Floating panes (pop a single pane into its own owned window without spawning a new instance) are a separate feature; only the Phase 1 host primitive has shipped — there is no user-visible gesture yet.
+
+### Running different versions side-by-side
+
+Starting in v0.41.1, different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before v0.41.1, launching an older portable while a newer one was running would silently focus the wrong window.
+
+Each version now has its own single-instance domain and versioned data directory (`channels/<channel>/versions/<semver>/`). Agent definitions and settings are still shared within the same channel, so your agents are available across versions.
 
 ## Browser state per channel
 

@@ -9,7 +9,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 
 | Area | Windows | macOS | Linux |
 |---|---|---|---|
-| Launcher (`agentmux-launcher`) | ✅ ships | 🟡 in progress | 🟡 in progress |
+| Launcher (`agentmux-launcher`) | ✅ ships | ✅ `task dev` (v0.41.0); installed/portable in progress | ✅ `task dev` (v0.41.0); installed/portable in progress |
 | Host (`agentmux-cef`) — Chromium embed | ✅ ships | 🟡 in progress | 🟡 in progress |
 | Sidecar (`agentmux-srv`) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | `agentmux-common` (path resolution, runtime mode) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
@@ -22,6 +22,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 | Sidecar minidumps | ✅ WER → `%LOCALAPPDATA%\CrashDumps\` | ❌ uses macOS crash reporter (different path) | ❌ uses systemd-coredump or apport (different path) |
 | Portable distribution | ✅ ZIP build (`task package`) | 🟡 .app bundle planned | 🟡 AppImage (in progress) |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |
+| Version isolation (per-version single-instance domain) | ✅ v0.41.1+ | ✅ v0.41.1+ | ✅ v0.41.1+ |
 
 ✅ — supported and tested · 🟡 — partial / in progress · ❌ — not supported
 
@@ -44,6 +45,7 @@ The architecture is designed cross-platform from the start:
 - Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
 - App API ([agent-app-api](/internals/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
+- **Version isolation** (v0.41.1+) — each release version has its own single-instance domain and versioned data directory. Agent definitions and settings are shared within a channel across versions, so upgrading doesn't reset your agents.
 
 ## Per-OS notes
 
