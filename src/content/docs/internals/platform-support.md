@@ -45,7 +45,7 @@ The architecture is designed cross-platform from the start:
 - Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
 - App API ([agent-app-api](/internals/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
-- **Version isolation** (v0.41.1+) — each release version has its own single-instance domain and versioned data directory. Agent definitions and settings are shared within a channel across versions, so upgrading doesn't reset your agents.
+- **Version isolation** (v0.41.1+) — each release version has its own single-instance domain. Runtime databases, cache, and logs are version-scoped; agent definitions and settings are channel-wide, so upgrading doesn't reset your agents or settings.
 
 ## Per-OS notes
 

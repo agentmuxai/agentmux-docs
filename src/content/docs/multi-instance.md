@@ -111,7 +111,7 @@ Floating panes (pop a single pane into its own owned window without spawning a n
 
 Starting in v0.41.1, different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before v0.41.1, launching an older portable while a newer one was running would silently focus the wrong window.
 
-Each version now has its own single-instance domain and versioned data directory (`channels/<channel>/versions/<semver>/`). Agent definitions and settings are still shared within the same channel, so your agents are available across versions.
+Each version has its own single-instance domain. The runtime databases, cache, and logs are version-scoped (`channels/<channel>/versions/<semver>/`) — two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
 
 ## Browser state per channel
 
