@@ -3,7 +3,7 @@ title: Running multiple instances
 description: How AgentMux lets multiple installs and dev builds run side-by-side without colliding.
 ---
 
-AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state (SQLite, logs, browser cache, auth dirs) is keyed by **channel** — different channels never collide; instances on the same channel share an on-disk data dir but nothing else at runtime.
+AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state has three axes: **per-channel** (settings, agent definitions — survive upgrades), **per-version within a channel** (SQLite, host logs, CEF cache, IPC — isolated per release so concurrent versions don't collide), and **account-wide** (sidecar log, dictionaries, OAuth cookies — global across channels). Instances on the same (channel, version) share their runtime state; different versions or different channels are isolated.
 
 This page explains how that works from a user's perspective. For the underlying data-directory layout, log-discovery mechanics, and per-store details, see [Data layout](/internals/data-layout/).
 
@@ -136,11 +136,13 @@ If you need to wipe browser state for a single version: delete that version's `c
 **"Why isn't my dev build picking up the meta?"**
 You're probably running `task dev` from a different branch — or a different clone — than the one that wrote the meta. Each (branch, clone) pair gets its own dev data dir at `~/.agentmux/dev/<branch>/<clone-id>/`. Switching branches restarts the session in a different dir; running from a separate checkout of the same branch also gets its own dir. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones).
 
-**"My v0.38.3 database is gone after I installed v0.38.4."**
-It's there — the `stable` channel data dir is shared by all `stable` versions, and the schema migrated forward in place. Open the new version and your existing My Agents / conversations / identity bundles are all there. (This is the channels design: per-version isolation was the *old* behavior; it's gone.)
+**"What survives a version upgrade?"**
+- **Agent definitions** and **settings** (incl. per-provider auth dirs) live at the channel level (`channels/<ch>/agents/`, `channels/<ch>/config/`) and carry over from one version to the next automatically.
+- **Conversations, sagas, filestore, CEF cache, host logs, and IPC artifacts** are version-scoped (`channels/<ch>/versions/<v>/...`, v0.41.1+) — a fresh release starts with its own runtime sub-dir. On first launch of a new version, the launcher copies the immediate-prior version's runtime data into the new sub-dir so your conversation history isn't lost (one-time copy; the prior version's dir stays intact so you can fall back). If both versions then run concurrently, their runtime state diverges from that point.
+- **Sidecar log** lives at `~/.agentmux/logs/` (account-wide), so the cross-version `muxlog srv` recipe keeps working regardless.
 
 **"Are running portables sharing state?"**
-If they're on the same channel, yes. Different channels (e.g. `stable` vs `dev-portable`) → different data dirs. Same channel, different extracted folders → same data dir, both can run, both see the same blocks. They're still distinct [instances](/glossary/#instance) (each with its own launcher → sidecar → host → renderer process tree, its own Job Object) — only the on-disk data dir is shared.
+Depends on the (channel, version) pair. Two portables of the *same* release on the *same* channel share the version-scoped runtime SQLite, CEF cache, and host logs as well as the channel-wide agents/settings — they're effectively the same data, just two process trees. Two portables of *different* releases on the same channel share only the channel-wide agents/settings; their runtime dirs are separate. Two portables on *different* channels (e.g. `stable` vs `dev-portable`) share nothing. In all cases the launcher/sidecar/host/renderer tree is its own [instance](/glossary/#instance) with its own Job Object.
 
 **"I can't find the log file."**
 Use the `muxlog` shell helper from any AgentMux terminal:

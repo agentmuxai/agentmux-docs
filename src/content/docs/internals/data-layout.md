@@ -62,7 +62,7 @@ Pre-migration snapshots auto-save when an upgrade-with-migration is detected, th
 
 The snapshot is a `VACUUM INTO` copy of each SQLite store — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
 
-To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back over the channel's `data/db/` dir. There's no CLI for this yet — it's a planned follow-up.
+To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back over `channels/<channel>/versions/<v>/data/db/` (v0.41.1+), matching the version whose runtime DB you want to restore. There's no CLI for this yet — it's a planned follow-up.
 
 ## Per-channel contents
 
@@ -101,7 +101,7 @@ A single tree at `~/.agentmux/`, independent of channel:
 | `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own startup-phase log (single file, no rotation) | Launcher |
 | `~/.agentmux/config.toml` | Account-wide launcher config (saga retention, etc.) | Launcher |
 
-The durable launcher reducer event log (`launcher-events.log`) lives at `<data-dir>/data/launcher-events.log`. With multiple instances of the same channel running, all of their launchers append to this single file.
+The durable launcher reducer event log (`launcher-events.log`) lives at `channels/<channel>/versions/<v>/data/launcher-events.log` (v0.41.1+). Multiple instances of the **same (channel, version)** running concurrently append to this single file; a different release on the same channel writes to its own version-scoped file.
 
 ## Log discovery via pointer files
 
