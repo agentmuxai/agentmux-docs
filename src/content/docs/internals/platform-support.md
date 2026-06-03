@@ -9,7 +9,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 
 | Area | Windows | macOS | Linux |
 |---|---|---|---|
-| Launcher (`agentmux-launcher`) | ✅ ships | 🟡 in progress | 🟡 in progress |
+| Launcher (`agentmux-launcher`) | ✅ ships | 🟡 `task dev` (v0.41.0+); installed/portable in progress | 🟡 `task dev` (v0.41.0+); installed/portable in progress |
 | Host (`agentmux-cef`) — Chromium embed | ✅ ships | 🟡 in progress | 🟡 in progress |
 | Sidecar (`agentmux-srv`) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | `agentmux-common` (path resolution, runtime mode) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
@@ -22,6 +22,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 | Sidecar minidumps | ✅ WER → `%LOCALAPPDATA%\CrashDumps\` | ❌ uses macOS crash reporter (different path) | ❌ uses systemd-coredump or apport (different path) |
 | Portable distribution | ✅ ZIP build (`task package`) | 🟡 .app bundle planned | 🟡 AppImage (in progress) |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |
+| Version isolation (per-version single-instance domain + version-scoped runtime dirs) | ✅ v0.41.1+ (installed/portable) | 🟡 ships in `task dev` (v0.41.1+); installed/portable depends on launcher row above | 🟡 ships in `task dev` (v0.41.1+); installed/portable depends on launcher row above |
 
 ✅ — supported and tested · 🟡 — partial / in progress · ❌ — not supported
 
@@ -40,10 +41,11 @@ Pages and admonitions in these docs that are Windows-specific are flagged with a
 The architecture is designed cross-platform from the start:
 
 - The four-process topology ([architecture overview](/internals/architecture/)) doesn't change per OS — same launcher / host / sidecar / renderer split.
-- Path resolution ([multi-instance](/multi-instance/)) uses `~/.agentmux/` everywhere; the per-instance versioned subdirs are identical across OSes.
+- Path resolution ([multi-instance](/multi-instance/)) uses `~/.agentmux/` everywhere; the channel + version sub-dir layout (`channels/<ch>/versions/<v>/`) is identical across OSes.
 - Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
 - App API ([agent-app-api](/internals/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
+- **Version isolation** (v0.41.1+) — each release version has its own single-instance domain (the launcher's named-pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Agent definitions and settings are channel-wide under `channels/<channel>/`, so upgrading doesn't reset your agents or settings. The feature ships in `task dev` on all platforms; for installed/portable builds it's available on Windows today and gated on the macOS/Linux installed-build work landing (see the launcher row in the table above).
 
 ## Per-OS notes
 

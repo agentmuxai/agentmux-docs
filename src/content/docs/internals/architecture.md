@@ -8,9 +8,9 @@ AgentMux is a desktop application built around a small set of long-running proce
 ## The four processes
 
 ```
-┌──────────────────┐        named pipe        ┌──────────────────┐
+┌──────────────────┐         named pipe        ┌──────────────────┐
 │  agentmux-       │ ◀────────────────────────▶│  agentmux-cef    │
-│  launcher.exe    │                          │  (the "host")    │
+│  launcher        │                          │  (the "host")    │
 │  (≈325 KB shim)  │                          │                  │
 └────────┬─────────┘                          └────────┬─────────┘
          │ spawns                                      │ embeds
@@ -37,7 +37,7 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 | Process | Role | Crate |
 |---|---|---|
-| **launcher** | Sets DLL search path; spawns the host from `runtime/`; tracks WRR (Window Reality Reconciliation) via Win32 hooks; durable event log for OS-level facts. | `agentmux-launcher` |
+| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host from `runtime/`; durable event log for OS-level facts; version isolation (one single-instance domain per version). On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks (WindowProc, Win32 window events). macOS/Linux launcher integration shipped for `task dev` in v0.41.0; full feature parity is on the roadmap. | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the OS window, the browser panes, the JS bridge, and IPC fan-out to the renderer. | `agentmux-cef` |
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Auto-spawned by the host on a dynamic port; users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
@@ -50,12 +50,12 @@ A fifth crate — `agentmux-common` — provides shared utilities (path resoluti
 
 Each process owns one concern, end-to-end:
 
-- **The launcher** is the only process that survives an OS-level Win32 surprise (a window minimize event, a monitor disconnection, a focus theft). Its WRR layer reconciles AgentMux's own model against what Win32 actually thinks is happening.
+- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports (Win32 hooks, WindowProc). On macOS/Linux, the equivalent reconciliation layer is on the roadmap; `task dev` on those platforms runs through the launcher as of v0.41.0.
 - **The host** is the only process with a CEF context. Browser panes, drag/drop, OS focus, and renderer crashes all live or die in the host. Crashing the host kills the user-facing window; the launcher restarts it.
 - **The sidecar** is the only process that owns durable state. Closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.
 
-This split is what makes multi-instance work cleanly. Two AgentMux portables running side-by-side each have their own host, their own sidecar, and their own data dir — they share nothing except the launcher binary on disk.
+This split is what makes multi-instance work cleanly: each instance has its own host, sidecar, dynamic backend port, Job Object, and process tree. What instances share on disk depends on whether they're the same release: two portables of the same (channel, version) share the version-scoped runtime dir (SQLite, CEF cache, host logs) as well as the channel-wide agents/settings; two portables of different versions on the same channel share only the channel-wide agents/settings; two portables on different channels share nothing channel-scoped at all. Every instance also touches account-wide state (sidecar log, dictionaries, launcher config). See [Multi-instance & dev mode → What's per-instance vs per-version vs per-channel](/multi-instance/#whats-per-instance-vs-per-version-vs-per-channel) for the full matrix.
 
 ## How they communicate
 
@@ -83,17 +83,21 @@ The full layout, slice list, and migration plan are in the [reducer stack page](
 
 Every running instance resolves its paths through `agentmux-common::DataPaths` ([source](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs)). Resolution happens once in the launcher and is propagated to host + sidecar via the `AGENTMUX_*_DIR` env vars, so all three processes always agree.
 
-| Mode | Instance dir |
-|---|---|
-| **Installed** | `~/.agentmux/channels/<channel>/` (default channel: `stable`) |
-| **Portable** | `~/.agentmux/channels/<channel>/` — same as installed; instances on the same channel share an on-disk data dir but each runs as its own process tree. `stable` for downloaded releases, `dev-portable` for locally-packaged builds. |
-| **Dev** (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair, so two checkouts of the same branch don't collide. |
+| Mode | Channel root | Runtime dirs |
+|---|---|---|
+| **Installed** | `~/.agentmux/channels/<channel>/` (default `stable`) | `~/.agentmux/channels/<channel>/versions/<v>/` (v0.41.1+) — per-version runtime DB, cache, logs, IPC |
+| **Portable** (released ZIP) | Same as installed | Same as installed |
+| **Portable** (local `task package`) | `~/.agentmux/channels/dev-portable-<branch>/` | No version sub-dir — local builds aren't versioned releases. |
+| **Dev** (`task dev`) | n/a | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair. |
 
-Channels collapsed the old per-version `~/.agentmux/versions/<v>/` layout into one dir per channel — see [Data layout](/internals/data-layout/) and [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md) for the rationale and the per-clone Dev segment added in [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053).
+Inside each channel dir, state is split into **channel-wide** and **version-scoped** paths:
 
-Inside each data dir: `data/` (SQLite), `config/` (settings), `logs/` (rotated host + sidecar + launcher logs), `cef-cache/`, `agents/`, `runtime/` (lock + IPC).
+- **Channel-wide** (`channels/<channel>/`): `config/` (settings + per-provider auth dirs) and `agents/` (agent definitions). These survive version upgrades.
+- **Version-scoped** (`channels/<channel>/versions/<v>/`, v0.41.1+): `data/` (SQLite + launcher event log), `logs/` (host log; sidecar log lives elsewhere — see below), `cef-cache/` (cookies, IndexedDB, JS cache), `runtime/` (lock + IPC port file). These are isolated per release so concurrent versions on the same channel can't collide on SQLite writes or corrupt each other's caches.
 
-Account-wide state — cookies, OAuth tokens, dictionary downloads — lives at `~/.agentmux/shared/`, channel-independent. The launcher's own `config.toml` (saga retention etc.) lives directly at `~/.agentmux/config.toml`. Pre-migration snapshots auto-save at `~/.agentmux/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 per channel kept).
+This is a two-step evolution: channels (mid-2026) collapsed the old per-version `~/.agentmux/versions/<v>/` layout into per-channel dirs so agents and settings survived upgrades. Then v0.41.1 reintroduced a *version-scoped* sub-dir for the runtime hazards (concurrent SQLite writers, shared CEF cache, single-instance pipe collisions) while keeping agents and settings channel-wide. See [Data layout](/internals/data-layout/), [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md), and [`SPEC_VERSION_ISOLATION_2026_06_01`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_VERSION_ISOLATION_2026_06_01.md) for the design.
+
+Account-wide state lives outside `channels/`: the sidecar log (`~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>`), pointer files for log discovery, the launcher's `agentmux-launcher.log`, dictionaries, and the launcher's `config.toml` (saga retention etc.). Pre-migration snapshots auto-save at `~/.agentmux/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 per channel kept).
 
 See [Multi-instance & dev mode](/multi-instance/) for the full layout, log discovery story, and per-instance vs shared boundary.
 

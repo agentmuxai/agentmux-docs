@@ -31,7 +31,10 @@ Download `AgentMux_x64-setup.exe` and run the NSIS installer. Default install lo
 Download `agentmux-x64-portable.zip` and extract anywhere. No installation required — run `AgentMux.exe` directly. Ideal for testing a new build alongside an installed version (each instance is fully isolated; see [Multi-instance & dev mode](/multi-instance/)).
 
 ### MSIX
-Download `AgentMux_x64.msix` for Windows-Store-style installation with automatic updates.
+
+Download `AgentMux_x64.msix` for Windows-Store-style installation: sandboxed install (no UAC prompt) using AppX/MSIX packaging, with cleaner uninstall semantics than NSIS. Uses the same `stable` data channel as the installer, so agents and settings carry over if you switch between MSIX and the NSIS `.exe`.
+
+Note: not yet published to the Store; the MSIX package is sideloaded directly from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases) for now. **There is no auto-update** for any AgentMux distribution today (see [Update model](/security/update-model/)) — sideloaded MSIX, NSIS installer, and portable all require a manual re-download to upgrade. Once a Store listing ships, Store-installed MSIX builds will receive Store auto-updates; sideloaded MSIX builds still won't.
 
 ## Linux
 
