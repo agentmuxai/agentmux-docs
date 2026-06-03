@@ -9,7 +9,7 @@ AgentMux is built primarily on Windows today, with cross-platform foundations an
 
 | Area | Windows | macOS | Linux |
 |---|---|---|---|
-| Launcher (`agentmux-launcher`) | ✅ ships | ✅ `task dev` (v0.41.0); installed/portable in progress | ✅ `task dev` (v0.41.0); installed/portable in progress |
+| Launcher (`agentmux-launcher`) | ✅ ships | 🟡 `task dev` (v0.41.0+); installed/portable in progress | 🟡 `task dev` (v0.41.0+); installed/portable in progress |
 | Host (`agentmux-cef`) — Chromium embed | ✅ ships | 🟡 in progress | 🟡 in progress |
 | Sidecar (`agentmux-srv`) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | `agentmux-common` (path resolution, runtime mode) | ✅ ships | ✅ cross-platform | ✅ cross-platform |

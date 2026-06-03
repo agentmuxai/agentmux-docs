@@ -55,7 +55,7 @@ Each process owns one concern, end-to-end:
 - **The sidecar** is the only process that owns durable state. Closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.
 
-This split is what makes multi-instance work cleanly. Two AgentMux portables running side-by-side each have their own host, their own sidecar, and their own data dir — they share nothing except the launcher binary on disk.
+This split is what makes multi-instance work cleanly: each instance has its own host, sidecar, dynamic backend port, Job Object, and process tree. What instances share on disk depends on whether they're the same release: two portables of the same (channel, version) share the version-scoped runtime dir (SQLite, CEF cache, host logs) as well as the channel-wide agents/settings; two portables of different versions on the same channel share only the channel-wide agents/settings; two portables on different channels share nothing channel-scoped at all. Every instance also touches account-wide state (sidecar log, dictionaries, launcher config). See [Multi-instance & dev mode → What's per-instance vs per-version vs per-channel](/multi-instance/#whats-per-instance-vs-per-version-vs-per-channel) for the full matrix.
 
 ## How they communicate
 
