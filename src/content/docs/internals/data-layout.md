@@ -15,7 +15,7 @@ Earlier builds isolated by **version** — each new build got a fresh, empty `~/
 
 | Runtime mode | Default channel | Data directory |
 |---|---|---|
-| **Installed** (production install) | `stable` | `~/.agentmux/channels/stable/versions/<version>/data/` (DB, cache, logs); `~/.agentmux/channels/stable/` (agents, config — shared across versions) |
+| **Installed** (production install) | `stable` | Runtime root: `~/.agentmux/channels/stable/versions/<version>/` (`data/` for SQLite, `logs/`, `cef-cache/`, `runtime/` are siblings under it). Channel root: `~/.agentmux/channels/stable/` (`agents/`, `config/` — shared across versions). See [Per-channel contents](#per-channel-contents) for the full breakdown. |
 | **Portable** (downloaded released ZIP) | `stable` | Same as installed — both bind to the `stable` channel |
 | **Portable** (local `task package` build) | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` — no version sub-dir for local builds; rebuilds of one branch share a session |
 | **Dev** (`task dev`) | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
@@ -114,7 +114,7 @@ The host writes its own logs to `<data-dir>/logs/`. To make those discoverable f
 The pointer file's contents are the **absolute path** to the current log file:
 
 ```
-C:\Users\area54\.agentmux\channels\stable\logs\agentmux-host-v0.38.4.log.2026-05-25
+C:\Users\area54\.agentmux\channels\stable\versions\0.41.2\logs\agentmux-host-v0.41.2.log.2026-06-03
 ```
 
 So the canonical "find the running host's log" recipe is:
