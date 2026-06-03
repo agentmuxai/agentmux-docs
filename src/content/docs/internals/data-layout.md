@@ -84,7 +84,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | `agents/` | Per-agent working dirs — shared so agents survive version upgrades |
 | `config/` | Settings (`settings.json`) plus per-provider auth-config-dir homes (`config/auth/claude/`, `config/auth/codex/`, etc. — see [Auth flows](/auth/)) |
 
-In the table above, `<data-dir>` in older docs refers to the version-scoped root for data/logs/cef-cache and the channel root for agents/config. The distinction is handled automatically — you don't need to manage it manually.
+Older docs and shell-integration scripts use `<data-dir>` as a single placeholder; treat it as the version-scoped root `channels/<channel>/versions/<v>/` when the context is runtime state (DB, logs, cache, IPC), and the channel root `channels/<channel>/` when the context is agents or settings. The distinction is resolved automatically by `agentmux-common::DataPaths` and exported as `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR` — you don't need to manage it manually.
 
 See [Persistence](/internals/persistence/) for what each SQLite file holds and which process writes it.
 
@@ -175,4 +175,4 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 - [Persistence](/internals/persistence/) — what each SQLite store holds
 - [Architecture overview](/internals/architecture/) — process topology
 - [Window Reality Reconciliation](/internals/wrr/) — what the launcher event log records
-- [Auth flows](/auth/) — per-version auth-dir isolation
+- [Auth flows](/auth/) — per-channel auth-dir isolation per provider (channel-wide; survives version upgrades)

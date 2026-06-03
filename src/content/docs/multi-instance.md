@@ -3,7 +3,7 @@ title: Running multiple instances
 description: How AgentMux lets multiple installs and dev builds run side-by-side without colliding.
 ---
 
-AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state has three axes: **per-channel** (settings, agent definitions — survive upgrades), **per-version within a channel** (SQLite, host logs, CEF cache, IPC — isolated per release so concurrent versions don't collide), and **account-wide** (sidecar log, dictionaries, OAuth cookies — global across channels). Instances on the same (channel, version) share their runtime state; different versions or different channels are isolated.
+AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state has three axes: **per-channel** (settings, agent definitions, per-provider OAuth auth dirs — survive upgrades within a channel), **per-version within a channel** (SQLite, host logs, CEF cache + cookies, IPC artifacts — isolated per release so concurrent versions don't collide), and **account-wide** (sidecar log, dictionaries, launcher config — independent of channel). Instances on the same (channel, version) share their runtime state; different versions or different channels are isolated.
 
 This page explains how that works from a user's perspective. For the underlying data-directory layout, log-discovery mechanics, and per-store details, see [Data layout](/internals/data-layout/).
 
@@ -61,9 +61,10 @@ See [Data layout → Schema safety lock + snapshots](/internals/data-layout/#sch
 
 A few things are channel-independent and shared across all instances:
 
-- **Account-wide state** — dictionary downloads, anything the user authenticates "once" rather than "per channel"
-- **Pointer files** that resolve to the currently-running instance's logs (so a `muxlog` shell helper opened from any context can find the right log file)
-- **Account-wide config** — the launcher's own config (saga retention, etc.)
+- **Sidecar logs** — `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` — written directly to the account-wide log dir (not the per-version path) so `muxlog srv` resolves uniformly from any AgentMux terminal regardless of which channel/version is running.
+- **Pointer files** that resolve to the currently-running instance's logs (`current-host-v<v>.path`, `current-srv-v<v>.path`) so a `muxlog` shell helper opened from any context can find the right log file. Plus the launcher's own startup log (`agentmux-launcher.log`).
+- **Account-wide state** — dictionary downloads and anything the user authenticates "once" rather than "per channel" (the platform's system Crashpad dir on Windows; provider OAuth tokens are *not* in this category — those live per-channel under `channels/<ch>/config/auth/`).
+- **Account-wide config** — the launcher's own `~/.agentmux/config.toml` (saga retention, etc.).
 
 ## Running multiple instances at once
 
