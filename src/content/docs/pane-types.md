@@ -398,6 +398,6 @@ Rearrange panes by dragging their headers. You can:
 
 ### Tab tear-off
 
-Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree; per-channel state (agents, settings) is shared if both use the same channel. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
+Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree, but the same binary as the source, so it's the same (channel, version) — both share the per-version runtime state (CEF cache, cookies, SQLite stores, host logs) *and* the channel-wide agents/settings. Different channel → fully isolated. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
 
 > **Note:** Floating panes (pop a single pane into its own window *without* spawning a new instance) are a separate, distinct feature. The Phase 1 host primitive has shipped but there is no user-visible gesture yet.
