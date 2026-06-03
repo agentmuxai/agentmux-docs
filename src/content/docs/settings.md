@@ -157,15 +157,21 @@ The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by Ag
 
 ## Data Directories
 
-All channel state lives under `<data-dir>/`, where `<data-dir>` is `~/.agentmux/channels/<channel>/` (installed / portable) or `~/.agentmux/dev/<branch>/<clone-id>/` (dev). See [Persistence](/internals/persistence/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+For installed and portable release builds (v0.41.1+), state is split across **version-scoped** paths (one set per release, isolated so concurrent versions can't collide) and **channel-wide** paths (shared across all versions of the same channel, so they survive upgrades). Dev builds (`task dev`) skip the version-scoping and use a single per-(branch, clone) dir.
 
-| Purpose | Path |
-|---|---|
-| Config (`settings.json`, etc.) | `<data-dir>/config/` |
-| Logs (rotated daily, 7-day retention) | `<data-dir>/logs/` |
-| SQLite stores (objects, filestore, sagas) | `<data-dir>/data/db/` |
-| Launcher event log (JSONL) | `<data-dir>/data/launcher-events.log` |
-| Account-wide state (cookies, OAuth) | `~/.agentmux/shared/` |
+| Purpose | Path | Scope |
+|---|---|---|
+| Config (`settings.json`, per-provider auth-config-dir homes) | `~/.agentmux/channels/<channel>/config/` | Channel-wide |
+| Agent definitions | `~/.agentmux/channels/<channel>/agents/` | Channel-wide |
+| SQLite stores (objects, filestore, sagas) | `~/.agentmux/channels/<channel>/versions/<v>/data/db/` | Version-scoped |
+| Launcher event log (JSONL) | `~/.agentmux/channels/<channel>/versions/<v>/data/launcher-events.log` | Version-scoped |
+| Logs — host (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
+| Logs — sidecar (rotated daily) | `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` | Account-wide |
+| CEF cache (cookies, local storage, IndexedDB) | `~/.agentmux/channels/<channel>/versions/<v>/cef-cache/` | Version-scoped |
+| Account-wide state (dictionaries, cross-channel shared) | `~/.agentmux/shared/` | Account-wide |
+| Dev mode root | `~/.agentmux/dev/<branch>/<clone-id>/` | Per-(branch × clone), no version split |
+
+See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/multi-instance/) for the full layout and the historical migration from per-version → channels → channels-plus-version-scoped-runtime.
 
 ## See Also
 

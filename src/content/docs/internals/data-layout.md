@@ -73,7 +73,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | Path | Owns |
 |---|---|
 | `versions/<v>/data/` | SQLite stores (`db/objects.db`, `db/filestore.db`, `db/sagas.db`, `db/launcher-sagas.db`) and the launcher's JSONL event log (`launcher-events.log`) |
-| `versions/<v>/logs/` | Host + sidecar logs (rotated daily, 7-day retention) |
+| `versions/<v>/logs/` | Host logs (rotated daily, 7-day retention). **Sidecar logs are not here** — they live at `~/.agentmux/logs/` (account-wide), see [Account-wide (shared) contents](#account-wide-shared-contents) below. |
 | `versions/<v>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
 | `versions/<v>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets) |
 

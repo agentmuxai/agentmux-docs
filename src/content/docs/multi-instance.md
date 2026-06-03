@@ -11,39 +11,49 @@ This page explains how that works from a user's perspective. For the underlying 
 
 | Mode | When | Default channel | Data dir |
 |---|---|---|---|
-| **Installed** | Normal MSI install | `stable` | `~/.agentmux/channels/stable/` |
-| **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | `~/.agentmux/channels/stable/` (same as installed — both bind to the same channel) |
-| **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` (per-branch; `-- --fresh` for a throwaway dir) |
+| **Installed** | Normal MSI install | `stable` | Runtime (DB, cache, logs): `~/.agentmux/channels/stable/versions/<v>/`. Shared (agents, settings): `~/.agentmux/channels/stable/`. See [Data layout → Per-channel contents](/internals/data-layout/#per-channel-contents) for the full split. |
+| **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | Same as installed — both bind to the `stable` channel. |
+| **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` (per-branch; no version sub-dir for local builds; `-- --fresh` for a throwaway dir) |
 | **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
 Dev mode lives under `~/.agentmux/dev/` (outside `channels/`) and adds a per-clone segment so two checkouts of the same branch can run side-by-side. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones) below.
 
 The mode is detected at startup; the channel is derived from the mode. The override is `AGENTMUX_CHANNEL=<name>` — pin a channel explicitly for parallel-channel testing or to make a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't route through `channels/`).
 
-## What's per-instance vs per-channel
+## What's per-instance vs per-version vs per-channel
 
-Two axes of isolation, often confused:
+Three axes of isolation, often confused:
 
 **Per-instance** (one launcher → sidecar → host → renderer(s) tree, plus a Job Object) — every running AgentMux owns its own:
 
 - Process tree, dynamic backend port, IPC pipe, Job Object
 - Renderer JS contexts (in-memory state in the running window(s))
 
-**Per-channel** (one on-disk state set per channel, shared by all same-channel instances at runtime, isolated between channels):
+**Per-version** (one runtime-state set per (channel, version) pair, shared by all instances of the same release on the same channel, isolated from other versions of the same channel — shipped in v0.41.1):
 
-- **Data** — workspaces, tabs, blocks, layouts, agent definitions (one SQLite database per channel)
-- **Logs** — host + sidecar log files
-- **Browser state** — cookies, local storage, IndexedDB, service workers, browser DevTools settings
-- **Agent working dirs** — per-agent directories created by the Agent pane
-- **Per-provider auth dirs** — Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, and Pi each get their own auth state (see [Auth flows](/auth/))
+- **Runtime SQLite stores** — workspaces, tabs, blocks, layouts, sagas, filestore (`objects.db`, `sagas.db`, `filestore.db`)
+- **Logs** — host log files (rotated daily). Sidecar logs are *not* per-version — see [shared](#whats-shared) below.
+- **Browser state (CEF cache)** — cookies, local storage, IndexedDB, service workers, cached JS
+- **IPC + lockfiles** — ipc-port file, single-instance lock, named-pipe sockets
 
-So: two instances on the same channel (e.g. two portables of the same release launched from different folders) share all the per-channel state above but each runs as its own process tree. Two instances on different channels (e.g. installed `stable` + a `dev-<branch>` build) share none of it.
+**Per-channel** (one set per channel, shared across every version of that channel, isolated between channels — these are the things you want to survive an upgrade):
 
-This means installing a new patch release of `stable` doesn't disturb your existing My Agents, conversations, or auth state — both versions share the `stable` channel and the schema migrates forward in place. Switching between `task dev` branches *does* fully isolate, because each branch gets its own `dev-<branch>` channel. Two portables of the same release launched from different folders are two distinct [instances](/glossary/#instance) (each with its own process tree, Job Object, dynamic backend port) that **share the same on-disk data dir** because they're on the same channel.
+- **Agent definitions** — per-agent working dirs and definitions; running v0.41.0 and v0.41.1 of `stable` side-by-side gives both access to the same agents
+- **Settings** — `settings.json` and per-provider auth-config-dir homes (Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, Pi — see [Auth flows](/auth/))
 
-## Channels replace per-version data dirs
+So: two instances of the **same release** on the **same channel** (e.g. two portables of v0.41.1 `stable` launched from different folders) share the per-version runtime DBs and the channel-wide agents/settings, but each is its own process tree. Two instances of **different releases** on the same channel (e.g. v0.40.2 and v0.41.1, both `stable`) share the channel-wide agents/settings but have separate runtime DBs and caches. Two instances on **different channels** (e.g. installed `stable` + a `dev-<branch>` build) share none of it.
 
-Earlier builds isolated by individual version (`~/.agentmux/versions/<version>/`), and `task package` bumped the version on every build, so each one produced a fresh empty dir — My Agents reset, conversation history vanished. **Channels collapse that into one dir per channel**, and `task package` no longer bumps (local builds carry an ephemeral label, not a new version), with forward-only schema migrations on launch. A safety lock refuses to open a channel whose schema is newer than the running binary (so an older AgentMux can't downgrade-corrupt a channel a newer build wrote to). Pre-migration snapshots auto-save and the last 5 are kept.
+This means installing a new patch release of `stable` doesn't disturb your existing My Agents or auth state — both versions share the `stable` channel's agents/config, the new version starts with a fresh runtime-DB sub-dir and the schema migrates forward in place. Switching between `task dev` branches *does* fully isolate, because each branch gets its own `dev-<branch>` channel. Dev mode keeps the legacy single-dir layout (no per-version split) because Dev builds aren't released versions.
+
+## How channels and versions split state
+
+Channels are the cross-cutting axis: they group runs by purpose (`stable`, `beta`, `dev-portable-<branch>`). Within a channel, the **agents you defined and the settings you tuned travel with the channel** — they survive upgrades. Each release version then gets its **own runtime DBs, CEF cache, logs, and IPC artifacts** under `channels/<channel>/versions/<v>/`, so two concurrent releases on the same channel can't collide on SQLite writes or corrupt each other's caches (shipped in v0.41.1).
+
+This is a deliberate two-step model:
+
+- **Pre-channels (legacy):** state was isolated per individual version (`~/.agentmux/versions/<version>/`), and `task package` bumped on every build. Each new build produced an empty dir — My Agents reset, conversation history vanished.
+- **Channels (mid-2026):** state collapsed into one dir per channel. Agents and settings survived upgrades, but two concurrent versions on the same channel shared a SQLite file — a real hazard once tear-off and multi-version coexistence shipped.
+- **Channels + version-scoped runtime (v0.41.1+):** runtime DBs, cache, logs, and IPC are version-scoped under `channels/<ch>/versions/<v>/`. Agents and settings remain channel-wide so they still survive upgrades. `task package` no longer bumps (local builds carry an ephemeral label, not a new version), with forward-only schema migrations on launch. A safety lock refuses to open a channel whose schema is newer than the running binary (so an older AgentMux can't downgrade-corrupt a channel a newer build wrote to). Pre-migration snapshots auto-save and the last 5 are kept.
 
 See [Data layout → Schema safety lock + snapshots](/internals/data-layout/#schema-safety-lock--snapshots) and the [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md) spec for the design.
 
@@ -99,7 +109,7 @@ What happens on a successful tear-off:
 - The window paints live during the drag (Chrome-style follow), at full opacity.
 - The new window is a **full new instance**: own backend sidecar, own data dir, own workspace, own taskbar entry — same independence as launching AgentMux twice from the Start menu.
 
-Because the new window is a separate instance, all the per-instance/per-channel rules above apply: a tear-off on the same channel shares the per-channel state (cookies, browser cache, SQLite stores), a tear-off into a different channel is fully isolated.
+Because the new window is a separate instance — but the same binary, so the same (channel, version) — it shares the per-version runtime state (cookies, CEF cache, SQLite stores) and the channel-wide agents/settings of the source window. A tear-off onto a different channel is fully isolated.
 
 **Platform support:** Windows ✅, macOS ✅ (v0.40+), Linux ✅ Phase A (v0.41+, Wayland). There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
 
@@ -107,21 +117,19 @@ Because the new window is a separate instance, all the per-instance/per-channel 
 
 Floating panes (pop a single pane into its own owned window without spawning a new instance) are a separate feature; only the Phase 1 host primitive has shipped — there is no user-visible gesture yet.
 
-### Running different versions side-by-side
+## Running different versions side-by-side
 
 Starting in v0.41.1, different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before v0.41.1, launching an older portable while a newer one was running would silently focus the wrong window.
 
-Each version has its own single-instance domain. The runtime databases, cache, and logs are version-scoped (`channels/<channel>/versions/<semver>/`) — two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
+Each version has its own single-instance domain — the launcher's named-pipe hash includes the build version, so two binaries on the same channel produce distinct pipes and don't activate each other's window (shipped in [#1227](https://github.com/agentmuxai/agentmux/pull/1227)). Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
 
-## Browser state per channel
+This is independent of tear-off: it applies whenever two different versions on the same channel launch at the same time, regardless of how they were launched.
 
-Browser state lives on disk in the per-channel data dir, so it follows the same axis as everything else listed under [per-channel](#whats-per-instance-vs-per-channel):
+## Browser state
 
-- Cookies / local storage / IndexedDB / service workers are per-channel (shared between same-channel instances, isolated between channels)
-- Browser DevTools settings are per-channel
-- Cached JavaScript is per-channel
+Browser state (cookies, local storage, IndexedDB, service workers, cached JS, DevTools settings) lives on disk in the version-scoped CEF cache (`channels/<channel>/versions/<v>/cef-cache/`, v0.41.1+). It's shared between instances of the same (channel, version) running simultaneously, and isolated from other versions on the same channel as well as other channels entirely. See [What's per-instance vs per-version vs per-channel](#whats-per-instance-vs-per-version-vs-per-channel).
 
-If you need to wipe everything for a channel: delete that channel's `cef-cache/` and the browser pane comes up fresh on the next launch of any instance on that channel. ([Data layout](/internals/data-layout/) has the exact path.)
+If you need to wipe browser state for a single version: delete that version's `cef-cache/` and the browser pane comes up fresh on the next launch. ([Data layout](/internals/data-layout/) has the exact path.)
 
 ## Common pitfalls
 
