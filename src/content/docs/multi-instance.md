@@ -38,7 +38,7 @@ Three axes of isolation, often confused:
 
 **Per-channel** (one set per channel, shared across every version of that channel, isolated between channels — these are the things you want to survive an upgrade):
 
-- **Agent definitions** — per-agent working dirs and definitions; running v0.41.0 and v0.41.1 of `stable` side-by-side gives both access to the same agents
+- **Agent definitions** — per-agent working dirs and definitions; e.g. running v0.40.2 and v0.41.1 of `stable` side-by-side (the canonical version-isolation case, since v0.41.1 is the release that introduced the per-version single-instance domain) gives both access to the same agents
 - **Settings** — `settings.json` and per-provider auth-config-dir homes (Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, Pi — see [Auth flows](/auth/))
 
 So: two instances of the **same release** on the **same channel** (e.g. two portables of v0.41.1 `stable` launched from different folders) share the per-version runtime DBs and the channel-wide agents/settings, but each is its own process tree. Two instances of **different releases** on the same channel (e.g. v0.40.2 and v0.41.1, both `stable`) share the channel-wide agents/settings but have separate runtime DBs and caches. Two instances on **different channels** (e.g. installed `stable` + a `dev-<branch>` build) share none of it.
@@ -108,7 +108,7 @@ What happens on a successful tear-off:
 
 - A new top-level AgentMux window spawns at the cursor, matching the source window's size and position across monitors (DPI-corrected).
 - The window paints live during the drag (Chrome-style follow), at full opacity.
-- The new window is a **full new instance**: own backend sidecar, own data dir, own workspace, own taskbar entry — same independence as launching AgentMux twice from the Start menu.
+- The new window is a **full new instance**: own backend sidecar, own data dir, own workspace, and its own entry in the OS window manager (Windows taskbar, macOS Dock, GNOME activities, etc.) — same independence as launching AgentMux twice from a fresh shortcut.
 
 Because the new window is a separate instance — but the same binary, so the same (channel, version) — it shares the per-version runtime state (cookies, CEF cache, SQLite stores) and the channel-wide agents/settings of the source window. A tear-off onto a different channel is fully isolated.
 

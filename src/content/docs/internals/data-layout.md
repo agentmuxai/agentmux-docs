@@ -94,7 +94,7 @@ A single tree at `~/.agentmux/`, independent of channel:
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `~/.agentmux/shared/` | Account-wide state (cookies, dictionary downloads) — shared across channels | All hosts |
+| `~/.agentmux/shared/` | Account-wide state (dictionary downloads, cross-channel shared resources) — independent of channel and version. Browser cookies are *not* here; CEF cookies live in the version-scoped `versions/<v>/cef-cache/`. | All hosts |
 | `~/.agentmux/logs/current-host-v<version>.path` | Pointer file resolving to the running host's log path (absolute) | Host (write-through) |
 | `~/.agentmux/logs/agentmuxsrv-v<version>.log.<date>` | The sidecar's daily log file (lives directly in the shared dir, not the per-channel data dir) | Sidecar |
 | `~/.agentmux/logs/current-srv-v<version>.path` | Pointer file resolving to the running sidecar's log basename (relative to the same dir) | Sidecar (write-through) |
