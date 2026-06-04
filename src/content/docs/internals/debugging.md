@@ -62,7 +62,7 @@ grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pendin
 
 ## Sidecar crash dumps
 
-The sidecar runs as a separate process auto-spawned by the host. If it crashes (e.g. a `0xC0000409` STACK_BUFFER_OVERRUN), the OS writes a minidump.
+The sidecar runs as a separate process auto-spawned by the launcher (which owns its lifecycle). If it crashes (e.g. a `0xC0000409` STACK_BUFFER_OVERRUN), the OS writes a minidump.
 
 :::note[Windows-only path]
 On Windows, dumps land at `%LOCALAPPDATA%\CrashDumps\agentmux-srv*.dmp` via Windows Error Reporting (WER). On macOS, the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux, the path depends on whether `systemd-coredump` or `apport` is installed. See [Platform support](/internals/platform-support/) for the full per-OS table.

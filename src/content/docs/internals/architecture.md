@@ -7,16 +7,15 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 ## The four processes
 
-<figure>
-  <img src="/architecture.svg" alt="AgentMux four-process architecture: agentmux-launcher (×1 per channel-and-version pair, single-instance lock) spawns the host agentmux-cef. The host then embeds Chromium via CEF (×1 main renderer + ×N per browser pane) and auto-spawns the agentmux-srv sidecar on a dynamic port. The main renderer loads the SolidJS frontend, which talks to srv over WebSocket." />
-  <figcaption>Multiple AgentMux instances can run side-by-side — each (channel, version) pair gets its own complete 4-process stack. See <a href="/multi-instance/">Multi-instance</a> for the (channel, version) split.</figcaption>
-</figure>
+<p align="center">
+  <img src="/architecture.svg" alt="AgentMux four-process architecture: agentmux-launcher (×1 per (channel, version) — single-instance lock keyed on hash(data_dir + version), per the I1 isolation invariant) spawns agentmux-cef (×1 per launcher) and agentmux-srv (×1 per launcher, dynamic port). Host embeds Chromium 148 via CEF (×1 main renderer + ×N per browser pane). The SolidJS frontend runs in the main renderer and talks to srv over WebSocket. Multiple AgentMux instances can run side-by-side, each (channel, version) with its own full stack." width="860" />
+</p>
 
 | Process | Role | Crate |
 |---|---|---|
-| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host from `runtime/`; durable event log for OS-level facts; version isolation (one single-instance domain per version). On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks (WindowProc, Win32 window events). macOS/Linux launcher integration shipped for `task dev` in v0.41.0; full feature parity is on the roadmap. | `agentmux-launcher` |
+| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host from `runtime/`; **owns the sidecar lifecycle** (auto-spawns the sidecar process and supervises it); durable event log for OS-level facts; single-instance enforcement per (channel, version) — the I1 isolation invariant keys the pipe on `hash(data_dir + version)`. On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks (WindowProc, Win32 window events). macOS/Linux launcher integration shipped for `task dev` in v0.41.0; full feature parity is on the roadmap. | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the OS window, the browser panes, the JS bridge, and IPC fan-out to the renderer. | `agentmux-cef` |
-| **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Auto-spawned by the host on a dynamic port; users never run it directly. | `agentmux-srv` |
+| **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Spawned and supervised by the launcher (which owns its lifecycle); listens on a dynamic local port and serves the host + frontend over a WebSocket. Users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
 
 A fifth crate — `agentmux-common` — provides shared utilities (path resolution, runtime mode detection) that all the above consume.
@@ -29,7 +28,7 @@ Each process owns one concern, end-to-end:
 
 - **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports (Win32 hooks, WindowProc). On macOS/Linux, the equivalent reconciliation layer is on the roadmap; `task dev` on those platforms runs through the launcher as of v0.41.0.
 - **The host** is the only process with a CEF context. Browser panes, drag/drop, OS focus, and renderer crashes all live or die in the host. Crashing the host kills the user-facing window; the launcher restarts it.
-- **The sidecar** is the only process that owns durable state. Closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
+- **The sidecar** is the only process that owns durable state. The launcher spawns it (so its lifecycle survives a host crash); closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.
 
 This split is what makes multi-instance work cleanly: each instance has its own host, sidecar, dynamic backend port, Job Object, and process tree. What instances share on disk depends on whether they're the same release: two portables of the same (channel, version) share the version-scoped runtime dir (SQLite, CEF cache, host logs) as well as the channel-wide agents/settings; two portables of different versions on the same channel share only the channel-wide agents/settings; two portables on different channels share nothing channel-scoped at all. Every instance also touches account-wide state (sidecar log, dictionaries, launcher config). See [Multi-instance & dev mode → What's per-instance vs per-version vs per-channel](/multi-instance/#whats-per-instance-vs-per-version-vs-per-channel) for the full matrix.

@@ -18,7 +18,7 @@ The App API is what you should reach for first. It expresses **intent** ("open t
 - **Client:** `RpcApi` / `TabRpcClient` in the frontend (`frontend/app/store/rpc-api.ts`)
 - **Auth:** Token-based; pass via `authenticate` or `authenticatetoken` on connect
 
-The host auto-spawns a sidecar per instance on a dynamic port; terminals opened inside AgentMux receive `AGENTMUX_PORT` and an auth token via the [shell integration](/multi-instance/#shell-helpers) env block.
+The launcher spawns a sidecar per instance on a dynamic port (owns its lifecycle and supervises it); the host then connects to the sidecar over a local WebSocket. Terminals opened inside AgentMux receive `AGENTMUX_PORT` and an auth token via the [shell integration](/multi-instance/#shell-helpers) env block.
 
 ## App API
 
