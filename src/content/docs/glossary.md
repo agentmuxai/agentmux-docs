@@ -17,9 +17,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="browser-pane"></a>**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
 
-**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium 146 runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
+**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium 148 runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
-<a id="host"></a>**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher), spawns the [sidecar](#sidecar) and the Chromium subprocesses. See [Architecture overview](/internals/architecture/).
+<a id="host"></a>**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher); spawns the Chromium subprocesses. (The [sidecar](#sidecar) is also spawned by the launcher, which owns its lifecycle — see [Architecture overview](/internals/architecture/).)
 
 **Identity bundle** — A named credential set bound to an agent at launch. Decouples *who an agent acts as* (GitHub PAT, AWS profile, API keys) from *what an agent does* (the Memory bundle). The same Memory can run as multiple identities — work, personal, demo — without restart. See [Identity bundles](/identity/).
 
