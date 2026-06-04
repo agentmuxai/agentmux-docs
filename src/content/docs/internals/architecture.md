@@ -7,10 +7,9 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 ## The four processes
 
-<figure>
-  <img src="/architecture.svg" alt="AgentMux four-process architecture: agentmux-launcher (×1 per channel-and-version pair, single-instance lock) spawns the host agentmux-cef. The host then embeds Chromium via CEF (×1 main renderer + ×N per browser pane) and auto-spawns the agentmux-srv sidecar on a dynamic port. The main renderer loads the SolidJS frontend, which talks to srv over WebSocket." />
-  <figcaption>Multiple AgentMux instances can run side-by-side — each (channel, version) pair gets its own complete 4-process stack. See <a href="/multi-instance/">Multi-instance</a> for the (channel, version) split.</figcaption>
-</figure>
+<p align="center">
+  <img src="/architecture.svg" alt="AgentMux four-process architecture: agentmux-launcher (×1 per channel, single-instance lock) spawns agentmux-cef (×1 per launcher) and agentmux-srv (×1 per launcher, dynamic port). Host embeds Chromium 148 via CEF (×1 main renderer + ×N per browser pane). The SolidJS frontend runs in the main renderer and talks to srv over WebSocket. Multiple AgentMux instances can run side-by-side, each with its own full stack keyed on data-dir channel." width="860" />
+</p>
 
 | Process | Role | Crate |
 |---|---|---|
