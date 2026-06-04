@@ -168,7 +168,7 @@ If `cargo build` fails with "CMake was unable to find a build program correspond
 
 ### Backend binary not found
 
-Run `task build:backend` and verify the binary lands in `target/release/` (or the platform-equivalent location). The host auto-spawns the sidecar by absolute path.
+Run `task build:backend` and verify the binary lands in `target/release/` (or the platform-equivalent location). The launcher auto-spawns the sidecar by absolute path.
 
 ### Frontend not loading
 
