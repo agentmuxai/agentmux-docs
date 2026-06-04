@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 580" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">
   <title>AgentMux four-process architecture</title>
-  <desc>agentmux-launcher (1 per channel-and-version pair, enforced via a single-instance named-pipe lock under that pair's runtime/ dir) spawns agentmux-cef (1 per launcher) and agentmux-srv (1 per launcher, dynamic port). The host embeds Chromium via CEF (1 main renderer + N renderer subprocesses, one per browser pane). The main renderer loads the SolidJS frontend, which talks to the srv sidecar over a WebSocket.</desc>
+  <desc>agentmux-launcher (1 per channel-and-version pair, enforced via a single-instance named-pipe lock under that pair's runtime/ dir) spawns agentmux-cef. The host then embeds Chromium via CEF (1 main renderer + N renderer subprocesses, one per browser pane) and auto-spawns agentmux-srv (the sidecar) on a dynamic port. The main renderer loads the SolidJS frontend, which talks to the srv sidecar over a WebSocket.</desc>
 
   <defs>
     <style>
@@ -37,7 +37,7 @@
   <g>
     <rect class="box" x="40" y="30" width="280" height="110"/>
     <text class="title" x="180" y="62" text-anchor="middle">agentmux-launcher</text>
-    <text class="sub"   x="180" y="86" text-anchor="middle">~325 KB shim · spawns host + srv</text>
+    <text class="sub"   x="180" y="86" text-anchor="middle">~325 KB shim · spawns the host</text>
     <text class="card"  x="180" y="115" text-anchor="middle">×1 per (channel, version)</text>
     <text class="sub"   x="180" y="132" text-anchor="middle" style="font-size:12px;">(single-instance via named-pipe lock)</text>
   </g>
@@ -85,9 +85,9 @@
     <text class="card-side" x="480" y="560" text-anchor="middle">×1 per launcher · dynamic port · Rust + Tokio + Axum</text>
   </g>
 
-  <!-- launcher -> srv (spawns) -->
-  <path class="edge" d="M180,140 L180,480" marker-end="url(#arrow)"/>
-  <text class="edge-label" x="190" y="310">spawns</text>
+  <!-- host -> srv (auto-spawns the sidecar on a dynamic port). Routed along the left margin of the right column so it doesn't collide with the JS bridge / websocket arrows. -->
+  <path class="edge" d="M640,90 L600,90 L600,510 L640,510" marker-end="url(#arrow)"/>
+  <text class="edge-label" x="490" y="300" text-anchor="end">auto-spawns sidecar</text>
 
   <!-- solidjs -> srv (websocket) -->
   <path class="edge" d="M780,430 L780,480" marker-end="url(#arrow)"/>
