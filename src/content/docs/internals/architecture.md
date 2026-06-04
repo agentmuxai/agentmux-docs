@@ -7,33 +7,9 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 ## The four processes
 
-```
-┌──────────────────┐         named pipe        ┌──────────────────┐
-│  agentmux-       │ ◀────────────────────────▶│  agentmux-cef    │
-│  launcher        │                          │  (the "host")    │
-│  (≈325 KB shim)  │                          │                  │
-└────────┬─────────┘                          └────────┬─────────┘
-         │ spawns                                      │ embeds
-         │                                             ▼
-         │                                      ┌──────────────────┐
-         │                                      │  Chromium        │
-         │                                      │  (CEF renderer)  │
-         │                                      └────────┬─────────┘
-         │                                               │ JS bridge
-         │                                               ▼
-         │                                      ┌──────────────────┐
-         │                                      │  SolidJS app     │
-         │                                      │  (the frontend)  │
-         │                                      └────────┬─────────┘
-         │                                               │ websocket
-         ▼                                               ▼
-┌─────────────────────────────────────────────────────────┐
-│                     agentmux-srv                         │
-│                       (sidecar)                          │
-│   • RPC engine (websocket)   • SQLite persistence        │
-│   • saga coordinator         • event bus                 │
-└─────────────────────────────────────────────────────────┘
-```
+<figure>
+  <img src="/architecture.svg" alt="AgentMux four-process architecture: agentmux-launcher (×1 per channel, single-instance lock) spawns agentmux-cef (×1 per launcher) and agentmux-srv (×1 per launcher, dynamic port). The host embeds Chromium via CEF (×1 main renderer + ×N per browser pane). The main renderer loads the SolidJS frontend, which talks to srv over WebSocket. Multiple AgentMux instances can run side-by-side, each with its own full stack keyed on data-dir channel." />
+</figure>
 
 | Process | Role | Crate |
 |---|---|---|
