@@ -50,11 +50,23 @@ chmod +x AgentMux_amd64.AppImage
 ./AgentMux_amd64.AppImage
 ```
 
-### Requirements
-- A display server (X11 or Wayland)
-- glibc 2.31+ (Ubuntu 20.04 / Debian 11 / equivalent or newer)
+On first launch the AppImage extracts itself to `~/.local/share/agentmux/extracted/<version>/` (~2–3 s one-time). Subsequent launches start in ~1 s from the cached copy.
 
-No system browser dependencies — the AppImage carries its own CEF runtime.
+### .deb (Debian/Ubuntu)
+
+A `.deb` package is available from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases):
+
+```bash
+sudo dpkg -i AgentMux_amd64.deb
+agentmux
+```
+
+### Requirements
+- **Display server:** X11 or Wayland. Defaults to **XWayland** (`--ozone-platform=x11`); set `AGENTMUX_OZONE_PLATFORM=wayland` for native Wayland (experimental).
+- **glibc 2.31+** (Ubuntu 20.04 / Debian 11 or newer)
+- **FUSE** — required for the AppImage compressed mount; pre-installed on most desktop distros. If absent, extract manually: `./AgentMux_amd64.AppImage --appimage-extract && squashfs-root/AppRun`
+
+No other system dependencies — the AppImage bundles its own Chromium runtime (~200 MB compressed).
 
 ## Verify Installation
 

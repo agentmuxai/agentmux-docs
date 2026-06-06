@@ -3,7 +3,7 @@ title: Running multiple instances
 description: How AgentMux lets multiple installs and dev builds run side-by-side without colliding.
 ---
 
-AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own Job Object, and its own dynamic backend port. On-disk state has three axes: **per-channel** (settings, agent definitions, per-provider OAuth auth dirs — survive upgrades within a channel), **per-version within a channel** (SQLite, host logs, CEF cache + cookies, IPC artifacts — isolated per release so concurrent versions don't collide), and **account-wide** (sidecar log, dictionaries, launcher config — independent of channel). Instances on the same (channel, version) share their runtime state; different versions or different channels are isolated.
+AgentMux is designed for **multiple [instances](/glossary/#instance) running side-by-side** — installed + dev, a portable + `task dev`, several portable copies of the same release. Each instance has its own process tree (launcher → sidecar → host → renderer(s)), its own process-isolation container (Job Object on Windows / process group on Linux + macOS), and its own dynamic backend port. On-disk state has three axes: **per-channel** (settings, agent definitions, per-provider OAuth auth dirs — survive upgrades within a channel), **per-version within a channel** (SQLite, host logs, CEF cache + cookies, IPC artifacts — isolated per release so concurrent versions don't collide), and **account-wide** (sidecar log, dictionaries, launcher config — independent of channel). Instances on the same (channel, version) share their runtime state; different versions or different channels are isolated.
 
 This page explains how that works from a user's perspective. For the underlying data-directory layout, log-discovery mechanics, and per-store details, see [Data layout](/internals/data-layout/).
 
@@ -24,9 +24,9 @@ The mode is detected at startup; the channel is derived from the mode. The overr
 
 Three axes of isolation, often confused:
 
-**Per-instance** (one launcher → sidecar → host → renderer(s) tree, plus a Job Object) — every running AgentMux owns its own:
+**Per-instance** (one launcher → sidecar → host → renderer(s) tree, plus a process-isolation container) — every running AgentMux owns its own:
 
-- Process tree, dynamic backend port, IPC pipe, Job Object
+- Process tree, dynamic backend port, IPC socket/pipe, process-isolation container (Job Object on Windows / process group on Linux + macOS)
 - Renderer JS contexts (in-memory state in the running window(s))
 
 **Per-version** (one runtime-state set per (channel, version) pair, shared by all instances of the same release on the same channel, isolated from other versions of the same channel — shipped in v0.41.1):
@@ -34,7 +34,7 @@ Three axes of isolation, often confused:
 - **Runtime SQLite stores** — workspaces, tabs, blocks, layouts, sagas, filestore (`objects.db`, `sagas.db`, `filestore.db`)
 - **Logs** — host log files (rotated daily). Sidecar logs are *not* per-version — see [shared](#whats-shared) below.
 - **Browser state (CEF cache)** — cookies, local storage, IndexedDB, service workers, cached JS
-- **IPC + lockfiles** — ipc-port file, single-instance lock, named-pipe sockets
+- **IPC + lockfiles** — ipc-port file, single-instance lock, named-pipe sockets (Windows) / Unix domain sockets (Linux + macOS)
 
 **Per-channel** (one set per channel, shared across every version of that channel, isolated between channels — these are the things you want to survive an upgrade):
 
@@ -81,7 +81,7 @@ Each new launch picks up its own dynamic backend port. There's no port to coordi
 
 Two checkouts of `agentmux` on the same host can each run `task dev` in parallel, even on the same branch. Every dev launch derives a stable **clone id** from a hash of its workspace-root path:
 
-- **Data dir:** `~/.agentmux/dev/<branch>/<clone-id>/` — distinct per clone, so lockfile, named-pipe IPC, CEF cache, and logs all isolate. (Without this, two clones on the same branch would silently share state — the second `task dev`'s launcher would attach to the first clone's running window.)
+- **Data dir:** `~/.agentmux/dev/<branch>/<clone-id>/` — distinct per clone, so lockfile, IPC socket/pipe, CEF cache, and logs all isolate. (Without this, two clones on the same branch would silently share state — the second `task dev`'s launcher would attach to the first clone's running window.)
 - **Vite dev server port:** `5173 + cksum($PWD) % 200` — derived the same way. First clone often gets 5173; the second gets a different deterministic port from the same range (5173–5372).
 - **Sidecar TCP ports:** dynamic (OS-assigned), so always distinct without any keying.
 - **`target/` and `dist/cef-dev/`:** live inside each clone's working tree, so they're per-clone by construction.
@@ -122,7 +122,7 @@ Floating panes (pop a single pane into its own owned window without spawning a n
 
 Starting in v0.41.1, different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before v0.41.1, launching an older portable while a newer one was running would silently focus the wrong window.
 
-Each version has its own single-instance domain — the launcher's named-pipe hash includes the build version, so two binaries on the same channel produce distinct pipes and don't activate each other's window (shipped in [#1227](https://github.com/agentmuxai/agentmux/pull/1227)). Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
+Each version has its own single-instance domain — the launcher's IPC socket/pipe hash includes the build version, so two binaries on the same channel produce distinct sockets/pipes and don't activate each other's window (shipped in [#1227](https://github.com/agentmuxai/agentmux/pull/1227)). Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
 
 This is independent of tear-off: it applies whenever two different versions on the same channel launch at the same time, regardless of how they were launched.
 
@@ -143,7 +143,7 @@ You're probably running `task dev` from a different branch — or a different cl
 - **Sidecar log** lives at `~/.agentmux/logs/` (account-wide), so the cross-version `muxlog srv` recipe keeps working regardless.
 
 **"Are running portables sharing state?"**
-Depends on the (channel, version) pair. Two portables of the *same* release on the *same* channel share the version-scoped runtime SQLite, CEF cache, and host logs as well as the channel-wide agents/settings — they're effectively the same data, just two process trees. Two portables of *different* releases on the same channel share only the channel-wide agents/settings; their runtime dirs are separate. Two portables on *different* channels (e.g. `stable` vs `dev-portable`) share nothing. In all cases the launcher/sidecar/host/renderer tree is its own [instance](/glossary/#instance) with its own Job Object.
+Depends on the (channel, version) pair. Two portables of the *same* release on the *same* channel share the version-scoped runtime SQLite, CEF cache, and host logs as well as the channel-wide agents/settings — they're effectively the same data, just two process trees. Two portables of *different* releases on the same channel share only the channel-wide agents/settings; their runtime dirs are separate. Two portables on *different* channels (e.g. `stable` vs `dev-portable`) share nothing. In all cases the launcher/sidecar/host/renderer tree is its own [instance](/glossary/#instance) with its own process-isolation container (Job Object on Windows / process group on Linux + macOS).
 
 **"I can't find the log file."**
 Use the `muxlog` shell helper from any AgentMux terminal:

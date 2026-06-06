@@ -27,8 +27,8 @@ Host (agentmux-cef)                   FFI + UI thread           Layer 2
    ┃ launcher → host pipe (in flight)
 Launcher (agentmux-launcher)          process & OS facts        Layer 1
    ▲ lifecycle, processes, windows, monitors, pool, registries
-   ▲ WRR (Window Reality Reconciliation) via Win32 hooks
-   ┃ launcher pipe (named pipe IPC)
+   ▲ WRR (Window Reality Reconciliation) via Win32 hooks [Windows]
+   ┃ launcher IPC (named pipe [Windows] / Unix domain socket [Linux + macOS])
 Srv (agentmux-srv)                    app domain                Layer 3
    ▲ workspaces, tabs, blocks, layouts, agents, identity
    ▲ saga coordinator (Path A — chosen E.5)
@@ -40,7 +40,7 @@ Persistence                                                      durability
 
 ### Layer 1 — Launcher
 
-Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. Reconciles AgentMux's own model against Win32 reality via WRR (Window Reality Reconciliation) hooks. Durable JSONL event log at `<data-dir>/data/launcher-events.log` (one log file per version, appended to by every same-version launcher). **Status:** done.
+Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. On Windows: reconciles AgentMux's own model against Win32 reality via WRR hooks. On Linux (v0.42.x+): driven over Unix-domain-socket IPC from the host; same reducer, same 60+ command handlers, same saga coordinator — WRR drift detection not yet implemented. Durable JSONL event log at `<data-dir>/data/launcher-events.log`. **Status:** done.
 
 ### Layer 2 — Host
 

@@ -3,7 +3,7 @@ title: Architecture overview
 description: How AgentMux is organized — the launcher, the host, the sidecar, and the renderer — and how they talk to each other.
 ---
 
-AgentMux is a desktop application built around a small set of long-running processes that exchange events over named pipes and a local websocket. Understanding the topology is enough to navigate the rest of the docs.
+AgentMux is a desktop application built around a small set of long-running processes that exchange events over named pipes (Windows) / Unix domain sockets (Linux + macOS) and a local websocket. Understanding the topology is enough to navigate the rest of the docs.
 
 ## The four processes
 
@@ -13,7 +13,7 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 | Process | Role | Crate |
 |---|---|---|
-| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host from `runtime/`; **owns the sidecar lifecycle** (auto-spawns the sidecar process and supervises it); durable event log for OS-level facts; single-instance enforcement per (channel, version) — the I1 isolation invariant keys the pipe on `hash(data_dir + version)`. On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks (WindowProc, Win32 window events). macOS/Linux launcher integration shipped for `task dev` in v0.41.0; full feature parity is on the roadmap. | `agentmux-launcher` |
+| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host; **owns the sidecar lifecycle**; durable event log; single-instance enforcement per (channel, version) — the I1 isolation invariant keys the IPC socket/pipe on `hash(data_dir + version)`. On Windows: sets DLL search path; tracks WRR (Window Reality Reconciliation) via Win32 hooks. On Linux: AppImage entry point (A0, v0.42.x); Unix-socket IPC server + full reducer + saga coordinator (A1, v0.42.x). `task dev` on all platforms runs through the launcher (v0.41.0+). | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the OS window, the browser panes, the JS bridge, and IPC fan-out to the renderer. | `agentmux-cef` |
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Spawned and supervised by the launcher (which owns its lifecycle); listens on a dynamic local port and serves the host + frontend over a WebSocket. Users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
@@ -26,12 +26,12 @@ A fifth crate — `agentmux-common` — provides shared utilities (path resoluti
 
 Each process owns one concern, end-to-end:
 
-- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports (Win32 hooks, WindowProc). On macOS/Linux, the equivalent reconciliation layer is on the roadmap; `task dev` on those platforms runs through the launcher as of v0.41.0.
+- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports (Win32 hooks, WindowProc). On Linux (v0.42.x+), the launcher is the AppImage entry point and runs the full reducer + saga coordinator over Unix-domain-socket IPC. On macOS/Linux, WRR drift detection is not yet implemented.
 - **The host** is the only process with a CEF context. Browser panes, drag/drop, OS focus, and renderer crashes all live or die in the host. Crashing the host kills the user-facing window; the launcher restarts it.
 - **The sidecar** is the only process that owns durable state. The launcher spawns it (so its lifecycle survives a host crash); closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.
 
-This split is what makes multi-instance work cleanly: each instance has its own host, sidecar, dynamic backend port, Job Object, and process tree. What instances share on disk depends on whether they're the same release: two portables of the same (channel, version) share the version-scoped runtime dir (SQLite, CEF cache, host logs) as well as the channel-wide agents/settings; two portables of different versions on the same channel share only the channel-wide agents/settings; two portables on different channels share nothing channel-scoped at all. Every instance also touches account-wide state (sidecar log, dictionaries, launcher config). See [Multi-instance & dev mode → What's per-instance vs per-version vs per-channel](/multi-instance/#whats-per-instance-vs-per-version-vs-per-channel) for the full matrix.
+This split is what makes multi-instance work cleanly: each instance has its own host, sidecar, dynamic backend port, process-isolation container (Job Object on Windows / process group on Linux + macOS), and process tree. What instances share on disk depends on whether they're the same release: two portables of the same (channel, version) share the version-scoped runtime dir (SQLite, CEF cache, host logs) as well as the channel-wide agents/settings; two portables of different versions on the same channel share only the channel-wide agents/settings; two portables on different channels share nothing channel-scoped at all. Every instance also touches account-wide state (sidecar log, dictionaries, launcher config). See [Multi-instance & dev mode → What's per-instance vs per-version vs per-channel](/multi-instance/#whats-per-instance-vs-per-version-vs-per-channel) for the full matrix.
 
 ## How they communicate
 
