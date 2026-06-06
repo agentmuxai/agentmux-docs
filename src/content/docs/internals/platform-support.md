@@ -19,7 +19,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Terminal pane (PTY) | ✅ ConPTY | ✅ posix\_openpt | ✅ posix\_openpt |
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
 | Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so, v0.42.x+) |
-| Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Phase A, v0.41+) |
+| Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Phase A, v0.41+, Wayland desktop) |
 | Window transparency | ✅ ships | 🟡 in progress | 🟡 in progress (root cause identified) |
 | Native splash screen | ✅ ships | ✅ ships | 🟡 not yet implemented |
 | Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
