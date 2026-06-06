@@ -20,7 +20,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
 | Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so, v0.42.x+) |
 | Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Phase A, v0.41+, Wayland desktop) |
-| Window transparency | ✅ ships | 🟡 in progress | 🟡 in progress (root cause identified) |
+| Window transparency | ✅ ships | 🟡 in progress (CEF Views layer) | 🟡 in progress (root cause identified: views::SolidBackground) |
 | Native splash screen | ✅ ships | ✅ ships | 🟡 not yet implemented |
 | Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
 | Sidecar minidumps | ✅ WER → `%LOCALAPPDATA%\CrashDumps\` | ❌ uses macOS crash reporter (`~/Library/Logs/DiagnosticReports/`) | ❌ uses systemd-coredump or apport |
@@ -63,7 +63,7 @@ The architecture is designed cross-platform from the start:
 ### macOS
 
 - Ships as a notarized `.dmg` (v0.42.x+). The launcher binary is `Contents/MacOS/AgentMux` inside the app bundle.
-- WRR hooks will use `NSWorkspace` observers for window-event subscriptions (planned; not yet implemented — see the ❌ WRR row in the table above).
+- WRR hooks will use `NSWindow` observers/delegates for per-window event subscriptions (planned; not yet implemented — see the ❌ WRR row in the table above).
 - Shell integration: bash, zsh, and fish ship by default. PowerShell support is opt-in.
 
 ### Linux
