@@ -24,7 +24,7 @@ Frontend (renderer / SolidJS)         per-process atoms        consumer
 Host (agentmux-cef)                   FFI + UI thread           Layer 2
    ▲ pending_window_creations, active_drag, tear_off_hooks
    ▲ deliberately retained scaffolding: browsers, window_pool
-   ┃ launcher → host pipe (in flight)
+   ┃ launcher → host pipe/socket (in flight)
 Launcher (agentmux-launcher)          process & OS facts        Layer 1
    ▲ lifecycle, processes, windows, monitors, pool, registries
    ▲ WRR (Window Reality Reconciliation) via Win32 hooks [Windows]

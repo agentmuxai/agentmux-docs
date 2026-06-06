@@ -47,7 +47,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="process"></a>**process** — An OS process. **Avoid in user-facing copy** — one [instance](#instance) has 4+ processes ([launcher](#launcher), [sidecar](#sidecar), [host](#host), [renderer](#renderer)s, plus Chromium GPU/utility subprocesses), so "this AgentMux process" is ambiguous. Reserve "process" for internal docs that genuinely discuss the process tree.
 
-<a id="process-group"></a>**process group** — The Linux + macOS equivalent of a Windows Job Object for AgentMux's process-isolation needs. The launcher places the host and sidecar in a process group and sets `PR_SET_PDEATHSIG` (Linux) so child processes terminate when the launcher exits. This is what prevents orphaned `agentmux-cef` or `agentmux-srv` processes if the launcher crashes.
+<a id="process-group"></a>**process group** — The Linux + macOS equivalent of a Windows Job Object for AgentMux's process-isolation needs. The launcher places the host and sidecar in a process group. On Linux, `PR_SET_PDEATHSIG` ensures child processes terminate when the launcher exits — this prevents orphaned `agentmux-cef` or `agentmux-srv` processes if the launcher crashes. On macOS, crashed-parent children are reparented to launchd rather than killed; the process group provides isolation but not automatic orphan cleanup.
 
 **reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
 

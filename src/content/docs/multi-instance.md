@@ -120,7 +120,7 @@ Floating panes (pop a single pane into its own owned window without spawning a n
 
 ## Running different versions side-by-side
 
-Starting in v0.41.1, different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before v0.41.1, launching an older portable while a newer one was running would silently focus the wrong window.
+Starting in v0.41.1 (Windows) / v0.42.x (macOS + Linux), different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. Before this shipped on your platform, launching an older portable while a newer one was running would silently focus the wrong window.
 
 Each version has its own single-instance domain — the launcher's IPC socket/pipe hash includes the build version, so two binaries on the same channel produce distinct sockets/pipes and don't activate each other's window (shipped in [#1227](https://github.com/agentmuxai/agentmux/pull/1227)). Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Agent definitions and settings live at the channel level and are shared across all versions of that channel, so your agents and settings are available in both.
 
