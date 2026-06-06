@@ -38,7 +38,7 @@ Dev mode is keyed by two segments under `~/.agentmux/dev/`:
 Without this second segment, two clones on the same branch would resolve to the same `~/.agentmux/dev/<branch>/` and silently collide on:
 
 - the single-instance lockfile,
-- the launcher's named-pipe IPC (the second clone's launcher would route opens into the first clone's window),
+- the launcher's IPC socket/pipe (the second clone's launcher would route opens into the first clone's window),
 - the data dir and logs.
 
 Each `task dev` derives its `clone-id` from `current_exe()` at launch, hashes the canonical lowercase path, and threads it into [`RuntimeMode::Dev { branch, clone_id }`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs). It travels to host and sidecar via `AGENTMUX_CLONE_ID`.
@@ -75,7 +75,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | `versions/<v>/data/` | SQLite stores (`db/objects.db`, `db/filestore.db`, `db/sagas.db`, `db/launcher-sagas.db`) and the launcher's JSONL event log (`launcher-events.log`) |
 | `versions/<v>/logs/` | Host logs (rotated daily, 7-day retention). **Sidecar logs are not here** — they live at `~/.agentmux/logs/` (account-wide), see [Account-wide (shared) contents](#account-wide-shared-contents) below. |
 | `versions/<v>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
-| `versions/<v>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets) |
+| `versions/<v>/runtime/` | Runtime IPC artifacts (lock files, named-pipe sockets on Windows / Unix domain sockets on Linux + macOS) |
 
 **Channel-wide** — `channels/<channel>/`
 

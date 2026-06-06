@@ -11,6 +11,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **Agent App API** — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/agent-app-api/).
 
+**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
+
 **agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
 **block** — An immutable persisted unit of pane state. A block is the smallest thing the reducer writes. Terminal output, code block, diff, chat message — each is one or more blocks. Layered structure with reducer-driven mutations. See [The reducer stack](/internals/reducer-stack/).
@@ -23,11 +25,11 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **Identity bundle** — A named credential set bound to an agent at launch. Decouples *who an agent acts as* (GitHub PAT, AWS profile, API keys) from *what an agent does* (the Memory bundle). The same Memory can run as multiple identities — work, personal, demo — without restart. See [Identity bundles](/identity/).
 
-<a id="instance"></a>**instance** — One AgentMux **process tree**, rooted at one [launcher](#launcher), with its own [sidecar](#sidecar), [host](#host), [renderer](#renderer)(s), and Job Object. Each launch of `agentmux-launcher` creates a new instance. Multiple instances run side-by-side. The "other AgentMux instances on LAN" entries shown in the status bar each correspond to a separate instance. See [Multi-instance & dev mode](/multi-instance/).
+<a id="instance"></a>**instance** — One AgentMux **process tree**, rooted at one [launcher](#launcher), with its own [sidecar](#sidecar), [host](#host), [renderer](#renderer)(s), and process-isolation container (Job Object on Windows / [process group](#process-group) on Linux + macOS). Each launch of `agentmux-launcher` creates a new instance. Multiple instances run side-by-side. The "other AgentMux instances on LAN" entries shown in the status bar each correspond to a separate instance. See [Multi-instance & dev mode](/multi-instance/).
 
 > Note: "instance" is *not* one process — a baseline single-window dev session has 4 processes ([launcher](#launcher) + [sidecar](#sidecar) + [host](#host) + 1 [renderer](#renderer)), plus shared GPU/utility Chromium subprocesses, plus more renderers as windows and browser panes are opened.
 
-> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two Job Objects) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
+> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two process-isolation containers) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
 
 **jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). The MCP tool `mcp__agentbus__inject_terminal` is the primary entry point.
 
@@ -45,11 +47,15 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="process"></a>**process** — An OS process. **Avoid in user-facing copy** — one [instance](#instance) has 4+ processes ([launcher](#launcher), [sidecar](#sidecar), [host](#host), [renderer](#renderer)s, plus Chromium GPU/utility subprocesses), so "this AgentMux process" is ambiguous. Reserve "process" for internal docs that genuinely discuss the process tree.
 
+<a id="process-group"></a>**process group** — The Linux + macOS equivalent of a Windows Job Object for AgentMux's process-isolation needs. The launcher places the host and sidecar in a process group. On Linux, `PR_SET_PDEATHSIG` ensures child processes terminate when the launcher exits — this prevents orphaned `agentmux-cef` or `agentmux-srv` processes if the launcher crashes. On macOS, crashed-parent children are reparented to launchd rather than killed; the process group provides isolation but not automatic orphan cleanup.
+
 **reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
 <a id="sidecar"></a>**sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
+
+**Unix domain socket** — The IPC mechanism the launcher uses on Linux and macOS to communicate with the host. The socket lives at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (primary) or `/tmp/agentmux-<uid>/<hash>.sock` (fallback when `$XDG_RUNTIME_DIR` is unset), where `<hash>` is derived from `(data_dir + version)` — the same isolation key as the Windows named pipe. The counterpart Windows primitive is a **named pipe** (`\\.\pipe\agentmux-<hash>`). Both carry the same wire protocol (the reducer command set defined in `agentmux-common/src/ipc`). See [Platform support → Linux](/internals/platform-support/#linux).
 
 **streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 
