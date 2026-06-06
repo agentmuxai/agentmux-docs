@@ -6,7 +6,7 @@ title: "Installation"
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux is available for Windows, macOS, and Linux. The portable package is around 148 MB; runtime memory is 150–350 MB depending on session activity.
+AgentMux is available for Windows, macOS, and Linux. The Windows portable package is around 148 MB; the Linux AppImage is around 200 MB. Runtime memory is 150–350 MB depending on session activity.
 
 AgentMux bundles its own Chromium runtime via CEF — there is **no system dependency on WebKitGTK or any other browser engine.** A standard desktop installation of any supported OS is enough.
 
@@ -52,6 +52,8 @@ chmod +x AgentMux_amd64.AppImage
 
 On first launch the AppImage extracts itself to `~/.local/share/agentmux/extracted/<version>/` (~2–3 s one-time). Subsequent launches start in ~1 s from the cached copy.
 
+**FUSE required** (for the compressed SquashFS mount). Pre-installed on most desktop distros. If absent: `./AgentMux_amd64.AppImage --appimage-extract && squashfs-root/AppRun`
+
 ### .deb (Debian/Ubuntu)
 
 A `.deb` package is available from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases):
@@ -64,9 +66,8 @@ agentmux
 ### Requirements
 - **Display server:** X11 or Wayland. Defaults to **XWayland** (`--ozone-platform=x11`); set `AGENTMUX_OZONE_PLATFORM=wayland` for native Wayland (experimental).
 - **glibc 2.31+** (Ubuntu 20.04 / Debian 11 or newer)
-- **FUSE** — required for the AppImage compressed mount; pre-installed on most desktop distros. If absent, extract manually: `./AgentMux_amd64.AppImage --appimage-extract && squashfs-root/AppRun`
 
-No other system dependencies — the AppImage bundles its own Chromium runtime (~200 MB compressed).
+No other system dependencies — AgentMux bundles its own Chromium runtime.
 
 ## Verify Installation
 
