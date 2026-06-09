@@ -400,4 +400,16 @@ Rearrange panes by dragging their headers. You can:
 
 Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree, but the same binary as the source, so it's the same (channel, version) — both share the per-version runtime state (CEF cache, cookies, SQLite stores, host logs) *and* the channel-wide agents/settings. Different channel → fully isolated. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
 
-> **Note:** Floating panes (pop a single pane into its own window *without* spawning a new instance) are a separate, distinct feature. The Phase 1 host primitive has shipped but there is no user-visible gesture yet.
+### Floating panes
+
+**Drag a pane header outside the window** to pop it into a **floating subordinate window** owned by the same instance — not a new AgentMux instance, just a detached child window that shares the same backend sidecar.
+
+| Control | Behavior |
+|---|---|
+| Drag pane header outside the window | Spawns a floating window at the same size as the original pane |
+| Drag the floating title bar | Move the floating window freely across monitors |
+| Drag near a target window + hold | Dock indicator appears after 180 ms of hovering at ≤400 px/s; release to dock |
+| Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |
+| Close button in floater title bar | Closes the pane (same as closing a docked pane) |
+
+**Redock gesture:** drag the floating pane's title bar close to any AgentMux window. A dock indicator appears once your cursor has stayed near that window for 180 ms at a slow-to-stopped speed (≤400 CSS px/s) — the dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock.

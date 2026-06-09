@@ -116,7 +116,7 @@ Because the new window is a separate instance — but the same binary, so the sa
 
 **Known limitation:** Dropping the dragged tab into *another* running AgentMux instance's tab bar is not yet wired up — Phase 1 only supports tearing to the desktop, not cross-instance docking. That's planned for Phase 2.
 
-Floating panes (pop a single pane into its own owned window without spawning a new instance) are a separate feature; only the Phase 1 host primitive has shipped — there is no user-visible gesture yet.
+**Floating panes** (pop a single pane into its own owned window without spawning a new instance) are a distinct feature — drag a pane header outside the window to float it. See [Pane Management → Floating panes](/pane-types/#floating-panes) for the full gesture and redock behaviour.
 
 ## Running different versions side-by-side
 
