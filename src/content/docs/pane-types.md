@@ -408,7 +408,7 @@ Drag a tab below the tab bar to spawn a **new AgentMux instance** containing tha
 |---|---|
 | Drag pane header outside the window | Spawns a floating window at the same size as the original pane |
 | Drag the floating title bar | Move the floating window freely across monitors |
-| Drag near a target window + hold | Dock indicator appears after 180 ms of hovering at ≤400 px/s; release to dock |
+| Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 180 ms at that speed; release to dock |
 | Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |
 | Close button in floater title bar | Closes the pane (same as closing a docked pane) |
 

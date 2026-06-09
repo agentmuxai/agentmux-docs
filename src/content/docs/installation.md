@@ -34,7 +34,7 @@ Download `agentmux-x64-portable.zip` and extract anywhere. No installation requi
 
 Download `AgentMux_x64.msix` for Windows-Store-style installation. Sandboxed install (no UAC prompt), uses the same `stable` data channel as the installer so agents and settings carry over if you switch. Automatic updates require a Store listing — direct `.msix` downloads must be updated manually.
 
-Note: not yet published to the Store; the MSIX package is available directly from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases) in the meantime. Store listing is planned for a future release.
+Note: not yet published to the Store; the MSIX package is available directly from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases) in the meantime. Store listing is planned for a future release. See [Update model](/security/update-model/) for full details on how each distribution receives updates.
 
 ## Linux
 
