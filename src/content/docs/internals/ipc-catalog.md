@@ -26,7 +26,7 @@ This document catalogs every inter-process channel in AgentMux, their wire contr
 11. [Channel I: Chromium Remote Debug Port (CDP)](#11-channel-i-chromium-remote-debug-port-cdp)
 12. [IPC Token and Auth Key — Lifecycle and Leak Surface](#12-ipc-token-and-auth-key--lifecycle-and-leak-surface)
 13. [Launcher ↔ Srv Named Pipe (Reducer Bus)](#13-launcher--srv-named-pipe-reducer-bus)
-14. [Command/Event Domain Mixing in agentmux-common/src/ipc.rs](#14-commandevent-domain-mixing-in-agentmux-commonsrcipcsrs)
+14. [Command/Event Domain Mixing in agentmux-common/src/ipc.rs](#14-commandevent-domain-mixing-in-agentmux-commonsrcipcrs)
 15. [Environment Variable Contract](#15-environment-variable-contract)
 16. [Security Findings Cross-Reference](#16-security-findings-cross-reference)
 
@@ -79,13 +79,13 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 
 | ID | Name | Transport | Direction | Auth | Purpose |
 |----|------|-----------|-----------|------|---------|
-| A | Local IPC HTTP | HTTP POST 127.0.0.1:<rnd> | renderer→host | Bearer `ipc_token` | All host command dispatch |
+| A | Local IPC HTTP | `HTTP POST 127.0.0.1:<rnd>` | renderer→host | Bearer `ipc_token` | All host command dispatch |
 | B | CEF JS event push | `frame.execute_javascript()` | host→renderer | none (same process trust) | Push typed events to frontend |
 | C | Launcher named pipe / Unix socket | Named pipe (Win) / Unix socket | host↔launcher | none (OS pipe ownership) | Window state mirror, saga dispatch, WRR |
 | D | Srv named pipe bridge | Named pipe (Win) / Unix socket | host←srv (read-only) | none (OS pipe ownership) | Forward srv reducer events to renderer |
-| E | Srv WebSocket RPC | WS ws://127.0.0.1:<rnd>/ws | renderer↔srv | `?authkey=` query param (WS-only) | RPC commands, event bus subscription |
-| F | Srv HTTP service | HTTP POST 127.0.0.1:<rnd>/agentmux/service | renderer→srv | `X-AuthKey` header | Object CRUD, tab/block/workspace ops |
-| G | Browser DOM API | HTTP POST 127.0.0.1:<rnd>/agentmux/browser/* | renderer→host | Bearer `ipc_token` | CSS query, JS eval, screenshot, click, key in browser panes |
+| E | Srv WebSocket RPC | `WS ws://127.0.0.1:<rnd>/ws` | renderer↔srv | `?authkey=` query param (WS-only) | RPC commands, event bus subscription |
+| F | Srv HTTP service | `HTTP POST 127.0.0.1:<rnd>/agentmux/service` | renderer→srv | `X-AuthKey` header | Object CRUD, tab/block/workspace ops |
+| G | Browser DOM API | `HTTP POST 127.0.0.1:<rnd>/agentmux/browser/*` | renderer→host | Bearer `ipc_token` | CSS query, JS eval, screenshot, click, key in browser panes |
 | H | OSC 16162 | Terminal escape sequence (PTY output) | shell→renderer | none (data in PTY stream) | Inject env keys into block metadata; configure poller |
 | I | Chromium remote debug | HTTP/WS 127.0.0.1:9222 (prod) / 9223 (dev) | any local process→renderer | none | CDP automation; used internally by Browser DOM API |
 | 13 | Launcher↔Srv named pipe | Named pipe (Win) / Unix socket | launcher↔srv | none (OS pipe ownership) | Srv reducer Command/Event bus |

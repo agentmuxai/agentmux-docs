@@ -14,7 +14,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 3. [Reducer-Stack Initiative — Discussion #707](#3-reducer-stack-initiative)
 4. [Focus / Selection Visual Highlight — 3-Source Color Resolution](#4-focus--selection-visual-highlight)
 5. [WaveObject Store (WOS) — Block and Tab Persistence](#5-waveobject-store-wos)
-6. [SRV-02 Finding — Dual Persistence Paths for LayoutState](#6-srv-02-finding)
+6. [SRV-02 Finding — Dual Persistence Paths for LayoutState](#6-srv-02-finding--dual-persistence-paths-for-layoutstate)
 7. [Boundary Summary](#7-boundary-summary)
 
 ---
