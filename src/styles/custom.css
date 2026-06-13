@@ -18,7 +18,13 @@
   --sl-color-white: #ffffff;
   --sl-color-gray-1: #e2e8f0;
   --sl-color-gray-2: #94a3b8;
-  --sl-color-gray-3: #1e293b;
+  /* gray-3 is Starlight's MUTED-TEXT token (right-sidebar "On this page" TOC,
+     footer links, tabs, file-tree, link-card, search-result icon — 11 of its
+     12 uses are `color`/`fill`). It must stay legible on the near-black bg.
+     The old #1e293b gave only 1.35:1 contrast (text ≈ background). #7c8aa0 is
+     5.6:1 — readable, still muted below the gray-2 body text. Surfaces/borders
+     use gray-4/5/6 (kept near-black), so the deep-dark theme is unchanged. */
+  --sl-color-gray-3: #7c8aa0;
   --sl-color-gray-4: #162032;
   --sl-color-gray-5: #0d0b1c;
   --sl-color-gray-6: #0a0a0f;
