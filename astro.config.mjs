@@ -106,6 +106,9 @@ export default defineConfig({
 							items: [
 								{ label: 'Architecture overview', slug: 'internals/architecture' },
 								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
+								{ label: 'Frontend state model', slug: 'internals/state-model' },
+								{ label: 'IPC catalog', slug: 'internals/ipc-catalog' },
+								{ label: 'Environment variable contract', slug: 'internals/env-vars' },
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
 								{ label: 'Modal system', slug: 'internals/modal-system' },
