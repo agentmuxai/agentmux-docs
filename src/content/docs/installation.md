@@ -25,7 +25,7 @@ The macOS build is code-signed and notarized.
 Three options available from [agentmux.ai](https://agentmux.ai):
 
 ### Installer (.exe)
-Download `AgentMux_x64-setup.exe` and run the NSIS installer. Default install location is `%LOCALAPPDATA%\AgentMux`.
+Download `AgentMux_x64-setup.exe` and run the Inno Setup installer. Default install location is `%LOCALAPPDATA%\AgentMux`.
 
 ### Portable (.zip)
 Download `agentmux-x64-portable.zip` and extract anywhere. No installation required — run `AgentMux.exe` directly. Ideal for testing a new build alongside an installed version (each instance is fully isolated; see [Multi-instance & dev mode](/multi-instance/)).

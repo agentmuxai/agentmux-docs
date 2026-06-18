@@ -1,107 +1,161 @@
 ---
 title: "Interagent Communication"
+description: "The MuxBus — how agents discover each other and route messages across the Host, LAN, and WAN tiers."
 ---
 
 :::caution[Alpha Software]
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux panes communicate through a reactive event system. This enables real-time coordination between agents, terminals, and monitoring views.
+The **MuxBus** is the messaging substrate that lets agents find and talk to each other — on the same machine, across a local network, or (optionally) across the internet. Every agent pane gets access to it via the `DiscoverAgents` and `SendMessage` MCP tools.
 
 ## Architecture
 
-Communication flows through the backend via WebSocket using JSON-RPC 2.0:
+The MuxBus has three tiers, ordered by trust and latency:
 
 ```
-Pane A (Frontend)
-    ↕  WebSocket / JSON-RPC 2.0
-agentmux-srv (Backend)
-    ↕  WebSocket / JSON-RPC 2.0
-Pane B (Frontend)
+┌──────────────────────────────────────────────┐
+│  Host tier                                   │
+│  In-process reactive handler                 │
+│  ~same-process latency                       │
+│                                              │
+│  ┌───────────┐   jekt   ┌───────────┐        │
+│  │  Agent A  │ ───────▶ │  Agent B  │        │
+│  └───────────┘          └───────────┘        │
+└──────────────────────────────────────────────┘
+          │ mDNS peer-to-peer (LAN tier)
+          ▼
+┌──────────────────────────────────────────────┐
+│  LAN tier                                    │
+│  mDNS-discovered peer AgentMux instances     │
+│  ~LAN latency                                │
+└──────────────────────────────────────────────┘
+          │ cloud relay (opt-in)
+          ▼
+┌──────────────────────────────────────────────┐
+│  WAN tier                                    │
+│  agentbus cloud relay — opt-in               │
+│  you operate the relay                       │
+└──────────────────────────────────────────────┘
 ```
 
-The backend acts as a message broker. Panes publish events, and other panes subscribe to them. All communication is asynchronous and non-blocking.
+| Tier | Scope | How it works | Auth | Default |
+|---|---|---|---|---|
+| **Host** | Same AgentMux instance | In-process reactive handler | Per-launch auth key | Always on |
+| **LAN** | Same local network | mDNS peer discovery + HTTP forward | Peer auth key from mDNS/registry | Off — enable via LAN discovery toggle |
+| **WAN** | Cross-network | Outbound poll to an agentbus relay | Bearer token you configure | Off — enable via poller config |
 
-## Event System
+## How agents use it
 
-AgentMux uses a publish-subscribe event system. Panes subscribe to event types with optional scope filters.
+Two MCP tools cover the full surface. They're available to every agent pane automatically — no configuration required on the Host tier.
 
-### Publishing Events
+### `DiscoverAgents`
 
-Any pane can publish an event through the RPC API:
+No parameters. Returns the reachable agent population across all active tiers:
 
-```typescript
-RpcApi.EventPublishCommand(client, {
-    eventType: "sysinfo",
-    scope: "local",
-    data: { cpu: 45.2, mem: 8192 }
-});
-```
-
-### Subscribing to Events
-
-Panes subscribe to events by type and scope:
-
-```typescript
-const unsub = waveEventSubscribe({
-    eventType: "sysinfo",
-    scope: connectionName,
-    handler: (event) => {
-        // Process incoming event
+```json
+{
+  "host": {
+    "addressable": [
+      { "agent_id": "claude", "block_id": "uuid", "provider": "claude" }
+    ],
+    "agents": [ /* full agent records with heartbeat state */ ]
+  },
+  "lan": [
+    {
+      "host": "peer-machine",
+      "agents": [ { "agent_id": "codex", "provider": "codex" } ]
     }
-});
+  ],
+  "wan": {
+    "subscribed_agents": [ /* agents reachable via the cloud relay */ ]
+  }
+}
 ```
 
-Subscriptions return an unsubscribe function for cleanup.
+`host.addressable` is the list you can `SendMessage` to right now. `host.agents` includes all registered agents, including those that may be idle or just missed a heartbeat. LAN and WAN entries appear only when those tiers are active.
 
-### Event History
+### `SendMessage`
 
-Read past events for a given type:
+Parameters: `to` (target agent name, required), `message` (string, required).
 
-```typescript
-const history = await RpcApi.EventReadHistoryCommand(client, {
-    eventType: "sysinfo",
-    maxItems: 120
-});
-```
+Routes the message to the named agent through the appropriate tier — Host if the agent is local, LAN if it's on a discovered peer, WAN via the relay otherwise.
 
-## Use Cases
+Returns `{ "success": true }` on delivery, or `{ "success": false, "error": "..." }` if the agent isn't found or the tier is unavailable.
 
-### Agent Output Streaming
+The message arrives in the target agent's pane as if a user typed it. The agent picks it up on its next turn.
 
-When an agent produces output, it publishes events that the agent pane subscribes to. The Swarm view also subscribes to these events to track all agent activity in one place.
+## Host tier
 
-### System Metrics
+The **reactive handler** is the in-process delivery path. Every agent pane registers with it on startup and unregisters on shutdown. Registration writes a per-agent file at `~/.agentmux/agents/<agent_id>.json` so peer instances can also find and forward to it.
 
-The sysinfo backend collector publishes `sysinfo` events at a configurable interval. Any number of Sysinfo panes can subscribe — each renders its own plots from the same event stream.
+Agents that stop sending heartbeats drop from the Host `addressable` list within ~30 s but remain in `agents` for audit purposes until the entry expires (4 hours).
 
-### Subagent Tracking
+The Host tier is always active — no configuration needed.
 
-When a parent agent spawns a sub-agent, the backend emits subagent lifecycle events. The Swarm pane picks these up to show active/completed sub-agents. Opening a Subagent pane subscribes to that specific agent's event stream.
+## LAN tier
 
-### Block Lifecycle
+The LAN tier requires **LAN discovery** to be enabled:
 
-Events are published when blocks (panes) are created, focused, resized, or closed. This enables features like focus tracking and layout persistence.
+1. Click the version chip in the status bar to open the HostPopover.
+2. Toggle **LAN discovery** on.
+3. AgentMux starts advertising via mDNS and browsing for peers.
 
-## Scoping
+Once active, peer instances on the same network appear within ~5 s in the Warden widget's LAN section and in `DiscoverAgents`'s `lan` field.
 
-Events are scoped to control delivery:
+When `SendMessage` targets an agent on a LAN peer:
+1. The local reactive handler checks `~/.agentmux/agents/` for the agent's registry entry.
+2. If not found locally, it checks the mDNS-discovered peer list.
+3. The message is forwarded via HTTP to the peer's sidecar, authenticated with the peer's auth key from the registry entry.
+4. The peer delivers it to the target agent's pane.
 
-- **Local** — Events from the local machine
-- **Connection-scoped** — Events from a specific SSH connection (e.g., `ssh:myhost`)
-- **Block-scoped** — Events targeted at a specific pane by block ID
+LAN forwarding uses the peer's actual IP + port from the mDNS announcement — not `127.0.0.1`. This is the key difference from local cross-instance forwarding (which is 127.0.0.1 only, for same-machine multi-instance scenarios).
 
-## Remote Communication
+## WAN tier
 
-For remote hosts connected via SSH, the `wsh` binary runs on the remote and communicates with the backend via WebSocket. Remote events (like sysinfo from a server) are scoped by connection name, so local and remote metrics don't collide.
+The WAN tier routes messages through an agentbus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (open-source `agentbus-server`).
 
-```
-Local Sysinfo Pane  ←  backend  ←  local sysinfo collector
-Remote Sysinfo Pane ←  backend  ←  wsh (remote host) → remote sysinfo
-```
+To enable:
 
-## See Also
+1. Open any terminal pane in AgentMux.
+2. Configure the poller via the in-app settings panel with `{ agentmux_url, agentmux_token }`.
+3. The sidecar starts polling the relay; inbound messages route through the same reactive handler as local injects.
 
-- [Agent App API](/agent-app-api) — Full RPC command reference
-- [Subagent Watcher](/subagent-watcher) — Sub-agent monitoring
-- [System Metrics](/system-metrics) — Sysinfo event details
+The relay is opt-in and operates under your control. See [Reactive event bus](/security/reactive-event-bus/) for the full WAN trust model and poller configuration details.
+
+## Message delivery semantics
+
+| Scenario | Behavior |
+|---|---|
+| Target found on Host tier | In-process inject — synchronous, ~zero latency |
+| Target found on LAN peer | HTTP forward to peer sidecar — ~LAN latency |
+| Target found via WAN relay | Relay delivers on next poll cycle |
+| Target not found anywhere | Returns `{ success: false, error: "agent not found" }` |
+| LAN tier off, agent is on LAN | Returns `agent not found` — tier must be active to route |
+
+There is no buffering for offline agents at any tier. If an agent isn't registered and reachable when `SendMessage` is called, the call fails immediately.
+
+## Observing message flow
+
+The **Warden widget** (hamburger ≡ → Warden, or the shield icon in the widget bar) surfaces the reactive handler state:
+
+- **Agent table** — registered agents with last-seen heartbeat
+- **Audit feed** — last 50 message deliveries (source, target, byte count, success/fail)
+- **LAN section** — discovered peer instances and their agent counts
+
+For programmatic inspection, the `/agentmux/reactive/audit` and `/agentmux/reactive/agents` REST endpoints expose the same data.
+
+## Security
+
+The auth model across all three tiers is documented in [Reactive event bus](/security/reactive-event-bus/). The short version:
+
+- **Host and local cross-instance:** per-launch auth key gated on every route.
+- **LAN peer-to-peer:** peer's auth key from its registry entry (mode `0600`) presented on forward.
+- **WAN relay:** bearer token you configure, outbound-only connection — the relay never calls into your sidecar.
+
+## See also
+
+- [Reactive event bus](/security/reactive-event-bus/) — auth model, endpoint reference, trust boundaries
+- [LAN discovery](/lan-discovery/) — mDNS setup and peer visibility
+- [Warden widget](/warden/) — observing agent state and audit feed
+- [Agent App API](/internals/agent-app-api/) — DiscoverAgents and SendMessage tool reference
