@@ -13,25 +13,24 @@ The API has two equivalent surfaces — **MCP tools** (for agents that use MCP-c
 
 ## How agents get access
 
-When AgentMux launches an agent, the sidecar injects these environment variables into the agent's PTY:
+When AgentMux launches an agent, the sidecar injects three environment variables into the agent's PTY:
 
 | Env var | Value | Purpose |
 |---|---|---|
 | `AGENTMUX_LOCAL_URL` | `http://127.0.0.1:<port>` | Sidecar base URL |
 | `AGENTMUX_BLOCKID` | `<pane UUID>` | The pane this agent lives in — used as self-context default |
 | `AGENTMUX_AGENT_ID` | `<agent name>` | Agent's registered name — used by `SendMessage` routing |
-| `AGENTMUX_AUTH_KEY` | `<per-launch UUIDv4>` | Auth token for the sidecar REST API — re-injected at agent spawn for `agentmux-bashwrap` (the streaming bash runner inside the agent's subprocess tree); `agentmux-mcp` inherits it from the agent's env |
 
-The sidecar strips `AGENTMUX_AUTH_KEY` from its own process environment at startup (security PR #801) so it doesn't leak into arbitrary subprocesses, then re-injects it explicitly into each agent pane spawn.
+`AGENTMUX_AUTH_KEY` is **not classified as a PTY env var** (see `internals/env-vars.md` — "Available In Pane? No"). The sidecar strips it from its own process environment at startup (security PR #801) and re-injects it per spawn only for internal tooling that requires it (`agentmux-bashwrap`, the streaming bash runner). `agentmux-mcp` receives it through its own spawn configuration, not from the agent's PTY environment.
 
 ```
 Agent CLI (claude / codex / gemini / …)
   └─ spawns agentmux-mcp (MCP stdio server)
-       ├─ inherits AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID from agent PTY env
+       ├─ receives AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID
        └─ advertises 11 MCP tools → routes each to the REST API
 ```
 
-Agents using MCP tools don't need to manually construct `X-AuthKey` headers — the MCP client (`agentmux-mcp`) handles authentication. Direct REST calls require the key explicitly; use them only in tooling that legitimately has access to the agent's environment (e.g. `agentmux-bashwrap`, sidecar utilities).
+Agents using MCP tools never touch `X-AuthKey` directly — the MCP sidecar handles it. The REST API is for scripts or tooling that run with explicit access to the auth key (e.g. inside the sidecar itself, or a trusted subprocess you spawn with the key explicitly).
 
 ## MCP tools (11 tools)
 

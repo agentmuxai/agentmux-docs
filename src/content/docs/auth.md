@@ -101,9 +101,9 @@ For API-key providers (OpenClaw, Kimi, Pi), there is no browser; the panel eithe
 
 ### Session-scoped today, bundle-scoped later
 
-In the current release (Phase B), a successful OAuth completion authenticates the **session** — the agent that's about to launch can use the credentials, but they are **not yet persisted into an Identity bundle**. The Identity dropdown stays on the blank singleton, and the next launch repeats the OAuth flow.
+In the current release (Phase B), a successful OAuth completion via the Pre-Launch panel **does not create an Identity bundle**. The Identity dropdown stays on the blank singleton. On the next launch, the pre-launch panel will still show **Connected** (the provider token persisted in `shared/providers/` is valid), but no named Identity bundle exists to select — you can't hand this credential set to a different agent by name.
 
-Persistent bundle storage ("log in once, reuse across launches") is **Phase C** — still in design. Once it lands, completing the panel's OAuth will create or update a `db_identity_bundles` row and let you reuse the credentials by selecting the bundle on subsequent launches. Track progress against `SPEC_OAUTH_IN_IDENTITY_BUNDLES_2026_05_13.md` in the main repo.
+Persistent bundle storage (named Identity bundles created from the panel's OAuth completion) is **Phase C** — still in design. Once it lands, completing the panel's OAuth will create or update a `db_identity_bundles` row and let you reuse the credentials by selecting the bundle on subsequent launches. Track progress against `SPEC_OAUTH_IN_IDENTITY_BUNDLES_2026_05_13.md` in the main repo.
 
 ## Manual login
 
