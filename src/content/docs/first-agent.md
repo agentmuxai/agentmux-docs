@@ -114,8 +114,8 @@ AgentMux classifies failures so you know exactly what happened and what to do:
 |---|---|---|
 | **Auth** | Red banner — credentials rejected or expired | **Re-authenticate** button opens the inline OAuth / key flow — no restart |
 | **Rate limit** | Banner with estimated retry delay | Auto-retries after the delay (5 s default) |
-| **OOM / memory** | Banner — model exceeded memory budget | Start a fresh session or reduce attached context |
-| **Context overflow** | Banner — context window full | Summarize and continue in a new turn |
+| **Context exceeded** | Banner — context window full | Summarize and continue in a new turn |
+| **Killed** | Banner — process killed (OOM or external signal) | Restart; reduce context or container memory limits |
 | **Crash** | Banner with crash class | **Restart** button; the prior partial turn is preserved |
 
 ## Agent Types

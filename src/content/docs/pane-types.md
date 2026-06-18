@@ -167,7 +167,7 @@ The editor detects and handles non-UTF-8 files automatically — Windows-1252 `.
 
 ### Markdown preview
 
-With a `.md` file open, press `Ctrl+Shift+M` (`Cmd+Shift+M`) to toggle a rendered preview pane alongside the editor. The preview re-renders on each save. Press the shortcut again to collapse it.
+With a `.md` file open, press `Ctrl+Shift+V` (`Cmd+Shift+V`) to toggle a rendered preview pane alongside the editor. The preview re-renders on each save. Press the shortcut again to collapse it.
 
 ### Find / Replace
 
