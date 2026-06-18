@@ -98,11 +98,25 @@ To stop:
 
 The relay is **your choice of operator** — AgentMux Corp doesn't run one. Spin up your own, or use the open-source agentbus-server. There is no AgentMux-Corp-controlled endpoint baked into the binary.
 
-## Cross-instance forwarding — local-only
+## Cross-instance forwarding
 
-The registry lives in `~/.agentmux/agents/` and is shared by all AgentMux instances running as the same user. The forwarding happens over `127.0.0.1` URLs only — there is no cross-machine forwarding. For cross-machine routing, use the cloud agentbus poller (above).
+There are two cross-instance forwarding modes, based on where the peer lives.
+
+### Same-machine (local) forwarding
+
+The registry at `~/.agentmux/agents/` is shared by all AgentMux instances running as the same user. When the target agent is registered by a different instance on the same machine, the handler forwards over `127.0.0.1` — no network exposure. Auth is the per-peer auth key from the registry entry (mode `0600`).
 
 The audit (C1+C2 fix) tightened this: prior to agentmux v0.33.790, the cross-instance forward presented no auth, which relied on the receiving peer accepting any local-process request. Now both halves of the forward require the per-peer auth key from the registry entry.
+
+### LAN forwarding (v0.46+)
+
+When [LAN discovery](/lan-discovery/) is active, peer AgentMux instances on the local network are discovered via mDNS. Their sidecar address (real IP + port) and auth key are exchanged during the mDNS announcement.
+
+When a `SendMessage` target isn't found in the local registry, the handler checks the mDNS peer list. If a peer owns the agent, the forward goes to the peer's actual IP + port — not `127.0.0.1` — using the peer's auth key from the announcement.
+
+The trust model here is the same as same-machine forwarding: the peer's auth key gating. The threat surface is wider (the forward travels over LAN, not loopback) but is still bounded by: (a) you opted in to LAN discovery, and (b) the peer's auth key isn't shared beyond the mDNS announcement.
+
+LAN forwarding is **off by default**. Enable LAN discovery via the HostPopover toggle (version chip → LAN discovery). Without it, `SendMessage` to a LAN agent returns `agent not found`.
 
 ## What an attacker would have to do to drive your agent
 
