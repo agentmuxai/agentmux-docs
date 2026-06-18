@@ -43,8 +43,8 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 
 **App-wide manager (hamburger menu):**
 1. Click the hamburger (≡) at the top of the tab bar.
-2. Choose **Identity & Memory**.
-3. The bundle manager modal opens — browse and edit any bundle without first opening a specific agent.
+2. Choose **Trust Center**.
+3. Switch to the **Identity** tab — browse and edit any bundle without first opening a specific agent.
 
 The hamburger-menu path opens a singleton modal shared across the app: if it's already open in another window, clicking the entry focuses that window instead of opening a duplicate. The per-agent cog path stays scoped to the current pane.
 
