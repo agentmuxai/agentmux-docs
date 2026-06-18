@@ -160,5 +160,5 @@ For the underlying pointer-file mechanics that make `muxlog` work, see [Data lay
 ## See also
 
 - [Pane Types](/pane-types/) — the user-visible pane catalog
-- [Auth flows](/auth/) — per-channel auth-dir isolation per provider
+- [Auth flows](/auth/) — provider credential storage model and auth flows per provider
 - [Data layout](/internals/data-layout/) — internals: SQLite stores, pointer files, log discovery

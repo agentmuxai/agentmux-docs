@@ -57,7 +57,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
 
-**Trust Center** — The app-wide credential and configuration hub. Three tabs: **Accounts** (OAuth logins and API keys for every provider), **Identity** (named credential sets — [Identity bundles](#identity-bundle)), **Memory** (reusable agent definitions — [Memory bundles](#memory-bundle)). Open from the hamburger menu (≡) → Trust Center. See [Trust Center](/trust-center/).
+**Trust Center** — The app-wide credential and configuration hub. Three tabs: **Accounts** (OAuth logins and API keys for every provider), **Identity** (named credential sets — [Identity bundles](#identity-bundle)), **Memory** (reusable agent definitions — [Memory bundles](#memory-bundle)). Open from the hamburger menu (≡) → Trust Center.
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
