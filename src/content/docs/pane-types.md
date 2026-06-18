@@ -139,7 +139,7 @@ The tree column appears on the left, **expanded by default**, with three "roots"
 | Hover the divider between tree and editor | Cursor flips to col-resize; drag to resize the tree column |
 | Symlinked rows | Followed automatically (matches VS Code), marked with a `↗` overlay |
 
-The tree column **width is persisted per pane** in block meta (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
+The tree column **width is persisted per pane** in pane metadata (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
 
 ### Pane icon doubles as the tree toggle
 
