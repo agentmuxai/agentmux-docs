@@ -85,8 +85,8 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `app:globalhotkey` | string | `""` | Global activation hotkey |
-| `app:defaultnewblock` | string | `""` | Default pane type for new blocks |
-| `app:showoverlayblocknums` | boolean | `false` | Show block numbers as overlay |
+| `app:defaultnewblock` | string | `""` | Default pane type for new panes |
+| `app:showoverlayblocknums` | boolean | `false` | Show pane numbers as overlay |
 | `app:dismissarchitecturewarning` | boolean | `false` | Suppress the architecture-mismatch notice |
 
 ## Shell Environment
@@ -122,7 +122,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 |---------|------|---------|-------------|
 | `widget:showhelp` | boolean | `true` | Show Help widget in top bar |
 | `widget:icononly` | boolean | `false` | Icon-only widget bar (no labels) |
-| `blockheader:showblockids` | boolean | `false` | Display block IDs in pane headers |
+| `blockheader:showblockids` | boolean | `false` | Display pane IDs in pane headers |
 | `preview:showhiddenfiles` | boolean | `false` | Show hidden files in file previews |
 | `tab:preset` | string | `""` | Default tab layout preset |
 

@@ -20,11 +20,13 @@ See [Installation](/installation) for detailed steps.
 
 ## 2. Launch and Orient
 
-When AgentMux opens, you'll see a default terminal pane. The key areas are:
+When AgentMux opens, you'll see a default terminal pane. This is the agent operating environment — agents run here as first-class panes, not terminal sessions bolted on afterward. The key areas are:
 
 - **Top bar** — Tab management and widget launcher (right side icons)
 - **Workspace** — Your pane grid, drag to rearrange
 - **Status bar** — Connection status and system info
+
+If any provider CLIs are missing, open the **Toolchain Manager** (hamburger menu ≡ → Toolchain Manager) — it shows the detected version, path, and status of every dependency, with install links.
 
 ## 3. Create a Memory bundle
 
@@ -52,13 +54,15 @@ The agent starts in a new pane within your workspace. You'll see:
 - Tool calls as they execute
 - File diffs when the agent writes files
 
-## 5. Split Panes
+## 5. Add More Panes
 
-Run a terminal alongside your agent:
+Run a terminal or a second agent alongside your first:
 
-1. Press `Cmd+D` (`Alt+D`) to split right
-2. The new pane opens as a terminal
+1. Press `Cmd+D` (`Alt+D`) to split right — the new pane opens as a terminal
+2. To launch a second agent, press `Cmd+Shift+A` (`Alt+Shift+A`) to open the agent picker
 3. Navigate between panes with `Ctrl+Shift+Arrow`
+
+Each pane is independent — agents don't share context unless you wire them explicitly via the MuxBus or Agent App API.
 
 ## 6. Monitor System Resources
 

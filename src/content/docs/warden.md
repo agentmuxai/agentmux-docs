@@ -36,7 +36,7 @@ Lists every agent currently registered with this instance's reactive handler:
 | Column | What |
 |---|---|
 | `agent` | Agent ID (matches what shows in the agent pane title bar) |
-| `block` | Short hash of the block ID hosting the agent |
+| `pane` | Short hash of the pane ID hosting the agent |
 | `last seen` | Time since the agent last sent a heartbeat (refreshes every second) |
 | `state` | `active` if heartbeat ≤ 30 s ago, else `idle` |
 

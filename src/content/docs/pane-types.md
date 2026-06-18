@@ -30,8 +30,8 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Per-agent: tab inside the Agent pane (cog → Identity). App-wide: hamburger menu (≡) → **Identity & Memory** opens the singleton bundle manager. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory** | Per-agent: tab inside the Agent pane (cog → Memory). App-wide: same hamburger menu (≡) → **Identity & Memory** entry — both bundles live side-by-side in the manager. Replaces the older Forge concept. |
+| **Identity** | Per-agent: tab inside the Agent pane (cog → Identity). App-wide: hamburger menu (≡) → **Trust Center** → Identity tab. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Memory** | Per-agent: tab inside the Agent pane (cog → Memory). App-wide: hamburger menu (≡) → **Trust Center** → Memory tab — both bundle types live side-by-side in the manager. Replaces the older Forge concept. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens `settings.json` in your default editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 | **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
@@ -122,7 +122,9 @@ When these two axes disagree, you get the classic "click X, type, characters lan
 
 The editor pane is a [CodeMirror 6](https://codemirror.net/) workspace with a file-tree explorer down the left side. It covers quick edits, file viewing, and diffing inside a pane — it is not a standalone IDE; deep editing happens in your agent's terminal or via agent tool calls.
 
-Languages currently get syntax highlighting via lazy-loaded extensions: TypeScript / JavaScript, Python, Rust, HTML, CSS, JSON, Markdown. Other extensions fall back to plain text. `Ctrl+S` / `Cmd+S` saves the current file; unsaved changes mark the pane title with `*`.
+Languages currently get syntax highlighting via lazy-loaded extensions: TypeScript / JavaScript, Python, Rust, HTML, CSS, JSON, Markdown. Other extensions fall back to plain text.
+
+`Ctrl+S` / `Cmd+S` saves the current file. When **no file is open** (scratch buffer mode), `Ctrl+S` opens an inline **Save As** path entry at the bottom of the editor — type an absolute path and press Enter to write the buffer to disk. Unsaved changes mark the pane title with `*`.
 
 ### File tree
 
@@ -132,10 +134,12 @@ The tree column appears on the left, **expanded by default**, with three "roots"
 |---|---|
 | Click a folder row | Expand if collapsed, collapse if expanded (lazy-loaded on first expand; cached after) |
 | Click a file row | Loads it into the editor. The active file's row carries a `circle-dot` icon and a highlight |
+| **F2** on a file or folder row | Inline rename — edit the name in place and press Enter to confirm, Escape to cancel. A confirmation dialog appears for non-empty directory renames. |
+| Right-click a folder row | Context menu: **Rename** (same as F2), **Collapse Folder** (collapses that subtree only) |
 | Hover the divider between tree and editor | Cursor flips to col-resize; drag to resize the tree column |
 | Symlinked rows | Followed automatically (matches VS Code), marked with a `↗` overlay |
 
-The tree column **width is persisted per pane** in block meta (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
+The tree column **width is persisted per pane** in pane metadata (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
 
 ### Pane icon doubles as the tree toggle
 
@@ -156,6 +160,24 @@ Three small square buttons at the top of the tree, each with an **instant toolti
 ### Open by path
 
 A path-input affordance lives at the bottom of the tree column when no file is open — handy when an LLM hands you an absolute path and you don't want to navigate the tree to find it. Once a file is open, the input is hidden to give the tree more vertical space.
+
+### Encoding detection
+
+The editor detects and handles non-UTF-8 files automatically — Windows-1252 `.ini` files, UTF-16 BOM, Shift_JIS, and similar encodings all load correctly. The detected encoding is shown in the status bar. Saves always write back in the file's original encoding unless you choose otherwise.
+
+### Markdown preview
+
+With a `.md` file open, press `Ctrl+Shift+V` (`Cmd+Shift+V`) to toggle a rendered preview pane alongside the editor. The preview re-renders on each save. Press the shortcut again to collapse it.
+
+### Find / Replace
+
+Press `Ctrl+F` (`Cmd+F`) to open the find bar. Press `Ctrl+H` (`Cmd+H`) to open find-and-replace. Both support:
+
+- **Regex** — toggle the `.*` button to switch between literal and regex search
+- **Case-sensitive** — toggle `Aa`
+- **Whole word** — toggle `\b`
+
+Results highlight in the editor and the gutter shows match density. Press `Enter` / `Shift+Enter` to step through matches; press `Escape` to close.
 
 ### Language-server diagnostics (Phase 1)
 
@@ -202,7 +224,7 @@ Set `editor:lsp.enabled = false` in your settings to disable LSP across all edit
 The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_FILE_TREE_2026-05-26.md) for the file-tree design and [`SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md) for the language-server roadmap. Not currently supported (each item listed there as future phases):
 
 - File watching for live tree updates — use the 🔄 button when something changes outside the app
-- Rename / delete / new-file from the tree — happens in your agent or terminal
+- Delete / new-file from the tree — happens in your agent or terminal (rename ships via F2 and the right-click context menu)
 - Multi-root workspaces — single set of system roots is the only configuration
 - LSP completion / hover / go-to-definition — Phase 2; only diagnostics ship today
 - LSP for languages other than TypeScript and JavaScript — Phase 3 (rust-analyzer, pyright, gopls, clangd are pre-wired in the install-hint table, just not surfaced yet)
@@ -212,7 +234,7 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 
 ## Agent
 
-The agent pane runs an AI agent session. It displays:
+The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own identity bundle, memory bundle, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
 
 - **Streaming text** — Agent output in real time
 - **Tool calls** — Name, arguments, and result of each tool invocation
@@ -239,6 +261,22 @@ The virtualization is **hybrid** — the trailing 50 rows (the streaming buffer)
 See [internals/agent-pane-virtualization](/internals/agent-pane-virtualization/) for the architecture and the spec at `docs/specs/SPEC_AGENT_PANE_VIRTUALIZATION_REDESIGN.md` in the main repo.
 
 Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours` and `term:agentidletimeoutmins` settings — see the [Settings Reference](/settings/#terminal-settings).
+
+### Activity dock
+
+Long-running shell commands started by the agent are pinned to a **dock at the top of the agent pane** — visible at a glance without scrolling to find the tool call. Click any docked activity row to expand its live log output. The dock entry clears automatically when the process completes.
+
+### Send-now queue
+
+The composer has a **send-now** mode for messages you want delivered the moment the agent's next tool call completes — useful for mid-turn corrections without interrupting the current operation. Type your message and use the send-now action to queue it; it holds at the tool-call boundary and fires the instant the tool returns. Press `↑` to recall the last queued message.
+
+### AskUserQuestion
+
+When an agent calls `AskUserQuestion` (part of the Agent SDK control protocol), an interactive question panel appears inline in the pane — above the composer, below the message thread. Submit your answer directly; the agent resumes without any further action. If the agent stalls after receiving the answer, AgentMux auto-resumes it after a short delay.
+
+### Persistent shell
+
+Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes.
 
 ### Subsections
 

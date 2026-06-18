@@ -43,8 +43,8 @@ Same shape as the Identity tab — list of bundles on the left, detail editor on
 
 **App-wide manager (hamburger menu):**
 1. Click the hamburger (≡) at the top of the tab bar.
-2. Choose **Identity & Memory**.
-3. The shared bundle manager opens — Memory and Identity bundles live side-by-side in the same modal.
+2. Choose **Trust Center**.
+3. Switch to the **Memory** tab — Memory and Identity bundles live side-by-side in the same manager.
 
 The hamburger path opens a singleton modal: if already open in another window, clicking focuses that window rather than spawning a duplicate.
 
