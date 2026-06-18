@@ -12,6 +12,7 @@ This page is for IT teams, network admins, and security reviewers who need to kn
 | CEF host (`agentmux-cef`) | random ephemeral | `127.0.0.1` | Serves the SolidJS frontend over HTTP and the IPC bridge | Bearer token (one-shot, per-launch) | On |
 | Sidecar (`agentmux-srv`) | random ephemeral | `127.0.0.1` | WebSocket + HTTP RPC for the frontend, agent panes, and inter-instance forwarding | `X-AuthKey` header (per-launch UUIDv4) | On |
 | mDNS discovery (sidecar) | `5353` | `0.0.0.0` | Announces this instance to other AgentMux instances on the LAN | None (read-only beacon) | **Off** |
+| Sidecar LAN listener (v0.46+) | random ephemeral | LAN interface | Accepts forwarded messages from peer AgentMux instances when LAN discovery is on | `X-AuthKey` header (same auth as loopback listener) | **Off** (follows LAN discovery toggle) |
 | Cloud agentbus poller (sidecar) | n/a (outbound) | n/a | Inbound message channel from a hosted relay | Bearer token configured at setup | **Off** |
 
 The TL;DR: **no inbound network listener accepts non-loopback traffic by default.** AgentMux requires no inbound firewall rule.
@@ -50,7 +51,7 @@ When mDNS is on, the data broadcast is:
 - Instance ID (a UUID, not sensitive)
 - Local sidecar URL (`http://127.0.0.1:<port>`)
 
-No session content, no auth keys, no credentials. The broadcast is read-only — nobody can drive AgentMux through mDNS itself; they can only learn the local URL, which still requires the auth key to use.
+No session content, no auth keys, no credentials. The mDNS broadcast itself is read-only — nobody can drive AgentMux through the mDNS announcement; it only reveals the instance's real IP and port. However, enabling LAN discovery also enables LAN-tier jekt forwarding (v0.46+): a LAN-enabled instance will open outbound TCP connections to peer sidecars using their discovered IP+port and auth key, and it will accept inbound TCP on a LAN interface from authenticated peers. See [Cross-instance forwarding](#cross-instance-forwarding) below.
 
 If you don't want LAN broadcast: don't enable mDNS. It stays off.
 
@@ -62,11 +63,19 @@ The poller URL and bearer token are user-configurable through the in-pane `/agen
 
 If you don't want any cloud connectivity: don't configure the poller. It stays off.
 
-## Cross-instance forwarding (LAN, off by default)
+## Cross-instance forwarding
 
-If you run multiple AgentMux instances on the same machine, they can forward inject messages to each other over `127.0.0.1`. This is a local-only mechanism — the file-based agent registry lives in `~/.agentmux/agents/` (mode `0600` per file) and contains each instance's URL plus auth key. Peers use these credentials when forwarding.
+AgentMux supports two forwarding scopes, both opt-in:
 
-Cross-machine forwarding is not supported. If you want LAN-wide message routing, that's what the cloud agentbus poller is for.
+**Same-machine forwarding** — Multiple instances on the same machine forward inject messages to each other over `127.0.0.1`. The file-based agent registry (`~/.agentmux/agents/`, mode `0600` per file) contains each instance's URL plus auth key. Peers use these credentials when forwarding.
+
+**LAN forwarding (v0.46+)** — When LAN discovery is enabled, forwarding extends to peer instances on the LAN. The sender reads the peer's real IP and port (discovered via mDNS) and auth key (from the local registry), then connects directly over TCP. The peer sidecar authenticates every request with `X-AuthKey`. No traffic passes through the cloud relay; the forwarding is direct peer-to-peer.
+
+Network implications of enabling LAN discovery + forwarding:
+
+- The local sidecar opens outbound TCP connections to peer IP addresses on their backend port.
+- The local sidecar also binds a LAN-interface listener so it can accept forwarded messages from peers — this is the one case where a sidecar socket accepts non-loopback connections. **This listener is only active when LAN discovery is on.**
+- Firewall rule required: allow inbound TCP on the ephemeral sidecar port from trusted LAN peers (or restrict to the LAN subnet).
 
 ## Firewall configuration
 
@@ -77,7 +86,8 @@ For a managed deployment that wants belt-and-suspenders:
 - Allow outbound HTTPS to whatever LLM providers your agents use (Anthropic, OpenAI, Google, GitHub).
 - Allow outbound to your tool catalog hosts (typically GitHub release assets).
 - If using the cloud agentbus poller: allow outbound to that relay.
-- Optionally block inbound to ports 1024-65535 from non-loopback interfaces (defence-in-depth — AgentMux doesn't accept inbound on those, but this catches misconfigurations).
+- If using LAN discovery + forwarding (v0.46+): allow inbound TCP from trusted LAN peers on the ephemeral sidecar port. Without this rule, incoming LAN-forwarded messages are dropped by the OS firewall before AgentMux sees them.
+- If NOT using LAN: block inbound to ports 1024-65535 from non-loopback interfaces (defence-in-depth — AgentMux doesn't accept inbound on those when LAN is off, but this catches misconfigurations).
 
 ## What we don't put on the wire
 
