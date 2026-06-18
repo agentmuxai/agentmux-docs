@@ -72,7 +72,7 @@ The quick version: a Memory bundle is a reusable agent definition — provider, 
 
 ## See also
 
-- [Auth flows](/auth/) — per-provider OAuth flows, API key storage, per-channel isolation
+- [Auth flows](/auth/) — per-provider OAuth flows, API key storage, and credential storage model
 - [Identity bundles](/identity/) — full Identity bundle reference
 - [Memory bundles](/memory/) — full Memory bundle reference
 - [First Agent Setup](/first-agent/) — connecting your first provider
