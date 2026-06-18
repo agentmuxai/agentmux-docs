@@ -63,7 +63,7 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 |---|---|---|
 | **Installed** | `~/.agentmux/channels/<channel>/` (default `stable`) | `~/.agentmux/channels/<channel>/versions/<v>/` (v0.41.1+) — per-version runtime DB, cache, logs, IPC |
 | **Portable** (released ZIP) | Same as installed | Same as installed |
-| **Portable** (local `task package`) | `~/.agentmux/channels/dev-portable-<branch>/` | No version sub-dir — local builds aren't versioned releases. |
+| **Portable** (local `task package`) | `~/.agentmux/channels/local-<branch>/` | No version sub-dir — local builds aren't versioned releases. |
 | **Dev** (`task dev`) | n/a | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair. |
 
 Inside each channel dir, state is split into **channel-wide** and **version-scoped** paths:
