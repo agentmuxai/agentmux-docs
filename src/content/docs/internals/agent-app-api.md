@@ -184,7 +184,7 @@ Start a persistent background shell process pinned to the activity dock.
 | `title` | string | Label shown in the activity dock |
 | `env` | object | Extra env vars for the shell process |
 
-Returns `{ shell_id }`. The shell stays open between turns — the agent can issue follow-up commands to the same session.
+Returns `{ shell_id }`. The shell process stays alive until `ShellStop` is called or the pane closes. Use it for long-running background processes; subsequent input to the running shell is not supported via this API.
 
 #### `ShellStop`
 
@@ -251,7 +251,7 @@ Every MCP tool has an equivalent REST endpoint on `$AGENTMUX_LOCAL_URL`. All req
 | `GET` | `/agentmux/discovery` | `DiscoverAgents` |
 | `POST` | `/agentmux/reactive/inject` | `SendMessage` |
 
-Example — rename the current tab directly from a shell script inside a pane:
+Example — rename the current tab from a trusted script that has access to the auth key (e.g. an `agentmux-mcp` subprocess or a sidecar utility, not an agent's own PTY shell):
 
 ```bash
 curl -s -X POST "$AGENTMUX_LOCAL_URL/api/v1/tab/name" \

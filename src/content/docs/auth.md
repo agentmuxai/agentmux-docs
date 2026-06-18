@@ -17,10 +17,10 @@ The primary UI for managing provider credentials is the **Accounts tab** inside 
 
 Each service shows as a tile with its current connection status. Click a tile to connect, reconnect, or revoke:
 
-- **OAuth providers** — clicking **Connect** opens a PKCE or Device Flow browser login. The token is stored in the provider's per-channel auth-config dir and validated on load (expired tokens show a ⚠ badge).
+- **OAuth providers** — clicking **Connect** opens a PKCE or Device Flow browser login. The token is stored account-wide under `~/.agentmux/shared/providers/<provider>/` and validated on load (expired tokens show a ⚠ badge).
 - **API key providers** — clicking **Connect** opens an inline key field. The key is validated against the live service before saving.
 
-The Accounts tab is the replacement for managing credentials through the pre-launch modal alone. OAuth tokens and API keys are stored in the provider's auth-config dir and validated on each launch — if a valid token exists, no re-authentication is needed. Expired or missing tokens show a ⚠ badge and require re-login.
+The Accounts tab manages the underlying provider tokens. These tokens persist in the auth-config dir and are validated on each launch — if a stored token is valid, no re-authentication is needed. This is separate from [Identity bundles](/identity/), which are session-scoped in the current release (Phase B): completing OAuth through the Pre-Launch panel doesn't yet persist the credentials into a named bundle. See the [Pre-launch OAuth panel](#pre-launch-oauth-panel) section below.
 
 ## Per-provider summary
 
