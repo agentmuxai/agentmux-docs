@@ -70,7 +70,7 @@ The LAN section populates when you turn on [LAN discovery](/lan-discovery/) via 
 | `agents` | Number of agents currently registered on the peer |
 | `last seen` | Time since the peer last announced |
 
-Today this is **read-only** — you can see peers, but you can't yet jekt to them through the Warden, quarantine them, or push policy. Those land when LAN jekt forwarding ships.
+Today the LAN section is **read-only in the Warden UI** — you can see peers, but you can't yet jekt to them through the Warden, quarantine them, or push policy. LAN jekt forwarding itself shipped in v0.46 (accessible via `SendMessage` MCP tool); the Warden UI controls for cross-instance jekt and quarantine are a follow-up.
 
 ## Internet section
 
@@ -95,8 +95,8 @@ Two adjacent surfaces sometimes get confused with the Warden:
 | Pause host / kill-all | ❌ Future PR |
 | `governance.json` policy file | ❌ Future PR |
 | Approval queue (human-in-the-loop) | ❌ Future PR |
-| Cross-instance jekt forwarding | ❌ Blocked on LAN jekt routing |
-| Quarantine a peer / push policy | ❌ Blocked on LAN jekt routing |
+| Cross-instance jekt forwarding via Warden UI | ❌ Future PR |
+| Quarantine a peer / push policy | ❌ Future PR |
 | Internet (cloud) governance | ❌ Blocked on AgentBus cloud relay |
 
 ## See also

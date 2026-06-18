@@ -7,7 +7,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 ## Terms
 
-**agentbus** — The cross-process, cross-machine message bus that lets agents (and the panes they live in) exchange messages. Two delivery models: [jekt](#jekt) and [message](#message). See [Reactive event bus](/security/reactive-event-bus/) (Wave 2) for the full surface.
+**agentbus** — The cross-process, cross-machine message bus that lets agents (and the panes they live in) exchange messages. Two delivery models: [jekt](#jekt) and [message](#message). See [Reactive event bus](/security/reactive-event-bus/) for the full surface.
+
+**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [Agent App API](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
 **Agent App API** — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/agent-app-api/).
 
@@ -21,6 +23,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium 148 runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
+<a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `dev-portable-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
+
 <a id="host"></a>**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher); spawns the Chromium subprocesses. (The [sidecar](#sidecar) is also spawned by the launcher, which owns its lifecycle — see [Architecture overview](/internals/architecture/).)
 
 **Identity bundle** — A named credential set bound to an agent at launch. Decouples *who an agent acts as* (GitHub PAT, AWS profile, API keys) from *what an agent does* (the Memory bundle). The same Memory can run as multiple identities — work, personal, demo — without restart. See [Identity bundles](/identity/).
@@ -31,13 +35,15 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 > Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two process-isolation containers) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
 
-**jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). The MCP tool `mcp__agentbus__inject_terminal` is the primary entry point.
+**jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). Use the `SendMessage` MCP tool (Agent App API) or `POST /agentmux/reactive/inject` to jekt an agent.
 
 <a id="launcher"></a>**launcher** — The 325 KB shim process (`agentmux-launcher`) that boots AgentMux. Spawns the host and sidecar, holds the IPC auth-key, tracks window reality. See [Architecture overview](/internals/architecture/).
 
 **Memory bundle** — An agent personality + capability stack: provider, model, instructions, MCP servers, skills, environment. Reusable across launches. Memory is *what an agent does*; [Identity](#identity-bundle) is *who it does it as*. See [Memory bundles](/memory/).
 
-**message** — Verb. Deliver a message to the recipient's mailbox; the recipient reads it when they're ready. Asynchronous counterpart to [jekt](#jekt). The MCP tool `mcp__agentbus__send_message` is the primary entry point.
+**message** — Verb. Deliver a message to the recipient's mailbox; the recipient reads it when they're ready. Asynchronous counterpart to [jekt](#jekt). Use the `SendMessage` MCP tool (Agent App API) with the target agent's name.
+
+**MuxBus** — The three-tier interagent messaging substrate: **Host** (in-process reactive handler, same AgentMux instance), **LAN** (mDNS peer-to-peer forwarding, same network, v0.46+), **WAN** (opt-in cloud relay you operate). Powers the `DiscoverAgents` and `SendMessage` Agent App API tools. See [Interagent Communication](/internals/interagent-comms/).
 
 **MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 
@@ -50,6 +56,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 <a id="process-group"></a>**process group** — The Linux + macOS equivalent of a Windows Job Object for AgentMux's process-isolation needs. The launcher places the host and sidecar in a process group. On Linux, `PR_SET_PDEATHSIG` ensures child processes terminate when the launcher exits — this prevents orphaned `agentmux-cef` or `agentmux-srv` processes if the launcher crashes. On macOS, crashed-parent children are reparented to launchd rather than killed; the process group provides isolation but not automatic orphan cleanup.
 
 **reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
+
+**Trust Center** — The app-wide credential and configuration hub. Three tabs: **Accounts** (OAuth logins and API keys for every provider), **Identity** (named credential sets — [Identity bundles](#identity-bundle)), **Memory** (reusable agent definitions — [Memory bundles](#memory-bundle)). Open from the hamburger menu (≡) → Trust Center.
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 

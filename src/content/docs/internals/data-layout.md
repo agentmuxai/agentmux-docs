@@ -82,7 +82,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | Path | Owns |
 |---|---|
 | `agents/` | Per-agent working dirs — shared so agents survive version upgrades |
-| `config/` | Settings (`settings.json`) plus per-provider auth-config-dir homes (`config/auth/claude/`, `config/auth/codex/`, etc. — see [Auth flows](/auth/)) |
+| `config/` | Settings (`settings.json`). Provider credentials are **not** here — they moved to the account-wide `~/.agentmux/shared/providers/<provider>/` in v0.45 (see [Auth flows](/auth/)). |
 
 Older docs and shell-integration scripts use `<data-dir>` as a single placeholder; treat it as the version-scoped root `channels/<channel>/versions/<v>/` when the context is runtime state (DB, logs, cache, IPC), and the channel root `channels/<channel>/` when the context is agents or settings. The distinction is resolved automatically by `agentmux-common::DataPaths` and exported as `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR` — you don't need to manage it manually.
 
@@ -94,7 +94,7 @@ A single tree at `~/.agentmux/`, independent of channel:
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `~/.agentmux/shared/` | Account-wide state (dictionary downloads, cross-channel shared resources) — independent of channel and version. Browser cookies are *not* here; CEF cookies live in the version-scoped `versions/<v>/cef-cache/`. | All hosts |
+| `~/.agentmux/shared/` | Account-wide state: dictionary downloads, cross-channel shared resources, and provider OAuth/API-key credentials (`shared/providers/<provider>/`) — independent of channel and version. Browser cookies are *not* here; CEF cookies live in the version-scoped `versions/<v>/cef-cache/`. | All hosts |
 | `~/.agentmux/logs/current-host-v<version>.path` | Pointer file resolving to the running host's log path (absolute) | Host (write-through) |
 | `~/.agentmux/logs/agentmuxsrv-v<version>.log.<date>` | The sidecar's daily log file (lives directly in the shared dir, not the per-channel data dir) | Sidecar |
 | `~/.agentmux/logs/current-srv-v<version>.path` | Pointer file resolving to the running sidecar's log basename (relative to the same dir) | Sidecar (write-through) |
@@ -175,4 +175,4 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 - [Persistence](/internals/persistence/) — what each SQLite store holds
 - [Architecture overview](/internals/architecture/) — process topology
 - [Window Reality Reconciliation](/internals/wrr/) — what the launcher event log records
-- [Auth flows](/auth/) — per-channel auth-dir isolation per provider (channel-wide; survives version upgrades)
+- [Auth flows](/auth/) — provider credential storage model (account-wide under shared/providers/)

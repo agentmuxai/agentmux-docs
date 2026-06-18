@@ -1,13 +1,13 @@
 ---
 title: "Auth flows"
-description: Per-provider auth model — OAuth vs API key — and how AgentMux isolates each provider's auth dir per instance.
+description: Per-provider auth model — OAuth vs API key — and how AgentMux stores provider credentials account-wide under shared/providers/.
 ---
 
 :::caution[Alpha Software]
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux supports seven providers (`claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi`). Each ships with its own auth model and its own auth-config directory. AgentMux **isolates** these per AgentMux instance so that two instances on the same machine — different versions, dev + portable, two portables — never share auth state.
+AgentMux supports seven providers (`claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi`). Each ships with its own auth model and its own auth-config directory. Provider credentials are stored **account-wide** under `~/.agentmux/shared/providers/<provider>/` — they persist across channel upgrades and are shared when running multiple instances on the same machine.
 
 The canonical source is `frontend/app/view/agent/providers/index.ts:PROVIDERS`. Each entry has an `authType`, `authCheckCommand`, `authLoginCommand`, and `authConfigDirEnvVar`.
 
@@ -33,51 +33,45 @@ For Claude / Codex / Gemini, an `*_API_KEY` env var (`CLAUDE_API_KEY`, `OPENAI_A
 
 Three providers (OpenClaw, Kimi, Pi) use API keys, configured by their own login subcommand. The key is stored under the provider's auth-config dir.
 
-## Per-channel auth-dir isolation
+## Auth-config dir storage
 
-AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the channel's data dir at `<data-dir>/config/` (where `<data-dir>` is `~/.agentmux/channels/<channel>/` — `stable` for installed and released portable, `dev-portable-<branch>` for local `task package` builds, `dev-<branch>` for `task dev`). For example, on the `stable` channel:
+AgentMux sets each provider's `authConfigDirEnvVar` to a subdirectory under the account-wide shared directory:
 
 ```
-~/.agentmux/channels/stable/config/auth/claude/
-~/.agentmux/channels/stable/config/auth/codex/
-~/.agentmux/channels/stable/config/auth/gemini/
+~/.agentmux/shared/providers/claude/
+~/.agentmux/shared/providers/codex/
+~/.agentmux/shared/providers/gemini/
 …
 ```
 
-See [Data layout](/internals/data-layout/) for the broader channels model. The short version: every AgentMux build within a channel shares the same data dir (and therefore the same auth dirs), and different channels are isolated.
+Credentials at this path persist across channel upgrades and are shared across all channels and instances on the same machine — authenticate once and every AgentMux build picks up the same tokens.
 
 Per-provider:
 
 | Provider | Env var | Resolves to |
 |---|---|---|
-| Claude Code | `CLAUDE_CONFIG_DIR` | `<data-dir>/config/auth/claude/` |
-| Codex CLI | `CODEX_HOME` | `<data-dir>/config/auth/codex/` |
-| Gemini CLI | `GEMINI_CLI_HOME` | `<data-dir>/config/auth/gemini/` |
-| OpenClaw | `OPENCLAW_HOME` | `<data-dir>/config/auth/openclaw/` |
-| Kimi Code CLI | `KIMI_SHARE_DIR` | `<data-dir>/config/auth/kimi/` |
-| GitHub Copilot CLI | `COPILOT_HOME` | `<data-dir>/config/auth/copilot/` |
-| Pi | `PI_HOME` | `<data-dir>/config/auth/pi/` |
+| Claude Code | `CLAUDE_CONFIG_DIR` | `~/.agentmux/shared/providers/claude/` |
+| Codex CLI | `CODEX_HOME` | `~/.agentmux/shared/providers/codex/` |
+| Gemini CLI | `GEMINI_CLI_HOME` | `~/.agentmux/shared/providers/gemini/` |
+| OpenClaw | `OPENCLAW_HOME` | `~/.agentmux/shared/providers/openclaw/` |
+| Kimi Code CLI | `KIMI_SHARE_DIR` | `~/.agentmux/shared/providers/kimi/` |
+| GitHub Copilot CLI | `COPILOT_HOME` | `~/.agentmux/shared/providers/copilot/` |
+| Pi | `PI_HOME` | `~/.agentmux/shared/providers/pi/` |
 
 The `authDirName` field in `PROVIDERS` is what becomes the subdirectory name (`claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi` respectively).
 
-### Why isolate
+### Historical note
 
-Without isolation, running an installed AgentMux and a `task dev` build on the same machine would mean both writing to the same `~/.claude/` (or equivalent) directory. Auth tokens, account state, and dictionary downloads would collide.
+Prior to v0.45, credentials were stored per-channel under `~/.agentmux/channels/<channel>/config/auth/<provider>/`. This required re-authentication when switching channels (e.g. `stable` → `dev-portable-<branch>`) even though the underlying account hadn't changed. Moving credentials to the account-wide `shared/providers/` path fixed this regression — a single OAuth login is now valid across all channels and versions on the same machine.
 
-With per-channel isolation:
-
-- The `stable` channel keeps its Claude OAuth token while a `dev-<branch>` build does its own login flow against a separate auth dir.
-- `task dev` from a feature branch gets its own auth state — login flows in the dev build don't disturb the installed build.
-- Two simultaneous portables of the same channel share auth state because they share the data dir. They're separate [instances](/glossary/#instance) (separate process trees) but one shared on-disk auth set per channel — there's only one set of provider tokens worth tracking per channel.
-
-## Identity bundles vs auth-dir isolation
+## Identity bundles vs provider credentials
 
 These are independent layers:
 
-- **Auth-dir isolation** is per-instance and provider-scoped. It separates v1's Claude state from v2's Claude state.
-- **[Identity bundles](/identity/)** are per-agent-instance and selectable at launch. They override or extend the ambient auth — e.g., "for this agent, use the *work* GitHub PAT, not the ambient one."
+- **Provider credentials** (the auth-config dirs above) are account-wide and provider-scoped. Every instance on the same machine shares them.
+- **[Identity bundles](/identity/)** are per-agent and selectable at launch. They override or extend the ambient credentials — e.g., "for this agent, use the *work* GitHub PAT, not the ambient one."
 
-You can run two agents inside the same AgentMux instance with different Identity bundles. Both share the same provider auth dirs (auth-dir isolation is per AgentMux instance, not per agent), but the env vars AgentMux injects per agent at spawn override per-account-scoped credentials.
+You can run two agents inside the same AgentMux instance with different Identity bundles. Both share the same account-wide provider auth dirs, but the env vars AgentMux injects per agent at spawn can override the shared credentials.
 
 ## Pre-launch OAuth panel
 
@@ -90,7 +84,7 @@ The Launch Agent modal gates the **Launch** button on completed provider auth. I
 | **Ready** | Green banner: "✓ Connected. Ready to launch." Launch button enables. |
 | **Failed** | Red error banner with a Retry button. |
 
-Internally the panel calls `auth.start` over RPC, which spawns the provider's CLI (`claude auth login` / `codex login` / etc.) under the per-version auth-dir env vars described above. The browser-based OAuth flow runs against that subprocess; the panel polls `auth.poll` once per second until the CLI reports success.
+Internally the panel calls `auth.start` over RPC, which spawns the provider's CLI (`claude auth login` / `codex login` / etc.) under the auth-config-dir env vars described above. The browser-based OAuth flow runs against that subprocess; the panel polls `auth.poll` once per second until the CLI reports success.
 
 For API-key providers (OpenClaw, Kimi, Pi), there is no browser; the panel either accepts a pasted key inline or, for Copilot's device-code path, displays a verification URL and one-time code.
 
@@ -105,7 +99,7 @@ Persistent bundle storage ("log in once, reuse across launches") is **Phase C** 
 If you need to log in outside an Agent pane, set the env var first:
 
 ```bash
-export CLAUDE_CONFIG_DIR=~/.agentmux/versions/0.33.733/config/auth/claude
+export CLAUDE_CONFIG_DIR=~/.agentmux/shared/providers/claude
 claude auth login
 ```
 
