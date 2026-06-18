@@ -267,7 +267,7 @@ The underlying protocol is WebSocket, JSON-RPC 2.0 — the same transport the fr
 - **Endpoint:** `ws://127.0.0.1:<port>/ws?authkey=<AGENTMUX_AUTH_KEY>`
 - **Auth:** `authkey` query param on connect (custom headers not supported by the browser WS API)
 
-Subscribe to live agent output or workspace events via the `eventsub` command on the WebSocket rather than polling.
+The WebSocket connection receives server-pushed JSON-RPC notifications for live agent output and workspace events — use these instead of polling the REST endpoints.
 
 ## Permission boundary
 
@@ -282,6 +282,6 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 ## See also
 
 - [Trust model](/security/trust-model/) — full trust boundary description
-- [Interagent Communication](/internals/interagent-comms/) — MuxBus tiers and SendMessage routing
+- [Interagent Communication](/internals/interagent-comms/) — reactive event system underlying DiscoverAgents and SendMessage
 - [Trust Center](/trust-center/) — credential management UI
 - [Pane Types](/pane-types/) — pane types OpenEditor can create

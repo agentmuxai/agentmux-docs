@@ -25,8 +25,8 @@ The Accounts tab shows every service AgentMux can connect to. Each entry display
 
 Click any service tile to connect or manage credentials:
 
-- **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in the OS keychain (or the provider's auth-config dir) and never written as plaintext to disk. Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
-- **API key providers** (OpenClaw, Kimi, Pi) — clicking **Connect** opens an inline key entry field. The key is validated against the service before it's saved. Keys are stored in the OS keychain where the platform supports it; otherwise in the provider's auth-config dir with 0600 permissions.
+- **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in the provider's auth-config dir (per-channel isolated, never plaintext via AgentMux). Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
+- **API key providers** (OpenClaw, Kimi, Pi) — clicking **Connect** opens an inline key entry field. The key is validated against the service before it's saved and stored in the provider's auth-config dir with restricted permissions.
 
 Supported providers:
 
