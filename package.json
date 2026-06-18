@@ -27,9 +27,9 @@
   },
   "deployments": {
     "prod": {
-      "version": "0.0.86",
-      "commit": "0f5a806",
-      "deployed_at": "2026-06-18T19:50:04.000Z",
+      "version": "0.0.87",
+      "commit": "f7d0f27",
+      "deployed_at": "2026-06-18T20:09:00.000Z",
       "deployed_by": "smark-06122"
     }
   }
