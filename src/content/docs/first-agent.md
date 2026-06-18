@@ -6,7 +6,7 @@ title: "First Agent Setup"
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-This guide walks through connecting your first AI agent to AgentMux. AgentMux supports seven providers as first-class agent types — `claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, and `pi`. The full list lives in `frontend/app/view/agent/providers/index.ts:PROVIDERS` in the main repo.
+This guide walks through what it means for an agent to be first-class in AgentMux. Each agent gets its own structured pane — not a terminal wrapper — with a real identity bundle, a memory bundle, a streaming parser, and a lifecycle. AgentMux supports seven providers: `claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, and `pi`. The full list lives in `frontend/app/view/agent/providers/index.ts:PROVIDERS` in the main repo.
 
 ## You don't need to preinstall the agent CLIs
 
@@ -43,7 +43,7 @@ After the install completes (or immediately, when the CLI is already cached), Ag
 |-------|-------------|
 | **Name** | A human-readable name (e.g., `backend-claude`) |
 | **Provider** | Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, or Pi |
-| **Model** | Model identifier passed to the provider (e.g., `claude-sonnet-4-6`) |
+| **Model** | Model identifier passed to the provider. The picker is provider-aware — selecting Claude Code shows Claude models (opus, sonnet, haiku), Codex shows gpt-5.x models, etc. |
 | **Working Directory** | The project directory the agent works in |
 
 ### Provider Command
@@ -89,6 +89,34 @@ The agent pane shows:
 - **File diffs** — Side-by-side diffs when the agent modifies files
 - **Status** — Active, idle, or completed
 - **Disconnected banner** — surfaces if the WebSocket drops mid-turn; click to reconnect
+
+## Sending shell commands directly
+
+Prefix any message in the composer with `!cmd` to run it as a shell command in the agent's working directory instead of sending it to the model. Useful for quick checks without leaving the pane:
+
+```
+!cmd git status
+!cmd cat .env.example
+!cmd ls -la dist/
+```
+
+The output streams into the pane thread like a tool result.
+
+## AskUserQuestion
+
+Agents can pause and ask you a question via the **AskUserQuestion panel** — an interactive prompt that appears inline in the pane above the composer. Answer directly and submit; the agent resumes automatically. If the agent stalls after receiving your answer, AgentMux auto-resumes it after a short delay.
+
+## When an agent fails
+
+AgentMux classifies failures so you know exactly what happened and what to do:
+
+| Error class | What you see | Recovery |
+|---|---|---|
+| **Auth** | Red banner — credentials rejected or expired | **Re-authenticate** button opens the inline OAuth / key flow — no restart |
+| **Rate limit** | Banner with estimated retry delay | Auto-retries after the delay (5 s default) |
+| **OOM / memory** | Banner — model exceeded memory budget | Start a fresh session or reduce attached context |
+| **Context overflow** | Banner — context window full | Summarize and continue in a new turn |
+| **Crash** | Banner with crash class | **Restart** button; the prior partial turn is preserved |
 
 ## Agent Types
 
