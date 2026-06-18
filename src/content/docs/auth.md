@@ -11,6 +11,17 @@ AgentMux supports seven providers (`claude`, `codex`, `gemini`, `openclaw`, `kim
 
 The canonical source is `frontend/app/view/agent/providers/index.ts:PROVIDERS`. Each entry has an `authType`, `authCheckCommand`, `authLoginCommand`, and `authConfigDirEnvVar`.
 
+## Trust Center: Accounts tab
+
+The primary UI for managing provider credentials is the **Accounts tab** inside [Trust Center](/trust-center/) (hamburger menu ≡ → Trust Center → Accounts).
+
+Each service shows as a tile with its current connection status. Click a tile to connect, reconnect, or revoke:
+
+- **OAuth providers** — clicking **Connect** opens a PKCE or Device Flow browser login. The token is stored account-wide under `~/.agentmux/shared/providers/<provider>/` and validated on load (expired tokens show a ⚠ badge).
+- **API key providers** — clicking **Connect** opens an inline key field. The key is validated against the live service before saving.
+
+The Accounts tab manages the underlying provider tokens. These tokens persist in the auth-config dir and are validated on each launch — if a stored token is valid, no re-authentication is needed. This is separate from [Identity bundles](/identity/), which are session-scoped in the current release (Phase B): completing OAuth through the Pre-Launch panel doesn't yet persist the credentials into a named bundle. See the [Pre-launch OAuth panel](#pre-launch-oauth-panel) section below.
+
 ## Per-provider summary
 
 | Provider | `authType` | Login command | Auth config dir env var |
@@ -90,9 +101,9 @@ For API-key providers (OpenClaw, Kimi, Pi), there is no browser; the panel eithe
 
 ### Session-scoped today, bundle-scoped later
 
-In the current release (Phase B), a successful OAuth completion authenticates the **session** — the agent that's about to launch can use the credentials, but they are **not yet persisted into an Identity bundle**. The Identity dropdown stays on the blank singleton, and the next launch repeats the OAuth flow.
+In the current release (Phase B), a successful OAuth completion via the Pre-Launch panel **does not create an Identity bundle**. The Identity dropdown stays on the blank singleton. On the next launch, the pre-launch panel will still show **Connected** (the provider token persisted in `shared/providers/` is valid), but no named Identity bundle exists to select — you can't hand this credential set to a different agent by name.
 
-Persistent bundle storage ("log in once, reuse across launches") is **Phase C** — still in design. Once it lands, completing the panel's OAuth will create or update a `db_identity_bundles` row and let you reuse the credentials by selecting the bundle on subsequent launches. Track progress against `SPEC_OAUTH_IN_IDENTITY_BUNDLES_2026_05_13.md` in the main repo.
+Persistent bundle storage (named Identity bundles created from the panel's OAuth completion) is **Phase C** — still in design. Once it lands, completing the panel's OAuth will create or update a `db_identity_bundles` row and let you reuse the credentials by selecting the bundle on subsequent launches. Track progress against `SPEC_OAUTH_IN_IDENTITY_BUNDLES_2026_05_13.md` in the main repo.
 
 ## Manual login
 

@@ -1,180 +1,288 @@
 ---
 title: Agent App API
-description: The high-level intent-based API for driving AgentMux from an agent — agent.open, agent.send, pane.open — plus the low-level RPC catalog.
+description: The API that lets agents operate the AgentMux workspace — open panes, rename tabs, message peers, navigate the UI.
 ---
 
 :::caution[Alpha Software]
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux exposes two layers of RPC surface: a **high-level App API** for agents and integrations, and a **low-level command catalog** for direct manipulation. Both transport over the same JSON-RPC 2.0 WebSocket and share the same auth.
+The **Agent App API** is what makes AgentMux an *operating* environment, not just a workspace. Every agent running inside a pane has access to a typed API that lets it drive the environment itself: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. No human in the loop required.
 
-The App API is what you should reach for first. It expresses **intent** ("open this agent in a pane, idempotently") and orchestrates the underlying `CreateBlock` / `SetMeta` / `ControllerResync` calls. The low-level catalog is for cases that don't fit the intent shape (tooling, testing, custom panes).
+The API has two equivalent surfaces — **MCP tools** (for agents that use MCP-capable providers) and a **REST API** (direct HTTP, for any language). Both authenticate with the same key and express the same capabilities. The MCP tools are what most agents will reach for; the REST endpoints are there for scripts, webhooks, and advanced use.
 
-## Transport
+## How agents get access
+
+When AgentMux launches an agent, the sidecar injects three environment variables into the agent's PTY:
+
+| Env var | Value | Purpose |
+|---|---|---|
+| `AGENTMUX_LOCAL_URL` | `http://127.0.0.1:<port>` | Sidecar base URL |
+| `AGENTMUX_BLOCKID` | `<pane UUID>` | The pane this agent lives in — used as self-context default |
+| `AGENTMUX_AGENT_ID` | `<agent name>` | Agent's registered name — used by `SendMessage` routing |
+
+`AGENTMUX_AUTH_KEY` is **not classified as a PTY env var** (see `internals/env-vars.md` — "Available In Pane? No"). The sidecar strips it from its own process environment at startup (security PR #801) and re-injects it per spawn only for internal tooling that requires it (`agentmux-bashwrap`, the streaming bash runner). `agentmux-mcp` receives it through its own spawn configuration, not from the agent's PTY environment.
+
+```
+Agent CLI (claude / codex / gemini / …)
+  └─ spawns agentmux-mcp (MCP stdio server)
+       ├─ receives AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID
+       └─ advertises 11 MCP tools → routes each to the REST API
+```
+
+Agents using MCP tools never touch `X-AuthKey` directly — the MCP sidecar handles it. The REST API is for scripts or tooling that run with explicit access to the auth key (e.g. inside the sidecar itself, or a trusted subprocess you spawn with the key explicitly).
+
+## MCP tools (11 tools)
+
+These are the 11 tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically.
+
+### Self-context
+
+#### `WhoAmI`
+
+Resolve the calling agent's position in the UI tree — pane, tab, window, workspace.
+
+```json
+// Returns:
+{
+  "block_id": "uuid",
+  "block_title": "pane title",
+  "tab_id": "uuid",
+  "tab_name": "Tab Label",
+  "window_id": "uuid",
+  "window_name": "Window Title",
+  "workspace_id": "uuid",
+  "workspace_name": "Workspace Name"
+}
+```
+
+No parameters. Call this before any navigation verb to get a stable reference to your own context.
+
+---
+
+### Layout introspection
+
+#### `Layout`
+
+Read the AgentMux UI structure. Single tool with a `query` discriminator.
+
+| `query` | Returns |
+|---|---|
+| `"layout"` (default) | Full hierarchical tree: Windows → Workspaces → Tabs → Panes |
+| `"windows"` | Flat list of all windows |
+| `"workspaces"` | Flat list of all workspaces |
+| `"tabs"` | Tabs in the calling agent's workspace |
+
+```json
+// Layout("layout") returns:
+{
+  "windows": [
+    {
+      "window_id": "uuid",
+      "window_name": "AgentMux",
+      "workspaces": [
+        {
+          "workspace_id": "uuid",
+          "workspace_name": "Main",
+          "tabs": [
+            {
+              "tab_id": "uuid",
+              "tab_name": "Tab 1",
+              "active": true,
+              "panes": [
+                { "block_id": "uuid", "view": "agent", "title": "claude" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Naming
+
+#### `SetName`
+
+Rename any UI element. Self-defaults: omit the explicit target ID and the agent's own context is used.
+
+| `target` | What it renames | Char limit |
+|---|---|---|
+| `"pane"` | The agent's own pane header title | 128 |
+| `"tab"` | The current tab label | 128 |
+| `"window"` | The OS window title bar | 64 |
+| `"workspace"` | The workspace name | 128 |
+
+Parameters: `target` (required), `name` (required).
+
+```
+// Rename own pane
+SetName(target="pane", name="Research")
+
+// Rename the current tab
+SetName(target="tab", name="Build pipeline")
+
+// Rename the window
+SetName(target="window", name="Project Athena")
+```
+
+---
+
+### Navigation
+
+#### `SetActiveTab`
+
+Switch the active tab within the current workspace.
+
+Parameters: `tab_id` (required, from `Layout("tabs")`).
+
+#### `NewTab`
+
+Create a new tab in the current workspace.
+
+Parameters: `name` (optional string).
+
+#### `FocusWindow`
+
+Bring an AgentMux window to the OS foreground.
+
+Parameters: `window_id` (optional — defaults to the calling agent's own window).
+
+---
+
+### Pane operations
+
+#### `OpenEditor`
+
+Open a file in an editor pane.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `file` | string (required) | — | Absolute path to the file |
+| `title` | string | file name | Tab/pane title |
+| `split` | `"right"` \| `"left"` \| `"down"` \| `"up"` | `"right"` | Split direction relative to the calling pane |
+| `collapse_tree` | boolean | `false` | Open with the file-tree sidebar collapsed |
+| `floating` | boolean | `false` | Open in a floating overlay window instead of a docked split |
+
+Returns `{ block_id, tab_id, view, created }`.
+
+---
+
+### Shell management
+
+#### `Shell`
+
+Start a persistent background shell process pinned to the activity dock.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `cmd` | string (required) | Shell command to run |
+| `cwd` | string | Working directory (defaults to agent's working dir) |
+| `title` | string | Label shown in the activity dock |
+| `env` | object | Extra env vars for the shell process |
+
+Returns `{ shell_id }`. The shell process stays alive until `ShellStop` is called or the pane closes. Use it for long-running background processes; subsequent input to the running shell is not supported via this API.
+
+#### `ShellStop`
+
+Stop a running shell by ID.
+
+Parameters: `shell_id` (required, from `Shell` response).
+
+---
+
+### Agent coordination
+
+#### `DiscoverAgents`
+
+List reachable agents across the MuxBus tiers (Host / LAN / WAN).
+
+No parameters. Returns:
+
+```json
+{
+  "host": {
+    "addressable": [
+      { "agent_id": "claude", "block_id": "uuid", "provider": "claude" }
+    ],
+    "agents": [ /* full agent records */ ]
+  },
+  "lan": [ { "host": "peer-machine", "agents": [ /* … */ ] } ],
+  "wan": { "subscribed_agents": [ /* … */ ] }
+}
+```
+
+Use the `addressable` list to find agents you can `SendMessage` to.
+
+#### `SendMessage`
+
+Send a message to another agent by name. Routes through the MuxBus.
+
+Parameters: `to` (target agent name, required), `message` (string, required).
+
+Returns `{ success, error? }`. The message is delivered to the target agent's pane as if a user typed it — the agent picks it up on its next turn.
+
+---
+
+## REST API
+
+Every MCP tool has an equivalent REST endpoint on `$AGENTMUX_LOCAL_URL`. All requests require `X-AuthKey: $AGENTMUX_AUTH_KEY`.
+
+| Method | Endpoint | MCP equivalent |
+|---|---|---|
+| `GET` | `/api/v1/self?block_id=<id>` | `WhoAmI` |
+| `GET` | `/api/v1/layout` | `Layout("layout")` |
+| `GET` | `/api/v1/windows` | `Layout("windows")` |
+| `GET` | `/api/v1/workspaces` | `Layout("workspaces")` |
+| `GET` | `/api/v1/tabs?block_id=<id>` | `Layout("tabs")` |
+| `POST` | `/api/v1/pane/title` | `SetName(target="pane")` |
+| `POST` | `/api/v1/tab/name` | `SetName(target="tab")` |
+| `POST` | `/api/v1/window/name` | `SetName(target="window")` |
+| `POST` | `/api/v1/workspace/name` | `SetName(target="workspace")` |
+| `POST` | `/api/v1/tab/activate` | `SetActiveTab` |
+| `POST` | `/api/v1/tab/new` | `NewTab` |
+| `POST` | `/api/v1/window/focus` | `FocusWindow` |
+| `POST` | `/api/v1/pane/open` | `OpenEditor` |
+| `POST` | `/api/v1/shell/create` | `Shell` |
+| `POST` | `/api/v1/shell/stop` | `ShellStop` |
+| `GET` | `/agentmux/discovery` | `DiscoverAgents` |
+| `POST` | `/agentmux/reactive/inject` | `SendMessage` |
+
+Example — rename the current tab from a trusted script that has access to the auth key (e.g. an `agentmux-mcp` subprocess or a sidecar utility, not an agent's own PTY shell):
+
+```bash
+curl -s -X POST "$AGENTMUX_LOCAL_URL/api/v1/tab/name" \
+  -H "X-AuthKey: $AGENTMUX_AUTH_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"block_id\": \"$AGENTMUX_BLOCKID\", \"name\": \"Done\"}"
+```
+
+## Transport (WebSocket JSON-RPC)
+
+The underlying protocol is WebSocket, JSON-RPC 2.0 — the same transport the frontend uses. The MCP tools and REST endpoints are thin wrappers over this. Direct WebSocket access is available for advanced use (streaming events, subscriptions):
 
 - **Protocol:** WebSocket, JSON-RPC 2.0
-- **Server:** `agentmux-srv` (Rust, Tokio + Axum)
-- **Client:** `RpcApi` / `TabRpcClient` in the frontend (`frontend/app/store/rpc-api.ts`)
-- **Auth:** Token-based; pass via `authenticate` or `authenticatetoken` on connect
+- **Endpoint:** `ws://127.0.0.1:<port>/ws?authkey=<AGENTMUX_AUTH_KEY>`
+- **Auth:** `authkey` query param on connect (custom headers not supported by the browser WS API)
 
-The launcher spawns a sidecar per instance on a dynamic port (owns its lifecycle and supervises it); the host then connects to the sidecar over a local WebSocket. Terminals opened inside AgentMux receive `AGENTMUX_PORT` and an auth token via the [shell integration](/multi-instance/#shell-helpers) env block.
-
-## App API
-
-High-level commands defined in [`agentmux-srv/src/server/app_api.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/app_api.rs). Idempotent, intent-based.
-
-### Agent lifecycle
-
-| Command | Description |
-|---|---|
-| `agent.open` | Open an agent (from the agent-definition catalog) in a pane. Idempotent — if the agent already has a block in the target tab, returns it. Resolves provider, sets controller meta, registers the controller. |
-| `agent.send` | Send a message to a running agent. Honors the agent's CLI provider (Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, Pi). |
-| `agent.stop` | Cleanly stop an agent (asks the CLI to wrap up). |
-| `agent.status` | Query an agent's current state — controller status, last activity, block id. |
-| `agent.list` | List every running agent across the workspace, with provider + status. |
-| `agent.output` | Fetch the last N lines of an agent's terminal output (post-stream-buffer). |
-
-### Process tracking
-
-| Command | Description |
-|---|---|
-| `agent.process-list` | List every OS process currently tracked for a given agent block (PIDs, RSS, command line). |
-| `agent.tracked-blocks` | List every block the process tracker is following — for the swarm aggregate view. |
-| `agent.kill-process` | Terminate one PID, only if it's a tracked member of the named block (safety-checked). |
-| `agent.kill-tree` | Terminate the entire process tree for a given block. |
-
-The process tracker has three confidence levels (`high`, `best_effort`, `none`) that callers should respect when interpreting results.
-
-### Panes
-
-| Command | Description |
-|---|---|
-| `pane.open` | Open a pane of one of the supported view types: `editor` (requires `file`), `term`, `browser` (requires `url`), `sysinfo`, or `help`. Returns the new block id. |
-
-### Sessions
-
-| Command | Description |
-|---|---|
-| `session:archive` | Archive the current session state to a portable bundle. |
-| `session:restore` | Restore a previously archived session into a fresh workspace. |
-| `session:export` | Export a session digest (read-only, shareable). |
-| `session:digest` | Compute a digest of the current session for diff / hashing. |
-
-## Low-level RPC catalog
-
-The primitives the App API is built on. These are stable but lower-level — most consumers should prefer the App API where one exists.
-
-### Block management
-
-| Command | Description |
-|---|---|
-| `createblock` | Create a new block (pane) in a tab |
-| `createsubblock` | Create a sub-block within a parent block |
-| `deleteblock` | Delete a block |
-| `deletesubblock` | Delete a sub-block |
-| `blockinfo` | Get block metadata and file info |
-| `blockslist` | List all blocks, optionally filtered by window or workspace |
-
-### Block control
-
-| Command | Description |
-|---|---|
-| `controllerinput` | Send input to a block's controller (terminal input, signals, resize) |
-| `controllerresync` | Resync or restart a block's controller |
-| `controllerrestart` | Restart a block's controller |
-| `controllerstop` | Stop a block's controller |
-| `captureblockscreenshot` | Capture a screenshot of a block's content |
-
-### File operations
-
-| Command | Description |
-|---|---|
-| `fileread` | Read a file's contents |
-| `filewrite` | Write contents to a file |
-| `filecreate` | Create a new file |
-| `filedelete` | Delete a file |
-| `fileappend` | Append data to a file |
-| `filecopy` | Copy a file |
-| `filemove` | Move/rename a file |
-| `filemkdir` | Create a directory |
-| `filelist` | List files in a directory |
-| `fileliststream` | Stream a directory listing (for large directories) |
-| `filereadstream` | Stream file contents |
-| `filestreamtar` | Stream a tar archive of files |
-| `fileinfo` | Get file metadata |
-| `filejoin` | Join file paths |
-
-### Event system
-
-| Command | Description |
-|---|---|
-| `eventpublish` | Publish an event to the event bus |
-| `eventrecv` | Receive/handle an event |
-| `eventsub` | Subscribe to events by type and scope |
-| `eventunsub` | Unsubscribe from a specific subscription |
-| `eventunsuball` | Unsubscribe from all subscriptions |
-| `eventreadhistory` | Read historical events |
-
-### Connection management
-
-| Command | Description |
-|---|---|
-| `connconnect` | Connect to a remote host |
-| `conndisconnect` | Disconnect from a remote host |
-| `connensure` | Ensure a connection is established |
-| `connlist` | List active connections |
-| `connlistaws` | List available AWS connections |
-| `connstatus` | Get status of all connections |
-
-### Metadata + configuration
-
-| Command | Description |
-|---|---|
-| `getmeta` | Get metadata for a wave object |
-| `setmeta` | Set metadata on a wave object |
-| `setview` | Set a block's view type |
-| `getfullconfig` | Get the complete configuration |
-| `getvar` / `setvar` | Get / set a config variable |
-
-### Authentication
-
-| Command | Description |
-|---|---|
-| `authenticate` | Authenticate with a token string |
-| `authenticatetoken` | Authenticate with structured token data |
-
-## Streaming commands
-
-A few commands return async streams instead of single responses:
-
-- `fileliststream` — directory entries progressively
-- `filereadstream` — file contents in chunks
-- `filestreamtar` — tar archive bytes
-
-The frontend client surfaces these as `AsyncGenerator` objects; over the wire each chunk is a JSON-RPC notification on the same connection. For live agent output, subscribe to the relevant agent block via `eventsub` rather than polling `agent.output`.
+The WebSocket connection receives server-pushed JSON-RPC notifications for live agent output and workspace events — use these instead of polling the REST endpoints.
 
 ## Permission boundary
 
-Be aware of what the API currently does and does not enforce.
+Agents are *sub-trusted*: they run as the user but do not hold the sidecar's full auth key at the OS level. The Agent App API is the curated surface across that boundary — scoped, reversible operations.
 
-By the [trust model](/security/trust-model/), agent processes are *sub-trusted*: they run as the user but are not given the sidecar's auth key. That's the intended boundary. The Agent App API is the narrow surface across that boundary — the only RPC entry points an agent can reach.
+What the API allows today: open panes, rename UI elements, navigate, discover and message peers, manage shells.
 
-In the current implementation, an agent that authenticates to the App API gets broad access to the workspace: spawn panes, mutate workspace state, send messages, read and write blocks. There is no per-tool permission scope, no allow-list of which RPCs a given agent may call, no rate limiting beyond what the underlying RPC machinery provides.
+What it does not expose: delete arbitrary panes belonging to other agents, access other agents' file systems, or call raw `dispatch_service` destructive commands. A finer-grained per-agent permission model (allow-lists, scoped capabilities) is on the roadmap.
 
-**Concrete advice:**
-
-- Treat the Agent App API as a privilege boundary you opt into per agent. An agent you don't trust should not be given API access.
-- Default-deny in your own workflow: don't enable the API for agents whose Memory bundle isn't from a source you trust.
-- The audit endpoint logs every RPC call. If you're running a less-trusted agent, watch the log.
-
-A finer-grained permission model (per-agent allow-lists, scoped RPC capabilities) is on the roadmap. This page will be updated when it lands.
+**Practical advice:** don't inject `AGENTMUX_AUTH_KEY` into agent instructions when running less-trusted agents. The API is designed for agents you authored or trust, not for arbitrary model output from external sources.
 
 ## See also
 
-- [Trust model](/security/trust-model/) — the broader trust boundaries this API sits inside
-- [Interagent Communication](/internals/interagent-comms/) — the event pub-sub system the `event*` commands plug into
-- [Persistence](/internals/persistence/) — how state changes flow into SQLite
-- [Reducer stack](/internals/reducer-stack/) — what's RPC-driven vs reducer-driven (migration in flight)
-- [Configuration](/config/) — settings + MCP config
-- [Building from Source](/internals/building/) — backend architecture
+- [Trust model](/security/trust-model/) — full trust boundary description
+- [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
+- [Trust Center](/trust-center/) — credential management UI
+- [Pane Types](/pane-types/) — pane types OpenEditor can create
