@@ -73,7 +73,7 @@ The `authDirName` field in `PROVIDERS` is what becomes the subdirectory name (`c
 
 ### Historical note
 
-Prior to v0.45, credentials were stored per-channel under `~/.agentmux/channels/<channel>/config/auth/<provider>/`. This required re-authentication when switching channels (e.g. `stable` → `dev-portable-<branch>`) even though the underlying account hadn't changed. Moving credentials to the account-wide `shared/providers/` path fixed this regression — a single OAuth login is now valid across all channels and versions on the same machine.
+Prior to v0.45, credentials were stored per-channel under `~/.agentmux/channels/<channel>/config/auth/<provider>/`. This required re-authentication when switching channels (e.g. `stable` → `local-<branch>`) even though the underlying account hadn't changed. Moving credentials to the account-wide `shared/providers/` path fixed this regression — a single OAuth login is now valid across all channels and versions on the same machine.
 
 ## Identity bundles vs provider credentials
 

@@ -5,7 +5,7 @@ description: The on-disk layout for AgentMux — per-channel data dirs, per-inst
 
 This page documents the on-disk layout AgentMux uses to isolate state across builds and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For the SQLite stores themselves, see [Persistence](/internals/persistence/).
 
-The on-disk layout is keyed by **channel** and, within a channel, by **version** (as of v0.41.1). The channel persists agent definitions, settings, and identity across versions — so My Agents survive upgrades. The version sub-directory isolates the runtime DBs, cache, and logs so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Across channels (`stable`, `beta`, `dev-portable-<branch>`, `dev-<branch>`) state is fully isolated. Dev mode adds a further axis — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
+The on-disk layout is keyed by **channel** and, within a channel, by **version** (as of v0.41.1). The channel persists agent definitions, settings, and identity across versions — so My Agents survive upgrades. The version sub-directory isolates the runtime DBs, cache, and logs so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Across channels (`stable`, `beta`, `local-<branch>`, `dev-<branch>`) state is fully isolated. Dev mode adds a further axis — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
 
 ## Channels: what they replace
 
@@ -17,7 +17,7 @@ Earlier builds isolated by **version** — each new build got a fresh, empty `~/
 |---|---|---|
 | **Installed** (production install) | `stable` | Runtime root: `~/.agentmux/channels/stable/versions/<version>/` (`data/` for SQLite, `logs/`, `cef-cache/`, `runtime/` are siblings under it). Channel root: `~/.agentmux/channels/stable/` (`agents/`, `config/` — shared across versions). See [Per-channel contents](#per-channel-contents) for the full breakdown. |
 | **Portable** (downloaded released ZIP) | `stable` | Same as installed — both bind to the `stable` channel |
-| **Portable** (local `task package` build) | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` — no version sub-dir for local builds; rebuilds of one branch share a session |
+| **Portable** (local `task package` build) | `local-<branch>` | `~/.agentmux/channels/local-<branch>/` — no version sub-dir for local builds; rebuilds of one branch share a session |
 | **Dev** (`task dev`) | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
 Dev mode lives outside `channels/` on purpose: branches are short-lived and numerous, so promoting each one to a first-class channel would clutter the namespace. The `<clone-id>` segment was added when [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) generalized Dev mode to also be per-clone — see [Per-clone isolation in Dev mode](#per-clone-isolation-in-dev-mode) below.

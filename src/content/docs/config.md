@@ -17,7 +17,7 @@ Settings live under the channel's data dir, so every version that binds to the s
 | Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
 | Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
-The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `dev-portable` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Core Settings
 
