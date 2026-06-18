@@ -11,6 +11,17 @@ AgentMux supports seven providers (`claude`, `codex`, `gemini`, `openclaw`, `kim
 
 The canonical source is `frontend/app/view/agent/providers/index.ts:PROVIDERS`. Each entry has an `authType`, `authCheckCommand`, `authLoginCommand`, and `authConfigDirEnvVar`.
 
+## Trust Center: Accounts tab
+
+The primary UI for managing provider credentials is the **Accounts tab** inside [Trust Center](/trust-center/) (hamburger menu ≡ → Trust Center → Accounts).
+
+Each service shows as a tile with its current connection status. Click a tile to connect, reconnect, or revoke:
+
+- **OAuth providers** — clicking **Connect** opens a PKCE or Device Flow browser login. The token is stored in the OS keychain or the provider's auth-config dir and validated on load (expired tokens show a ⚠ badge).
+- **API key providers** — clicking **Connect** opens an inline key field. The key is validated against the live service before saving.
+
+The Accounts tab is the replacement for managing credentials through the pre-launch modal alone. Credentials stored here are reused across launches without re-authenticating.
+
 ## Per-provider summary
 
 | Provider | `authType` | Login command | Auth config dir env var |

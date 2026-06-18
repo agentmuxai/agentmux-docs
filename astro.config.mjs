@@ -56,6 +56,7 @@ export default defineConfig({
 							items: [
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
+								{ label: 'Trust Center', slug: 'trust-center' },
 								{ label: 'Memory bundles', slug: 'memory' },
 								{ label: 'Identity bundles', slug: 'identity' },
 								{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
