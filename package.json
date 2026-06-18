@@ -27,10 +27,10 @@
   },
   "deployments": {
     "prod": {
-      "version": "0.0.50",
-      "commit": "02c116e06f38",
-      "deployed_at": "2026-05-28T13:31:35.687Z",
-      "deployed_by": "agent1"
+      "version": "0.0.86",
+      "commit": "0f5a806",
+      "deployed_at": "2026-06-18T19:50:04.000Z",
+      "deployed_by": "smark-06122"
     }
   }
 }
