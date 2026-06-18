@@ -40,9 +40,9 @@ Supported providers:
 | Kimi Code | API key | |
 | Pi | API key | |
 
-### Credential isolation
+### Credential storage
 
-Every AgentMux channel maintains its own set of service credentials — two builds on the same machine on different channels can hold separate Claude sessions, useful for work vs personal accounts. See [Auth flows](/auth/) for the full per-channel isolation model.
+Provider credentials are stored account-wide under `~/.agentmux/shared/providers/<provider>/` — they persist across channel upgrades and version changes without re-authentication. See [Auth flows](/auth/) for the credential storage model and per-provider details.
 
 ### Relationship to Identity bundles
 

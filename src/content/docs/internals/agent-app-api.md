@@ -13,23 +13,24 @@ The API has two equivalent surfaces — **MCP tools** (for agents that use MCP-c
 
 ## How agents get access
 
-When AgentMux launches an agent, the sidecar injects four environment variables into the agent's process:
+When AgentMux launches an agent, the shell controller injects three environment variables into the agent's PTY:
 
 | Env var | Value | Purpose |
 |---|---|---|
-| `AGENTMUX_LOCAL_URL` | `http://127.0.0.1:<port>` | Sidecar base URL — all API calls go here |
-| `AGENTMUX_AUTH_KEY` | `<per-instance secret>` | Auth key — pass as `X-AuthKey` header on every request |
+| `AGENTMUX_LOCAL_URL` | `http://127.0.0.1:<port>` | Sidecar base URL |
 | `AGENTMUX_BLOCKID` | `<pane UUID>` | The pane this agent lives in — used as self-context default |
 | `AGENTMUX_AGENT_ID` | `<agent name>` | Agent's registered name — used by `SendMessage` routing |
 
-The MCP server (`agentmux-mcp`) is a separate subprocess launched alongside the agent. It inherits these env vars and exposes them as tool inputs, so agents never have to handle auth or URL construction manually.
+The auth key (`AGENTMUX_AUTH_KEY`) is **not** in the agent's PTY environment — it is stripped at the srv boundary and re-injected only into the `agentmux-mcp` subprocess. This keeps the key out of agent instructions and process-visible env, while still allowing the MCP layer to authenticate against the REST API on the agent's behalf.
 
 ```
 Agent CLI (claude / codex / gemini / …)
   └─ spawns agentmux-mcp (MCP stdio server)
-       ├─ inherits AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID
+       ├─ receives AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID
        └─ advertises 11 MCP tools → routes each to the REST API
 ```
+
+Agents using MCP tools never touch `X-AuthKey` directly — the MCP sidecar handles it. The REST API is for scripts or tooling that run with explicit access to the auth key (e.g. inside the sidecar itself, or a trusted subprocess you spawn with the key explicitly).
 
 ## MCP tools (11 tools)
 
@@ -282,6 +283,6 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 ## See also
 
 - [Trust model](/security/trust-model/) — full trust boundary description
-- [Interagent Communication](/internals/interagent-comms/) — reactive event system underlying DiscoverAgents and SendMessage
+- [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
 - [Trust Center](/trust-center/) — credential management UI
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
