@@ -11,7 +11,7 @@ This page explains how that works from a user's perspective. For the underlying 
 
 | Mode | When | Default channel | Data dir |
 |---|---|---|---|
-| **Installed** | Normal MSI install | `stable` | Runtime (DB, cache, logs): `~/.agentmux/channels/stable/versions/<v>/`. Shared (agents, settings): `~/.agentmux/channels/stable/`. See [Data layout → Per-channel contents](/internals/data-layout/#per-channel-contents) for the full split. |
+| **Installed** | Inno Setup installer | `stable` | Runtime (DB, cache, logs): `~/.agentmux/channels/stable/versions/<v>/`. Shared (agents, settings): `~/.agentmux/channels/stable/`. See [Data layout → Per-channel contents](/internals/data-layout/#per-channel-contents) for the full split. |
 | **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | Same as installed — both bind to the `stable` channel. |
 | **Portable** (local `task package`) | A portable you built yourself from source | `dev-portable-<branch>` | `~/.agentmux/channels/dev-portable-<branch>/` (per-branch; no version sub-dir for local builds; `-- --fresh` for a throwaway dir) |
 | **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>-<clone>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
@@ -39,7 +39,7 @@ Three axes of isolation, often confused:
 **Per-channel** (one set per channel, shared across every version of that channel, isolated between channels — these are the things you want to survive an upgrade):
 
 - **Agent definitions** — per-agent working dirs and definitions; e.g. running v0.40.2 and v0.41.1 of `stable` side-by-side (the canonical version-isolation case, since v0.41.1 is the release that introduced the per-version single-instance domain) gives both access to the same agents
-- **Settings** — `settings.json` and per-provider auth-config-dir homes (Claude, Codex, Gemini, OpenClaw, Kimi, Copilot, Pi — see [Auth flows](/auth/))
+- **Settings** — `settings.json`. Provider auth-config dirs (OAuth tokens, API keys) are *not* per-channel — they live account-wide under `~/.agentmux/shared/providers/<provider>/` so credentials persist across channel upgrades. See [Auth flows](/auth/).
 
 So: two instances of the **same release** on the **same channel** (e.g. two portables of v0.41.1 `stable` launched from different folders) share the per-version runtime DBs and the channel-wide agents/settings, but each is its own process tree. Two instances of **different releases** on the same channel (e.g. v0.40.2 and v0.41.1, both `stable`) share the channel-wide agents/settings but have separate runtime DBs and caches. Two instances on **different channels** (e.g. installed `stable` + a `dev-<branch>` build) share none of it.
 
@@ -63,7 +63,7 @@ A few things are channel-independent and shared across all instances:
 
 - **Sidecar logs** — `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` — written directly to the account-wide log dir (not the per-version path) so `muxlog srv` resolves uniformly from any AgentMux terminal regardless of which channel/version is running.
 - **Pointer files** that resolve to the currently-running instance's logs (`current-host-v<v>.path`, `current-srv-v<v>.path`) so a `muxlog` shell helper opened from any context can find the right log file. Plus the launcher's own startup log (`agentmux-launcher.log`).
-- **Account-wide state** — dictionary downloads and anything the user authenticates "once" rather than "per channel" (the platform's system Crashpad dir on Windows; provider OAuth tokens are *not* in this category — those live per-channel under `channels/<ch>/config/auth/`).
+- **Account-wide state** — dictionary downloads, provider OAuth tokens and API keys (under `~/.agentmux/shared/providers/<provider>/` — account-wide so credentials survive channel upgrades), and the platform's system Crashpad dir on Windows.
 - **Account-wide config** — the launcher's own `~/.agentmux/config.toml` (saga retention, etc.).
 
 ## Running multiple instances at once

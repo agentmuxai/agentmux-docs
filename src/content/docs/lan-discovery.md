@@ -9,7 +9,7 @@ AgentMux is in **early alpha** and under heavy active development. Many features
 
 AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS) — the same zero-config protocol Bonjour, AirPlay, and printer discovery use. Once enabled, every AgentMux running on your LAN appears in the [Warden widget](/warden/)'s LAN section and in the HostPopover, along with its hostname and version.
 
-LAN discovery is currently **read-only**: you can *see* the peers but cross-instance jekt routing isn't wired up yet (that's the next phase). It is opt-in, off by default, and live-toggleable from the status bar.
+LAN discovery is opt-in, off by default, and live-toggleable from the status bar. As of v0.46, it enables both peer *visibility* (seeing what's on your LAN) and **LAN jekt forwarding** (routing `SendMessage` calls directly to agents on peer instances without going through the cloud relay).
 
 ## What it does
 
@@ -19,9 +19,8 @@ When enabled, your AgentMux instance:
 - Continuously browses the LAN for peer instances of the same service
 - Broadcasts the live peer list to the frontend so the Warden and HostPopover update within seconds of a peer appearing or leaving
 
-What it does *not* do (yet):
+What it does *not* do:
 
-- Forward jekts between instances (still routes through the file-based cross-instance registry or the AgentBus cloud relay)
 - Enforce any policy on peers
 - Share workspace state across instances
 
@@ -100,9 +99,8 @@ When in doubt, check the HostPopover or Warden's LAN section. If a peer is missi
 
 ## What's next
 
-The substrate is in; the routing isn't yet. Future phases will:
+LAN jekt forwarding shipped in v0.46. Future phases will:
 
-- Forward jekts to LAN peers directly (instead of via the file registry / cloud relay)
 - Wire the [Warden widget](/warden/) to issue cross-instance enforcement actions (quarantine, policy push)
 - Add an embedded MCP server so agents talk to the local AgentMux directly, bypassing the Node-based `@a5af/agentbus-client` for local/LAN cases
 
