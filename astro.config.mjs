@@ -28,6 +28,8 @@ export default defineConfig({
 				SiteTitle: './src/components/SiteTitle.astro',
 			},
 			head: [
+				{ tag: 'meta', attrs: { name: 'color-scheme', content: 'dark light' } },
+				{ tag: 'style', content: ':root{background:#0a0a0f}@media(prefers-color-scheme:light){:root{background:#f1f5f9}}' },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
 			],
