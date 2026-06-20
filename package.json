@@ -1,36 +1,38 @@
 {
-  "name": "agentmux-docs",
-  "type": "module",
-  "version": "0.0.93",
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build && node scripts/normalize-mtimes.mjs",
-    "build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
-    "build:rust-docs": "node scripts/build-rust-docs.mjs",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@astrojs/starlight": "^0.40.0",
-    "astro": "^6.4.8",
-    "sharp": "^0.35.1"
-  },
-  "overrides": {
-    "esbuild": "npm:esbuild-wasm@^0.27.3"
-  },
-  "devDependencies": {
-    "typedoc": "^0.28.19",
-    "typedoc-plugin-markdown": "^4.12.0",
-    "typescript": "^6.0.3"
-  },
-  "deployments": {
-    "prod": {
-      "version": "0.0.93",
-      "commit": "150a186",
-      "deployed_at": "2026-06-20T10:00:00.000Z",
-      "deployed_by": "smark-06122"
-    }
-  }
+	"name": "agentmux-docs",
+	"type": "module",
+	"version": "0.0.95",
+	"scripts": {
+		"dev": "astro dev",
+		"start": "astro dev",
+		"build": "astro build",
+		"build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build && node scripts/normalize-mtimes.mjs",
+		"build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
+		"build:rust-docs": "node scripts/build-rust-docs.mjs",
+		"preview": "astro preview",
+		"astro": "astro"
+	},
+	"dependencies": {
+		"@astrojs/starlight": "^0.40.0",
+		"@beoe/rehype-graphviz": "^0.4.2",
+		"@beoe/sqlitecache": "^0.1.1",
+		"astro": "^6.4.8",
+		"sharp": "^0.35.1"
+	},
+	"overrides": {
+		"esbuild": "npm:esbuild-wasm@^0.27.3"
+	},
+	"devDependencies": {
+		"typedoc": "^0.28.19",
+		"typedoc-plugin-markdown": "^4.12.0",
+		"typescript": "^6.0.3"
+	},
+	"deployments": {
+		"prod": {
+			"version": "0.0.93",
+			"commit": "150a186",
+			"deployed_at": "2026-06-20T10:00:00.000Z",
+			"deployed_by": "smark-06122"
+		}
+	}
 }
