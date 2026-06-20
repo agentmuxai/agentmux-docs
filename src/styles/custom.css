@@ -41,10 +41,6 @@
   }
 }
 
-/* Reserve scrollbar gutter so body-scrollbar appearance never causes layout shift. */
-:root {
-  scrollbar-gutter: stable;
-}
 
 /* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
 :root[data-theme='light'],
