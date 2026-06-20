@@ -11,20 +11,49 @@ The renderer (`frontend/app/view/agent/virtualization/`) keeps only ~50 visible 
 
 ### 1. Hybrid virtualization
 
-```
-┌─ scrollRef (.agent-document) ─────────────────────────┐
-│  ┌─ virtualized region ─────────────────────────────┐ │
-│  │  height = virtualizer.getTotalSize()             │ │
-│  │  position: relative                              │ │
-│  │  rows: position: absolute, translateY(start)     │ │
-│  │  measureElement on each row                      │ │
-│  └──────────────────────────────────────────────────┘ │
-│  ┌─ streaming buffer (always mounted, last 50 rows) ┐ │
-│  │  trailing N nodes, normal flex flow              │ │
-│  │  no virtualization → no measurement lag during   │ │
-│  │  token streams                                   │ │
-│  └──────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────┘
+```dot
+digraph {
+  compound=true
+  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.2,0.12" color="#8b8b95"]
+  edge [style=invis]
+
+  subgraph cluster_scroll {
+    label="scrollRef (.agent-document)"
+    style=filled
+    fillcolor="#f4f4fb"
+    color="#8168d3"
+    fontcolor="#8168d3"
+    fontname="Consolas,monospace"
+    fontsize=11
+    penwidth=1.5
+
+    subgraph cluster_virtual {
+      label="virtualized region"
+      style=filled
+      fillcolor="#ffffff"
+      color="#5e8fd9"
+      fontcolor="#5e8fd9"
+      fontname="Consolas,monospace"
+      fontsize=11
+      penwidth=1.5
+      virt [label="height = virtualizer.getTotalSize()\nposition: relative\nrows: position absolute, translateY(start)\nmeasureElement on each row" color="#5e8fd9"]
+    }
+
+    subgraph cluster_buffer {
+      label="streaming buffer — always mounted, last 50 rows"
+      style=filled
+      fillcolor="#ffffff"
+      color="#419fe0"
+      fontcolor="#419fe0"
+      fontname="Consolas,monospace"
+      fontsize=11
+      penwidth=1.5
+      buf [label="trailing N nodes, normal flex flow\nno virtualization → no measurement lag\nduring active token streams" color="#419fe0"]
+    }
+
+    virt -> buf
+  }
+}
 ```
 
 The virtualized region uses `@tanstack/solid-virtual` with absolute positioning and per-row `ResizeObserver` measurement. The streaming buffer (the trailing 50 rows) is rendered with a normal `<Index>` so token deltas to active streaming nodes update in place — no recycling, no measurement lag. As rows age past the buffer, they transition into the virtualized region by which point their measurement has stabilized.
