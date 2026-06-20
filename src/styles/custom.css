@@ -31,6 +31,21 @@
   --sl-color-black: #050508;
 }
 
+/* Fix first-load search bar jerk on wide viewports (> ~1952px).
+   Starlight's header col1 uses a formula that grows proportionally with viewport
+   width, so a pane-width change of ~60px shifts col1 (and therefore the search
+   bar) by ~30px. Pinning col1 to exactly --__sidebar-width makes it stable. */
+@media (min-width: 50rem) {
+  .header > .header {
+    grid-template-columns: var(--__sidebar-width) 1fr auto;
+  }
+}
+
+/* Reserve scrollbar gutter so body-scrollbar appearance never causes layout shift. */
+:root {
+  scrollbar-gutter: stable;
+}
+
 /* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {
