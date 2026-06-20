@@ -2,9 +2,11 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import { rehypeGraphviz } from '@beoe/rehype-graphviz';
-import { SqliteCache } from '@beoe/sqlitecache';
+import { SQLiteCache } from '@beoe/sqlitecache';
+import { mkdirSync } from 'node:fs';
 
-const diagramCache = new SqliteCache({ database: '.cache/diagrams.db' });
+mkdirSync('.cache', { recursive: true });
+const diagramCache = new SQLiteCache({ database: '.cache/diagrams.db' });
 
 export default defineConfig({
 	markdown: {

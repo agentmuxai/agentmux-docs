@@ -63,35 +63,35 @@ figure.graphviz svg {
   height: auto;
 }
 
-:root[data-theme='dark'] figure.graphviz .node polygon,
-:root[data-theme='dark'] figure.graphviz .node ellipse,
-:root[data-theme='dark'] figure.graphviz .node rect {
+:root:not([data-theme='light']) figure.graphviz .node polygon,
+:root:not([data-theme='light']) figure.graphviz .node ellipse,
+:root:not([data-theme='light']) figure.graphviz .node rect {
   fill: #1a1a1e !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .node text {
+:root:not([data-theme='light']) figure.graphviz .node text {
   fill: #f0f0f5 !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .edge path {
+:root:not([data-theme='light']) figure.graphviz .edge path {
   stroke: #6a6a78 !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .edge polygon {
+:root:not([data-theme='light']) figure.graphviz .edge polygon {
   fill: #6a6a78 !important;
   stroke: #6a6a78 !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .edge text {
+:root:not([data-theme='light']) figure.graphviz .edge text {
   fill: #b8b8c2 !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .cluster polygon {
+:root:not([data-theme='light']) figure.graphviz .cluster polygon {
   fill: transparent !important;
 }
 
-:root[data-theme='dark'] figure.graphviz .cluster text,
-:root[data-theme='dark'] figure.graphviz .graph text {
+:root:not([data-theme='light']) figure.graphviz .cluster text,
+:root:not([data-theme='light']) figure.graphviz .graph text {
   fill: #b8b8c2 !important;
 }
 
