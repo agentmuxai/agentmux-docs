@@ -38,9 +38,27 @@ No CDK. Static S3 + CloudFront, deployed manually:
 ```bash
 git submodule update --init --recursive   # one-time, makes src/agentmux available
 npm run build:full                         # build:typedoc + build:rust-docs + build
-aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
-aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS --paths "/*"
+
+# 1. Sync non-HTML assets first (new CSS/JS available before old ones are removed)
+aws s3 sync dist/ s3://agentmux-docs-prod/ --delete --exclude "*.html"
+# 2. Force-upload all HTML files (bypasses mtime comparison — normalize-mtimes sets
+#    a fixed epoch so s3 sync skips HTML when only the CSS hash inside it changes)
+aws s3 cp dist/ s3://agentmux-docs-prod/ --recursive --exclude "*" --include "*.html"
+
+# 3. Invalidate CF and wait for full propagation before reporting success
+INVAL=$(aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS --paths "/*" --query 'Invalidation.Id' --output text)
+aws cloudfront wait invalidation-completed --distribution-id EF4XTPT79GHLS --id $INVAL
+
+# 4. Verify — CSS hash in live HTML must match what's in S3/_astro/
+curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*common[^"]*\.css"'
+aws s3 ls s3://agentmux-docs-prod/_astro/ | grep common
 ```
+
+**Why the two-step sync:** `normalize-mtimes.mjs` sets all dist file mtimes to a fixed
+epoch so unchanged files aren't re-uploaded. But when the CSS bundle hash changes, the
+HTML files referencing it have the same byte length and the same mtime → `s3 sync` skips
+them. The old CSS gets deleted but the stale HTML stays → CF serves HTML that references
+a missing CSS file → site unstyled. Always force-upload HTML separately.
 
 **`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content.
 
@@ -73,3 +91,14 @@ Use `build:full` before any production deploy. `build` is fine for iterating on 
 - Both dark AND light mode tested when changing `custom.css`
 - Logo/image assets go in `src/assets/` (Astro optimizes them), not `public/`
 - Favicons go in `public/` (served as-is)
+
+## Post-Deploy Verification (required)
+
+After every deploy, verify before reporting success:
+
+```bash
+# CSS hash in live page must match what's in S3
+curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*\.css"'
+aws s3 ls s3://agentmux-docs-prod/_astro/ | grep css
+# Hashes must match. If not: HTML wasn't uploaded — run the force-upload step again.
+```
