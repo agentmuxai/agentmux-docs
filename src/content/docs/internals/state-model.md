@@ -140,7 +140,7 @@ export interface LayoutNode {
 
 Leaf nodes have `data.blockId` set and no `children`. Branch nodes have `children` and no `data`. The tree is always a binary flex tree where `flexDirection` alternates.
 
-### 1.8 Layout Tree ASCII Diagram
+### 1.8 Layout Tree
 
 <img src="/diagrams/state-model-layout.svg" alt="LayoutModel (purple) owns six children: localTreeStateAtom (steel-blue, holds focusedNodeId/magnifiedNodeId/rootNode/leafOrder), treeState (gray, mutable scratch), focusedNodeIdStack (gray), waveObjectAtom (steel-blue, persists with 100ms debounce), nodeModels (steel-blue, per-node isFocused/isMagnified), and treeReducer (purple, mutates state and triggers fan-out)." style="max-width:100%" />
 

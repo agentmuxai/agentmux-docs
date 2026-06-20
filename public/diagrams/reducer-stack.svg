@@ -73,5 +73,5 @@
   <!-- Layer: Persistence (bottom) — gray -->
   <rect class="bg" x="30" y="622" width="820" height="42" rx="8"/>
   <text class="t" x="440" y="644" text-anchor="middle">Persistence — durability</text>
-  <text class="s" x="440" y="659" text-anchor="middle" style="font-size:11px">objects.db · filestore.db · sagas.db · launcher-sagas.db · launcher-events.log (JSONL ring)</text>
+  <text class="s" x="440" y="659" text-anchor="middle" style="font-size:11px">objects.db · filestore.db · sagas.db · launcher-sagas.db · launcher-events.log (JSONL ring, 4096 entries)</text>
 </svg>

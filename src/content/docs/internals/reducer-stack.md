@@ -15,7 +15,7 @@ Three pressures drove it:
 2. **Auditable mutations** — every command leaves a trail. Bug reports become "find the last `dispatch(blockId, MoveBlockToWindow)` for that block_id" instead of "did anyone call `setUrl()` mid-load?".
 3. **Testable invariants** — pure `update(state, command)` functions are unit-testable without a CEF context. The `agent-pane-state` slice has 32 invariants asserted in its test file alone; none of them require a running app.
 
-## The four layers
+## The five layers
 
 <img src="/diagrams/reducer-stack.svg" alt="Reducer stack: five layers from bottom (Persistence) through Srv, Launcher, Host up to Frontend, connected by labeled arrows showing data flow." style="max-width:100%" />
 
