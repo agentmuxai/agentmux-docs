@@ -38,7 +38,7 @@ export default defineConfig({
 				// the full sidebar is in the DOM, giving the correct scrollHeight.
 				{
 					tag: 'script',
-					content: `document.addEventListener('DOMContentLoaded',function(){if(!matchMedia('(min-width: 50em)').matches)return;var s=document.getElementById('starlight__sidebar'),p=document.querySelector('sl-sidebar-state-persist');if(!s||!p)return;try{var d=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'null');if(d&&d.hash===p.dataset.hash&&typeof d.scroll==='number')s.scrollTop=d.scroll;}catch(e){}});`,
+					content: `document.addEventListener('DOMContentLoaded',function(){var s=document.getElementById('starlight__sidebar'),p=document.querySelector('sl-sidebar-state-persist');if(!s)return;if(matchMedia('(min-width: 50em)').matches){try{var d=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'null');if(d&&p&&d.hash===p.dataset.hash&&typeof d.scroll==='number')s.scrollTop=d.scroll;}catch(e){}}s.classList.add('sl-scroll-ready');});`,
 				},
 			],
 			customCss: ['./src/styles/custom.css'],
