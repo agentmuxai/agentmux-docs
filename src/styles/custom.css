@@ -86,6 +86,10 @@ figure.graphviz svg {
   fill: #b8b8c2 !important;
 }
 
+:root:not([data-theme='light']) figure.graphviz .graph > polygon {
+  fill: transparent !important;
+}
+
 :root:not([data-theme='light']) figure.graphviz .cluster polygon {
   fill: transparent !important;
 }
