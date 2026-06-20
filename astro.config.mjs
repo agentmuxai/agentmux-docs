@@ -32,6 +32,14 @@ export default defineConfig({
 				{ tag: 'style', content: ':root{background:#0a0a0f}@media(prefers-color-scheme:light){:root{background:#f1f5f9}}' },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
+				// Re-apply sidebar scroll after full parse. Starlight's inline script sets
+				// scrollTop mid-parse (before sidebar HTML is complete), so scrollHeight is
+				// too small and the assignment gets clamped. DOMContentLoaded fires after
+				// the full sidebar is in the DOM, giving the correct scrollHeight.
+				{
+					tag: 'script',
+					content: `document.addEventListener('DOMContentLoaded',function(){if(!matchMedia('(min-width: 50em)').matches)return;var s=document.getElementById('starlight__sidebar'),p=document.querySelector('sl-sidebar-state-persist');if(!s||!p)return;try{var d=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'null');if(d&&d.hash===p.dataset.hash&&typeof d.scroll==='number')s.scrollTop=d.scroll;}catch(e){}});`,
+				},
 			],
 			customCss: ['./src/styles/custom.css'],
 			social: [
