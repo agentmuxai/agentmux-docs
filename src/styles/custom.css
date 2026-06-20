@@ -34,10 +34,10 @@
 /* Fix first-load search bar jerk on wide viewports (> ~1952px).
    Starlight's header col1 uses a formula that grows proportionally with viewport
    width, so a pane-width change of ~60px shifts col1 (and therefore the search
-   bar) by ~30px. Pinning col1 to exactly --__sidebar-width makes it stable. */
+   bar) by ~30px. Pinning col1 to sidebar-width minus nav-pad makes it stable. */
 @media (min-width: 50rem) {
   .header > .header {
-    grid-template-columns: var(--__sidebar-width) 1fr auto;
+    grid-template-columns: max(0rem, calc(var(--sl-sidebar-width) - var(--sl-nav-pad-x))) 1fr auto;
   }
 }
 
