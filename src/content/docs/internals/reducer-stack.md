@@ -24,7 +24,7 @@ digraph {
   node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" color="#8168d3" fontcolor="#1c1c1f" fontsize=12 penwidth=1.5 margin="0.25,0.15"]
   edge [color="#8b8b95" fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.7]
 
-  persistence [label="Persistence — durability\nobjects.db · filestore.db · sagas.db\nlauncher-events.log (JSONL ring, 4096 entries)" color="#5e8fd9"]
+  persistence [label="Persistence — durability\nobjects.db · filestore.db · sagas.db · launcher-sagas.db\nlauncher-events.log (JSONL ring, 4096 entries)" color="#5e8fd9"]
   srv [label="Srv (agentmux-srv) — Layer 3 — app domain\nworkspaces · tabs · blocks · layouts · agents · identity\nsaga coordinator (Path A — chosen E.5)" color="#5e8fd9"]
   launcher [label="Launcher (agentmux-launcher) — Layer 1 — process & OS facts\nlifecycle · processes · windows · monitors · pool · registries\nWRR (Window Reality Reconciliation) via Win32 hooks [Windows]" color="#8168d3"]
   host [label="Host (agentmux-cef) — Layer 2 — FFI + UI thread\npending_window_creations · active_drag · tear_off_hooks\nbrowsers · window_pool (scaffolding — deliberately retained)" color="#8168d3"]
