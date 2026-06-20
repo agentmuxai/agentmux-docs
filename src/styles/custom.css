@@ -25,24 +25,10 @@
      5.6:1 — readable, still muted below the gray-2 body text. Surfaces/borders
      use gray-4/5/6 (kept near-black), so the deep-dark theme is unchanged. */
   --sl-color-gray-3: #7c8aa0;
-  --sl-color-gray-4: #162032;
+  --sl-color-gray-4: #111118;
   --sl-color-gray-5: #0d0b1c;
   --sl-color-gray-6: #0a0a0f;
   --sl-color-black: #050508;
-}
-
-/* Mask first-load layout thrashing caused by the AgentMux browser pane briefly
-   initializing at a narrower width then expanding. A short fade-in hides the
-   ~60ms window where the layout switches between mobile and desktop breakpoints
-   (sidebar visibility snap, header grid reflow, etc.). */
-@media (prefers-reduced-motion: no-preference) {
-  body {
-    animation: page-fade-in 0.1s ease forwards;
-  }
-  @keyframes page-fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
 }
 
 /* Sidebar scroll-position guard: keep sidebar invisible on desktop until
@@ -73,11 +59,11 @@
   --sl-color-accent-high: #3730a3;
   --sl-color-white: #181926;
   --sl-color-gray-1: #1e293b;
-  --sl-color-gray-2: #334155;
+  --sl-color-gray-2: #475569;
   --sl-color-gray-3: #64748b;
   --sl-color-gray-4: #94a3b8;
   --sl-color-gray-5: #cbd5e1;
-  --sl-color-gray-6: #f1f5f9;
-  --sl-color-gray-7: #f8fafc;
+  --sl-color-gray-6: #f8fafc;
+  --sl-color-gray-7: #ffffff;
   --sl-color-black: #ffffff;
 }
