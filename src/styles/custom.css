@@ -45,6 +45,15 @@
   }
 }
 
+/* Sidebar scroll-position guard: keep sidebar invisible on desktop until
+   DOMContentLoaded has applied the saved scrollTop, preventing the
+   up-then-down flash on cold page loads. The JS reveal script adds
+   .sl-scroll-ready to lift this rule. On no-JS the class never comes so
+   the sidebar stays hidden — acceptable since the site requires JS. */
+@media (min-width: 50rem) {
+  #starlight__sidebar:not(.sl-scroll-ready) { opacity: 0; }
+}
+
 /* Fix first-load search bar jerk on wide viewports (> ~1952px).
    Starlight's header col1 uses a formula that grows proportionally with viewport
    width, so a pane-width change of ~60px shifts col1 (and therefore the search
