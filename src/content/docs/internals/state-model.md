@@ -142,29 +142,7 @@ Leaf nodes have `data.blockId` set and no `children`. Branch nodes have `childre
 
 ### 1.8 Layout Tree ASCII Diagram
 
-```dot
-digraph {
-  rankdir=LR
-  splines=polyline
-  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" color="#8168d3" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.2,0.12"]
-  edge [color="#8b8b95" fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.7]
-
-  model [label="LayoutModel\nper-tab · long-lived createRoot" color="#8168d3"]
-  localAtom [label="localTreeStateAtom\nSignalAtom<LayoutTreeState>\n  focusedNodeId  ─── read by isFocused memo\n  magnifiedNodeId\n  rootNode ────── LayoutNode (tree)\n  leafOrder ───── LeafOrderEntry[]" color="#5e8fd9"]
-  treeState [label="treeState: LayoutTreeState\n(mutable scratch copy)" color="#8b8b95"]
-  focusStack [label="focusedNodeIdStack: string[]\n[0] == current focus == focusedNodeId" color="#8b8b95"]
-  waveObj [label="waveObjectAtom\nWritableWaveObjectAtom<LayoutState>\npersistToBackend() — 100ms debounce" color="#5e8fd9"]
-  nodeModels [label="nodeModels: Map<nodeId, NodeModel>\n  isFocused: Accessor<boolean>\n  isMagnified: Accessor<boolean>\n  blockNum · innerRect" color="#5e8fd9"]
-  treeReducer [label="treeReducer(action)\n→ mutates treeState\n→ localTreeStateAtom._set()  triggers fan-out\n→ persistToBackend()  WOS update + backend push" color="#8168d3"]
-
-  model -> localAtom
-  model -> treeState
-  model -> focusStack
-  model -> waveObj
-  model -> nodeModels
-  model -> treeReducer
-}
-```
+<img src="/diagrams/state-model-layout.svg" alt="LayoutModel (purple) owns six children: localTreeStateAtom (steel-blue, holds focusedNodeId/magnifiedNodeId/rootNode/leafOrder), treeState (gray, mutable scratch), focusedNodeIdStack (gray), waveObjectAtom (steel-blue, persists with 100ms debounce), nodeModels (steel-blue, per-node isFocused/isMagnified), and treeReducer (purple, mutates state and triggers fan-out)." style="max-width:100%" />
 
 ---
 
@@ -206,29 +184,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 
 #### TurnPhase discriminated union
 
-```dot
-digraph {
-  rankdir=TB
-  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" color="#8168d3" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.25,0.12"]
-  edge [fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.8 color="#8b8b95"]
-
-  Idle [label="Idle\nno turn in flight"]
-  Submitting [label="Submitting\nawaiting first stream event"]
-  Streaming [label="Streaming\nstream producing events"]
-  Interrupting [label="Interrupting\nstop requested, awaiting TurnEnd or unsub"]
-  Done [label="Done — terminal\ncompleted | stopped | interrupted | errored" color="#5e8fd9"]
-  Disconnected [label="Disconnected\nstream dropped mid-turn; remembers lastKind" color="#5e8fd9"]
-
-  Idle -> Submitting
-  Submitting -> Streaming [label="first stream event"]
-  Submitting -> Done [label="SubmitTimeoutElapsed (30s) → errored" color="#8168d3" fontcolor="#8168d3"]
-  Streaming -> Interrupting [label="RequestStop"]
-  Streaming -> Done [label="StreamStalled (60s idle) → errored" color="#8168d3" fontcolor="#8168d3"]
-  Streaming -> Disconnected [label="stream dropped"]
-  Interrupting -> Done [label="TurnEnd / unsub → interrupted"]
-  Interrupting -> Done [label="InterruptTimeoutElapsed (5s) → interrupted" color="#8168d3" fontcolor="#8168d3"]
-}
-```
+<img src="/diagrams/state-model-turnphase.svg" alt="TurnPhase state machine: Idle → Submitting → Streaming → Interrupting, each with arrows to terminal Done (steel-blue) or Disconnected. Purple arrows show timeout/error transitions: SubmitTimeoutElapsed (30s), StreamStalled (60s), InterruptTimeoutElapsed (5s)." style="max-width:100%" />
 
 **Selectors** (`types.ts:269-336`):
 

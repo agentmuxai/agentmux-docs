@@ -63,22 +63,7 @@ Diagnostic endpoints — list registered agents on this instance, fetch the audi
 
 ## The three trust boundaries
 
-```dot
-digraph {
-  rankdir=TB
-  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.25,0.15"]
-  edge [fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.8]
-
-  frontend [label="Frontend pane\n/ MCP client" color="#419fe0"]
-  sidecar [label="Local sidecar (this machine)\nX-AuthKey required on all /reactive/* routes" color="#8168d3"]
-  peer [label="Peer sidecar\n(same-machine 127.0.0.1 or LAN IP)\npeer auth_key from registry (mode 0600)" color="#5e8fd9"]
-  relay [label="Cloud agentbus relay (opt-in)\nbearer token  ·  you operate the relay\noutbound poll only — relay never calls in" color="#5e8fd9"]
-
-  frontend -> sidecar [label="jekt / message" color="#8168d3" fontcolor="#8168d3"]
-  sidecar -> peer [label="forward with peer auth_key" color="#8b8b95" dir=both]
-  sidecar -> relay [label="outbound poll\nagentmux_token bearer" color="#5e8fd9" fontcolor="#5e8fd9" style=dashed]
-}
-```
+<img src="/diagrams/reactive-event-bus.svg" alt="Trust boundaries: Frontend pane sends jekt/message to local sidecar (purple, X-AuthKey required). Sidecar forwards bidirectionally to peer sidecar (steel-blue, peer auth_key from mode-0600 registry) or via outbound poll to cloud relay (opt-in, dashed)." style="max-width:100%" />
 
 1. **Frontend ↔ sidecar.** Frontend sends `X-AuthKey` from the per-launch UUIDv4 the launcher generated. Same boundary as every other authed RPC.
 2. **Sidecar ↔ peer sidecar (cross-instance).** The writing sidecar embeds its `auth_key` in its registry file. The forwarding sidecar reads the registry, extracts the peer's `auth_key`, and presents it on the forward. The registry file is `0600` so a co-user on the same box can't read it — same boundary as the existing `authkey.dev` file.

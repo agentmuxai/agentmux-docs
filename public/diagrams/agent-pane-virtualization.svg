@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 380" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title>Agent pane virtualization — scroll region containment</title>
+  <defs>
+    <style>
+      .outer { fill: #f4f4fb; stroke: #8168d3; stroke-width: 1.5; }
+      .virt  { fill: #ffffff; stroke: #5e8fd9; stroke-width: 1.5; }
+      .buf   { fill: #ffffff; stroke: #419fe0; stroke-width: 1.5; }
+      .t     { font-weight: 700; font-size: 13px; fill: #1c1c1f; }
+      .lp    { font-size: 12px; font-weight: 700; fill: #8168d3; }
+      .ls    { font-size: 12px; font-weight: 700; fill: #5e8fd9; }
+      .lb    { font-size: 12px; font-weight: 700; fill: #419fe0; }
+      .s     { font-size: 11px; fill: #44444c; }
+      @media (prefers-color-scheme: dark) {
+        .outer { fill: #13131a; }
+        .virt, .buf { fill: #1a1a1e; }
+        .t  { fill: #f0f0f5; }
+        .s  { fill: #b8b8c2; }
+      }
+    </style>
+  </defs>
+
+  <!-- Outer: scrollRef (.agent-document) -->
+  <rect class="outer" x="20" y="20" width="660" height="340" rx="10"/>
+  <text class="lp" x="38" y="46">scrollRef (.agent-document)</text>
+  <text class="s"  x="38" y="62">overflow-y: auto · height: 100%</text>
+
+  <!-- Inner left: virtualized region -->
+  <rect class="virt" x="40" y="80" width="280" height="250" rx="8"/>
+  <text class="ls" x="55" y="105">virtualized region</text>
+  <text class="s"  x="55" y="124">height = virtualizer.getTotalSize()</text>
+  <text class="s"  x="55" y="141">position: relative</text>
+  <text class="s"  x="55" y="158">rows: position absolute</text>
+  <text class="s"  x="55" y="175">         translateY(start)</text>
+  <text class="s"  x="55" y="196">measureElement on each row</text>
+  <text class="s"  x="55" y="220">Only DOM-mounts rows within</text>
+  <text class="s"  x="55" y="237">the visible scroll viewport.</text>
+  <text class="s"  x="55" y="254">Rows above/below are unmounted</text>
+  <text class="s"  x="55" y="271">but their height is accounted for</text>
+  <text class="s"  x="55" y="288">by the outer container height.</text>
+
+  <!-- Inner right: streaming buffer -->
+  <rect class="buf" x="360" y="80" width="300" height="250" rx="8"/>
+  <text class="lb" x="375" y="105">streaming buffer</text>
+  <text class="s"  x="375" y="122" style="font-size:10.5px">always mounted · last 50 rows</text>
+  <text class="s"  x="375" y="148">trailing N nodes</text>
+  <text class="s"  x="375" y="165">normal flex flow</text>
+  <text class="s"  x="375" y="182">no virtualization</text>
+  <text class="s"  x="375" y="199">→ no measurement lag</text>
+  <text class="s"  x="375" y="224">During active token streams</text>
+  <text class="s"  x="375" y="241">new rows append here without</text>
+  <text class="s"  x="375" y="258">triggering virtualizer re-layout.</text>
+  <text class="s"  x="375" y="275">On idle, rows promote into</text>
+  <text class="s"  x="375" y="292">the virtualized region.</text>
+</svg>

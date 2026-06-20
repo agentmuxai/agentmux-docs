@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 500" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title>Reactive event bus — trust boundaries</title>
+  <defs>
+    <style>
+      .bp { fill: #ffffff; stroke: #8168d3; stroke-width: 1.5; }
+      .bs { fill: #ffffff; stroke: #5e8fd9; stroke-width: 1.5; }
+      .bb { fill: #ffffff; stroke: #419fe0; stroke-width: 1.5; }
+      .t  { font-weight: 700; font-size: 14px; fill: #1c1c1f; }
+      .s  { font-size: 12px; fill: #44444c; }
+      .cp { font-size: 11.5px; font-weight: 600; fill: #8168d3; }
+      .cs { font-size: 11.5px; font-weight: 600; fill: #5e8fd9; }
+      .e  { stroke: #8b8b95; stroke-width: 1.5; fill: none; }
+      .ep { stroke: #8168d3; stroke-width: 1.5; fill: none; }
+      .es { stroke: #5e8fd9; stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+      .el { font-size: 11px; fill: #44444c; font-weight: 500; }
+      .elp { font-size: 11px; fill: #8168d3; font-weight: 600; }
+      .els { font-size: 11px; fill: #5e8fd9; font-weight: 600; }
+      @media (prefers-color-scheme: dark) {
+        .bp, .bs, .bb { fill: #1a1a1e; }
+        .t { fill: #f0f0f5; }
+        .s { fill: #b8b8c2; }
+        .e  { stroke: #6a6a78; }
+        .el { fill: #b8b8c2; }
+      }
+    </style>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8168d3"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8b8b95"/>
+    </marker>
+    <marker id="ag-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M10,1 L1,5 L10,9 z" fill="#8b8b95"/>
+    </marker>
+    <marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#5e8fd9"/>
+    </marker>
+  </defs>
+
+  <!-- Frontend pane / MCP client (blue) -->
+  <rect class="bb" x="180" y="30" width="360" height="72" rx="8"/>
+  <text class="t" x="360" y="59" text-anchor="middle">Frontend pane / MCP client</text>
+  <text class="s" x="360" y="80" text-anchor="middle">sends jekt or message via X-AuthKey</text>
+
+  <!-- Arrow: frontend → sidecar -->
+  <line class="ep" x1="360" y1="102" x2="360" y2="158" marker-end="url(#ap)"/>
+  <text class="elp" x="368" y="134">jekt / message</text>
+
+  <!-- Local sidecar (purple) -->
+  <rect class="bp" x="80" y="163" width="560" height="88" rx="8"/>
+  <text class="t" x="360" y="192" text-anchor="middle">Local sidecar (this machine)</text>
+  <text class="s" x="360" y="213" text-anchor="middle">X-AuthKey required on all /agentmux/reactive/* routes</text>
+  <text class="cp" x="360" y="238" text-anchor="middle">always on · in-process delivery first, then peer registry lookup</text>
+
+  <!-- Arrow: sidecar ↔ peer (angled left-down) -->
+  <path class="e" d="M160,251 L160,338 L95,338" marker-start="url(#ag-start)" marker-end="url(#ag)"/>
+  <text class="el" x="92" y="300" text-anchor="end">forward</text>
+  <text class="el" x="92" y="315" text-anchor="end">peer auth_key</text>
+
+  <!-- Arrow: sidecar → relay (dashed, right-down) -->
+  <path class="es" d="M560,251 L560,338 L625,338" marker-end="url(#as)"/>
+  <text class="els" x="568" y="300">outbound poll</text>
+  <text class="els" x="568" y="315">agentmux_token</text>
+
+  <!-- Peer sidecar (steel-blue) -->
+  <rect class="bs" x="30" y="343" width="280" height="88" rx="8"/>
+  <text class="t" x="170" y="372" text-anchor="middle">Peer sidecar</text>
+  <text class="s" x="170" y="392" text-anchor="middle">same-machine 127.0.0.1</text>
+  <text class="s" x="170" y="410" text-anchor="middle">or LAN IP (v0.46+)</text>
+  <text class="cs" x="170" y="425" text-anchor="middle" style="font-size:10.5px">peer auth_key from registry (mode 0600)</text>
+
+  <!-- Cloud relay (steel-blue) -->
+  <rect class="bs" x="410" y="343" width="280" height="88" rx="8"/>
+  <text class="t" x="550" y="372" text-anchor="middle">Cloud agentbus relay</text>
+  <text class="s" x="550" y="392" text-anchor="middle">opt-in · you operate the relay</text>
+  <text class="s" x="550" y="410" text-anchor="middle">outbound poll only</text>
+  <text class="cs" x="550" y="425" text-anchor="middle" style="font-size:10.5px">relay never calls back in</text>
+</svg>
