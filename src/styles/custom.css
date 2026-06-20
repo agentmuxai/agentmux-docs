@@ -51,6 +51,50 @@
 }
 
 
+/* Graphviz diagrams — matches public/architecture.svg color tokens.
+   Graphviz inlines fill/stroke on SVG elements; !important overrides for dark mode. */
+figure.graphviz {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+figure.graphviz svg {
+  max-width: 100%;
+  height: auto;
+}
+
+:root[data-theme='dark'] figure.graphviz .node polygon,
+:root[data-theme='dark'] figure.graphviz .node ellipse,
+:root[data-theme='dark'] figure.graphviz .node rect {
+  fill: #1a1a1e !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .node text {
+  fill: #f0f0f5 !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .edge path {
+  stroke: #6a6a78 !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .edge polygon {
+  fill: #6a6a78 !important;
+  stroke: #6a6a78 !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .edge text {
+  fill: #b8b8c2 !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .cluster polygon {
+  fill: transparent !important;
+}
+
+:root[data-theme='dark'] figure.graphviz .cluster text,
+:root[data-theme='dark'] figure.graphviz .graph text {
+  fill: #b8b8c2 !important;
+}
+
 /* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {

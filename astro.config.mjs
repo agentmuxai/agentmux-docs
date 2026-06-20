@@ -1,8 +1,21 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { rehypeGraphviz } from '@beoe/rehype-graphviz';
+import { SqliteCache } from '@beoe/sqlitecache';
+
+const diagramCache = new SqliteCache({ database: '.cache/diagrams.db' });
 
 export default defineConfig({
+	markdown: {
+		syntaxHighlight: {
+			type: 'shiki',
+			excludeLangs: ['dot'],
+		},
+		rehypePlugins: [
+			[rehypeGraphviz, { cache: diagramCache, class: 'not-content' }],
+		],
+	},
 	redirects: {
 		'/architecture-overview': '/internals/architecture',
 		'/reducer-stack': '/internals/reducer-stack',
