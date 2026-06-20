@@ -34,34 +34,24 @@ This document catalogs every inter-process channel in AgentMux, their wire contr
 
 ## 1. Architecture Overview
 
-```
-  ┌─────────────────────────────────────────────────────────┐
-  │  agentmux-launcher  (Windows: named pipe server;        │
-  │                       Unix: Unix domain socket server)  │
-  │  Role: Job Object owner, saga coordinator, single-      │
-  │        instance guard, HWND drift monitor (WRR)         │
-  └──────────┬──────────────────────────┬───────────────────┘
-             │ Channel C (pipe/socket)  │ Channel 13 (pipe)
-             │ NL-JSON Command/Event    │ NL-JSON Command/Event
-             ▼                          ▼
-  ┌──────────────────────┐   ┌─────────────────────────────┐
-  │  agentmux-cef        │   │  agentmux-srv               │
-  │  (CEF host process)  │   │  (backend sidecar)          │
-  │                      │   │                             │
-  │  HTTP IPC server     │   │  HTTP + WS server           │
-  │  127.0.0.1:<rnd>     │   │  127.0.0.1:<rnd>            │
-  │  Auth: Bearer token  │   │  Auth: X-AuthKey header     │
-  └───────┬──────────────┘   └───────────┬─────────────────┘
-          │ Channel D (pipe)             │
-          │ (read-only; fwds srv events) │
-          │                             │
-  ┌───────▼──────────────────────────────▼──────────────────┐
-  │  Renderer process (Chromium)                            │
-  │  Frontend JS / SolidJS                                  │
-  │  Channels A, B: fetch POST /ipc  ↔  CustomEvent        │
-  │  Channels E, F: WebSocket /ws    ↔  POST /agentmux/svc  │
-  │  Channel H:     xterm.js OSC 16162 handler              │
-  └─────────────────────────────────────────────────────────┘
+```dot
+digraph {
+  rankdir=TB
+  splines=curved
+  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.3,0.2"]
+  edge [fontname="Consolas,monospace" fontcolor="#44444c" fontsize=9 penwidth=1.5 arrowsize=0.8]
+
+  launcher [label="agentmux-launcher\nWindows: named pipe server  |  Unix: Unix domain socket server\nJob Object owner · saga coordinator · single-instance guard · WRR" color="#8168d3"]
+  cef [label="agentmux-cef (CEF host process)\nHTTP IPC server  127.0.0.1:<rnd>\nAuth: Bearer ipc_token" color="#8168d3"]
+  srv [label="agentmux-srv (backend sidecar)\nHTTP + WS server  127.0.0.1:<rnd>\nAuth: X-AuthKey header" color="#5e8fd9"]
+  renderer [label="Renderer process (Chromium) / SolidJS frontend\nCh A, B: fetch POST /ipc  ↔  CustomEvent\nCh E, F: WebSocket /ws   ↔  POST /agentmux/svc\nCh H: xterm.js OSC 16162 handler" color="#419fe0"]
+
+  launcher -> cef [label="Ch C — pipe/socket\nNL-JSON Command/Event" color="#8168d3" fontcolor="#8168d3" dir=both]
+  launcher -> srv [label="Ch 13 — pipe\nNL-JSON Command/Event" color="#8168d3" fontcolor="#8168d3" dir=both]
+  cef -> renderer [label="Ch D — pipe (read-only)\nfwds srv events" color="#8b8b95"]
+  cef -> renderer [label="Ch A, B — POST /ipc ↔ CustomEvent" color="#8168d3" fontcolor="#8168d3" dir=both style=dashed]
+  srv -> renderer [label="Ch E, F — WebSocket /ws ↔ /agentmux/svc" color="#8168d3" fontcolor="#8168d3" dir=both style=dashed]
+}
 ```
 
 **Process hierarchy** (production):

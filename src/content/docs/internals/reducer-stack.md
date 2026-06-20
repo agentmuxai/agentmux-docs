@@ -17,25 +17,24 @@ Three pressures drove it:
 
 ## The four layers
 
-```
-Frontend (renderer / SolidJS)         per-process atoms        consumer
-   ▲ slice-based reducer migration (9 slices, in flight)
-   ┃ CEF JS bridge ▲ events
-Host (agentmux-cef)                   FFI + UI thread           Layer 2
-   ▲ pending_window_creations, active_drag, tear_off_hooks
-   ▲ deliberately retained scaffolding: browsers, window_pool
-   ┃ launcher → host pipe/socket (in flight)
-Launcher (agentmux-launcher)          process & OS facts        Layer 1
-   ▲ lifecycle, processes, windows, monitors, pool, registries
-   ▲ WRR (Window Reality Reconciliation) via Win32 hooks [Windows]
-   ┃ launcher IPC (named pipe [Windows] / Unix domain socket [Linux + macOS])
-Srv (agentmux-srv)                    app domain                Layer 3
-   ▲ workspaces, tabs, blocks, layouts, agents, identity
-   ▲ saga coordinator (Path A — chosen E.5)
-   ┃ persist subscriber (idempotent SQLite write-back)
-Persistence                                                      durability
-   ▲ objects.db, filestore.db, sagas.db, launcher-sagas.db
-   ▲ launcher-events.log (JSONL); in-memory ring (4096) + disk
+```dot
+digraph {
+  rankdir=BT
+  splines=polyline
+  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" color="#8168d3" fontcolor="#1c1c1f" fontsize=12 penwidth=1.5 margin="0.25,0.15"]
+  edge [color="#8b8b95" fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.7]
+
+  persistence [label="Persistence — durability\nobjects.db · filestore.db · sagas.db · launcher-sagas.db\nlauncher-events.log (JSONL ring, 4096 entries)" color="#5e8fd9"]
+  srv [label="Srv (agentmux-srv) — Layer 3 — app domain\nworkspaces · tabs · blocks · layouts · agents · identity\nsaga coordinator (Path A — chosen E.5)" color="#5e8fd9"]
+  launcher [label="Launcher (agentmux-launcher) — Layer 1 — process & OS facts\nlifecycle · processes · windows · monitors · pool · registries\nWRR (Window Reality Reconciliation) via Win32 hooks [Windows]" color="#8168d3"]
+  host [label="Host (agentmux-cef) — Layer 2 — FFI + UI thread\npending_window_creations · active_drag · tear_off_hooks\nbrowsers · window_pool (scaffolding — deliberately retained)" color="#8168d3"]
+  frontend [label="Frontend (renderer / SolidJS) — consumer\nper-process atoms · 9 slices (reducer migration in flight)" color="#419fe0"]
+
+  persistence -> srv [label="persist subscriber\n(idempotent SQLite write-back)"]
+  srv -> launcher [label="launcher IPC\n(named pipe / Unix domain socket)"]
+  launcher -> host [label="launcher → host\npipe/socket"]
+  host -> frontend [label="CEF JS bridge\nevents"]
+}
 ```
 
 ### Layer 1 — Launcher
