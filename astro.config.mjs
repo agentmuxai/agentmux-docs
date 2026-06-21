@@ -11,15 +11,38 @@ export default defineConfig({
 				baseUrl: 'https://github.com/agentmuxai/agentmux/blob/main/',
 				// Short-name aliases used across docs (defined in internals/env-vars.md preamble)
 				aliases: {
-					'shell.rs':            'agentmux-srv/src/backend/blockcontroller/shell.rs',
-					'data_paths.rs':       'agentmux-common/src/data_paths.rs',
-					'runtime_mode.rs':     'agentmux-common/src/runtime_mode.rs',
-					'srv_spawner.rs':      'agentmux-launcher/src/srv_spawner.rs',
-					'launcher/main.rs':    'agentmux-launcher/src/main.rs',
-					'shellintegration.rs': 'agentmux-srv/src/backend/shellintegration.rs',
-					'bash.sh':             'agentmux-srv/src/backend/shellintegration/bash.sh',
-					'pwsh.ps1':            'agentmux-srv/src/backend/shellintegration/pwsh.ps1',
-					'websocket.rs':        'agentmux-srv/src/server/websocket.rs',
+					// Rust / shell (env-vars page)
+					'shell.rs':                    'agentmux-srv/src/backend/blockcontroller/shell.rs',
+					'data_paths.rs':               'agentmux-common/src/data_paths.rs',
+					'runtime_mode.rs':             'agentmux-common/src/runtime_mode.rs',
+					'srv_spawner.rs':              'agentmux-launcher/src/srv_spawner.rs',
+					'launcher/main.rs':            'agentmux-launcher/src/main.rs',
+					'shellintegration.rs':         'agentmux-srv/src/backend/shellintegration.rs',
+					'bash.sh':                     'agentmux-srv/src/backend/shellintegration/bash.sh',
+					'pwsh.ps1':                    'agentmux-srv/src/backend/shellintegration/pwsh.ps1',
+					'websocket.rs':                'agentmux-srv/src/server/websocket.rs',
+					// Layout model (state-model page)
+					'layoutModel.ts':              'frontend/layout/lib/layoutModel.ts',
+					'layoutTree.ts':               'frontend/layout/lib/layoutTree.ts',
+					'layoutFocus.ts':              'frontend/layout/lib/layoutFocus.ts',
+					'layoutPersistence.ts':        'frontend/layout/lib/layoutPersistence.ts',
+					'layoutAtom.ts':               'frontend/layout/lib/layoutAtom.ts',
+					'layoutNodeModels.ts':         'frontend/layout/lib/layoutNodeModels.ts',
+					// Agent-pane-state store (state-model page §3)
+					'types.ts':                    'frontend/app/store/agent-pane-state/types.ts',
+					'reducer.ts':                  'frontend/app/store/agent-pane-state/reducer.ts',
+					'browser-pane-state-store.ts': 'frontend/app/store/browser-pane-state-store.ts',
+					'editor-pane-state-store.ts':  'frontend/app/store/editor-pane-state-store.ts',
+					// Block rendering (state-model page §4–5)
+					'autotitle.ts':                'frontend/app/block/autotitle.ts',
+					'blockframe.tsx':              'frontend/app/block/blockframe.tsx',
+					'blocktypes.ts':               'frontend/app/block/blocktypes.ts',
+					'block.scss':                  'frontend/app/block/block.scss',
+					'tabbar.tsx':                  'frontend/app/tab/tabbar.tsx',
+					// Global store / type defs
+					'global.ts':                   'frontend/app/store/global.ts',
+					'wos.ts':                      'frontend/app/store/wos.ts',
+					'gotypes.d.ts':                'frontend/types/gotypes.d.ts',
 				},
 				// Remap path prefixes: specs/ in docs → docs/specs/ in repo
 				pathMap: {

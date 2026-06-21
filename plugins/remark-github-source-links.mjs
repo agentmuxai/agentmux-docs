@@ -20,7 +20,7 @@ const EXTENSIONS = /\.(rs|ts|tsx|js|mjs|cjs|toml|json|md|sh|ps1|scss|css)$/i;
 
 // Matches the path portion and an optional :line or :start-end suffix.
 // Supports both ASCII hyphen and en-dash / em-dash in ranges.
-const LINE_SUFFIX = /^([\w./-]+?)(?::([\d]+)(?:[–\-]([\d]+))?)?$/;
+const LINE_SUFFIX = /^([\w./-]+?)(?::([\d]+)(?:[–—-]([\d]+))?)?$/;
 
 export default function remarkGithubSourceLinks(opts = {}) {
   const {
