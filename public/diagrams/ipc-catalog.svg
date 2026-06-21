@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title>AgentMux IPC architecture</title>
+  <defs>
+    <style>
+      .bp { fill: #ffffff; stroke: #8168d3; stroke-width: 1.5; }
+      .bs { fill: #ffffff; stroke: #5e8fd9; stroke-width: 1.5; }
+      .bb { fill: #ffffff; stroke: #419fe0; stroke-width: 1.5; }
+      .t  { font-weight: 700; font-size: 13px; fill: #1c1c1f; }
+      .s  { font-size: 11px; fill: #44444c; }
+      .cp { font-size: 10.5px; font-weight: 600; fill: #8168d3; }
+      .cs { font-size: 10.5px; font-weight: 600; fill: #5e8fd9; }
+      .cb { font-size: 10.5px; font-weight: 600; fill: #419fe0; }
+      .e  { stroke: #8b8b95; stroke-width: 1.5; fill: none; }
+      .ep { stroke: #8168d3; stroke-width: 1.5; fill: none; }
+      .epd { stroke: #8168d3; stroke-width: 1.5; fill: none; stroke-dasharray: 6 4; }
+      .el { font-size: 10px; fill: #44444c; }
+      .elp { font-size: 10px; fill: #8168d3; font-weight: 600; }
+      @media (prefers-color-scheme: dark) {
+        .bp, .bs, .bb { fill: #1a1a1e; }
+        .t  { fill: #f0f0f5; }
+        .s  { fill: #b8b8c2; }
+        .e  { stroke: #6a6a78; }
+        .el { fill: #b8b8c2; }
+      }
+    </style>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8b8b95"/>
+    </marker>
+    <marker id="ag-s" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M10,1 L1,5 L10,9 z" fill="#8b8b95"/>
+    </marker>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8168d3"/>
+    </marker>
+    <marker id="ap-s" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M10,1 L1,5 L10,9 z" fill="#8168d3"/>
+    </marker>
+  </defs>
+
+  <!-- Launcher (top-left, purple) -->
+  <rect class="bp" x="30" y="30" width="360" height="100" rx="8"/>
+  <text class="t" x="210" y="57"  text-anchor="middle">agentmux-launcher</text>
+  <text class="s" x="210" y="75"  text-anchor="middle">Windows: named pipe server</text>
+  <text class="s" x="210" y="91"  text-anchor="middle">Unix: Unix domain socket server</text>
+  <text class="s" x="210" y="107" text-anchor="middle">Job Object owner · single-instance guard · WRR</text>
+  <text class="cp" x="210" y="122" text-anchor="middle">saga coordinator</text>
+
+  <!-- CEF host (top-right, purple) -->
+  <rect class="bp" x="490" y="30" width="360" height="100" rx="8"/>
+  <text class="t" x="670" y="57"  text-anchor="middle">agentmux-cef (CEF host process)</text>
+  <text class="s" x="670" y="75"  text-anchor="middle">HTTP IPC server 127.0.0.1:&lt;rnd&gt;</text>
+  <text class="s" x="670" y="91"  text-anchor="middle">Auth: Bearer ipc_token</text>
+  <text class="cp" x="670" y="112" text-anchor="middle">Ch C — pipe/socket · NL-JSON Command/Event</text>
+
+  <!-- Arrow: launcher ↔ cef (bidirectional, purple) -->
+  <line class="ep" x1="390" y1="73" x2="490" y2="73" marker-start="url(#ap-s)" marker-end="url(#ap)"/>
+  <text class="elp" x="440" y="65" text-anchor="middle">Ch C — named pipe / socket</text>
+
+  <!-- Srv (bottom-left, steel-blue) -->
+  <rect class="bs" x="30" y="310" width="360" height="100" rx="8"/>
+  <text class="t" x="210" y="337" text-anchor="middle">agentmux-srv (backend sidecar)</text>
+  <text class="s" x="210" y="355" text-anchor="middle">HTTP + WS server 127.0.0.1:&lt;rnd&gt;</text>
+  <text class="s" x="210" y="371" text-anchor="middle">Auth: X-AuthKey header</text>
+  <text class="s" x="210" y="387" text-anchor="middle">Ch E, F — WebSocket /ws ↔ POST /agentmux/svc</text>
+  <text class="cs" x="210" y="402" text-anchor="middle">Ch 13 — pipe · NL-JSON Command/Event</text>
+
+  <!-- Arrow: launcher ↔ srv (bidirectional, purple) -->
+  <path class="ep" d="M210,130 L210,310" marker-start="url(#ap-s)" marker-end="url(#ap)"/>
+  <text class="elp" x="218" y="225">Ch 13 — pipe · NL-JSON</text>
+
+  <!-- Renderer (bottom-right, blue) -->
+  <rect class="bb" x="490" y="310" width="360" height="100" rx="8"/>
+  <text class="t" x="670" y="337" text-anchor="middle">Renderer (Chromium) / SolidJS</text>
+  <text class="s" x="670" y="355" text-anchor="middle">Ch A, B — fetch POST /ipc ↔ CustomEvent</text>
+  <text class="s" x="670" y="371" text-anchor="middle">Ch E, F — WebSocket /ws ↔ /agentmux/svc</text>
+  <text class="s" x="670" y="387" text-anchor="middle">Ch D — pipe (read-only) fwds srv events</text>
+  <text class="cb" x="670" y="402" text-anchor="middle">Ch H — xterm.js OSC 16162 handler</text>
+
+  <!-- Arrow: cef → renderer (solid, gray — Ch D fwds events) -->
+  <path class="e" d="M670,130 L670,310" marker-end="url(#ag)"/>
+  <text class="el" x="678" y="200">Ch D — pipe (read-only)</text>
+  <text class="el" x="678" y="213">fwds srv events</text>
+
+  <!-- Arrow: cef ↔ renderer (dashed purple — Ch A, B) -->
+  <path class="epd" d="M530,130 L530,310" marker-start="url(#ap-s)" marker-end="url(#ap)"/>
+  <text class="elp" x="538" y="225">Ch A, B</text>
+
+  <!-- Arrow: srv ↔ renderer (dashed purple — Ch E, F) -->
+  <path class="epd" d="M390,360 L490,360" marker-start="url(#ap-s)" marker-end="url(#ap)"/>
+  <text class="elp" x="440" y="353" text-anchor="middle">Ch E, F — WebSocket</text>
+</svg>

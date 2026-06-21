@@ -13,20 +13,7 @@ The **MuxBus** is the messaging substrate that lets agents find and talk to each
 
 The MuxBus has three tiers, ordered by trust and latency:
 
-```dot
-digraph {
-  rankdir=TB
-  node [shape=box fontname="Consolas,monospace" style=filled fillcolor="#ffffff" fontcolor="#1c1c1f" fontsize=11 penwidth=1.5 margin="0.4,0.25" width=5]
-  edge [fontname="Consolas,monospace" fontcolor="#44444c" fontsize=10 penwidth=1.5 arrowsize=0.8]
-
-  host [label="Host tier — in-process reactive handler\nper-launch auth key  ·  always on  ·  ~same-process latency\n\nAgent A  ──jekt──▶  Agent B" color="#8168d3"]
-  lan [label="LAN tier — mDNS-discovered peer instances\npeer auth key from mDNS registry  ·  off by default  ·  ~LAN latency" color="#5e8fd9"]
-  wan [label="WAN tier — agentbus cloud relay (opt-in)\nbearer token  ·  outbound poll only  ·  you operate the relay" color="#419fe0"]
-
-  host -> lan [label="mDNS peer-to-peer" style=dashed color="#5e8fd9" fontcolor="#5e8fd9"]
-  lan -> wan [label="cloud relay (opt-in)" style=dashed color="#419fe0" fontcolor="#419fe0"]
-}
-```
+<img src="/diagrams/interagent-comms.svg" alt="Three-tier delivery model: Host tier (purple, always on) → LAN tier (steel-blue, mDNS peers, off by default) → WAN tier (blue, cloud relay, opt-in). Dashed arrows show opt-in escalation path." style="max-width:100%" />
 
 | Tier | Scope | How it works | Auth | Default |
 |---|---|---|---|---|

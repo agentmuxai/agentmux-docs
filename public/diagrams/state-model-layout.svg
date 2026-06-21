@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title>LayoutModel — per-tab state tree</title>
+  <defs>
+    <style>
+      .bp { fill: #ffffff; stroke: #8168d3; stroke-width: 1.5; }
+      .bs { fill: #ffffff; stroke: #5e8fd9; stroke-width: 1.5; }
+      .bg { fill: #ffffff; stroke: #8b8b95; stroke-width: 1.5; }
+      .t  { font-weight: 700; font-size: 13px; fill: #1c1c1f; }
+      .s  { font-size: 10.5px; fill: #44444c; }
+      .e  { stroke: #8b8b95; stroke-width: 1.5; fill: none; }
+      @media (prefers-color-scheme: dark) {
+        .bp, .bs, .bg { fill: #1a1a1e; }
+        .t { fill: #f0f0f5; }
+        .s { fill: #b8b8c2; }
+        .e { stroke: #6a6a78; }
+      }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8b8b95"/>
+    </marker>
+  </defs>
+
+  <!-- Root: LayoutModel -->
+  <rect class="bp" x="330" y="20" width="300" height="64" rx="8"/>
+  <text class="t" x="480" y="48" text-anchor="middle">LayoutModel</text>
+  <text class="s" x="480" y="66" text-anchor="middle">per-tab · long-lived createRoot</text>
+
+  <!-- Connector lines from root down to children -->
+  <line class="e" x1="480" y1="84" x2="480" y2="110"/>
+  <!-- Fan-out horizontal bar -->
+  <line class="e" x1="80" y1="110" x2="880" y2="110"/>
+  <!-- Verticals to each child -->
+  <line class="e" x1="80"  y1="110" x2="80"  y2="140"/>
+  <line class="e" x1="240" y1="110" x2="240" y2="140"/>
+  <line class="e" x1="400" y1="110" x2="400" y2="140"/>
+  <line class="e" x1="560" y1="110" x2="560" y2="140"/>
+  <line class="e" x1="720" y1="110" x2="720" y2="140"/>
+  <line class="e" x1="880" y1="110" x2="880" y2="140"/>
+
+  <!-- Child 1: localTreeStateAtom (steel-blue) -->
+  <rect class="bs" x="20" y="140" width="120" height="230" rx="7"/>
+  <text class="t" x="80" y="163" text-anchor="middle" style="font-size:11px">localTreeState</text>
+  <text class="t" x="80" y="178" text-anchor="middle" style="font-size:11px">Atom</text>
+  <text class="s" x="80" y="196" text-anchor="middle">SignalAtom</text>
+  <text class="s" x="80" y="210" text-anchor="middle">&lt;LayoutTreeState&gt;</text>
+  <text class="s" x="80" y="232" text-anchor="middle">focusedNodeId</text>
+  <text class="s" x="80" y="246" text-anchor="middle">  → isFocused memo</text>
+  <text class="s" x="80" y="260" text-anchor="middle">magnifiedNodeId</text>
+  <text class="s" x="80" y="274" text-anchor="middle">rootNode</text>
+  <text class="s" x="80" y="288" text-anchor="middle">  → LayoutNode</text>
+  <text class="s" x="80" y="302" text-anchor="middle">leafOrder</text>
+  <text class="s" x="80" y="316" text-anchor="middle">  → LeafOrderEntry[]</text>
+  <text class="s" x="80" y="353" text-anchor="middle" style="font-size:9px">read by isFocused memo</text>
+
+  <!-- Child 2: treeState (gray) -->
+  <rect class="bg" x="155" y="140" width="130" height="110" rx="7"/>
+  <text class="t" x="220" y="163" text-anchor="middle" style="font-size:11px">treeState</text>
+  <text class="s" x="220" y="181" text-anchor="middle">LayoutTreeState</text>
+  <text class="s" x="220" y="199" text-anchor="middle">mutable scratch</text>
+  <text class="s" x="220" y="215" text-anchor="middle">copy used by</text>
+  <text class="s" x="220" y="231" text-anchor="middle">treeReducer</text>
+
+  <!-- Child 3: focusedNodeIdStack (gray) -->
+  <rect class="bg" x="300" y="140" width="130" height="100" rx="7"/>
+  <text class="t" x="365" y="163" text-anchor="middle" style="font-size:11px">focusedNodeId</text>
+  <text class="t" x="365" y="178" text-anchor="middle" style="font-size:11px">Stack</text>
+  <text class="s" x="365" y="197" text-anchor="middle">string[]</text>
+  <text class="s" x="365" y="213" text-anchor="middle">[0] == current</text>
+  <text class="s" x="365" y="229" text-anchor="middle">focus</text>
+
+  <!-- Child 4: waveObjectAtom (steel-blue) -->
+  <rect class="bs" x="445" y="140" width="130" height="120" rx="7"/>
+  <text class="t" x="510" y="163" text-anchor="middle" style="font-size:11px">waveObjectAtom</text>
+  <text class="s" x="510" y="181" text-anchor="middle">WritableWaveObject</text>
+  <text class="s" x="510" y="196" text-anchor="middle">Atom&lt;LayoutState&gt;</text>
+  <text class="s" x="510" y="214" text-anchor="middle">persistToBackend()</text>
+  <text class="s" x="510" y="229" text-anchor="middle">100ms debounce</text>
+
+  <!-- Child 5: nodeModels (steel-blue) -->
+  <rect class="bs" x="590" y="140" width="145" height="140" rx="7"/>
+  <text class="t" x="662" y="163" text-anchor="middle" style="font-size:11px">nodeModels</text>
+  <text class="s" x="662" y="181" text-anchor="middle">Map&lt;nodeId,</text>
+  <text class="s" x="662" y="196" text-anchor="middle">  NodeModel&gt;</text>
+  <text class="s" x="662" y="214" text-anchor="middle">isFocused: Accessor</text>
+  <text class="s" x="662" y="229" text-anchor="middle">isMagnified: Accessor</text>
+  <text class="s" x="662" y="244" text-anchor="middle">blockNum</text>
+  <text class="s" x="662" y="259" text-anchor="middle">innerRect</text>
+
+  <!-- Child 6: treeReducer (purple) -->
+  <rect class="bp" x="750" y="140" width="150" height="160" rx="7"/>
+  <text class="t" x="825" y="163" text-anchor="middle" style="font-size:11px">treeReducer</text>
+  <text class="s" x="825" y="181" text-anchor="middle">treeReducer(action)</text>
+  <text class="s" x="825" y="199" text-anchor="middle">→ mutates treeState</text>
+  <text class="s" x="825" y="217" text-anchor="middle">→ localTreeStateAtom</text>
+  <text class="s" x="825" y="232" text-anchor="middle">     ._set()</text>
+  <text class="s" x="825" y="248" text-anchor="middle">  triggers fan-out</text>
+  <text class="s" x="825" y="266" text-anchor="middle">→ persistToBackend()</text>
+  <text class="s" x="825" y="281" text-anchor="middle">  WOS + backend push</text>
+</svg>

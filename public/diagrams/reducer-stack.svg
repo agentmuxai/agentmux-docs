@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 680" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <title>AgentMux reducer stack — five layers</title>
+  <defs>
+    <style>
+      .bp { fill: #ffffff; stroke: #8168d3; stroke-width: 1.5; }
+      .bs { fill: #ffffff; stroke: #5e8fd9; stroke-width: 1.5; }
+      .bb { fill: #ffffff; stroke: #419fe0; stroke-width: 1.5; }
+      .bg { fill: #ffffff; stroke: #8b8b95; stroke-width: 1.5; }
+      .t  { font-weight: 700; font-size: 14px; fill: #1c1c1f; }
+      .s  { font-size: 12px; fill: #44444c; }
+      .cp { font-size: 11.5px; font-weight: 600; fill: #8168d3; }
+      .cs { font-size: 11.5px; font-weight: 600; fill: #5e8fd9; }
+      .cb { font-size: 11.5px; font-weight: 600; fill: #419fe0; }
+      .e  { stroke: #8b8b95; stroke-width: 1.5; fill: none; }
+      .el { font-size: 11px; fill: #44444c; }
+      @media (prefers-color-scheme: dark) {
+        .bp, .bs, .bb, .bg { fill: #1a1a1e; }
+        .t  { fill: #f0f0f5; }
+        .s  { fill: #b8b8c2; }
+        .e  { stroke: #6a6a78; }
+        .el { fill: #b8b8c2; }
+      }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8b8b95"/>
+    </marker>
+  </defs>
+
+  <!-- Layer: Frontend (top, consumer) — blue -->
+  <rect class="bb" x="30" y="30" width="820" height="84" rx="8"/>
+  <text class="t"  x="440" y="59"  text-anchor="middle">Frontend (renderer / SolidJS) — consumer</text>
+  <text class="s"  x="440" y="80"  text-anchor="middle">per-process atoms · 9 slices (reducer migration in flight)</text>
+  <text class="cb" x="440" y="101" text-anchor="middle">CEF JS bridge ▲ events</text>
+
+  <!-- Arrow up: Host → Frontend -->
+  <line class="e" x1="440" y1="168" x2="440" y2="114" marker-end="url(#a)"/>
+  <text class="el" x="448" y="146">CEF JS bridge · events</text>
+
+  <!-- Layer: Host — purple -->
+  <rect class="bp" x="30" y="172" width="820" height="92" rx="8"/>
+  <text class="t"  x="440" y="202" text-anchor="middle">Host (agentmux-cef) — Layer 2 — FFI + UI thread</text>
+  <text class="s"  x="440" y="223" text-anchor="middle">pending_window_creations · active_drag · tear_off_hooks</text>
+  <text class="s"  x="440" y="242" text-anchor="middle">browsers · window_pool (scaffolding — deliberately retained)</text>
+  <text class="cp" x="440" y="258" text-anchor="middle">launcher → host pipe/socket</text>
+
+  <!-- Arrow up: Launcher → Host -->
+  <line class="e" x1="440" y1="320" x2="440" y2="264" marker-end="url(#a)"/>
+  <text class="el" x="448" y="296">launcher → host pipe/socket</text>
+
+  <!-- Layer: Launcher — purple -->
+  <rect class="bp" x="30" y="324" width="820" height="92" rx="8"/>
+  <text class="t"  x="440" y="354" text-anchor="middle">Launcher (agentmux-launcher) — Layer 1 — process &amp; OS facts</text>
+  <text class="s"  x="440" y="375" text-anchor="middle">lifecycle · processes · windows · monitors · pool · registries</text>
+  <text class="s"  x="440" y="394" text-anchor="middle">WRR (Window Reality Reconciliation) via Win32 hooks [Windows]</text>
+  <text class="cp" x="440" y="410" text-anchor="middle">launcher IPC (named pipe [Windows] / Unix domain socket [Linux + macOS])</text>
+
+  <!-- Arrow up: Srv → Launcher -->
+  <line class="e" x1="440" y1="470" x2="440" y2="416" marker-end="url(#a)"/>
+  <text class="el" x="448" y="448">launcher IPC (named pipe / Unix domain socket)</text>
+
+  <!-- Layer: Srv — steel-blue -->
+  <rect class="bs" x="30" y="474" width="820" height="92" rx="8"/>
+  <text class="t"  x="440" y="504" text-anchor="middle">Srv (agentmux-srv) — Layer 3 — app domain</text>
+  <text class="s"  x="440" y="525" text-anchor="middle">workspaces · tabs · blocks · layouts · agents · identity</text>
+  <text class="s"  x="440" y="544" text-anchor="middle">saga coordinator (Path A — chosen E.5)</text>
+  <text class="cs" x="440" y="560" text-anchor="middle">persist subscriber (idempotent SQLite write-back)</text>
+
+  <!-- Arrow up: Persistence → Srv -->
+  <line class="e" x1="440" y1="618" x2="440" y2="566" marker-end="url(#a)"/>
+  <text class="el" x="448" y="596">persist subscriber (idempotent SQLite write-back)</text>
+
+  <!-- Layer: Persistence (bottom) — gray -->
+  <rect class="bg" x="30" y="622" width="820" height="42" rx="8"/>
+  <text class="t" x="440" y="644" text-anchor="middle">Persistence — durability</text>
+  <text class="s" x="440" y="659" text-anchor="middle" style="font-size:11px">objects.db · filestore.db · sagas.db · launcher-sagas.db · launcher-events.log (JSONL ring, 4096 entries)</text>
+</svg>
