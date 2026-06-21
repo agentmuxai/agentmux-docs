@@ -52,6 +52,25 @@
 
 
 
+/* Source reference links — inline code that links to GitHub */
+a.src-ref code,
+code a.src-ref {
+  text-decoration: none;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.9;
+}
+a.src-ref:hover code,
+code a.src-ref:hover {
+  opacity: 1;
+  border-bottom-style: solid;
+}
+
+/* Bare line-number links in reference tables */
+a.src-line {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {

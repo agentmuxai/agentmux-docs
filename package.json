@@ -1,7 +1,7 @@
 {
 	"name": "agentmux-docs",
 	"type": "module",
-	"version": "0.0.98",
+	"version": "0.0.99",
 	"scripts": {
 		"dev": "astro dev",
 		"start": "astro dev",
@@ -21,9 +21,11 @@
 		"esbuild": "npm:esbuild-wasm@^0.27.3"
 	},
 	"devDependencies": {
+		"hast-util-to-string": "^3.0.1",
 		"typedoc": "^0.28.19",
 		"typedoc-plugin-markdown": "^4.12.0",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3",
+		"unist-util-visit": "^5.1.0"
 	},
 	"deployments": {
 		"prod": {
