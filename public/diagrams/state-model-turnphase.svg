@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 440" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 460" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
   <title>TurnPhase state machine</title>
   <defs>
     <style>
@@ -76,8 +76,8 @@
 
   <!-- Arrow: Submitting → Done (timeout, purple) -->
   <path class="ep" d="M313,234 L313,310 L600,310 L600,340" marker-end="url(#ap)"/>
-  <text class="elp" x="318" y="275">SubmitTimeoutElapsed (30s)</text>
-  <text class="elp" x="318" y="288">→ errored</text>
+  <text class="elp" x="308" y="275" text-anchor="end">SubmitTimeoutElapsed (30s)</text>
+  <text class="elp" x="308" y="288" text-anchor="end">→ errored</text>
 
   <!-- Arrow: Streaming → Done (stalled, purple) -->
   <path class="ep" d="M538,234 L538,290 L620,290 L620,340" marker-end="url(#ap)"/>
@@ -98,11 +98,11 @@
   <path class="ep" d="M830,234 L830,320 L690,320 L690,340" marker-end="url(#ap)"/>
   <text class="elp" x="768" y="308" text-anchor="middle">InterruptTimeout (5s)</text>
 
-  <!-- Legend -->
-  <line class="e" x1="30" y1="410" x2="70" y2="410"/>
-  <text class="el" x="76" y="414">normal transition</text>
-  <line class="ep" x1="200" y1="410" x2="240" y2="410"/>
-  <text class="elp" x="246" y="414">timeout / error transition</text>
-  <rect class="bs" x="430" y="400" width="16" height="16" rx="3"/>
-  <text class="el" x="452" y="413">terminal state</text>
+  <!-- Legend — placed below the terminal-state boxes (which bottom at y=412) -->
+  <line class="e" x1="30" y1="430" x2="70" y2="430"/>
+  <text class="el" x="76" y="434">normal transition</text>
+  <line class="ep" x1="200" y1="430" x2="240" y2="430"/>
+  <text class="elp" x="246" y="434">timeout / error transition</text>
+  <rect class="bs" x="430" y="422" width="16" height="16" rx="3"/>
+  <text class="el" x="452" y="434">terminal state</text>
 </svg>

@@ -78,6 +78,7 @@ export default defineConfig({
 			},
 			components: {
 				SiteTitle: './src/components/SiteTitle.astro',
+				Footer: './src/components/Footer.astro',
 			},
 			head: [
 				{ tag: 'meta', attrs: { name: 'color-scheme', content: 'dark light' } },

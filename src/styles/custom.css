@@ -71,6 +71,23 @@ a.src-line {
   white-space: nowrap;
 }
 
+/* Diagram zoom (medium-zoom) */
+.sl-markdown-content img[src] { cursor: zoom-in; }
+/* Overlay must sit above Starlight's sidebar (which uses z-index in the ~100 range). */
+.medium-zoom-overlay {
+  z-index: 9000 !important;
+  background: var(--sl-color-gray-6) !important;
+}
+/* Zoomed image sits above the overlay; lift max-width so the CSS transform
+   can scale it to fill the viewport unhindered. */
+.medium-zoom-image--opened {
+  z-index: 9001 !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 4px;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.5);
+}
+
 /* Light mode — gray scale is INVERTED: gray-1 = dark text, gray-6 = light bg */
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {

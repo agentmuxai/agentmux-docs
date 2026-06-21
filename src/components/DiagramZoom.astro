@@ -1,0 +1,15 @@
+<script>
+  import mediumZoom from 'medium-zoom';
+
+  const init = () =>
+    mediumZoom('.sl-markdown-content img[src]', {
+      background: 'var(--sl-color-gray-6)',
+      margin: 24,
+    });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
