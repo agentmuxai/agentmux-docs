@@ -1,7 +1,7 @@
 {
 	"name": "agentmux-docs",
 	"type": "module",
-	"version": "0.0.97",
+	"version": "0.0.98",
 	"scripts": {
 		"dev": "astro dev",
 		"start": "astro dev",
@@ -14,8 +14,6 @@
 	},
 	"dependencies": {
 		"@astrojs/starlight": "^0.40.0",
-		"@beoe/rehype-graphviz": "^0.4.2",
-		"@beoe/sqlitecache": "^0.1.1",
 		"astro": "^6.4.8",
 		"sharp": "^0.35.1"
 	},
