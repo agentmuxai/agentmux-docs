@@ -36,6 +36,41 @@ npm run build:full   # Production build. Generates TypeScript + Rust references.
 
 Use `build:full` before any production deploy — `build` is fine for iterating on docs styling and content.
 
+## Diagrams
+
+Architecture and internals diagrams are hand-authored SVGs in `public/diagrams/`, matching the design tokens in `DESIGN.md` (color palette, font stack, dark-mode `@media` query). Reference `public/architecture.svg` as the canonical style example.
+
+When adding or updating a diagram:
+1. Copy the structure from an existing SVG in `public/diagrams/`.
+2. Use explicit `x`/`y` coordinates — no layout engine. This is intentional: auto-layout tools (Graphviz, D2) use abstract font metrics that don't match browser rendering, causing text to overflow boxes.
+3. See `DIAGRAMS.md` for the full design token reference and a catalogue of all diagrams.
+
+## Source reference links
+
+File paths and line numbers written as inline code in docs prose automatically become GitHub hyperlinks at build time via two Astro plugins in `plugins/`:
+
+| Plugin | What it converts |
+|--------|-----------------|
+| `remark-github-source-links.mjs` | `` `path/file.rs` ``, `` `file.rs:42` ``, `` `file.rs:42-78` `` → GitHub blob links |
+| `rehype-github-source-table.mjs` | Bare line numbers in table cells (e.g. `506–611`) when a sibling cell already has a file link |
+
+**Rules for writing source references:**
+
+- Always use backtick inline code for file paths: `` `agentmux-srv/src/reducer.rs` ``
+- Line numbers go after a colon: `` `reducer.rs:42` `` or `` `reducer.rs:42-78` ``
+- The path must contain a `/` or be a registered alias (see `aliases` in `astro.config.mjs`) for the link to fire — bare single-word filenames like `` `reducer.ts` `` are not linked (too many false positives with symbol names)
+- Spec/design docs under `specs/` in the repo are reachable as `` `specs/SPEC_NAME.md` `` (remapped to `docs/specs/` automatically)
+- Existing `[text](url)` markdown links are left untouched
+
+**Adding an alias** (for short filenames used across multiple pages):
+
+```js
+// astro.config.mjs → remarkGithubSourceLinks options → aliases
+'short.rs': 'full/path/to/short.rs',
+```
+
+See `SOURCE_LINKS.md` for the full spec including the table-linking algorithm and all edge cases.
+
 ## Contributing
 
 Pull requests welcome. Page-level tips:

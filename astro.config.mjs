@@ -1,9 +1,37 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import remarkGithubSourceLinks from './plugins/remark-github-source-links.mjs';
+import rehypeGithubSourceTable from './plugins/rehype-github-source-table.mjs';
 
 export default defineConfig({
-	markdown: {},
+	markdown: {
+		remarkPlugins: [
+			[remarkGithubSourceLinks, {
+				baseUrl: 'https://github.com/agentmuxai/agentmux/blob/main/',
+				// Short-name aliases used across docs (defined in internals/env-vars.md preamble)
+				aliases: {
+					'shell.rs':            'agentmux-srv/src/backend/blockcontroller/shell.rs',
+					'data_paths.rs':       'agentmux-common/src/data_paths.rs',
+					'runtime_mode.rs':     'agentmux-common/src/runtime_mode.rs',
+					'srv_spawner.rs':      'agentmux-launcher/src/srv_spawner.rs',
+					'launcher/main.rs':    'agentmux-launcher/src/main.rs',
+					'shellintegration.rs': 'agentmux-srv/src/backend/shellintegration.rs',
+					'bash.sh':             'agentmux-srv/src/backend/shellintegration/bash.sh',
+					'pwsh.ps1':            'agentmux-srv/src/backend/shellintegration/pwsh.ps1',
+					'websocket.rs':        'agentmux-srv/src/server/websocket.rs',
+				},
+				// Remap path prefixes: specs/ in docs → docs/specs/ in repo
+				pathMap: {
+					'specs/': 'docs/specs/',
+				},
+			}],
+		],
+		rehypePlugins: [
+			// Must run after remarkGithubSourceLinks so it can detect the <a> tags
+			rehypeGithubSourceTable,
+		],
+	},
 	redirects: {
 		'/architecture-overview': '/internals/architecture',
 		'/reducer-stack': '/internals/reducer-stack',
