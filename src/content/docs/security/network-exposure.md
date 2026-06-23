@@ -13,7 +13,7 @@ This page is for IT teams, network admins, and security reviewers who need to kn
 | Sidecar (`agentmux-srv`) | random ephemeral | `127.0.0.1` | WebSocket + HTTP RPC for the frontend, agent panes, and inter-instance forwarding | `X-AuthKey` header (per-launch UUIDv4) | On |
 | mDNS discovery (sidecar) | `5353` | `0.0.0.0` | Announces this instance to other AgentMux instances on the LAN | None (read-only beacon) | **Off** |
 | Sidecar LAN listener (v0.46+) | random ephemeral | LAN interface | Accepts forwarded messages from peer AgentMux instances when LAN discovery is on | `X-AuthKey` header (same auth as loopback listener) | **Off** (follows LAN discovery toggle) |
-| Cloud agentbus poller (sidecar) | n/a (outbound) | n/a | Inbound message channel from a hosted relay | Bearer token configured at setup | **Off** |
+| Cloud MuxBus poller (sidecar) | n/a (outbound) | n/a | Inbound message channel from a hosted relay | Bearer token configured at setup | **Off** |
 
 The TL;DR: **no inbound network listener accepts non-loopback traffic by default.** AgentMux requires no inbound firewall rule.
 
@@ -55,9 +55,9 @@ No session content, no auth keys, no credentials. The mDNS broadcast itself is r
 
 If you don't want LAN broadcast: don't enable mDNS. It stays off.
 
-## Cloud agentbus poller (opt-in)
+## Cloud MuxBus poller (opt-in)
 
-If you configure a remote agentbus relay, the sidecar **outbound-polls** that URL on an interval. Inbound messages arrive over that polled connection; no inbound port is opened.
+If you configure a remote MuxBus relay, the sidecar **outbound-polls** that URL on an interval. Inbound messages arrive over that polled connection; no inbound port is opened.
 
 The poller URL and bearer token are user-configurable through the in-pane `/agentmux/reactive/poller/config` endpoint (which requires auth — see audit fix C2 in `agentmux@v0.33.790`). Configure once; rotate the token by re-configuring.
 
@@ -85,7 +85,7 @@ For a managed deployment that wants belt-and-suspenders:
 
 - Allow outbound HTTPS to whatever LLM providers your agents use (Anthropic, OpenAI, Google, GitHub).
 - Allow outbound to your tool catalog hosts (typically GitHub release assets).
-- If using the cloud agentbus poller: allow outbound to that relay.
+- If using the cloud MuxBus poller: allow outbound to that relay.
 - If using LAN discovery + forwarding (v0.46+): allow inbound TCP from trusted LAN peers on the ephemeral sidecar port. Without this rule, incoming LAN-forwarded messages are dropped by the OS firewall before AgentMux sees them.
 - If NOT using LAN: block inbound to ports 1024-65535 from non-loopback interfaces (defence-in-depth — AgentMux doesn't accept inbound on those when LAN is off, but this catches misconfigurations).
 

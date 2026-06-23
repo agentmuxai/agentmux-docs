@@ -19,7 +19,7 @@ The MuxBus has three tiers, ordered by trust and latency:
 |---|---|---|---|---|
 | **Host** | Same AgentMux instance | In-process reactive handler | Per-launch auth key | Always on |
 | **LAN** | Same local network | mDNS peer discovery + HTTP forward | Peer auth key from mDNS/registry | Off — enable via LAN discovery toggle |
-| **WAN** | Cross-network | Outbound poll to an agentbus relay | Bearer token you configure | Off — enable via poller config |
+| **WAN** | Cross-network | Outbound poll to a MuxBus relay | Bearer token you configure | Off — enable via poller config |
 
 ## How agents use it
 
@@ -89,7 +89,7 @@ LAN forwarding uses the peer's actual IP + port from the mDNS announcement — n
 
 ## WAN tier
 
-The WAN tier routes messages through an agentbus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (open-source `agentbus-server`).
+The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `agentbus-server`; the binary still carries the legacy name).
 
 To enable:
 

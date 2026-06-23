@@ -7,8 +7,6 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 ## Terms
 
-**agentbus** — The cross-process, cross-machine message bus that lets agents (and the panes they live in) exchange messages. Two delivery models: [jekt](#jekt) and [message](#message). See [Reactive event bus](/security/reactive-event-bus/) for the full surface.
-
 **agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [Agent App API](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
 **Agent App API** — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/agent-app-api/).
@@ -43,7 +41,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **message** — Verb. Deliver a message to the recipient's mailbox; the recipient reads it when they're ready. Asynchronous counterpart to [jekt](#jekt). Use the `SendMessage` MCP tool (Agent App API) with the target agent's name.
 
-**MuxBus** — The three-tier interagent messaging substrate: **Host** (in-process reactive handler, same AgentMux instance), **LAN** (mDNS peer-to-peer forwarding, same network, v0.46+), **WAN** (opt-in cloud relay you operate). Powers the `DiscoverAgents` and `SendMessage` Agent App API tools. See [Interagent Communication](/internals/interagent-comms/).
+<a id="agentbus"></a>**MuxBus** — The cross-process, cross-machine interagent messaging substrate, in three tiers: **Host** (in-process reactive handler, same AgentMux instance), **LAN** (mDNS peer-to-peer forwarding, same network, v0.46+), and **WAN** (opt-in cloud relay you operate). Two delivery models: [jekt](#jekt) and [message](#message). Powers the `DiscoverAgents` and `SendMessage` Agent App API tools. See [Interagent Communication](/internals/interagent-comms/) and [Reactive event bus](/security/reactive-event-bus/). (Formerly called *agentbus*; some artifact names — e.g. the `mcp__agentbus__*` MCP tools and the `agentbus-client` package — still carry the old name.)
 
 **MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 

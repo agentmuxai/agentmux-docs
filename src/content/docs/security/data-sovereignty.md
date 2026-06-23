@@ -51,9 +51,9 @@ The catalog itself ships with AgentMux. Adding a new tool is a code change, not 
 
 ### Cross-instance forwarding (opt-in, default off)
 
-If you run multiple AgentMux instances on the same machine and enable the agentbus, they discover each other via a local file registry (`~/.agentmux/instances/`) and forward messages over 127.0.0.1 between them. No external network involved.
+If you run multiple AgentMux instances on the same machine and enable the MuxBus, they discover each other via a local file registry (`~/.agentmux/instances/`) and forward messages over 127.0.0.1 between them. No external network involved.
 
-A separate **cloud agentbus poller** can be configured to receive inbound messages from a hosted relay; this is opt-in and off by default. See [Reactive event bus](/security/reactive-event-bus/) once that page lands.
+A separate **cloud MuxBus poller** can be configured to receive inbound messages from a hosted relay; this is opt-in and off by default. See [Reactive event bus](/security/reactive-event-bus/) once that page lands.
 
 ### mDNS discovery (opt-in, default off)
 
@@ -64,7 +64,7 @@ If you enable mDNS, AgentMux broadcasts on the local network (`0.0.0.0:5353`) to
 | Setting | Default | Effect |
 |---|---|---|
 | mDNS discovery | Off | LAN broadcast of instance presence. |
-| Cloud agentbus poller | Off | Inbound messages from a hosted relay. |
+| Cloud MuxBus poller | Off | Inbound messages from a hosted relay. |
 | Crash reporting | Not applicable (none exists) | — |
 | Update check | Not applicable (none exists) | See [Update model](/security/update-model/). |
 
@@ -73,7 +73,7 @@ If you enable mDNS, AgentMux broadcasts on the local network (`0.0.0.0:5353`) to
 If you want to verify any of this for yourself:
 
 - **Audit network traffic.** Run AgentMux behind a packet inspector (`mitmproxy`, `tcpdump`, your firewall logs). All you'll see is the LLM provider traffic from agent CLIs and any explicit user actions (tool download, etc.).
-- **Read the source.** The full outbound HTTP surface in the Rust backend is limited to: the tool store (`agentmux-srv/src/backend/tool_store.rs`), the cross-instance forwarder (`agentmux-srv/src/server/reactive.rs`), and the cloud agentbus poller (opt-in, see above). Search for `reqwest::Client` in the codebase to see every outbound call.
+- **Read the source.** The full outbound HTTP surface in the Rust backend is limited to: the tool store (`agentmux-srv/src/backend/tool_store.rs`), the cross-instance forwarder (`agentmux-srv/src/server/reactive.rs`), and the cloud MuxBus poller (opt-in, see above). Search for `reqwest::Client` in the codebase to see every outbound call.
 - **Inspect the SQLite database.** `~/.agentmux/state.db` is a normal SQLite file. Open it with the `sqlite3` CLI to confirm what's there.
 
 ---
