@@ -15,7 +15,9 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 | `launcher-sagas.db` | SQLite | launcher | Launcher-side saga state (LSD-1 batch onward) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
-All five live under the channel's data dir at `<data-dir>/data/` (i.e. `~/.agentmux/channels/<channel>/data/` for installed/portable, `~/.agentmux/dev/<branch>/<clone-id>/data/` for `task dev`). SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<clone-id>` are derived.
+All five live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
+
+> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, keybindings) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs).
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
@@ -50,6 +52,82 @@ At startup the sidecar's reducer loads its in-memory state from `objects.db` ([`
 A separate **persist subscriber** ([`agentmux-srv/src/persist_subscriber.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/persist_subscriber.rs)) consumes the reducer's broadcast bus and mirrors lifecycle events back to SQLite for entities the reducer owns. On a `Lagged` error it does a scoped full-resync (insert/update only, never delete — there's a code comment explaining the migration-window reason).
 
 Migration status: workspaces are reducer-driven (E.2c.2 onward); tab + block writes are still mostly RPC-direct.
+
+## Cross-channel agent persistence
+
+`objects.db` is authoritative **per channel**, but user agents are meant to follow
+you everywhere — an agent created in one channel (or one release version) should
+appear, fully configured, in all of them. That globalization is implemented by a
+**definition-registry mirror** that shadows local `objects.db` agent mutations into
+an account-wide store. See
+[`SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE_2026-06-13.md)
+and [`def_registry_mirror.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/backend/storage/def_registry_mirror.rs).
+
+### The two global stores
+
+Both live under `~/.agentmux/shared/agents/` (account-wide, channel- and
+version-independent), as siblings resolved in
+[`registry/paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/registry/paths.rs):
+
+- **Definition registry** — `~/.agentmux/shared/agents/definitions/` — the global
+  copy of each user agent's *definition* (the launchable catalog entry).
+- **Instances registry** — `~/.agentmux/shared/agents/registry/` — the named
+  cross-channel *instances* (a running/launched agent's identity).
+
+### What travels with the definition
+
+A global definition record is not just the row from `db_agent_definitions`. The
+mirror (`agent_definition_to_record`) folds the agent's **content blobs** (e.g.
+instructions, the per-agent `ui:zoom`) and its **skills** into the same record,
+because both live in separate local tables and must travel together for a
+cross-channel agent to launch with its instructions intact.
+
+### Authority and read direction
+
+- **Local SQLite stays authoritative for writes** within its channel. The global
+  store is a cross-channel **read view**, never a write target that overrides
+  local truth.
+- **Reads are global-first for the roster.** `agent_def_list` overlays the global
+  user-agent roster so an agent that exists only in another channel still shows up.
+- **Content + skills fall back to the global record** when the agent has no local
+  SQLite row (the cross-channel case), so it launches with its instructions.
+
+### Symmetric mirroring (set *and* delete)
+
+Every local mutation re-mirrors via `registry_def_upsert`:
+
+- `agent_content_set` **and** `agent_content_delete` both re-mirror — so a
+  reset-to-default that deletes a local content row propagates the deletion
+  globally, not just the addition.
+- Skills mirror the same way (insert and delete).
+
+To make that safe, the mirror reads the local row with **local-only** accessors
+(`agent_content_get_all_local` / `agent_skill_list_local`). If it read through the
+global-fallback accessors, deleting a local blob would re-read the still-present
+global copy and re-mirror it straight back, defeating the deletion.
+
+### Deletes are global tombstones
+
+Deleting a user agent calls `registry_def_retire`, which writes a `retired/`
+**tombstone** into the definition store rather than just removing the active
+record. The tombstone is what stops a *stale* `objects.db` in another channel from
+resurrecting a deleted agent on its next `registry_def_upsert` — `upsert` refuses
+to revive a tombstoned id. A delete works even for an agent that exists only
+globally (no local SQLite row): the retire path still tombstones and reports
+success.
+
+### Resume across channels
+
+The instances registry carries a `session_id` (added in schema v1→v2, see
+[`registry/schema.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/registry/schema.rs))
+so a cross-channel agent's **conversation can resume** rather than starting cold
+when it's opened from a different channel or version.
+
+### Seeded vs user agents
+
+Only **user** agents go global. Seeded template agents stay **local** (per-channel):
+they're manifest-managed and re-seeded into each channel, and their hide flag is
+per-channel UI state — so the mirror skips any definition with `is_seeded != 0`.
 
 ## `filestore.db` — content blobs
 
@@ -94,10 +172,11 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 
 For completeness, things that are NOT stored in these five files:
 
-- **Settings** — JSON at `<data-dir>/config/settings.json`
-- **Agent working directories** — per-agent workspace dirs under `<data-dir>/agents/` (the agent *definitions* themselves live in `objects.db`)
-- **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version-independent)
-- **Chromium cache** — `<data-dir>/cef-cache/`
+- **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json` (and `keybindings.json`); **not** under `versions/<version>/`, so settings survive version upgrades
+- **Agent working directories** — per-agent workspace dirs under the **channel-wide** `~/.agentmux/channels/<channel>/agents/`, again one level above the version dir (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see below)
+- **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version- and channel-independent)
+- **Global agent registry** — user-agent definitions + named instances live account-wide under `~/.agentmux/shared/agents/` (see [Cross-channel agent persistence](#cross-channel-agent-persistence))
+- **Chromium cache** — version-scoped `~/.agentmux/channels/<channel>/versions/<version>/cef-cache/`
 - **CLI provider configs** — auth-config-dir managed by each provider's CLI
 
 ## See also

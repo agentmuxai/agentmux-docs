@@ -27,14 +27,121 @@ When AgentMux launches an agent, the sidecar injects three environment variables
 Agent CLI (claude / codex / gemini / …)
   └─ spawns agentmux-mcp (MCP stdio server)
        ├─ receives AGENTMUX_LOCAL_URL + AGENTMUX_AUTH_KEY + AGENTMUX_BLOCKID
-       └─ advertises 11 MCP tools → routes each to the REST API
+       └─ advertises a curated set of MCP tools → routes each to the REST API
 ```
 
 Agents using MCP tools never touch `X-AuthKey` directly — the MCP sidecar handles it. The REST API is for scripts or tooling that run with explicit access to the auth key (e.g. inside the sidecar itself, or a trusted subprocess you spawn with the key explicitly).
 
-## MCP tools (11 tools)
+## Two layers: MCP tools vs. the app-API RPC surface
 
-These are the 11 tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically.
+It helps to keep two layers separate:
+
+- **MCP tools** — the curated, agent-facing verbs that `agentmux-mcp` advertises and maps onto REST endpoints. These are the high-level "operate your workspace" actions (`WhoAmI`, `Layout`, `SetName`, `OpenEditor`, `Shell`, `SendMessage`, …) documented in the next section. This is the intentionally small surface most agents use.
+- **The app-API RPC surface** — the full set of JSON-RPC commands the backend (`agentmux-srv`) registers over its WebSocket transport. The frontend and internal tooling drive AgentMux through these. They include agent lifecycle, process management, session/blockfile persistence, agent-definition CRUD, identity, memory, drones, and more. The MCP tools are a thin, curated slice of this larger surface.
+
+The catalog below documents the **app-API RPC commands** by group, with each command's exact name verified against source. This is the *current* surface and grows actively — treat it as a snapshot, not a frozen contract.
+
+## App-API RPC catalog
+
+These commands are registered in `agentmux-srv` (see `agentmux-srv/src/server/app_api.rs`, `agentmux-srv/src/server/agent_handlers.rs`, and the command-name constants in `agentmux-srv/src/backend/rpc_types.rs`) and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
+
+### Agent lifecycle (`app_api.rs`)
+
+| Command | Purpose |
+|---|---|
+| `agent.open` | Open (or idempotently reattach) an agent pane in a tab from an agent definition. Routes through the reducer/`CreateBlock` for saga consistency (PR #1681). |
+| `agent.send` | Send a message/turn to a running agent (host subprocess, persistent, or container). |
+| `agent.stop` | Stop a running agent's controller (graceful or `SIGKILL`/`SIGTERM`). |
+| `agent.status` | Read one agent block's status, provider, controller type, session id. |
+| `agent.list` | List all agent blocks across tabs with status + session id. |
+| `agent.output` | Read paginated persisted output lines for an agent block. |
+| `agent.define` | Create or upsert an agent definition (broadcasts `agents:changed`). |
+
+### Agent process management (`app_api.rs`)
+
+| Command | Purpose |
+|---|---|
+| `agent.process-list` | List OS processes tracked for an agent block, with tracking confidence. |
+| `agent.tracked-blocks` | List every block currently tracked (swarm aggregate view). |
+| `agent.kill-process` | Terminate a single tracked PID within a block's process tree. |
+| `agent.kill-tree` | Terminate a block's entire process tree (job object / cgroup / killpg). |
+
+### Panes (`app_api.rs`)
+
+| Command | Purpose |
+|---|---|
+| `pane.open` | Open a non-agent pane (editor / term / browser / sysinfo / help), docked or floating. Like `agent.open`, routes through the reducer/`CreateBlock` for saga consistency (PR #1681). This is what the `OpenEditor` MCP tool calls. |
+
+### Blockfile pagination (`app_api.rs`)
+
+| Command | Purpose |
+|---|---|
+| `blockfile:line_count` | Count lines in a block's transcript file. |
+| `blockfile:read_range` | Read a line range from a block's transcript file. |
+| `blockfile:read_state` | Read a block's persisted state JSON. |
+| `blockfile:write_state` | Write a block's persisted state JSON. |
+
+### Session (`app_api.rs`)
+
+| Command | Purpose |
+|---|---|
+| `session:digest` | Produce a digest/summary of a session. |
+| `session:archive` | Archive a session. |
+| `session:restore` | Restore a previously archived session. |
+| `session:export` | Export a session. |
+| `session:activity_summary` | Per-turn live activity summary (writes `term:activity`). |
+
+### Agent-anchored session zone (`agent_handlers.rs`)
+
+A session zone is bound to the agent *definition* (`definition_id`), so every block of the same agent shares it.
+
+| Command | Purpose |
+|---|---|
+| `agent:session:read` | Read the agent definition's current session zone. |
+| `agent:session:write_state` | Write state into the agent's session zone. |
+| `agent:session:append_output` | Append output to the agent's session zone. |
+| `agent:session:archive` | Snapshot the agent's session zone to an archive. |
+| `agent:session:list_archives` | List the agent's session-zone archives. |
+
+### Native memory (`native_memory_handlers.rs`)
+
+| Command | Purpose |
+|---|---|
+| `agent:memory:list` | List an agent's native memory (brain) files. |
+| `agent:memory:read_file` | Read one native memory file. |
+| `agent:memory:write_file` | Write one native memory file. |
+
+### Broader `agent_handlers.rs` surface (grouped)
+
+The backend also registers a large set of management RPCs that the frontend (and tooling) use. These are grouped here rather than exhaustively expanded; names are verified against `agentmux-srv/src/backend/rpc_types.rs`.
+
+| Group | Commands |
+|---|---|
+| Agent-definition CRUD | `listagents`, `createagent`, `updateagent`, `deleteagent`, `forkagentdefinition`, `forkagentdefinitionsuggest`, `agentdefcreatefromtemplate`, `agentdefhide`, `agentdefunhide`, `agentdeflisthiddentemplates` |
+| Agent content | `getagentcontent`, `setagentcontent`, `getallagentcontent` — `setagentcontent` persists per-agent content (e.g. `ui:zoom`, `env`) keyed to the agent definition |
+| Skills CRUD | `listagentskills`, `createagentskill`, `updateagentskill`, `deleteagentskill` |
+| History | `appendagenthistory`, `listagenthistory`, `searchagenthistory` |
+| Import / export / seed | `importagentfromclaw`, `importagents`, `exportagents`, `reseedagents` |
+| Identity accounts | `listidentityaccounts`, `getidentityaccount`, `upsertidentityaccount`, `deleteidentityaccount`, `account.key.verify`, `account.oauth.start`, `account.oauth.poll`, `account.oauth.cancel` |
+| Agent ↔ identity junction | `linkagentidentity`, `unlinkagentidentity`, `listagentidentities` |
+| Identity bundles | `listidentitybundles`, `getidentitybundle`, `upsertidentitybundle`, `deleteidentitybundle`, `bindidentityaccount`, `unbindidentityaccount`, `listidentitybindings` |
+| Memory bundles (brain) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
+| Agent instances | `listagentinstances`, `getagentinstance`, `createagentinstance`, `updateagentinstance`, `deleteagentinstance`, `listnamedagents`, `hidenamedagent`, `listrecentsessions` |
+| Container runtime | `containerruntimeavailable` |
+| Drones | `listdrones`, `getdrone`, `upsertdrone`, `deletedrone`, `rundrone`, `listdroneruns` |
+
+### Widget RPCs (`cli_handlers.rs`)
+
+Recent additions for widget panes that run a local HTTP server (PR #1689). The frontend passes a per-widget **port** so a widget can override the default and AgentMux still reaches it:
+
+| Command | Purpose |
+|---|---|
+| `widget.health` | Liveness probe a widget's local server (`{ port, health_check_path, health_check_body_contains? }` → `{ healthy, status_code }`). |
+| `widget.api` | HTTP proxy to a widget's local server, bypassing browser CORS (`{ port, path, method?, headers?, body? }` → `{ ok, status_code, body, error? }`). Agents use it to call e.g. ComfyUI `/prompt` or Grafana `/api/query`. |
+
+## MCP tools (curated agent-facing slice)
+
+These are the high-level tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically. Each maps to a REST endpoint (see the [REST API](#rest-api) table), which in turn drives an app-API RPC command from the catalog above.
 
 ### Self-context
 
@@ -231,6 +338,10 @@ Returns `{ success, error? }`. The message is delivered to the target agent's pa
 
 Every MCP tool has an equivalent REST endpoint on `$AGENTMUX_LOCAL_URL`. All requests require `X-AuthKey: $AGENTMUX_AUTH_KEY`.
 
+:::note
+This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of the full app-API RPC catalog above — most RPC commands (agent lifecycle, sessions, blockfiles, identity, memory, drones, widgets) are reached over the WebSocket JSON-RPC transport, not via a dedicated `/api/v1/*` REST route.
+:::
+
 | Method | Endpoint | MCP equivalent |
 |---|---|---|
 | `GET` | `/api/v1/self?block_id=<id>` | `WhoAmI` |
@@ -274,7 +385,7 @@ The WebSocket connection receives server-pushed JSON-RPC notifications for live 
 
 Agents are *sub-trusted*: they run as the user but do not hold the sidecar's full auth key at the OS level. The Agent App API is the curated surface across that boundary — scoped, reversible operations.
 
-What the API allows today: open panes, rename UI elements, navigate, discover and message peers, manage shells.
+What the curated MCP tool surface allows today: open panes, rename UI elements, navigate, discover and message peers, manage shells. The broader app-API RPC surface (agent lifecycle, sessions, identity, memory, drones) is driven by the frontend and internal tooling over the authenticated WebSocket transport.
 
 What it does not expose: delete arbitrary panes belonging to other agents, access other agents' file systems, or call raw `dispatch_service` destructive commands. A finer-grained per-agent permission model (allow-lists, scoped capabilities) is on the roadmap.
 

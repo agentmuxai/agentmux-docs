@@ -440,14 +440,38 @@ Drag a tab below the tab bar to spawn a **new AgentMux instance** containing tha
 
 ### Floating panes
 
-**Drag a pane header outside the window** to pop it into a **floating subordinate window** owned by the same instance — not a new AgentMux instance, just a detached child window that shares the same backend sidecar.
+**Drag a pane header outside the window** to tear it off into a **floating window** — a detached window owned by the same AgentMux instance that shares the same backend sidecar. It is not a new instance; it's a standalone window holding the pane you tore off.
 
 | Control | Behavior |
 |---|---|
-| Drag pane header outside the window | Spawns a floating window at the same size as the original pane |
+| Drag pane header outside the window | Tears the pane into a floating window at the same size as the original pane |
 | Drag the floating title bar | Move the floating window freely across monitors |
 | Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 180 ms at that speed; release to dock |
 | Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |
 | Close button in floater title bar | Closes the pane (same as closing a docked pane) |
 
-**Redock gesture:** drag the floating pane's title bar close to any AgentMux window. A dock indicator appears once your cursor has stayed near that window for 180 ms at a slow-to-stopped speed (≤400 CSS px/s) — the dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock.
+#### Independent windows
+
+Every floating window is **fully independent**. Each one carries its own backend workspace, tab, and block state, so closing one window — or closing a pane inside it — never closes another window or affects the panes living elsewhere. A floating window only auto-closes when **its own** last pane is removed (the empty window has nothing left to show, so it tidies itself up).
+
+This independence is structural: each floater is an unowned top-level window rather than a child of the window it came from, so there's no cross-window cascade. Minimize, restore, and close are handled per source window explicitly, never propagated across separate floaters. See `agentmux-cef/src/floating_pane.rs` and [floating-pane-workspace.tsx](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/workspace/floating-pane-workspace.tsx) for the lifecycle.
+
+#### Tear off from any window
+
+Tear-off works from **every** window, not just the first one you opened — the main window and any secondary window alike. Grab a pane's header and drag it out to spin it into a floating window. A torn-off pane keeps its identity, so you can keep moving it from window to window without it losing state.
+
+#### Redock into any window
+
+**Redock gesture:** drag the floating pane's title bar close to any open AgentMux window — including secondary windows — and a dock indicator appears once your cursor has stayed near that window for 180 ms at a slow-to-stopped speed (≤400 CSS px/s). The dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock the pane into that window.
+
+Redock resolves correctly into secondary windows because every window — including ones promoted from the prewarm pool — carries a stable backend identity (`backend_window_id`), so the drop target is always unambiguous. The resolution logic lives in [commands/window/motion.rs](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/window/motion.rs).
+
+#### Cross-window pane movement
+
+Because torn-off panes keep their identity, you can move a pane freely between windows: tear it off, dock it into another window, tear it off again, and dock it somewhere else. The pane's state travels with it the whole way.
+
+#### Why tear-off feels instant
+
+New windows and torn-off panes are served from a hidden **prewarm pool** — a small set of pre-spawned, already-painted windows kept off-screen and ready to go. On tear-off, AgentMux promotes a pooled window in place instead of cold-starting a fresh one, which avoids the 150-300 ms gap that spawning a renderer process and painting the first frame would otherwise cost. The pool refills in the background after each use. On Windows this uses native `WS_POPUP` pool windows (`CreatePanePoolWindowWin32Task` in `agentmux-cef/src/floating_pane.rs`); macOS and Linux use frameless CEF Views windows. Pooled windows stay hidden until they're promoted. Promotion is wired through [commands/window_pool.rs](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/window_pool.rs).
+
+Pooled windows are created with a dark theme background, so tearing off a pane comes up clean rather than briefly flashing white before the pane content paints.
