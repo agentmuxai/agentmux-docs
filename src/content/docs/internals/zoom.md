@@ -1,15 +1,15 @@
 ---
 title: Zoom system
-description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.platform.ts`, how it persists, and how new view types opt in.
+description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.platform.ts`, how it persists (live block meta plus a durable per-agent layer), and how new view types opt in.
 ---
 
-AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it. Per-pane zoom is persisted on block meta (`term:zoom`); chrome zoom is in-memory only (see the table below).
+AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it. Per-pane zoom lives on block meta (`term:zoom`); for **agent** panes it is additionally mirrored into a durable per-agent store so the zoom survives the block (see [Persistence](#persistence)). Chrome zoom is in-memory only (see the table below).
 
 ## Two zooms
 
 | Mode | Scope | Persistence | Mechanism |
 |---|---|---|---|
-| **Per-pane** | One block | `term:zoom` on block meta | Terminal panes: `term.options.fontSize = base * zoom`. Other view types: CSS `zoom` on the view root. |
+| **Per-pane** | One block (agent panes: also persisted **per-agent**) | `term:zoom` on block meta — the live value; for agent panes also mirrored into a durable per-agent `ui:zoom` content blob (see [Persistence](#persistence)) | Terminal panes: `term.options.fontSize = base * zoom`. Other view types: CSS `zoom` on the view root. |
 | **Chrome** | Whole window | In-memory only — `chromeZoomAtom` + `--zoomfactor` on `:root`; reset on reload (`initChromeZoom()` reapplies `DEFAULT_ZOOM`, `loadZoom()` is a no-op today) | Title bar + status bar use `calc(... * var(--zoomfactor))` for their dimensions and fonts. |
 
 Per-pane is what users hit by default (zoom in/out adjusts the focused pane). Chrome zoom fires when the cursor is over the title bar / status bar / pane header during `Ctrl+Wheel`.
@@ -67,7 +67,11 @@ The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the 
 
 ## Persistence
 
-`term:zoom` is a block meta key. The full lifecycle:
+Zoom persists in **two layers**. The frontend only ever touches the first; the second is a pure backend mirror — no frontend code changed to add it.
+
+### Layer 1 — live block meta (`term:zoom`)
+
+`term:zoom` is a block meta key, scoped to one block. It's the value every view reads and applies live. The full lifecycle:
 
 1. User hits `Ctrl++`.
 2. `keymodel.ts` calls `zoomIn()` → `getFocusedBlockId()` → `zoomBlockIn(blockId, KEYBOARD_STEP)`.
@@ -76,7 +80,25 @@ The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the 
 5. The backend persists the meta change and broadcasts a block-update event.
 6. The block atom in the renderer re-fires; every component that reads `block()?.meta?.["term:zoom"]` recomputes.
 
-The cleanup at step 4 (`null` for 1.0) means the persisted meta only has a `term:zoom` entry for blocks the user actually adjusted — clean diffs in object dumps.
+`Ctrl+Wheel` follows the same path via `term.tsx` / `app.tsx` (see [Input routing](#input-routing)). The cleanup at step 4 (`null` for 1.0) means the persisted meta only has a `term:zoom` entry for blocks the user actually adjusted — clean diffs in object dumps.
+
+This layer is **block-scoped and ephemeral**: a block is created fresh each time a pane opens, so on its own `term:zoom` would reset to 1.0 every time you close and reopen an agent.
+
+### Layer 2 — durable per-agent zoom (`ui:zoom`)
+
+To make zoom survive pane close/reopen, the backend mirrors every agent block's `term:zoom` change into a **per-agent content blob** with `content_type = "ui:zoom"`, keyed by the stable `agent.id` (not the ephemeral block). This is the [`SPEC_AGENT_ZOOM_PERSISTENCE`](#see-also) layer.
+
+- **Mirror trigger.** When a `SetMeta` updates `term:zoom` on a block that carries an `agentId` (i.e. an agent pane), [`service.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/service.rs) calls `schedule_agent_zoom_mirror(agent_id, zoom)` (≈ line 2825). Non-agent blocks are untouched.
+- **Debounced — one write per burst.** The mirror is a 300ms **trailing** debounce backed by a per-agent generation counter. A spin of `Ctrl+Wheel` fires many `term:zoom` writes, but only the last survives the debounce window and commits, so there's no durable-write amplification (each commit also does a single global def-registry re-mirror).
+- **Reset deletes the row.** The frontend writes `term:zoom = null` when the user returns to 1.0. The mirror reads that `null` and **deletes** the `ui:zoom` row (`agent_content_delete`) rather than storing `1.0`. An agent the user never zoomed (or reset) persists nothing — defaults stay clean. Implementation in [`content.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/backend/storage/content.rs).
+- **Restore on reopen.** When a pane opens, [`app_api.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/app_api.rs) `agent.open` (≈ line 330) reads the agent's saved `ui:zoom` and seeds the new block's `term:zoom` from it, clamped to `[0.5, 2.0]` (`parse_seed_zoom`, which also rejects out-of-range and default `1.0` values). Layer 1 then applies it exactly as if the user had just set it.
+- **Global / cross-channel.** Because `ui:zoom` is a per-agent content blob, it is global cross-channel — `agent_content_set`/`agent_content_delete` re-mirror it to the shared definition registry. Reopening the *same agent* in a different window, channel, or server instance restores its zoom, not just within the channel where it was set.
+
+The result: zoom feels like an agent-level preference (it follows the agent everywhere) while the frontend still reads and writes only the block-scoped `term:zoom` it always has.
+
+### Zoom-invariant busy bar
+
+Agent panes apply CSS `zoom` to the whole view root, which would also scale the marching-ants **busy bar** at the bottom of the pane. To keep that bar a fixed on-screen size regardless of pane zoom, `agent-view.tsx` also sets a CSS variable `--agent-pane-zoom` alongside `zoom` on the root, and [`_control-bar.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/styles/_control-bar.scss) **counter-scales** the bar's dimensions and animation by dividing by `var(--agent-pane-zoom)`. So the content zooms but the busy indicator stays visually constant.
 
 ## Limits
 
@@ -87,7 +109,12 @@ The cleanup at step 4 (`null` for 1.0) means the persisted meta only has a `term
 ## See also
 
 - Spec: [`docs/specs/zoom-architecture.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/zoom-architecture.md) — the original design that established the universal framework, plus follow-ups for chrome zoom + pane-header zoom routing.
+- Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (debounced mirror, reset-deletes, cross-channel restore).
 - Source:
   - [`frontend/app/store/zoom.win32.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.win32.ts) (canonical implementation; macOS and Linux variants only override platform-specific compensation)
   - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) (Ctrl+/-/0 bindings)
   - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) (Ctrl+Wheel routing)
+  - [`agentmux-srv/src/server/service.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/service.rs) (`schedule_agent_zoom_mirror` — debounced `term:zoom` → `ui:zoom` mirror)
+  - [`agentmux-srv/src/server/app_api.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/app_api.rs) (`agent.open` seeds `term:zoom` from saved `ui:zoom`; `parse_seed_zoom`)
+  - [`agentmux-srv/src/backend/storage/content.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/backend/storage/content.rs) (per-agent content store + global def-registry mirror)
+  - [`frontend/app/view/agent/styles/_control-bar.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/styles/_control-bar.scss) (zoom-invariant busy bar via `--agent-pane-zoom`)

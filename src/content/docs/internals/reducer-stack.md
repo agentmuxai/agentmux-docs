@@ -25,7 +25,7 @@ Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. On Wind
 
 ### Layer 2 — Host
 
-CEF-side coordination: pending window creations, active drag operations, tear-off hooks, lifecycle. Lives in `agentmux-cef`. **Status:** partial — Phase B.5 shadow mirrors shipped; the host's own reducer migration is in flight.
+CEF-side coordination: pending window creations, active drag operations, tear-off hooks, lifecycle. Lives in `agentmux-cef`. **Status:** partial — Phase B.5 shadow mirrors shipped; the host's own reducer migration is in flight. Instance lifecycle has landed: quit-on-last-window (#1676) routes through the `count_live_user_windows` gate in [`agentmux-cef/src/reducer/quit.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/reducer/quit.rs), and the window-count consolidation (#1701) makes the status-bar count accurate after CEF Views closes via an explicit `WindowClosed` event plus snapshot reconciliation in the frontend. Folding the remaining duplicated lifecycle/window-count state into a single reducer authority is the ongoing SSOT-consolidation work tracked in [`SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22.md).
 
 ### Layer 3 — Sidecar (srv)
 
