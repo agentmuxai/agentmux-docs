@@ -7,7 +7,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 ## Terms
 
-**agentbus** — The cross-process, cross-machine message bus that lets agents (and the panes they live in) exchange messages. Two delivery models: [jekt](#jekt) and [message](#message). See [Reactive event bus](/security/reactive-event-bus/) for the full surface.
+<a id="agentbus"></a>**muxbus** — The cross-process, cross-machine message bus that lets agents (and the panes they live in) exchange messages. Two delivery models: [jekt](#jekt) and [message](#message). See [Reactive event bus](/security/reactive-event-bus/) for the full surface. (Formerly called *agentbus*; some artifact names — e.g. the `mcp__agentbus__*` MCP tools and the `agentbus-client` package — still carry the old name.)
 
 **agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [Agent App API](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 

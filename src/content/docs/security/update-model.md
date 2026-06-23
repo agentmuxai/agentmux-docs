@@ -63,7 +63,7 @@ To operate AgentMux fully offline:
 1. Install AgentMux and any tools you need on a connected machine.
 2. Copy the install directory (and `~/.agentmux/` if you want to bring sessions) to the air-gapped machine.
 3. Configure agents to point at on-prem or local model endpoints.
-4. Disable mDNS discovery and cloud agentbus poller in settings (both are off by default; nothing to do).
+4. Disable mDNS discovery and cloud muxbus poller in settings (both are off by default; nothing to do).
 
 ## What we don't promise
 

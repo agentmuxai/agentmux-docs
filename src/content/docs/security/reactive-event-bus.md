@@ -30,7 +30,7 @@ Body: `{ "target_agent": "id", "source_agent": "id?", "message": "..." }`.
 
 The handler tries local delivery first via the in-process `reactive_handler`. If the target isn't registered locally, it consults the file-based agent registry under `~/.agentmux/agents/`. If a peer instance owns the target, the handler forwards the request to that peer's `/agentmux/reactive/inject` over HTTP, authenticating with the peer's auth key from the registry entry.
 
-If no local or peer match: returns "agent not found", which the agentbus client typically interprets as "fall back to the cloud relay".
+If no local or peer match: returns "agent not found", which the muxbus client (the `agentbus-client` package, still named for the legacy term) typically interprets as "fall back to the cloud relay".
 
 ### Register / unregister
 
@@ -49,7 +49,7 @@ GET  /agentmux/reactive/poller/status
 GET  /agentmux/reactive/poller/stats
 ```
 
-Used to wire up the cloud agentbus relay (see below). Auth required on all three (audit fix C2 closed a token-leak from the previous unauthenticated `status` endpoint).
+Used to wire up the cloud muxbus relay (see below). Auth required on all three (audit fix C2 closed a token-leak from the previous unauthenticated `status` endpoint).
 
 ### Audit + listing
 
@@ -67,9 +67,9 @@ Diagnostic endpoints — list registered agents on this instance, fetch the audi
 
 1. **Frontend ↔ sidecar.** Frontend sends `X-AuthKey` from the per-launch UUIDv4 the launcher generated. Same boundary as every other authed RPC.
 2. **Sidecar ↔ peer sidecar (cross-instance).** The writing sidecar embeds its `auth_key` in its registry file. The forwarding sidecar reads the registry, extracts the peer's `auth_key`, and presents it on the forward. The registry file is `0600` so a co-user on the same box can't read it — same boundary as the existing `authkey.dev` file.
-3. **Sidecar ↔ cloud agentbus relay.** The poller calls outbound HTTPS to the configured `agentmux_url`, presenting `agentmux_token` as a bearer. The relay never calls into the sidecar. All inbound messages arrive over the polled connection (long-poll or websocket — relay-specific).
+3. **Sidecar ↔ cloud muxbus relay.** The poller calls outbound HTTPS to the configured `agentmux_url`, presenting `agentmux_token` as a bearer. The relay never calls into the sidecar. All inbound messages arrive over the polled connection (long-poll or websocket — relay-specific).
 
-## Cloud agentbus poller — opt-in
+## Cloud muxbus poller — opt-in
 
 The poller is **off by default**. To enable it:
 
@@ -120,6 +120,6 @@ In all three cases, the boundary is **the user account on the local machine**. A
 - `agentmux-srv/src/server/mod.rs` — router + auth middleware
 - `agentmux-srv/src/backend/reactive/handler.rs` — `inject_message` in-process delivery
 - `agentmux-srv/src/backend/reactive/registry.rs` — cross-instance file registry
-- `agentmux-srv/src/backend/reactive/poller.rs` — cloud agentbus poller
+- `agentmux-srv/src/backend/reactive/poller.rs` — cloud muxbus poller
 
 **Related**: [Interagent event bus](/internals/interagent-comms/), [Trust model](/security/trust-model/), [Network exposure](/security/network-exposure/).
