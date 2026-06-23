@@ -63,7 +63,7 @@ Pre-migration snapshots auto-save when an upgrade-with-migration is detected, th
 
 The snapshot is a `VACUUM INTO` copy of each SQLite store — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
 
-To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back over `channels/<channel>/versions/<v>/data/` (v0.41.1+), matching the version whose runtime DB you want to restore. There's no CLI for this yet — it's a planned follow-up.
+To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/` (v0.41.1+), matching the version whose runtime DB you want to restore. There's no CLI for this yet — it's a planned follow-up.
 
 ## Per-channel contents
 
@@ -73,7 +73,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 
 | Path | Owns |
 |---|---|
-| `versions/<v>/data/` | SQLite stores — session history and block state (`objects.db`, `sagas.db`) — plus the launcher's JSONL event log (`launcher-events.log`) |
+| `versions/<v>/data/` | SQLite stores live in `data/db/` — `objects.db` (reducer state), `sagas.db` + `launcher-sagas.db` (saga logs), `filestore.db` (per-block content) — plus the launcher's JSONL event log (`launcher-events.log`) directly in `data/` |
 | `versions/<v>/logs/` | Host logs (rotated daily, 7-day retention). **Sidecar logs are not here** — they live at `~/.agentmux/logs/` (account-wide), see [Account-wide (shared) contents](#account-wide-shared-contents) below. |
 | `versions/<v>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
 | `versions/<v>/runtime/` | Runtime IPC artifacts (the `ipc-port` file and single-instance `lock`; named-pipe sockets on Windows / Unix domain sockets on Linux + macOS) |
@@ -168,7 +168,7 @@ Each per-version file is independently restorable:
 - **Cold-copy the whole `<data-dir>/data/` directory** while AgentMux is closed — that's the simplest, most reliable backup.
 - **Hot copy of an individual SQLite file** while AgentMux is open is supported because the writer holds short transactions; use `sqlite3 .backup`. The JSONL event log is append-only and safe to copy at any time.
 
-Re-importing into a fresh install: stop AgentMux, place the `*.db` files and the JSONL log at `<data-dir>/data/`, and launch. Bootstrap reads them.
+Re-importing into a fresh install: stop AgentMux, place the `*.db` files at `<data-dir>/data/db/` and the JSONL log at `<data-dir>/data/`, and launch. Bootstrap reads them.
 
 ## See also
 
