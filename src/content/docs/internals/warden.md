@@ -30,7 +30,7 @@ The Warden renders three sections — Host, LAN, Internet — that map **1:1 ont
 |---|---|---|---|
 | Host | Tiers 1 + 2 (intra-process + local WS) | `ReactiveHandler` + `MessageBus` | live |
 | LAN | Tier 3 (mDNS peer forward) | `LanDiscoveryController` (mDNS only — forwarding TBD) | live (read-only) |
-| Internet | Tier 4 (cloud relay) | muxbus | disabled by default |
+| Internet | Tier 4 (cloud relay) | MuxBus | disabled by default |
 
 That's why the Warden was framed as "the operator-facing surface of the cascade" — not a new control plane, but a rendering of the layering that already exists in the backend.
 
@@ -59,7 +59,7 @@ Same 5 s + 1 s tick pattern. The LAN section's empty-state copy points the opera
 
 ### Internet section
 
-Pure stub — renders a "closed by default" message. The substrate (muxbus cloud relay forwarding through the controller) hasn't been wired.
+Pure stub — renders a "closed by default" message. The substrate (MuxBus cloud relay forwarding through the controller) hasn't been wired.
 
 ## Authed vs public endpoints
 
@@ -122,7 +122,7 @@ This matches `HelpViewModel` and contrasts with `SwarmViewModel` / `DroneViewMod
 
 ## Section status chips: not just decoration
 
-The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same `LayerSection` entry in the `SECTIONS` array. When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the muxbus cloud relay — both in one place.
+The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same `LayerSection` entry in the `SECTIONS` array. When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
 
 This is the same reason `defwidget@warden` carries a single `description` field that mentions the spec — the Warden is a long-running multi-PR effort, and the navigation breadcrumb back to the spec (and the chip's status) is what ties it together as it grows.
 

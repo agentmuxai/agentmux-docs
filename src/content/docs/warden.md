@@ -21,7 +21,7 @@ The Warden renders one section per **trust layer**, in order of decreasing trust
 |------|----------------|-------|
 | **Host** | The AgentMux process on this machine | Trusted — same memory space |
 | **LAN** | Peer AgentMux instances reachable via [LAN discovery](/lan-discovery/) | Semi-trusted — same network |
-| **Internet** | Cross-network peers via the muxbus cloud relay | Untrusted — opt-in only |
+| **Internet** | Cross-network peers via the MuxBus cloud relay | Untrusted — opt-in only |
 
 Each section has a small status chip in its header: `live`, `stub`, or `disabled`. That tells you at a glance whether the layer is currently functional (Host: yes), waiting on more substrate (LAN: live if you've enabled mDNS, otherwise empty), or deliberately off until you opt in (Internet: disabled by default).
 
@@ -74,7 +74,7 @@ Today the LAN section is **read-only in the Warden UI** — you can see peers, b
 
 ## Internet section
 
-The Internet section is **closed by default**. Cross-network governance (via the muxbus cloud relay) ships behind a future opt-in. The section currently shows a status chip of `disabled` and a one-line explanation.
+The Internet section is **closed by default**. Cross-network governance (via the MuxBus cloud relay) ships behind a future opt-in. The section currently shows a status chip of `disabled` and a one-line explanation.
 
 ## What the Warden is *not*
 
@@ -97,7 +97,7 @@ Two adjacent surfaces sometimes get confused with the Warden:
 | Approval queue (human-in-the-loop) | ❌ Future PR |
 | Cross-instance jekt forwarding via Warden UI | ❌ Future PR |
 | Quarantine a peer / push policy | ❌ Future PR |
-| Internet (cloud) governance | ❌ Blocked on muxbus cloud relay |
+| Internet (cloud) governance | ❌ Blocked on MuxBus cloud relay |
 
 ## See also
 
