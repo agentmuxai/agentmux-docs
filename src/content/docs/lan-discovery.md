@@ -102,7 +102,7 @@ When in doubt, check the HostPopover or Warden's LAN section. If a peer is missi
 LAN jekt forwarding shipped in v0.46. Future phases will:
 
 - Wire the [Warden widget](/warden/) to issue cross-instance enforcement actions (quarantine, policy push)
-- Add an embedded MCP server so agents talk to the local AgentMux directly, bypassing the Node-based `@a5af/agentbus-client` for local/LAN cases
+- Add an embedded MCP server so agents talk to the local AgentMux directly, bypassing the Node-based `@agentmuxai/muxbus-client` for local/LAN cases
 
 For the design details, see [LAN discovery (internals)](/internals/lan-discovery/) and the [`SPEC_WARDEN_WIDGET_2026-05-25.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_WARDEN_WIDGET_2026-05-25.md) spec in the main repo.
 
