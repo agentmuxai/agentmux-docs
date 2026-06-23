@@ -1,39 +1,39 @@
 {
-	"name": "agentmux-docs",
-	"type": "module",
-	"version": "0.1.4",
-	"scripts": {
-		"dev": "astro dev",
-		"start": "astro dev",
-		"build": "astro build",
-		"build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build && node scripts/normalize-mtimes.mjs",
-		"build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
-		"build:rust-docs": "node scripts/build-rust-docs.mjs",
-		"preview": "astro preview",
-		"astro": "astro"
-	},
-	"dependencies": {
-		"@astrojs/starlight": "^0.40.0",
-		"astro": "^6.4.8",
-		"sharp": "^0.35.1"
-	},
-	"overrides": {
-		"esbuild": "npm:esbuild-wasm@^0.27.3"
-	},
-	"devDependencies": {
-		"hast-util-to-string": "^3.0.1",
-		"medium-zoom": "^1.1.0",
-		"typedoc": "^0.28.19",
-		"typedoc-plugin-markdown": "^4.12.0",
-		"typescript": "^6.0.3",
-		"unist-util-visit": "^5.1.0"
-	},
-	"deployments": {
-		"prod": {
-			"version": "0.0.98",
-			"commit": "1d0c891",
-			"deployed_at": "2026-06-21T00:11:55.512Z",
-			"deployed_by": "smark-06122"
-		}
-	}
+  "name": "agentmux-docs",
+  "type": "module",
+  "version": "0.1.5",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "build:full": "npm run build:typedoc && npm run build:rust-docs && npm run build && node scripts/normalize-mtimes.mjs",
+    "build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
+    "build:rust-docs": "node scripts/build-rust-docs.mjs",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.40.0",
+    "astro": "^6.4.8",
+    "sharp": "^0.35.1"
+  },
+  "overrides": {
+    "esbuild": "npm:esbuild-wasm@^0.27.3"
+  },
+  "devDependencies": {
+    "hast-util-to-string": "^3.0.1",
+    "medium-zoom": "^1.1.0",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.12.0",
+    "typescript": "^6.0.3",
+    "unist-util-visit": "^5.1.0"
+  },
+  "deployments": {
+    "prod": {
+      "version": "0.1.4",
+      "commit": "af190c1c1c65",
+      "deployed_at": "2026-06-23T18:29:43.696Z",
+      "deployed_by": "unknown"
+    }
+  }
 }

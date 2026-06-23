@@ -11,8 +11,8 @@ If you just want the user-level overview, see [Interagent event bus](/internals/
 
 | Verb | Semantics | MCP tool | Use when |
 |---|---|---|---|
-| **jekt** | Inject directly into the recipient's terminal stdin. Synchronous, immediate. | `mcp__agentbus__inject_terminal` | The recipient is running and you want them to act now. |
-| **message** | Drop into the recipient's mailbox; they read on their own schedule. Asynchronous. | `mcp__agentbus__send_message` | The recipient may be offline; you don't need immediate processing. |
+| **jekt** | Inject directly into the recipient's terminal stdin. Synchronous, immediate. | `mcp__muxbus__inject_terminal` | The recipient is running and you want them to act now. |
+| **message** | Drop into the recipient's mailbox; they read on their own schedule. Asynchronous. | `mcp__muxbus__send_message` | The recipient may be offline; you don't need immediate processing. |
 
 Both delivery models go through the same routing logic; the difference is what happens at the recipient.
 
@@ -30,7 +30,7 @@ Body: `{ "target_agent": "id", "source_agent": "id?", "message": "..." }`.
 
 The handler tries local delivery first via the in-process `reactive_handler`. If the target isn't registered locally, it consults the file-based agent registry under `~/.agentmux/agents/`. If a peer instance owns the target, the handler forwards the request to that peer's `/agentmux/reactive/inject` over HTTP, authenticating with the peer's auth key from the registry entry.
 
-If no local or peer match: returns "agent not found", which the MuxBus client (the `agentbus-client` package, still named for the legacy term) typically interprets as "fall back to the cloud relay".
+If no local or peer match: returns "agent not found", which the MuxBus client (the `@agentmuxai/muxbus-client` package) typically interprets as "fall back to the cloud relay".
 
 ### Register / unregister
 
@@ -44,7 +44,7 @@ Lifecycle: agents register themselves on terminal-bring-up and unregister on shu
 ### Poller config + status
 
 ```
-POST /agentmux/reactive/poller/config { "agentmux_url", "agentmux_token" }
+POST /agentmux/reactive/poller/config { "muxbus_url", "muxbus_token" }
 GET  /agentmux/reactive/poller/status
 GET  /agentmux/reactive/poller/stats
 ```
@@ -67,21 +67,21 @@ Diagnostic endpoints — list registered agents on this instance, fetch the audi
 
 1. **Frontend ↔ sidecar.** Frontend sends `X-AuthKey` from the per-launch UUIDv4 the launcher generated. Same boundary as every other authed RPC.
 2. **Sidecar ↔ peer sidecar (cross-instance).** The writing sidecar embeds its `auth_key` in its registry file. The forwarding sidecar reads the registry, extracts the peer's `auth_key`, and presents it on the forward. The registry file is `0600` so a co-user on the same box can't read it — same boundary as the existing `authkey.dev` file.
-3. **Sidecar ↔ cloud MuxBus relay.** The poller calls outbound HTTPS to the configured `agentmux_url`, presenting `agentmux_token` as a bearer. The relay never calls into the sidecar. All inbound messages arrive over the polled connection (long-poll or websocket — relay-specific).
+3. **Sidecar ↔ cloud MuxBus relay.** The poller calls outbound HTTPS to the configured `muxbus_url`, presenting `muxbus_token` as a bearer. The relay never calls into the sidecar. All inbound messages arrive over the polled connection (long-poll or websocket — relay-specific).
 
 ## Cloud MuxBus poller — opt-in
 
 The poller is **off by default**. To enable it:
 
 1. Open the Subagent Watcher or a terminal pane in AgentMux.
-2. Issue the `X` OSC sequence (or use the in-app settings panel) with `{ agentmux_url, agentmux_token }`.
+2. Issue the `X` OSC sequence (or use the in-app settings panel) with `{ muxbus_url, muxbus_token }`.
 3. The poller starts long-polling the relay; inbound messages route through the same `reactive_handler.inject_message` path as local injects.
 
 To stop:
 
-- Configure with empty `agentmux_url` and `agentmux_token`. The poller stops cleanly.
+- Configure with empty `muxbus_url` and `muxbus_token`. The poller stops cleanly.
 
-The relay is **your choice of operator** — AgentMux Corp doesn't run one. Spin up your own, or use the open-source agentbus-server. There is no AgentMux-Corp-controlled endpoint baked into the binary.
+The relay is **your choice of operator** — AgentMux Corp doesn't run one. Spin up your own, or use the open-source `@agentmuxai/muxbus-server`. There is no AgentMux-Corp-controlled endpoint baked into the binary.
 
 ## Cross-instance forwarding
 

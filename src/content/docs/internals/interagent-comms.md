@@ -89,12 +89,12 @@ LAN forwarding uses the peer's actual IP + port from the mDNS announcement — n
 
 ## WAN tier
 
-The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `agentbus-server`; the binary still carries the legacy name).
+The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `@agentmuxai/muxbus-server`).
 
 To enable:
 
 1. Open any terminal pane in AgentMux.
-2. Configure the poller via the in-app settings panel with `{ agentmux_url, agentmux_token }`.
+2. Configure the poller via the in-app settings panel with `{ muxbus_url, muxbus_token }`.
 3. The sidecar starts polling the relay; inbound messages route through the same reactive handler as local injects.
 
 The relay is opt-in and operates under your control. See [Reactive event bus](/security/reactive-event-bus/) for the full WAN trust model and poller configuration details.
