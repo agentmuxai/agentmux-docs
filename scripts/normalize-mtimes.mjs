@@ -29,7 +29,16 @@
 import { utimes, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const FIXED_DATE = new Date('1970-01-01T00:00:00Z');
+// A fixed PAST date — older than any S3 object (uploaded in real time) so
+// `aws s3 sync` resolves "local not newer" → SKIP for unchanged files.
+//
+// NOT the Unix epoch (1970-01-01T00:00:00Z): the AWS CLI flags a mtime at/near
+// epoch 0 as "File has an invalid timestamp. Passing epoch time as timestamp"
+// and then exits with code 2 (on Windows the FILETIME→epoch conversion of 0
+// underflows). deploy-cli treats that non-zero exit as an upload failure and
+// aborts before the CloudFront invalidation. A valid, well-after-epoch date
+// keeps the skip-unchanged optimization without tripping the warning.
+const FIXED_DATE = new Date('2000-01-01T00:00:00Z');
 const ROOT = process.argv[2] ?? 'dist';
 
 let fileCount = 0;
