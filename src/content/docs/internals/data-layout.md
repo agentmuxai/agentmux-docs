@@ -58,10 +58,11 @@ Pre-migration snapshots auto-save when an upgrade-with-migration is detected, th
 ```
 ~/.agentmux/snapshots/<channel>-pre-v<code-version>-<ISO8601>.bak/
   ├── objects.db
-  └── sagas.db
+  ├── sagas.db
+  └── filestore.db
 ```
 
-The snapshot is a `VACUUM INTO` copy of each SQLite store — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
+The snapshot is a `VACUUM INTO` copy of each of the sidecar's SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. (The launcher's `launcher-sagas.db` is a separate saga log and is not part of the pre-migration snapshot.) Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
 
 To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/` (v0.41.1+), matching the version whose runtime DB you want to restore. There's no CLI for this yet — it's a planned follow-up.
 
