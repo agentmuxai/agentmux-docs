@@ -181,6 +181,8 @@ export default defineConfig({
 								{ label: 'Zoom system', slug: 'internals/zoom' },
 								{ label: 'Interagent event bus', slug: 'internals/interagent-comms' },
 								{ label: 'Agent pane virtualization', slug: 'internals/agent-pane-virtualization' },
+								{ label: 'Provider CLI integration', slug: 'internals/provider-cli-integration' },
+								{ label: 'Conversation overhead', slug: 'internals/conversation-overhead' },
 								{ label: 'LAN discovery', slug: 'internals/lan-discovery' },
 								{ label: 'Warden architecture', slug: 'internals/warden' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
