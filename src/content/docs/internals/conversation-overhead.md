@@ -88,7 +88,12 @@ On invalidation, turn 1 of the next session pays full `cache_creation_input_toke
 
 ## Conversation history ownership
 
-AgentMux does **not** accumulate or re-send conversation history. The provider CLI subprocess stays alive between turns and owns the `messages` array internally. AgentMux communicates with the CLI via PTY stdin (user turns) and reads structured events from its stdout — it never reconstructs or replays history.
+AgentMux does **not** accumulate or re-send conversation history. History ownership depends on the controller type:
+
+- **`persistent` (Claude Code):** The CLI subprocess stays alive between turns and owns the `messages` array for the session. AgentMux communicates via PTY stdin and reads structured events from stdout — it never reconstructs or replays history.
+- **`subprocess` (Codex, Gemini, others):** A fresh CLI process is spawned per turn. The provider's API holds session state server-side (via a session or thread ID), so history is not re-sent by the client on each turn either — it is referenced by ID.
+
+In both cases AgentMux itself never holds or replays the conversation history.
 
 Context compaction (automatic truncation when the context window fills up) is handled entirely inside the CLI. AgentMux detects compaction by watching for a large drop in the reported token count in the CLI's output stream, but does not trigger or control it.
 
