@@ -37,9 +37,11 @@ This is where prompt caching matters.
 
 ## Prompt caching and the real per-turn cost
 
-All three supported provider CLIs apply `cache_control: {"type": "ephemeral"}` to the system prompt block. The provider's API caches the system prompt server-side after the first request. Subsequent turns in the same session pay cache-read rates instead of full input rates.
+Each provider CLI manages system prompt caching using its own provider-specific mechanism. The details below cover Claude Code, which is the most documented case. Other providers use different caching APIs with different semantics.
 
-For Claude (Anthropic), the cost breakdown is:
+### Claude Code (Anthropic)
+
+The Claude Code CLI applies `cache_control: {"type": "ephemeral"}` to the system prompt block — this is Anthropic's explicit prompt caching header (`anthropic-beta: prompt-caching-2024-07-31`). The Anthropic API caches the system prompt server-side after the first request; subsequent turns in the same session pay cache-read rates.
 
 | Turn | Token type charged | Notes |
 |---|---|---|
@@ -53,6 +55,14 @@ real_context_tokens = input_tokens + cache_creation_input_tokens + cache_read_in
 ```
 
 Source: `frontend/app/view/agent/claude-translator.ts` (token accumulation), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`.
+
+### Codex (OpenAI)
+
+OpenAI applies prompt caching automatically for inputs over 1,024 tokens — no explicit header is required. Common prompt prefixes are cached server-side; the cost reduction is reflected in the `cached_tokens` field of the usage response. AgentMux does not currently surface Codex cache token counts separately.
+
+### Gemini (Google)
+
+Gemini supports context caching via a separate explicit API call (not an in-request header). The Gemini CLI manages this internally. Token cost reporting follows Gemini's usage response format, which differs from Anthropic's.
 
 ## What makes AgentMux's system prompt larger than a bare CLI session
 
