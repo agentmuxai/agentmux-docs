@@ -31,7 +31,7 @@ This file is written **once per agent launch**, not once per turn. AgentMux does
 
 ### Layer 2 — The provider CLI injects on every API call
 
-The provider CLI (Claude Code, Codex, Gemini) reads the CLAUDE.md file from disk and includes its contents as the **system prompt** on every HTTP request it makes to the provider's API. From the API's perspective, the system prompt is re-sent on every turn.
+The provider CLI reads its project instructions file from disk — `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini — and includes its contents as the **system prompt** on every HTTP request it makes to the provider's API. From the API's perspective, the system prompt is re-sent on every turn.
 
 This is where prompt caching matters.
 

@@ -37,7 +37,12 @@ Source: `agentmux-cef/src/commands/providers.rs` `get_local_cli_bin_path()`, `de
 
 ## Step 2 — Argument construction
 
-Launch arguments are built fresh each turn by `frontend/app/view/agent/buildRuntimeArgs.ts`. The process:
+Launch arguments are assembled by `frontend/app/view/agent/buildRuntimeArgs.ts`. When they are applied depends on the controller type:
+
+- **`persistent` (Claude Code):** Args are built once at the time the CLI subprocess is spawned and do not change between turns — the process stays alive for the session.
+- **`subprocess` (Codex, Gemini, others):** Args are rebuilt per turn, since a fresh process is spawned for each turn.
+
+The construction process:
 
 1. **Start from base args** — `ProviderDefinition.launchArgs` (e.g., `["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"]` for Claude).
 2. **Strip conflicting flags** — any `--dangerously-skip-permissions`, `--permission-mode`, `--yolo`, `--model`, and `--effort` flags already in the base are removed so runtime values take precedence.
