@@ -1,0 +1,86 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (full — typedoc + rustdoc + astro)
+        run: npm run build:full
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::050544946291:role/agentmux-docs-deploy
+          aws-region: us-east-1
+
+      - name: Sync non-HTML assets to S3
+        run: |
+          aws s3 sync dist/ s3://agentmux-docs-prod/ \
+            --delete \
+            --exclude "*.html"
+
+      - name: Force-upload HTML files
+        # normalize-mtimes sets all dist mtimes to a fixed epoch so s3 sync
+        # skips HTML when only the CSS hash inside it changes. Always force-
+        # upload HTML to prevent stale pages referencing deleted CSS bundles.
+        run: |
+          aws s3 cp dist/ s3://agentmux-docs-prod/ \
+            --recursive \
+            --exclude "*" \
+            --include "*.html"
+
+      - name: Invalidate CloudFront
+        run: |
+          INVAL=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+          echo "Invalidation ID: $INVAL"
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --id "$INVAL"
+
+      - name: Verify — CSS hash must match between live site and S3
+        run: |
+          LIVE=$(curl -sf "https://docs.agentmux.ai/user-guide/" \
+            | grep -o 'common\.[^"]*\.css' | head -1)
+          S3=$(aws s3 ls s3://agentmux-docs-prod/_astro/ \
+            | grep common | awk '{print $4}')
+          echo "Live: $LIVE"
+          echo "S3:   $S3"
+          if [ "$LIVE" != "$S3" ]; then
+            echo "CSS hash mismatch — HTML may not have been uploaded correctly"
+            exit 1
+          fi
+          echo "✓ CSS hash matches — deploy verified"
