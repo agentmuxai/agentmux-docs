@@ -5,11 +5,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout (with submodules)
@@ -32,11 +37,10 @@ jobs:
       - name: Build (full — typedoc + rustdoc + astro)
         run: npm run build:full
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::050544946291:role/agentmux-docs-deploy
           aws-region: us-east-1
 
       - name: Sync non-HTML assets to S3
