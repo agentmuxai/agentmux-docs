@@ -98,7 +98,7 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | `task test` | Run tests (`vitest`) |
 | `task clean` | Clean build artifacts |
 
-Run `task --list` to see every task. Note that `task package:macos` and `task package:msix` exist as TODO stubs in `Taskfile.yml` but do nothing — the full DMG / MSIX / .deb release artifact set is produced by [`agentmuxai/agentmux-builder`](https://github.com/agentmuxai/agentmux-builder), not local builds.
+Run `task --list` to see every task. Note that `task package:macos` and `task package:msix` exist as TODO stubs in `Taskfile.yml` but do nothing — full DMG / MSIX / .deb release artifacts are produced by the release pipeline, not local builds.
 
 ### Local build labels
 
