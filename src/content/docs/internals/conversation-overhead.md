@@ -21,13 +21,13 @@ Before the provider CLI process starts, AgentMux assembles and writes a `CLAUDE.
 | Agent MD | Agent definition | Per-agent task instructions |
 | Global memory bundles | Brain bundles (ordered) | Shared knowledge prepended to every agent |
 | Skills index | Installed skills | `# Available Skills` section listing callable skills |
-| Template vars | Runtime | `{{AGENT}}`, `{{DATE}}`, `{{WORKING_DIR}}` substituted at write time |
+| Template vars | Runtime | `{{AGENT}}`, `{{AGENT_DISPLAY}}`, `{{AGENT_ID}}`, `{{DATE}}` substituted at write time. `{{WORKING_DIR}}` is a supported placeholder but is not currently wired up on this path — see the note below. |
 
-Source: `agentmux-srv/src/backend/agent_config.rs` `build_config_files()`, `agentmux-srv/src/server/app_api.rs` `write_agent_config_files()`.
+Source: `agentmux-srv/src/backend/agent_config.rs` `build_config_files()`, `agentmux-srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
 
 This file is written **once per agent launch**, not once per turn. AgentMux does not call the provider's API directly — it hands the file off to the CLI and steps back.
 
-**Startup payload (separate from the CLAUDE.md file):** On the first turn of a new session (not on `--resume`), AgentMux also sends a structured user-turn message containing runtime identity, assigned accounts, peer agents, date/version, and any custom startup instructions. This is a one-time cost, not repeated. Source: `frontend/app/view/agent/buildStartupPayload.ts`, invoked from `frontend/app/view/agent/agent-view.tsx`.
+**Startup payload (separate from the CLAUDE.md file):** On the first turn of a new session (not on `--resume`), AgentMux also sends a structured user-turn message containing runtime identity, assigned accounts, peer agents, date/version, and any custom startup instructions. This is a one-time cost, not repeated. Source: `frontend/app/view/agent/startup/buildStartupPayload.ts`, invoked from `frontend/app/view/agent/agent-view.tsx` (guarded so it's skipped whenever the block already carries a session ID, i.e. on resume).
 
 ### Layer 2 — The provider CLI injects on every API call
 
@@ -48,13 +48,15 @@ The Claude Code CLI applies `cache_control: {"type": "ephemeral"}` to the system
 | Turn 1 | `cache_creation_input_tokens` | Full cost to write the cache entry |
 | Turn 2+ | `cache_read_input_tokens` | ~10× cheaper than full input tokens |
 
-AgentMux tracks all three token types — `input_tokens`, `cache_creation_input_tokens`, and `cache_read_input_tokens` — in `TokenCounts` (`agentmux-srv/src/backend/types.rs`) and sums them to show real context size. The correct formula is:
+AgentMux tracks all three token types — `input_tokens`, `cache_creation_input_tokens`, and `cache_read_input_tokens` — and sums them to show real context size. The correct formula is:
 
 ```
 real_context_tokens = input_tokens + cache_creation_input_tokens + cache_read_input_tokens
 ```
 
-Source: `frontend/app/view/agent/claude-translator.ts` (token accumulation), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`.
+Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation, lines 95-98), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `agentmux-srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
+
+**Note:** these three fields are parsed per-turn for the live UI counters only — they are not persisted anywhere queryable. There is currently no way to check historically whether caching landed for a past session; only live, in the moment.
 
 ### Codex (OpenAI)
 
@@ -82,9 +84,14 @@ The provider's cached system prompt entry is invalidated whenever the system pro
 - A memory bundle is added to or removed from the agent
 - The skills index changes (skill installed/removed)
 - A new session is started without `--resume` (the session ID changes, and the CLI opens a fresh context)
-- The working directory changes (affects `{{WORKING_DIR}}` substitution)
 
 On invalidation, turn 1 of the next session pays full `cache_creation_input_tokens` again.
+
+:::note[Working directory does *not* currently invalidate the cache]
+An earlier version of this page listed "the working directory changes" as a trigger, via `{{WORKING_DIR}}` template substitution. As of this writing, `write_agent_config_files` calls `build_config_files` — the variant that explicitly does **not** substitute `{{WORKING_DIR}}` (its own code comment: *"WORKING_DIR is not available in this signature... expansion will leave `{{WORKING_DIR}}` intact if absent"*). The sibling function that does substitute it, `build_config_files_with_bus`, has no callers anywhere in the codebase. So today, changing an agent's working directory has no effect on the assembled CLAUDE.md and does not invalidate the prompt cache. This is either dead code that should be wired up, or this line should stay removed — tracked as an open item, not yet decided either way.
+:::
+
+**Mitigation for cross-instance cache reuse:** the Claude Code provider's launch args include `--exclude-dynamic-system-prompt-sections`, which moves per-machine content (cwd, env info, memory paths, git status) out of the CLI's own dynamically-generated system-prompt sections and into the first user message instead — so the same assembled CLAUDE.md produces the same cached prompt prefix across different machines/instances, rather than each one minting its own cache entry. This only applies to content the CLI itself injects dynamically (separate from the CLAUDE.md-content invalidation triggers above), and is a no-op if an agent's `provider_flags` sets a custom `--system-prompt` (a free-form, user-configurable field), since that flag's own documented behavior only applies to the default system prompt.
 
 ## Conversation history ownership
 
@@ -95,9 +102,9 @@ AgentMux does **not** accumulate or re-send conversation history. History owners
 
 In both cases AgentMux itself never holds or replays the conversation history.
 
-Context compaction (automatic truncation when the context window fills up) is handled entirely inside the CLI. AgentMux detects compaction by watching for a large drop in the reported token count in the CLI's output stream, but does not trigger or control it.
+Context compaction (automatic truncation when the context window fills up) is handled entirely inside the CLI. AgentMux does not trigger or control it — the CLI never reports its own context-window size, so AgentMux learns/seeds it from observed usage and applies a fixed buffer to estimate when compaction is imminent.
 
-Compaction threshold for Claude Code CLI: `contextWindow - 33,000` tokens.
+Compaction threshold for Claude Code CLI: `contextWindow - 33,000` tokens. Source: `frontend/app/store/agent-pane-state/context-window.ts` — `const COMPACTION_BUFFER = 33_000`.
 
 ## Provider summary
 
