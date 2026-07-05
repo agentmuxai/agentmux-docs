@@ -128,7 +128,7 @@ Run directly on your machine. The agent CLI process spawns as a child process wi
 
 Run inside Docker containers. AgentMux connects to the container and manages the agent lifecycle. Useful for isolated environments or when agents need specific toolchains.
 
-Requires Docker installed **and the Docker daemon running** (e.g. Docker Desktop started) — having the `docker` CLI installed isn't enough on its own if the daemon itself is stopped. If the Container option is greyed out as "Docker not detected," start Docker Desktop and give AgentMux a few seconds to notice — it re-checks automatically, no restart needed.
+Requires Docker installed **and the Docker daemon running** (e.g. Docker Desktop started) — having the `docker` CLI installed isn't enough on its own if the daemon itself is stopped. If the Container option is greyed out as "Docker not detected," start Docker Desktop. On recent AgentMux versions this is picked up automatically within a few seconds; on older versions, restart AgentMux after starting Docker Desktop.
 
 ### Import from Claw
 
