@@ -138,7 +138,7 @@ Three higher-level namespaces are designed but not yet registered in `app_api.rs
 |---|---|---|
 | `identity.*` | `listidentityaccounts`, `linkagentidentity`, `account.key.verify`, … | S1 scope guard — agent writes only its own identity links; secrets returned as `masked_tail` only |
 | `preset.*` | `listmemories`, `getmemory`, `upsertmemory`, `deletememory` | Blank-singleton guard; `preset.self.get` resolves the calling agent instance's bound memory |
-| `memory.*` | `agent:memory:list/read_file/write_file` | S1 scope guard; fires `agent:memory:changed:<agent_id>` (persist=0) after writes |
+| `memory.*` | `agent:memory:list/read_file/write_file` | S1 scope guard; fires `agent:memory:changed:<agent_id>` after writes — a transient WPS event (`persist: 0`), not a DB-persisted row |
 
 Prerequisite: extend `RpcContext` with an `agent_id` field populated from `bus_agent_id` in `websocket.rs` (see §9 of the spec).
 
