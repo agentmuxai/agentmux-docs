@@ -83,6 +83,11 @@
    masking always applies regardless. */
 .header:not(.sl-header-ready) {
   opacity: 0;
+  /* Also remove from tab order/AT tree while hidden -- opacity:0 alone still
+     leaves nav/search controls focusable and announced during the reveal
+     window. Not gated on prefers-reduced-motion (unlike the fade below):
+     visibility flips instantly regardless, only the fade is cosmetic. */
+  visibility: hidden;
 }
 @media (prefers-reduced-motion: no-preference) {
   .header.sl-header-ready {
