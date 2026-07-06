@@ -50,6 +50,46 @@
   }
 }
 
+/* Header reveal guard: masks the first-load header reflow from the AgentMux
+   browser pane briefly initializing at a narrower width (<50rem) before
+   expanding to its final desktop width — Starlight's 50rem breakpoint flips
+   the header between mobile and desktop layout mid-resize, visibly moving
+   the search button ("jerk left" — confirmed live: button moves from
+   left:623 at 686px wide to left:324 once the pane settles at ~1586px,
+   with nothing masking the transition since #84 removed the original fix).
+   The JS reveal script (astro.config.mjs head script, mirrors the sidebar
+   scroll-guard pattern above) adds .sl-header-ready once window resizing
+   has been quiet for 60ms, then this rule lifts.
+
+   #81 originally masked this with a BODY-wide `animation`-based fade-in
+   gated on `prefers-reduced-motion: no-preference`, reverted in #84 because
+   it exposed the unstyled root background through the transparent body as
+   a white/black flash on the sidebar tree. #84's stated rationale — "the
+   sidebar scroll guard already covers pane-init layout thrashing" — was
+   incorrect: that guard only hides the sidebar itself, not the header, so
+   the header jerk was never actually covered by anything after #84 and
+   this regressed silently.
+
+   This version fixes both problems: scoped to .header only (not body), so
+   it can't reintroduce that flash (header/body/root all resolve to the
+   same near-black in this theme — rgb(10,10,15) / rgb(5,5,8) / rgb(10,10,15)
+   — confirmed live). And the masking itself (opacity:0 → 1 via class
+   toggle) is NOT gated on prefers-reduced-motion, unlike #81's animation —
+   confirmed live that this exact environment reports
+   `prefers-reduced-motion: reduce`, which would make an animation-gated
+   fix silently inert (present in code, never actually applying) while
+   still leaving the real jerk fully visible. Only the optional smoothing
+   transition below is gated on that preference; the hide-until-ready
+   masking always applies regardless. */
+.header:not(.sl-header-ready) {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .header.sl-header-ready {
+    transition: opacity 0.15s ease;
+  }
+}
+
 
 
 /* Source reference links — inline code that links to GitHub */
