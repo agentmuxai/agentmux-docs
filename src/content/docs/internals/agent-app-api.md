@@ -107,7 +107,7 @@ A session zone is bound to the agent *definition* (`definition_id`), so every bl
 
 | Command | Purpose |
 |---|---|
-| `agent:memory:list` | List an agent's native memory (brain) files. |
+| `agent:memory:list` | List an agent's native memory files. |
 | `agent:memory:read_file` | Read one native memory file. |
 | `agent:memory:write_file` | Write one native memory file. |
 
@@ -125,10 +125,22 @@ The backend also registers a large set of management RPCs that the frontend (and
 | Identity accounts | `listidentityaccounts`, `getidentityaccount`, `upsertidentityaccount`, `deleteidentityaccount`, `account.key.verify`, `account.oauth.start`, `account.oauth.poll`, `account.oauth.cancel` |
 | Agent ↔ identity junction | `linkagentidentity`, `unlinkagentidentity`, `listagentidentities` |
 | Identity bundles | `listidentitybundles`, `getidentitybundle`, `upsertidentitybundle`, `deleteidentitybundle`, `bindidentityaccount`, `unbindidentityaccount`, `listidentitybindings` |
-| Memory bundles (brain) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
+| Memory bundles (presets) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
 | Agent instances | `listagentinstances`, `getagentinstance`, `createagentinstance`, `updateagentinstance`, `deleteagentinstance`, `listnamedagents`, `hidenamedagent`, `listrecentsessions` |
 | Container runtime | `containerruntimeavailable` |
 | Drones | `listdrones`, `getdrone`, `upsertdrone`, `deletedrone`, `rundrone`, `listdroneruns` |
+
+### Identity, presets & memory — planned App API namespaces
+
+Three higher-level namespaces are designed but not yet registered in `app_api.rs` — see the [implementation spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) for full request/response shapes, security invariants, and phasing. They wrap the existing low-level handlers above behind the App API permission boundary and add per-agent scope enforcement.
+
+| Planned namespace | Delegates to | Adds |
+|---|---|---|
+| `identity.*` | `listidentityaccounts`, `linkagentidentity`, `account.key.verify`, … | S1 scope guard — agent writes only its own identity links; secrets returned as `masked_tail` only |
+| `preset.*` | `listmemories`, `getmemory`, `upsertmemory`, `deletememory` | Blank-singleton guard; `preset.self.get` resolves the calling agent instance's bound memory |
+| `memory.*` | `agent:memory:list/read_file/write_file` | S1 scope guard; fires `agent:memory:changed:<agent_id>` after writes — a transient WPS event (`persist: 0`), not a DB-persisted row |
+
+Prerequisite: extend `RpcContext` with an `agent_id` field populated from `bus_agent_id` in `websocket.rs` (see §9 of the spec).
 
 ### Widget RPCs (`cli_handlers.rs`)
 
@@ -397,3 +409,4 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 - [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
 - [Trust Center](/trust-center/) — credential management UI
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
+- [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — implementation spec for the planned `identity.*`/`preset.*`/`memory.*` App API namespaces
