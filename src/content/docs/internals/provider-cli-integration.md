@@ -18,9 +18,13 @@ AgentMux does not call AI provider APIs directly. Instead, it manages a provider
 | Gemini | `gemini` | `@google/gemini-cli` | `subprocess` | `stream-json` (NDJSON) |
 | OpenClaw | `openclaw` | — | `acp` | JSON-RPC 2.0 over stdio |
 | Kimi | `kimi` | — | `subprocess` | `stream-json` (NDJSON) |
-| Muxcode | `muxcode` | — | `subprocess` | — |
+| Muxcode | `muxcode` | `@agentmuxai/muxcode` | `subprocess` | `stream-json` (NDJSON) — reuses the Claude translator |
 
 The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` uses the Agent Communication Protocol over stdio.
+
+:::note
+The current provider registry also includes `pi` and `copilot` (both documented in [Auth flows](/auth/)) and `qwen` — their exact controller type / output format weren't re-verified for this table. **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/).
+:::
 
 Provider definitions live in `frontend/app/view/agent/providers/index.ts`.
 

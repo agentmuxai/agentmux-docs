@@ -7,13 +7,15 @@ description: Per-provider auth model — OAuth vs API key — and how AgentMux s
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux supports seven providers (`claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi`). Each ships with its own auth model and its own auth-config directory. Provider credentials are stored **account-wide** under `~/.agentmux/shared/providers/<provider>/` — they persist across channel upgrades and are shared when running multiple instances on the same machine.
+AgentMux supports nine providers (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot`). Each ships with its own auth model and its own auth-config directory. Provider credentials are stored **account-wide** under `~/.agentmux/shared/providers/<provider>/` — they persist across channel upgrades and are shared when running multiple instances on the same machine.
+
+`muxcode` ("Mux Code") is AgentMux's own first-party agentic coding CLI (npm: `@agentmuxai/muxcode`); it emits Claude-compatible stream-json output, so it reuses the Claude translator internally.
 
 The canonical source is `frontend/app/view/agent/providers/index.ts:PROVIDERS`. Each entry has an `authType`, `authCheckCommand`, `authLoginCommand`, and `authConfigDirEnvVar`.
 
-## Trust Center: Accounts tab
+## Armory: Accounts tab
 
-The primary UI for managing provider credentials is the **Accounts tab** inside [Trust Center](/trust-center/) (hamburger menu ≡ → Trust Center → Accounts).
+The primary UI for managing provider credentials is the **Accounts tab** inside the [Armory](/armory/) (hamburger menu ≡ → Armory → Accounts).
 
 Each service shows as a tile with its current connection status. Click a tile to connect, reconnect, or revoke:
 
@@ -33,6 +35,10 @@ The Accounts tab manages the underlying provider tokens. These tokens persist in
 | Kimi Code CLI | `api-key` | `kimi login` | `KIMI_SHARE_DIR` |
 | GitHub Copilot CLI | `oauth` | `copilot auth login` | `COPILOT_HOME` |
 | Pi | `api-key` | `pi config` | `PI_HOME` |
+
+:::note
+Two additional providers (`muxcode`, `qwen`) exist in the current provider registry but aren't yet reflected in this table — their exact `authType`/login command/env var weren't re-verified for this pass. Check `frontend/app/view/agent/providers/index.ts:PROVIDERS` for the authoritative current values.
+:::
 
 ## OAuth providers
 

@@ -20,7 +20,8 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Theme** | — | Submenu listing the available color themes. Selection persists via `window:theme` in `settings.json`. |
 | **Opacity** | — | Submenu of preset levels (35% – 100%). Below 100%, the window becomes translucent. Per-window override is in the [InstancePanel](/window-appearance/). |
 | **Help** | — | Opens the in-app Help pane (a quick reference). |
-| **Settings** | — | Opens `settings.json` in your default editor — same as picking *Settings* from the command palette. See [Settings reference](/settings/). |
+| **Armory** | — | Opens the Armory pane (formerly "Trust Center") — Accounts, Identities, Brain, Bundles, MCP Servers, Skills. See [Armory](/armory/). |
+| **Settings** | — | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
 | **Exit** | — | Closes the current window (not the whole app — other windows stay open). |
 
 The Theme and Opacity submenus check-mark the currently active value, so you can see at a glance what you're on.

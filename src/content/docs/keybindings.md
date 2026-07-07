@@ -69,15 +69,6 @@ Most commands also have a direct keyboard shortcut — see the tables below.
 | Split Below | `Cmd + Shift + D` | `Alt + Shift + D` |
 | Split in Direction | `Ctrl + Shift + S`, then Arrow Key |
 
-## wsh Commands
-
-Run these from any terminal pane:
-
-| Command | Description |
-|---------|-------------|
-| `wsh view [file\|url]` | Preview files, directories, or web URLs in a new pane |
-| `wsh edit [file]` | Open a file for editing in a code preview pane |
-
 ## Customization
 
 Keybindings can be customized in the settings file. See [Configuration](/config) for details on the settings file location and format.

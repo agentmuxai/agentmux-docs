@@ -36,17 +36,17 @@ For the spec, see [`SPEC_OAUTH_IDENTITY_BUNDLES_2026_05_22.md`](https://github.c
 
 Identity is **not a widget-bar entry.** Two paths reach it:
 
-**Per-agent (the original surface):**
+**Per-agent:**
 1. Open an Agent pane (pinned in the widget bar).
-2. Click the cog (⚙) in the pane header.
-3. Switch to the **Identity** tab.
+2. Click the **Agent setup** icon (`id-card`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
+3. Switch to the **Accounts** tab (renamed from "Identity" — same identity-bundle editor underneath, `AgentIdentityModalPanel`).
 
 **App-wide manager (hamburger menu):**
 1. Click the hamburger (≡) at the top of the tab bar.
-2. Choose **Trust Center**.
-3. Switch to the **Identity** tab — browse and edit any bundle without first opening a specific agent.
+2. Choose **Armory** (formerly "Trust Center").
+3. Switch to the **Identities** tab — browse and edit any bundle without first opening a specific agent.
 
-The hamburger-menu path opens a singleton modal shared across the app: if it's already open in another window, clicking the entry focuses that window instead of opening a duplicate. The per-agent cog path stays scoped to the current pane.
+The per-agent path stays scoped to the current pane; the Armory's Identities tab is app-wide.
 
 The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but the primary paths are the two above.
 

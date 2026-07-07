@@ -40,7 +40,7 @@ What this does *not* protect against:
 
 The CEF host runs its own small HTTP server on a separate random ephemeral port (also `127.0.0.1` only). The frontend talks to it for things that don't belong on the sidecar — clipboard, window management, file pickers, etc.
 
-Auth is a bearer token injected at startup. The CORS posture mirrors the sidecar: loopback-only origins.
+Auth is a bearer token injected at startup (checked inside the request handler). **Unlike the sidecar, this server's CORS layer is currently fully permissive** (`CorsLayer::permissive()` in `agentmux-cef/src/ipc.rs`), not scoped to loopback origins — the bearer-token check is the only thing standing between a page that discovers this port and the host IPC API. This is a known gap, tracked separately from the sidecar's tightened CORS predicate (see [IPC catalog](/internals/ipc-catalog/) for the full channel-by-channel audit).
 
 ## mDNS discovery (opt-in)
 
