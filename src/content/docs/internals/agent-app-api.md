@@ -153,7 +153,7 @@ Five higher-level, agent-scoped namespaces wrap the low-level handlers above beh
 
 This is the "Brain" primitive — see [Memory bundles → Native memory](/memory/#native-memory-brain) and the [Armory](/armory/#brain). It's distinct from a Bundle (below).
 
-#### `mcp.*` {#mcp}
+#### `mcp.*`
 
 | Command | Purpose | Params |
 |---|---|---|
@@ -167,7 +167,7 @@ This is the "Brain" primitive — see [Memory bundles → Native memory](/memory
 | `mcp.catalog.upsert` | Create/edit a global server (cannot promote a private one) | `id?`, `name`, `transport?`, `config?` |
 | `mcp.catalog.delete` | Delete a global server (cannot delete a private one via the catalog) | `id` |
 
-#### `skill.*` {#skills}
+#### `skill.*`
 
 Same shape as `mcp.*`:
 
@@ -183,7 +183,7 @@ Same shape as `mcp.*`:
 | `skill.catalog.upsert` | Create/edit a global skill | `id?`, `name`, `trigger?`, `skill_type?`, `description?`, `content?` |
 | `skill.catalog.delete` | Delete a global skill | `id` |
 
-#### `bundle.*` {#bundle}
+#### `bundle.*`
 
 The reusable agent-definition primitive (see [Memory bundles](/memory/) — the page name predates this rename, the content is current):
 

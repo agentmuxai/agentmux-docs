@@ -72,7 +72,7 @@ An agent's own MCP Servers tab (Agent setup → MCP Servers) lists what that age
 
 ## Skills
 
-The catalog of Skill primitives, with the same global-vs-private shape as MCP Servers (`skill.catalog.*` for global, `skill.*` for agent-scoped). See [Agent App API](/internals/agent-app-api/#skills) for the full RPC reference.
+The catalog of Skill primitives, with the same global-vs-private shape as MCP Servers (`skill.catalog.*` for global, `skill.*` for agent-scoped). See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
 
 ## Opening the Armory
 

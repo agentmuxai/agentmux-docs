@@ -63,7 +63,7 @@ Both surfaces, and an agent acting on itself, go through the same primitive:
 | App API | `memory.list`, `memory.read`, `memory.write` |
 | MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite` |
 
-See [Agent App API](/internals/agent-app-api/#memory) for the full parameter reference.
+See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for the full parameter reference.
 
 ## Launch flow
 
