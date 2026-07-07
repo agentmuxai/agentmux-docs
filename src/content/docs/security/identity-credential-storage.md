@@ -23,13 +23,13 @@ When wired up, the bundle will store the secret ARN; AgentMux will fetch the val
 
 ### `PlaintextDev` — plaintext, debug builds only
 
-For local development convenience. Stores the credential value directly in the SQLite database (`~/.agentmux/state.db`). **`cfg(debug_assertions)`-gated** — calling this variant in a release build is a hard error at resolve time, not a silent fallback.
+For local development convenience. Stores the credential value directly in `store.db` (the account-wide SQLite store under `~/.agentmux/shared/`). **`cfg(debug_assertions)`-gated** — calling this variant in a release build is a hard error at resolve time, not a silent fallback.
 
 If you build AgentMux from source for development, this variant works; the binary releases on `agentmux.ai/download` do not allow it.
 
 ## What's in the database
 
-The SQLite database at `~/.agentmux/state.db` contains, for each Identity bundle:
+`store.db` (the account-wide SQLite store under `~/.agentmux/shared/`) contains, for each Identity bundle:
 
 - Bundle name and description
 - Per-provider account list (provider class + display name)
@@ -88,7 +88,7 @@ The 2026-05-11 security audit ([source](/security/trust-model/)) confirmed:
 - `PlaintextDev` is genuinely gated to debug builds (`cfg(debug_assertions)` at resolve time).
 - Tokens are not logged on resolve.
 - The spawn path injects via env vars, not command line.
-- `~/.agentmux/state.db` permissions inherit from the parent dir (`0700` on Unix).
+- `store.db` (the account-wide store under `~/.agentmux/shared/`) permissions inherit from the parent dir (`0700` on Unix).
 
 ## What's not protected
 
@@ -106,6 +106,6 @@ These are intentional trade-offs of running agents as the user. If you need stro
 - `agentmux-srv/src/backend/storage/wstore.rs` — `SecretRef` enum + database schema
 - `agentmux-srv/src/backend/identity/resolver.rs` — resolution + `cfg(debug_assertions)` gate
 - `agentmux-srv/src/backend/blockcontroller/subprocess.rs` — agent spawn + env injection
-- `~/.agentmux/state.db` — SQLite at rest
+- `store.db` (the account-wide store under `~/.agentmux/shared/`) — SQLite at rest
 
 **Related**: [Identity bundles](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).

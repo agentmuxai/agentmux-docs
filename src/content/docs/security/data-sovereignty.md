@@ -9,7 +9,7 @@ AgentMux runs locally. The marketing summary is "zero telemetry"; this page is t
 
 The following are stored only on the local filesystem and are never transmitted by AgentMux itself:
 
-- **Session state.** Every block, message, tool call, diff, and terminal output — all persisted in the local SQLite database under `~/.agentmux/state.db` (path may vary by platform; see [Persistence](/internals/persistence/)).
+- **Session state.** Every block, message, tool call, diff, and terminal output — all persisted in local SQLite databases (`objects.db`, `sagas.db`, `filestore.db`) under `~/.agentmux/channels/<channel>/versions/<v>/data/db/`, plus an account-wide `store.db` under `~/.agentmux/shared/` for identity accounts, bundles, drones, and MuxBus credentials (see [Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/) for the full layout).
 - **Prompts and replies.** The full content of what you send agents and what they send back.
 - **File contents agents read or write.** When an agent reads or modifies a file, AgentMux records the diff in the local database. The file itself stays where it was.
 - **Terminal output.** PTY output is streamed into the local database and rendered in the pane. Not uploaded.
@@ -74,7 +74,7 @@ If you want to verify any of this for yourself:
 
 - **Audit network traffic.** Run AgentMux behind a packet inspector (`mitmproxy`, `tcpdump`, your firewall logs). All you'll see is the LLM provider traffic from agent CLIs and any explicit user actions (tool download, etc.).
 - **Read the source.** The full outbound HTTP surface in the Rust backend is limited to: the tool store (`agentmux-srv/src/backend/tool_store.rs`), the cross-instance forwarder (`agentmux-srv/src/server/reactive.rs`), and the cloud MuxBus poller (opt-in, see above). Search for `reqwest::Client` in the codebase to see every outbound call.
-- **Inspect the SQLite database.** `~/.agentmux/state.db` is a normal SQLite file. Open it with the `sqlite3` CLI to confirm what's there.
+- **Inspect the SQLite databases.** `objects.db`, `sagas.db`, and `filestore.db` (per-channel, per-version) and `store.db` (account-wide, under `~/.agentmux/shared/`) are normal SQLite files. Open them with the `sqlite3` CLI to confirm what's there.
 
 ---
 
@@ -82,6 +82,6 @@ If you want to verify any of this for yourself:
 - `agentmux-srv/src/backend/tool_store.rs` — tool download path + SHA-256 pinning
 - `agentmux-srv/src/server/reactive.rs` — cross-instance forwarding
 - `agentmux-srv/src/main.rs` — mDNS opt-in default-off
-- `~/.agentmux/state.db` — local persistence (see [Persistence](/internals/persistence/))
+- `agentmux-common/src/data_paths.rs`, `agentmux-srv/src/registry/paths.rs` — local persistence paths (see [Persistence](/internals/persistence/))
 
 **Marketing claims this page substantiates**: "zero telemetry", "data sovereignty by default", "audit trail" on [agentmux.ai](https://agentmux.ai).

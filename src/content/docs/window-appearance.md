@@ -54,7 +54,7 @@ Per-window opacity is stored in the window's object meta:
 
 When you drag the slider to 100%, both keys are cleared — the window returns to fully opaque with no transparency layer active.
 
-On next launch, AgentMux reads the stored meta and restores each window's opacity individually.
+On next launch, AgentMux reads the stored meta and restores each window's opacity individually. As of the window-topology-persistence work, this now also survives an unexpected **crash** (not just a clean quit and relaunch): the value is mirrored to the srv-side `Window.opacity` field via a `SetWindowOpacity` RPC, so if the host process is killed outright, the next launch can still recover the last-set opacity from srv storage rather than defaulting to opaque.
 
 ### Interaction with global opacity
 

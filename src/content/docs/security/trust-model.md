@@ -28,6 +28,12 @@ The shorthand is: *the user is trusted; everything else needs to present a key.*
 - **Tampered tool downloads.** The optional tool catalog SHA-pins every binary AgentMux fetches on the user's behalf; a download whose hash doesn't match the catalog is discarded. See [Update model](/security/update-model/).
 - **Plaintext credentials at rest.** Identity bundles store *references* to credentials (env-var names or future Secrets Manager entries), not values. See [Identity & credential storage](/security/identity-credential-storage/).
 
+## Agent-to-agent message trust (JEKT markers)
+
+Messages delivered between agents via the [MuxBus](/internals/interagent-comms/) are wrapped in a `[JEKT:FROM=... TIER=... TRUST=...]` marker before injection. `TRUST=host-verified` means the message arrived through the local Host tier (same-machine); `TRUST=network-claimed` means it arrived over LAN or WAN, where the sender's identity is only as trustworthy as the credential that presented it. `TIER=sensitive` (or auto-escalation on credential/destructive keywords) is meant to make the receiving agent stop and get human confirmation rather than act on it — including a confirming reply from another agent over MuxBus. This is a convention encoded in agent operating instructions, not a MuxBus transport guarantee — see [Interagent Communication](/internals/interagent-comms/#message-trust-markers-jekt).
+
+**Known gap — MuxBus multi-tenant authorization.** A 2026-07-06 audit found that MuxBus **authenticates** callers (a valid bearer token) but does not **authorize** which `agent_id`s a given caller may address — any holder of a valid MuxBus credential can inject, poll, or claim messages for any `agent_id` platform-wide. This is a known, tracked gap (not a silent vulnerability) in the current WAN-relay design, not something this page previously overstated protection against — see the deployment posture notes below. Remediation is proposed but not yet implemented.
+
 ## What AgentMux does not protect against
 
 Be honest about what's out of scope:

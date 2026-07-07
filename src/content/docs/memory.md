@@ -9,6 +9,10 @@ AgentMux is in **early alpha** and under heavy active development. Many features
 
 A **Memory bundle** is a reusable agent definition — everything that makes the agent behave like itself. Provider, model, system prompt ("Soul"), instructions, context files, MCP servers, skills. Selectable at launch from the Launch Agent modal.
 
+:::note[Also called "Bundle"]
+The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The underlying storage, page name, and concepts on this page are unchanged; only the label changed. The App API's older `preset.*` commands still work today as compatibility aliases for `bundle.*`.
+:::
+
 ## What goes in a Memory
 
 | Field | Purpose |
@@ -17,8 +21,8 @@ A **Memory bundle** is a reusable agent definition — everything that makes the
 | `model` | Model identifier passed to the provider (e.g. `claude-sonnet-4-6`). |
 | `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior. Prepended to the context at launch. |
 | `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. |
-| `mcp_servers` | Per-bundle MCP server configuration. Overrides the global `mcp:servers` setting. |
-| `skills` | Reusable capabilities (prompts, commands, workflows, MCP tools) attached to the bundle. |
+| `mcp_servers` | Per-bundle MCP server configuration, stored as an **inline JSON copy** — not a reference to the [MCP Server primitive](/armory/#mcp-servers) catalog. Editing a catalog server after the fact doesn't change what's already baked into a bundle. |
+| `skills` | Array of **Skill primitive IDs** (a real reference, unlike `mcp_servers`/`context_files`) — see [Skills in the Armory](/armory/#skills). |
 
 A "vanilla CLI session" is a Memory bundle with all fields blank except `provider`. The singleton blank Memory at the top of the Launch modal selects exactly this case.
 
@@ -30,25 +34,36 @@ If you want a brand-new conversation instead, the Launch modal's **Recent sessio
 
 Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too. The Swarm pane's history tab is the canonical browser for zones across all your agents.
 
-## How Memory is reached
+## How Memory bundles are reached
 
-Memory is **not a widget-bar entry.** Two paths reach it:
+Bundles are **app-wide only today** — there is no per-agent "Bundle" tab in the current agent-pane setup modal.
 
-**Per-agent (the original surface):**
-1. Open an Agent pane (pinned in the widget bar).
-2. Click the cog (⚙) in the pane header.
-3. Switch to the **Memory** tab.
-
-Same shape as the Identity tab — list of bundles on the left, detail editor on the right.
-
-**App-wide manager (hamburger menu):**
+**App-wide manager:**
 1. Click the hamburger (≡) at the top of the tab bar.
-2. Choose **Trust Center**.
-3. Switch to the **Memory** tab — Memory and Identity bundles live side-by-side in the same manager.
+2. Choose **Armory**.
+3. Switch to the **Bundles** tab.
 
-The hamburger path opens a singleton modal: if already open in another window, clicking focuses that window rather than spawning a duplicate.
+:::caution[Naming collision with the per-agent "Memory" tab]
+An agent pane's own setup modal (**Agent setup** icon → **Memory** tab) does **not** open the Bundle editor described on this page — it opens the agent's **native memory** ("Brain") notes instead, a different primitive covered below. This is a real, easy-to-trip naming collision: "Memory bundle" (this page, now labeled "Bundle") and "native memory" (below, labeled "Brain" in the Armory) are two distinct things that happen to share the word "memory."
+:::
 
-The view registration (`view: "memory"`) and `MemoryPaneViewModel` exist so `pane.open` RPC and right-click menus can reach the view, but the primary paths are the two above.
+The view registration (`view: "memory"`) and `MemoryPaneViewModel` exist so `pane.open` RPC and right-click menus can reach a bundle-scoped view, but the primary path today is the Armory's Bundles tab.
+
+## Native memory ("Brain")
+
+Distinct from a Bundle, **native memory** is a set of free-form `.md` files an already-running agent reads and writes about itself — notes, running context, anything it wants to persist across turns, independent of any bundle definition.
+
+- **Per-agent:** open an Agent pane → **Agent setup** icon (`id-card`) → **Memory** tab.
+- **App-wide:** hamburger menu (≡) → **Armory** → **Brain** tab, browsing every agent's notes in one place.
+
+Both surfaces, and an agent acting on itself, go through the same primitive:
+
+| Surface | Commands |
+|---|---|
+| App API | `memory.list`, `memory.read`, `memory.write` |
+| MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite` |
+
+See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for the full parameter reference.
 
 ## Launch flow
 
@@ -92,12 +107,13 @@ updated_at      TEXT NOT NULL
 
 ## Memory and per-instance overrides
 
-A Memory bundle is the **definition** — reusable across many agent instances. The Memory tab inside an Agent pane is the editor for the bundle plus any per-instance overrides on top.
+A Memory bundle is the **definition** — reusable across many agent instances, edited from the [Armory](/armory/)'s Bundles tab.
 
 When you launch an agent, AgentMux composes the bundle's settings with whatever overrides the running pane has accumulated, then spawns the provider's CLI with the resulting `launchArgs` and env. Two agents using the same Memory bundle but different overrides land on different actual configs at launch.
 
 ## See also
 
+- [Armory](/armory/) — where Bundles, native memory, MCP Servers, and Skills are all managed
 - [Identity bundles](/identity/) — the other half of agent composition
 - [First Agent Setup](/first-agent/) — provider login flows
-- [Pane Types](/pane-types/) — where Memory bundles surface in the UI
+- [Pane Types](/pane-types/) — where Bundles and native memory surface in the UI

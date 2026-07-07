@@ -130,17 +130,74 @@ The backend also registers a large set of management RPCs that the frontend (and
 | Container runtime | `containerruntimeavailable` |
 | Drones | `listdrones`, `getdrone`, `upsertdrone`, `deletedrone`, `rundrone`, `listdroneruns` |
 
-### Identity, presets & memory — planned App API namespaces
+### Identity, Memory (native), MCP, Skill & Bundle — shipped App API namespaces
 
-Three higher-level namespaces are designed but not yet registered in `app_api.rs` — see the [implementation spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) for full request/response shapes, security invariants, and phasing. They wrap the existing low-level handlers above behind the App API permission boundary and add per-agent scope enforcement.
+Five higher-level, agent-scoped namespaces wrap the low-level handlers above behind the App API permission boundary. All are registered in `agentmux-srv/src/server/app_api/mod.rs` today — none of these are "planned," despite earlier drafts of this page saying so.
 
-| Planned namespace | Delegates to | Adds |
+#### `identity.*`
+
+| Command | Purpose | Params |
 |---|---|---|
-| `identity.*` | `listidentityaccounts`, `linkagentidentity`, `account.key.verify`, … | S1 scope guard — agent writes only its own identity links; secrets returned as `masked_tail` only |
-| `preset.*` | `listmemories`, `getmemory`, `upsertmemory`, `deletememory` | Blank-singleton guard; `preset.self.get` resolves the calling agent instance's bound memory |
-| `memory.*` | `agent:memory:list/read_file/write_file` | S1 scope guard; fires `agent:memory:changed:<agent_id>` after writes — a transient WPS event (`persist: 0`), not a DB-persisted row |
+| `identity.self.accounts` | List the calling agent's linked accounts (secrets masked) | `agent_id` |
+| `identity.account.upsert` | Store/rotate a credential in the OS keychain, upsert the `IdentityAccount` row, and (re)link it to the agent for that provider | `agent_id`, `provider`, `name`, `kind?`, `secret`, `validate?`, `account_id?` |
+| `identity.account.validate` | Validate a stored account (by `account_id`) or an ad-hoc `provider`+`secret` pair (WS-only, not exposed over REST/MCP) | `account_id`+`agent_id`, or `provider`+`secret` |
+| `identity.self.unlink` | Unlink an account from a provider for this agent | `agent_id`, `provider` |
 
-Prerequisite: extend `RpcContext` with an `agent_id` field populated from `bus_agent_id` in `websocket.rs` (see §9 of the spec).
+#### `memory.*` (native memory / "Brain")
+
+| Command | Purpose | Params |
+|---|---|---|
+| `memory.list` | List `.md` files in the agent's native-memory dir, with preview + frontmatter type | `agent_id` |
+| `memory.read` | Read one file's content | `agent_id`, `filename` |
+| `memory.write` | Write/overwrite one file (atomic tmp+rename), 10 MB cap | `agent_id`, `filename`, `content` |
+
+This is the "Brain" primitive — see [Memory bundles → Native memory](/memory/#native-memory-brain) and the [Armory](/armory/#brain). It's distinct from a Bundle (below).
+
+#### `mcp.*`
+
+| Command | Purpose | Params |
+|---|---|---|
+| `mcp.list` | List an agent's accessible MCP servers | `agent_id` |
+| `mcp.get` | Fetch one server (accessibility-checked) | `agent_id`, `id` |
+| `mcp.upsert` | Create/update a private (non-global) server, name-unique per agent | `agent_id`, `id?`, `name`, `transport?` (default `"stdio"`), `config?` (JSON string, default `"{}"`) |
+| `mcp.delete` | Delete a server bound to the agent (forbidden if global) | `agent_id`, `id` |
+| `mcp.bind` | Bind an agent to an existing global (or already-bound) server | `agent_id`, `mcp_id` |
+| `mcp.unbind` | Unbind | `agent_id`, `mcp_id` |
+| `mcp.catalog.list` | List all global servers (Armory-level, no agent scoping) | — |
+| `mcp.catalog.upsert` | Create/edit a global server (cannot promote a private one) | `id?`, `name`, `transport?`, `config?` |
+| `mcp.catalog.delete` | Delete a global server (cannot delete a private one via the catalog) | `id` |
+
+#### `skill.*`
+
+Same shape as `mcp.*`:
+
+| Command | Purpose | Params |
+|---|---|---|
+| `skill.list` | List agent's accessible skills | `agent_id` |
+| `skill.get` | Fetch one skill | `agent_id`, `id` |
+| `skill.upsert` | Create/update a private skill | `agent_id`, `id?`, `name`, `trigger?`, `skill_type?` (default `"prompt"`), `description?`, `content?` |
+| `skill.delete` | Delete (forbidden if global) | `agent_id`, `id` |
+| `skill.bind` | Bind to a global (or already-bound) skill | `agent_id`, `skill_id` |
+| `skill.unbind` | Unbind | `agent_id`, `skill_id` |
+| `skill.catalog.list` | List all global skills | — |
+| `skill.catalog.upsert` | Create/edit a global skill | `id?`, `name`, `trigger?`, `skill_type?`, `description?`, `content?` |
+| `skill.catalog.delete` | Delete a global skill | `id` |
+
+#### `bundle.*`
+
+The reusable agent-definition primitive (see [Memory bundles](/memory/) — the page name predates this rename, the content is current):
+
+| Command | Purpose | Params |
+|---|---|---|
+| `bundle.list` | List all bundles | — |
+| `bundle.get` | Fetch one bundle by `id` or `name` | `id` or `name` |
+| `bundle.upsert` | Create/update a bundle (the `Memory` row shape — provider, model, instructions, `context_files`, `mcp_servers`, `skills`) | bundle fields |
+| `bundle.delete` | Delete a bundle | `id` |
+| `bundle.self.get` | Resolve the calling agent's currently-bound bundle (or the blank singleton) | `agent_id` |
+
+`bundle.*` is backed by the same storage as the older `preset.*` commands (`agentmux-srv/src/backend/storage/memory_bundles.rs`, table `db_memory_bundles`) — `preset.*` still works today as a compatibility alias registered against the identical handlers, but new code should use `bundle.*`.
+
+Prerequisite these all share: `RpcContext` carries an `agent_id` field populated from `bus_agent_id` in `websocket.rs`, enforcing per-agent scope (an agent can only read/write its own links, private primitives, and bindings — not another agent's).
 
 ### Widget RPCs (`cli_handlers.rs`)
 
@@ -303,13 +360,81 @@ Start a persistent background shell process pinned to the activity dock.
 | `title` | string | Label shown in the activity dock |
 | `env` | object | Extra env vars for the shell process |
 
-Returns `{ shell_id }`. The shell process stays alive until `ShellStop` is called or the pane closes. Use it for long-running background processes; subsequent input to the running shell is not supported via this API.
+Returns `{ shell_id }`. The shell process stays alive until `ShellStop` is called or the pane closes. Use it for long-running background processes.
 
 #### `ShellStop`
 
 Stop a running shell by ID.
 
 Parameters: `shell_id` (required, from `Shell` response).
+
+#### `ShellInput`
+
+Write to the stdin of a running shell started by `Shell`. Only works if that shell was created with `capture_stdin=true` — otherwise its stdin is `/dev/null` and the write is discarded (the tool tells you so).
+
+Parameters: `shell_id` (required), `text` (required — a newline is appended automatically).
+
+Returns a plain-text status string, e.g. `"wrote to shell <shell_id>"`, or an explanation of why the write was discarded (`StdinNotCaptured`, shell already exited, etc.).
+
+#### `ShellStatus`
+
+Query whether a shell started by `Shell` is still running.
+
+Parameters: `shell_id` (required).
+
+Returns a plain-text summary: running state, exit code (if exited), and total output line count so far.
+
+---
+
+### Scheduling
+
+#### `Loop`
+
+Repeatedly inject a prompt to an agent on a fixed interval, from inside the current MCP session.
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `prompt` | string (required) | — | Text to inject each fire |
+| `interval` | string | `"10m"` (min `"10s"`) | Fire interval, e.g. `"5m"`, `"30s"` |
+| `to` | string | self | Target agent name |
+| `immediate` | boolean | `false` | Fire once immediately, then on the interval |
+| `max_iterations` | integer | unlimited | Auto-stop after this many fires (equivalent to calling `LoopStop` once reached) |
+
+Returns a plain-text confirmation naming the loop (e.g. `loop-3`) and how to stop it. Loops are **session-scoped** — they live only as long as the current MCP process/agent session and do not survive a restart.
+
+#### `LoopStop`
+
+Stop a running loop by ID (e.g. `loop-3`, from the `Loop` response).
+
+#### `LoopList`
+
+List every loop running in the current agent session — id, prompt preview, target, interval, fire count, and remaining cap if any. No parameters.
+
+#### `CronCreate`
+
+Create a **durable, DB-persisted** scheduled job — unlike `Loop`, a cron job survives `agentmux-srv` restarts and isn't tied to any one agent session.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name` | string (required) | Job name |
+| `expression` | string (required) | 5-field UTC cron expression, e.g. `"0 9 * * 1-5"` |
+| `prompt` | string (required) | Text to inject on each fire |
+| `to` | string (required) | Target agent id |
+| `max_fires` | integer (optional) | Auto-disable after N fires; omit for unlimited |
+
+Returns the created job's id, schedule, and next fire time.
+
+#### `CronDelete`
+
+Permanently delete a cron job by `id` and cancel its scheduled task.
+
+#### `CronList`
+
+List every persistent cron job (enabled and paused), with schedule, next fire time, and fire count. No parameters.
+
+#### `CronPause` / `CronResume`
+
+Pause or resume a cron job by `id`. A paused job's definition stays in the database but doesn't fire until resumed.
 
 ---
 
@@ -371,8 +496,14 @@ This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of th
 | `POST` | `/api/v1/pane/open` | `OpenEditor` |
 | `POST` | `/api/v1/shell/create` | `Shell` |
 | `POST` | `/api/v1/shell/stop` | `ShellStop` |
+| `POST` | `/api/v1/shell/input` | `ShellInput` |
+| `GET` | `/api/v1/shell/status` | `ShellStatus` |
 | `GET` | `/agentmux/discovery` | `DiscoverAgents` |
 | `POST` | `/agentmux/reactive/inject` | `SendMessage` |
+
+:::note
+`Loop`/`LoopStop`/`LoopList` and `CronCreate`/`CronDelete`/`CronList`/`CronPause`/`CronResume` (see [Scheduling](#scheduling)) aren't in this REST table — they're MCP-only today, with no dedicated `/api/v1/*` route.
+:::
 
 Example — rename the current tab from a trusted script that has access to the auth key (e.g. an `agentmux-mcp` subprocess or a sidecar utility, not an agent's own PTY shell):
 
@@ -407,6 +538,7 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 
 - [Trust model](/security/trust-model/) — full trust boundary description
 - [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
-- [Trust Center](/trust-center/) — credential management UI
+- [Armory](/armory/) — credential + primitive management UI (Accounts, Identities, Brain, Bundles, MCP Servers, Skills)
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
-- [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — implementation spec for the planned `identity.*`/`preset.*`/`memory.*` App API namespaces
+- [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — original implementation spec for the (now-shipped) `identity.*`/`memory.*` namespaces
+- [Preset→Bundle rename spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md) — `bundle.*`, `mcp.*`, `skill.*` primitive model

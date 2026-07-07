@@ -58,8 +58,9 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 ```jsonc
 {
-  // AgentMux collects zero telemetry by default
-  // This setting exists for future opt-in analytics
+  // Controls the local Sysinfo pane's CPU/memory/disk/network sampler only —
+  // not analytics or crash-reporting. Nothing is ever sent off-device either way.
+  // Off by default.
   "telemetry:enabled": false
 }
 ```
@@ -79,7 +80,7 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-MCP servers are configured **per-agent** in a [Memory bundle](/memory/) (cog → settings → Memory inside an agent pane), not in `settings.json`. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent**, not in `settings.json` — either baked into a [Bundle](/memory/)'s `mcp_servers` field, or managed live via the [MCP Server primitive](/armory/#mcp-servers) (Agent setup icon → MCP Servers tab, or app-wide in the Armory). The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
 See [Memory bundles](/memory/) for the full bundle schema (including the `mcp_servers` field).
 

@@ -10,13 +10,13 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is **not a pane** — there's no `defwidget@settings` widget anymore. Open `settings.json` from the **hamburger menu** in the top tab bar:
+Settings is now a real **pane view** with its own UI sections (Appearance / Terminal / Agent / Sounds / Network / Files / Advanced) — it's registered as `defwidget@settings` in the widget bar (unpinned by default, reachable from the widget bar's overflow) and also reachable from the **hamburger menu**:
 
 1. Click the hamburger icon (≡) at the start of the tab bar.
 2. Select **Settings**.
-3. AgentMux opens `settings.json` in your default editor (via `ensure_settings_file` + `open_in_editor`).
+3. AgentMux opens (or focuses) the Settings pane.
 
-You can also use the command palette ("Open Settings File") if you prefer keyboard navigation.
+Editing `settings.json` directly still works and is reflected in the pane — use the command palette ("Open Settings File") if you want the raw file instead of the UI.
 
 The hamburger menu also includes inline submenus for the most-changed preferences so you don't have to touch the file directly:
 
@@ -100,7 +100,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `telemetry:enabled` | boolean | `true` | Enable telemetry collection |
+| `telemetry:enabled` | boolean | `false` | Enable the local Sysinfo pane's metrics sampler. Despite the name, this isn't analytics or crash-reporting — it's a purely local CPU/memory/disk/network sampling loop for the Sysinfo widget; nothing is ever sent off-device. Off by default. |
 | `telemetry:interval` | number | `1.0` | Metrics collection interval in seconds |
 | `telemetry:numpoints` | number | `120` | Number of history data points to track |
 

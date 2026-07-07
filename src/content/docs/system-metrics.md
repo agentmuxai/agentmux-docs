@@ -86,13 +86,9 @@ Each metric type has a distinct CSS variable for theming:
 
 ## Remote Monitoring
 
-Sysinfo supports monitoring remote hosts connected via SSH. When you have an active SSH connection:
-
-1. The `wsh` binary on the remote host collects system metrics
-2. Metrics are streamed back through the SSH tunnel
-3. The Sysinfo pane subscribes to events scoped to that connection
-
-Remote and local metrics are kept separate — you can have multiple Sysinfo panes, each monitoring a different host.
+:::caution[Needs re-verification]
+This section previously described remote-host monitoring via a `wsh` binary deployed over SSH. `wsh` was fully retired (see `specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` in the main repo) — the crate, its remote-deploy path, and the `wsh view`/`wsh edit` commands no longer exist in source. Whether Sysinfo still supports monitoring a remote host by some other mechanism, or whether this capability was removed along with `wsh`, hasn't been re-confirmed since the retirement. Don't rely on this section until it's verified against current source.
+:::
 
 ## See Also
 

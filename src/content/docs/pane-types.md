@@ -30,11 +30,16 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Per-agent: tab inside the Agent pane (cog → Identity). App-wide: hamburger menu (≡) → **Trust Center** → Identity tab. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory** | Per-agent: tab inside the Agent pane (cog → Memory). App-wide: hamburger menu (≡) → **Trust Center** → Memory tab — both bundle types live side-by-side in the manager. Replaces the older Forge concept. |
-| **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens `settings.json` in your default editor. |
+| **Identity** | Per-agent: **Agent setup** icon (`id-card`) → **Accounts** tab (renamed from "Identity"). App-wide: hamburger menu (≡) → **Armory** (formerly "Trust Center") → Identities tab. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Memory (native/"Brain")** | Per-agent: **Agent setup** icon → **Memory** tab (this is native per-agent notes, not the Bundle editor — see below). App-wide: hamburger menu (≡) → **Armory** → **Brain** tab. |
+| **Bundles** (formerly "Memory bundles"/Presets) | App-wide only today: hamburger menu (≡) → **Armory** → **Bundles** tab. No per-agent tab currently exposes bundle editing. |
+| **MCP Servers** | Per-agent: **Agent setup** icon → **MCP Servers** tab. App-wide: **Armory** → MCP Servers tab. |
+| **Skills** | Per-agent: **Agent setup** icon → **Skills** tab. App-wide: **Armory** → Skills tab. |
+| **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with its own sections (Appearance/Terminal/Agent/Sounds/Network/Files/Advanced) — no longer just opens `settings.json` in an external editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 | **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
+
+The **Agent setup** icon (`id-card`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Armory](/armory/#opening-the-armory).
 
 ## Terminal
 
@@ -276,16 +281,34 @@ When an agent calls `AskUserQuestion` (part of the Agent SDK control protocol), 
 
 ### Persistent shell
 
-Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes.
+Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes. The agent can also write to it (`ShellInput`) and poll its state (`ShellStatus`) — see [Agent App API](/internals/agent-app-api/#shell-management).
+
+### Next-prompt suggestion (ghost text)
+
+After each completed turn, if the composer is still empty, AgentMux may show a dimmed, model-predicted suggestion for your likely next message — displayed as the composer's placeholder text. Press **Tab** to accept it (inserted in full); typing anything else dismisses it immediately. It's powered by a small Haiku call and is always-on today (no settings toggle exists yet). This is AgentMux's own reimplementation of a feature Claude Code's own CLI can't surface here, since AgentMux always drives it in non-interactive mode.
+
+### Composer strip
+
+Mode, Model, and Effort (Claude panes only) render as pill-shaped **drop-up** controls in the composer strip — click one to open a small popup above it rather than a native dropdown; changes apply on the agent's next turn. The **Shell** button (formerly labeled "Log") toggles the resizable details drawer described below.
+
+### Details drawer & embedded shell
+
+Click **Shell** in the composer strip to open a resizable **details drawer** beneath the message thread, holding both the activity log and a real embedded terminal (xterm.js + PTY) for the pane. Drag the drawer's top edge to resize it (120–600 px); the height persists per-pane. The embedded terminal is a genuine, usable shell — though newer and lighter-weight than the standalone [Terminal pane](#terminal), so some edge cases (e.g. large pastes) aren't as polished yet.
+
+### Pane and tab colors
+
+Right-click a **pane header** for an inline 12-swatch color picker (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes. Right-click a **tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself. These are two independent color systems (different storage, different swatch sets) by design.
 
 ### Subsections
 
-The agent pane has two built-in side panels, opened via the cog → settings panel:
+The agent pane has a single **Agent setup** icon (`id-card`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed modal (`AgentSetupModal.tsx`):
 
-- **Identity** — manage Identity bundles (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …) for this agent instance. Backed by `frontend/app/view/identity/`, surfaced via `AgentIdentityPanel`. See [Identity](/identity/).
-- **Memory** — manage Memory bundles (personality + capability stacks: provider, model, instructions, context files, MCP, skills) for this agent instance. Backed by `frontend/app/view/memory/`. See [Memory](/memory/). Replaces the older Forge concept; `view: "forge"` blocks are still redirected to `view: "agent"` by `block.tsx` for backward compatibility with already-persisted blocks.
+- **Accounts** — manage this agent's Identity bundle (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …). Renders `AgentIdentityModalPanel`. See [Identity](/identity/).
+- **Memory** — this agent's **native memory** ("Brain") notes, not a Bundle editor. Renders `AgentNativeMemoryModal`. See [Memory bundles → Native memory](/memory/#native-memory-brain).
+- **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
+- **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
 
-Both open from inside an active agent pane — there are no widget-bar entries for them. The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the views, but the primary path is the agent-pane subsection.
+Briefs and Bundle management are not yet wired into this per-agent modal — use the [Armory](/armory/) for those. The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the underlying views, but the primary path is this modal.
 
 ## Swarm
 

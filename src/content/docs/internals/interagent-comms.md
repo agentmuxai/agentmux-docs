@@ -89,9 +89,9 @@ LAN forwarding uses the peer's actual IP + port from the mDNS announcement — n
 
 ## WAN tier
 
-The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `@agentmuxai/muxbus-server`).
+The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `@agentmuxai/muxbus-server`), or connect the status-bar's **MuxBus Cloud** sign-in chip (shows a sign-in button when logged out, or your account email + a disconnect popover when signed in) to AgentMux's own hosted relay at `auth.muxbus.agentmux.ai`.
 
-To enable:
+To enable manually:
 
 1. Open any terminal pane in AgentMux.
 2. Configure the poller via the in-app settings panel with `{ muxbus_url, muxbus_token }`.
@@ -128,6 +128,23 @@ The auth model across all three tiers is documented in [Reactive event bus](/sec
 - **Host and local cross-instance:** per-launch auth key gated on every route.
 - **LAN peer-to-peer:** peer's auth key from its registry entry (mode `0600`) presented on forward.
 - **WAN relay:** bearer token you configure, outbound-only connection — the relay never calls into your sidecar.
+
+### Message trust markers (JEKT)
+
+Every message delivered via `SendMessage` is wrapped in a marker block before it's injected into the recipient's pane:
+
+```
+[JEKT:FROM=<sender> TIER=<info|coord|sensitive> TRUST=<host-verified|network-claimed>]
+```
+
+- **`TRUST`** reflects *how* the message arrived, not who it claims to be from: `host-verified` means it came through the local Host tier (same-machine, in-process); `network-claimed` means it arrived over LAN or WAN — the sender identity is only as trustworthy as the credential that presented it, since transport alone doesn't authenticate the claimed agent name.
+- **`TIER`** signals how much scrutiny the content warrants: `info`/`coord` cover routine work an agent can act on directly. `sensitive` — or a message auto-escalated because it contains credential/destructive keywords (`token`, `api_key`, `secret`, `password`, `--force`, `rm -rf`, `drop table`, `private key`, `ssh key`, `trust center`, and similar) — means the receiving agent should stop and get explicit human confirmation before acting, rather than trusting a confirming reply from another agent over MuxBus.
+
+This convention lives in each agent's own operating instructions (not enforced by the MuxBus transport itself) — see the JEKT security rules in this repo's root `CLAUDE.md` for the canonical wording agents are expected to follow.
+
+### Cross-channel duplicate delivery (fixed)
+
+Two AgentMux channels on the same host (e.g. a dev build and a portable build), each running an agent with the same name, used to be able to receive the *same* cloud-relayed message twice — the old poll→deliver→ack flow let both channels pass the poll step before either acknowledged it. The claim step is now atomic and happens before local delivery, so only one channel delivers a given message.
 
 ## See also
 
