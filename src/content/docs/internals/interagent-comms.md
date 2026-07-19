@@ -138,7 +138,7 @@ Every message delivered via `SendMessage` is wrapped in a marker block before it
 ```
 
 - **`TRUST`** reflects *how* the message arrived, not who it claims to be from: `host-verified` means it came through the local Host tier (same-machine, in-process); `network-claimed` means it arrived over LAN or WAN — the sender identity is only as trustworthy as the credential that presented it, since transport alone doesn't authenticate the claimed agent name.
-- **`TIER`** signals how much scrutiny the content warrants: `info`/`coord` cover routine work an agent can act on directly. `sensitive` — or a message auto-escalated because it contains credential/destructive keywords (`token`, `api_key`, `secret`, `password`, `--force`, `rm -rf`, `drop table`, `private key`, `ssh key`, `trust center`, and similar) — means the receiving agent should stop and get explicit human confirmation before acting, rather than trusting a confirming reply from another agent over MuxBus.
+- **`TIER`** signals how much scrutiny the content warrants: `info`/`coord` cover routine work an agent can act on directly. `sensitive` — or a message auto-escalated because it contains credential/destructive keywords (`token`, `api_key`, `secret`, `password`, `--force`, `rm -rf`, `drop table`, `private key`, `ssh key`, `trust center`, `armory`, and similar) — means the receiving agent should stop and get explicit human confirmation before acting, rather than trusting a confirming reply from another agent over MuxBus.
 
 This convention lives in each agent's own operating instructions (not enforced by the MuxBus transport itself) — see the JEKT security rules in this repo's root `CLAUDE.md` for the canonical wording agents are expected to follow.
 
