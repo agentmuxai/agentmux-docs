@@ -30,21 +30,15 @@ If any provider CLIs are missing, open the **Toolchain Manager** (hamburger menu
 
 ## 3. Create a Memory bundle
 
-Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the **Agent** icon in the top bar), then open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab. See [Memory bundles](/memory/) for the full configuration surface.
+Memory bundles are app-wide, not per-agent — create one from the **Armory**: hamburger menu (≡) → **Armory** → **Bundles** tab → **+ New Bundle**. See [Memory bundles](/memory/) for the full configuration surface.
 
-Click **+ New Memory** and fill in:
-
-| Field | Example |
-|-------|---------|
-| **Name** | `my-claude` |
-| **Provider** | Claude Code |
-| **Working Directory** | `/home/user/projects/myapp` |
+Fill in at least a **Name** (e.g. `my-claude`) — Bundles are provider-agnostic today (provider/model belong to the agent, chosen when you launch it, not the bundle) — then optionally add **Description** and **Instructions**.
 
 Click **Create**.
 
 ## 4. Launch an Agent Session
 
-In the Launch Agent modal, pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
+Press `Cmd+Shift+A` (`Alt+Shift+A`), or click the **Agent** icon in the top bar, to open the Launch Agent modal. Pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
 
 The first time you pick a provider, AgentMux installs that CLI for you — an inline install modal runs `npm install` and streams the output. No `npm install -g` step beforehand. Once installed, the binary is cached per AgentMux version and reused on every later launch.
 
@@ -70,11 +64,13 @@ Click the chart icon in the top bar to add a **Sysinfo** pane. It shows live CPU
 
 ## 7. Add More Agents
 
-AgentMux supports multiple agents running simultaneously. Open the Memory pane again and create bundles for different providers:
+AgentMux supports multiple agents running simultaneously, each on its own provider — provider is chosen per-agent at launch (Bundles are provider-agnostic, see step 3). Each provider ships default launch arguments tuned for non-interactive multi-turn use:
 
 - **Claude Code** — `claude -p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions`
 - **Codex CLI** — `codex exec --json --dangerously-bypass-approvals-and-sandbox -`
+- **Mux Code** — `muxcode run -p`
 - **Gemini CLI** — `gemini --output-format stream-json --yolo -p ""`
+- **Qwen Code** — `qwen --output-format stream-json --yolo -p ""`
 - **OpenClaw** — `acpx --agent openclaw`
 - **Kimi Code CLI** — `kimi --print --output-format stream-json --yolo -p ""`
 - **GitHub Copilot CLI** — `copilot --acp`

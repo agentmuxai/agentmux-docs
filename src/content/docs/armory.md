@@ -18,7 +18,7 @@ It has six tabs:
 | **Accounts** | Service connections — OAuth logins and API keys for every provider |
 | **Identities** | Identity bundles — named credential sets assigned to agents at launch |
 | **Brain** | Native memory — free-form `.md` notes an agent reads/writes about itself, app-wide view |
-| **Bundles** | Bundles (formerly "Memory bundles"/Presets) — reusable agent definitions: provider, model, instructions, MCP servers, skills |
+| **Bundles** | Bundles (formerly "Memory bundles"/Presets) — reusable, provider-agnostic capability packs: instructions, MCP servers, skills |
 | **MCP Servers** | The MCP Server primitive catalog — global servers plus any agent-private ones |
 | **Skills** | The Skill primitive catalog — global skills plus any agent-private ones |
 
@@ -59,7 +59,7 @@ Per-agent, the same primitive is reached via the agent pane's **Agent setup → 
 
 The app-wide view of all Bundles (see [Memory bundles](/memory/) for the full reference — the page name predates the Bundle rename but the content is current).
 
-The quick version: a Bundle is a reusable agent definition — provider, model, system prompt, instructions, MCP servers, skills. Select one in the Launch Agent modal and the agent inherits the whole stack. Bundles are managed app-wide from this tab only today — there is currently no per-agent "Bundle" tab in the agent pane's setup modal.
+The quick version: a Bundle is a reusable, **provider-agnostic** capability pack — system prompt, instructions, MCP servers, skills. Provider and model belong to the agent, not the bundle, and are chosen separately at launch. Select a Bundle in the Launch Agent modal and the agent inherits the whole stack. Bundles are managed app-wide from this tab only today — there is currently no per-agent "Bundle" tab in the agent pane's setup modal.
 
 ## MCP Servers
 
@@ -84,7 +84,7 @@ The catalog of Skill primitives, with the same global-vs-private shape as MCP Se
 
 **Per-agent shortcuts** — several Armory tabs have a per-agent equivalent reached from inside an agent pane:
 1. Open any Agent pane → click the **Agent setup** icon (`id-card`) in the pane header.
-2. The modal opens with tabs: **Accounts · Memory (native, i.e. Brain) · MCP Servers · Skills**. This scopes each tab to that specific agent rather than the app-wide catalog. (Briefs and Bundle management are not yet wired into this per-agent modal — use the Armory for those.)
+2. The modal opens with tabs: **Accounts · Memory (native, i.e. Brain) · MCP Servers · Skills · Startup**. This scopes each tab to that specific agent rather than the app-wide catalog. The Startup tab selects which existing Bundle (if any) supplies this agent's Session Context startup instructions — it doesn't create or edit Bundles. (Briefs and full Bundle management are not yet wired into this per-agent modal — use the Armory for those.)
 
 Note: the previous design had two separate pane-header icons (a "Brain" icon for Memory and an "id-card" icon for Identity) — these are now consolidated into the single **Agent setup** icon.
 
