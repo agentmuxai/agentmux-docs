@@ -15,16 +15,17 @@ The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bu
 
 ## What goes in a Memory
 
-| Field | Purpose |
-|---|---|
-| `provider` | One of the nine supported providers — `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `openclaw`, `kimi`, `copilot`, `pi`. Determines the CLI binary, controller type, and stream parser. |
-| `model` | Model identifier passed to the provider (e.g. `claude-sonnet-4-6`). |
-| `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior. Prepended to the context at launch. |
-| `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. |
-| `mcp_servers` | Per-bundle MCP server configuration, stored as an **inline JSON copy** — not a reference to the [MCP Server primitive](/armory/#mcp-servers) catalog. Editing a catalog server after the fact doesn't change what's already baked into a bundle. |
-| `skills` | Array of **Skill primitive IDs** (a real reference, unlike `mcp_servers`/`context_files`) — see [Skills in the Armory](/armory/#skills). |
+Bundles are **provider-agnostic** — provider and model belong to the agent, chosen at launch, not to the bundle. Today's New/Edit Bundle form exposes Name, Description, and Instructions; Context files, MCP servers, and Skills are persisted in the schema (round-trip cleanly) but aren't yet editable through the form:
 
-A "vanilla CLI session" is a Memory bundle with all fields blank except `provider`. The singleton blank Memory at the top of the Launch modal selects exactly this case.
+| Field | Purpose | Editable in the UI today? |
+|---|---|---|
+| `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior. Prepended to the context at launch. | Yes |
+| `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. | Not yet — persisted as JSON |
+| `mcp_servers` | Per-bundle MCP server configuration, stored as an **inline JSON copy** — not a reference to the [MCP Server primitive](/armory/#mcp-servers) catalog. Editing a catalog server after the fact doesn't change what's already baked into a bundle. | Not yet — persisted as JSON |
+| `skills` | Array of **Skill primitive IDs** (a real reference, unlike `mcp_servers`/`context_files`) — see [Skills in the Armory](/armory/#skills). | Not yet — persisted as JSON |
+| `provider` / `model` | Vestigial DB columns from before bundles went provider-agnostic. Not exposed in the form; not consumed at launch. | No |
+
+A "vanilla CLI session" is the singleton `is_blank` Memory bundle at the top of the Launch modal — not a bundle with fields merely left empty.
 
 ## Session zones and default-continue
 
