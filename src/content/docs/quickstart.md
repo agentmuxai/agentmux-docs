@@ -38,7 +38,7 @@ Click **Create**.
 
 ## 4. Launch an Agent Session
 
-In the Launch Agent modal, pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
+Press `Cmd+Shift+A` (`Alt+Shift+A`), or click the **Agent** icon in the top bar, to open the Launch Agent modal. Pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
 
 The first time you pick a provider, AgentMux installs that CLI for you — an inline install modal runs `npm install` and streams the output. No `npm install -g` step beforehand. Once installed, the binary is cached per AgentMux version and reused on every later launch.
 
@@ -68,9 +68,9 @@ AgentMux supports multiple agents running simultaneously, each on its own provid
 
 - **Claude Code** — `claude -p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions`
 - **Codex CLI** — `codex exec --json --dangerously-bypass-approvals-and-sandbox -`
-- **Mux Code**
+- **Mux Code** — `muxcode run -p`
 - **Gemini CLI** — `gemini --output-format stream-json --yolo -p ""`
-- **Qwen Code**
+- **Qwen Code** — `qwen --output-format stream-json --yolo -p ""`
 - **OpenClaw** — `acpx --agent openclaw`
 - **Kimi Code CLI** — `kimi --print --output-format stream-json --yolo -p ""`
 - **GitHub Copilot CLI** — `copilot --acp`

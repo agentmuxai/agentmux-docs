@@ -1,13 +1,13 @@
 ---
 title: "Memory bundles"
-description: Reusable agent personality + capability stacks — provider, model, instructions, MCP, skills — selectable at launch.
+description: Reusable, provider-agnostic agent capability stacks — instructions, MCP, skills — selectable at launch.
 ---
 
 :::caution[Alpha Software]
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-A **Memory bundle** is a reusable agent definition — everything that makes the agent behave like itself. Provider, model, system prompt ("Soul"), instructions, context files, MCP servers, skills. Selectable at launch from the Launch Agent modal.
+A **Memory bundle** is a reusable, **provider-agnostic** capability pack — system prompt ("Soul"), instructions, context files, MCP servers, skills. Provider and model belong to the agent, chosen separately at launch, not to the bundle. Selectable at launch from the Launch Agent modal.
 
 :::note[Also called "Bundle"]
 The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The underlying storage, page name, and concepts on this page are unchanged; only the label changed. The App API's older `preset.*` commands still work today as compatibility aliases for `bundle.*`.
