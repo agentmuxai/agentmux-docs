@@ -84,7 +84,7 @@ The catalog of Skill primitives, with the same global-vs-private shape as MCP Se
 
 **Per-agent shortcuts** — several Armory tabs have a per-agent equivalent reached from inside an agent pane:
 1. Open any Agent pane → click the **Agent setup** icon (`id-card`) in the pane header.
-2. The modal opens with tabs: **Accounts · Memory (native, i.e. Brain) · MCP Servers · Skills**. This scopes each tab to that specific agent rather than the app-wide catalog. (Briefs and Bundle management are not yet wired into this per-agent modal — use the Armory for those.)
+2. The modal opens with tabs: **Accounts · Memory (native, i.e. Brain) · MCP Servers · Skills · Startup**. This scopes each tab to that specific agent rather than the app-wide catalog. The Startup tab selects which existing Bundle (if any) supplies this agent's Session Context startup instructions — it doesn't create or edit Bundles. (Briefs and full Bundle management are not yet wired into this per-agent modal — use the Armory for those.)
 
 Note: the previous design had two separate pane-header icons (a "Brain" icon for Memory and an "id-card" icon for Identity) — these are now consolidated into the single **Agent setup** icon.
 

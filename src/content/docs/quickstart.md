@@ -30,15 +30,14 @@ If any provider CLIs are missing, open the **Toolchain Manager** (hamburger menu
 
 ## 3. Create a Memory bundle
 
-Open an agent pane (`Cmd+Shift+A` / `Alt+Shift+A`, or click the **Agent** icon in the top bar), then open the agent pane's settings panel (cog icon in the pane header) and switch to the **Memory** tab. See [Memory bundles](/memory/) for the full configuration surface.
+Memory bundles are app-wide, not per-agent — create one from the **Armory**: hamburger menu (≡) → **Armory** → **Bundles** tab → **+ New Bundle**. See [Memory bundles](/memory/) for the full configuration surface.
 
-Click **+ New Memory** and fill in:
+Fill in at least:
 
 | Field | Example |
 |-------|---------|
 | **Name** | `my-claude` |
 | **Provider** | Claude Code |
-| **Working Directory** | `/home/user/projects/myapp` |
 
 Click **Create**.
 
@@ -70,11 +69,13 @@ Click the chart icon in the top bar to add a **Sysinfo** pane. It shows live CPU
 
 ## 7. Add More Agents
 
-AgentMux supports multiple agents running simultaneously. Open the Memory pane again and create bundles for different providers:
+AgentMux supports multiple agents running simultaneously. Open the Armory's Bundles tab again and create bundles for different providers:
 
 - **Claude Code** — `claude -p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions`
 - **Codex CLI** — `codex exec --json --dangerously-bypass-approvals-and-sandbox -`
+- **Mux Code** — see [First Agent Setup](/first-agent) for launch args
 - **Gemini CLI** — `gemini --output-format stream-json --yolo -p ""`
+- **Qwen Code** — see [First Agent Setup](/first-agent) for launch args
 - **OpenClaw** — `acpx --agent openclaw`
 - **Kimi Code CLI** — `kimi --print --output-format stream-json --yolo -p ""`
 - **GitHub Copilot CLI** — `copilot --acp`

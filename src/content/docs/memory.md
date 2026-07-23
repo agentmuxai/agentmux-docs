@@ -17,7 +17,7 @@ The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bu
 
 | Field | Purpose |
 |---|---|
-| `provider` | One of the seven supported providers — `claude`, `codex`, `gemini`, `openclaw`, `kimi`, `copilot`, `pi`. Determines the CLI binary, controller type, and stream parser. |
+| `provider` | One of the nine supported providers — `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `openclaw`, `kimi`, `copilot`, `pi`. Determines the CLI binary, controller type, and stream parser. |
 | `model` | Model identifier passed to the provider (e.g. `claude-sonnet-4-6`). |
 | `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior. Prepended to the context at launch. |
 | `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. |

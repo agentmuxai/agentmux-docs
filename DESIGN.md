@@ -129,11 +129,11 @@ Current `custom.css` alignment with the landing palette:
 | `--sl-color-accent` | `#6366f1` | `--color-primary` | ✓ matches |
 | `--sl-color-accent-high` | `#818cf8` dark / `#3730a3` light | `--color-primary-light` dark ✓ / light diverges | Δ light mode uses darker blue; landing uses `#4f46e5` — update if needed |
 | `--sl-color-gray-1` (text) | `#e2e8f0` dark / `#1e293b` light | `--color-text` | ✓ matches |
-| `--sl-color-gray-2` (muted) | `#94a3b8` dark / `#334155` light | `--color-text-muted` dark ✓ / light is `#64748b` | Δ light mode muted text should be `#64748b` |
+| `--sl-color-gray-2` (muted) | `#94a3b8` dark / `#475569` light | `--color-text-muted` dark ✓ / light is `#64748b` | Δ light mode muted text is `#475569`, matching neither the old `#334155` nor the `#64748b` recommendation below |
 | `--sl-color-gray-3` (muted-2) | `#7c8aa0` dark / `#64748b` light | between muted/border | ✓ reasonable |
-| `--sl-color-gray-4` (surface) | `#162032` dark / `#94a3b8` light | `--color-surface` is `#111118` | Δ dark mode surface is lighter than landing |
+| `--sl-color-gray-4` (surface) | `#111118` dark / `#94a3b8` light | `--color-surface` is `#111118` | ✓ applied — matches landing |
 | `--sl-color-gray-5` (surface-2) | `#0d0b1c` dark / `#cbd5e1` light | `--color-bg-end` dark ✓ | ✓ dark matches |
-| `--sl-color-gray-6` (bg) | `#0a0a0f` dark / `#f1f5f9` light | `--color-bg` dark ✓ / light is `#f8fafc` | Δ light bg should be `#f8fafc` |
+| `--sl-color-gray-6` (bg) | `#0a0a0f` dark / `#f8fafc` light | `--color-bg` dark ✓ / light is `#f8fafc` | ✓ applied — matches landing |
 | `--sl-color-black` | `#050508` dark / `#ffffff` light | near `--color-bg` | ✓ ok |
 | `--sl-color-white` | `#ffffff` dark / `#181926` light | `--color-text-strong` | ✓ ok |
 | `--sl-font` | system sans | UI / headings font | ✓ correct choice for docs prose |
@@ -141,9 +141,9 @@ Current `custom.css` alignment with the landing palette:
 
 ### Recommended fixes
 
-1. **Light mode `--sl-color-gray-6`** → `#f8fafc` (current `#f1f5f9` is one step darker than landing bg)
-2. **Light mode `--sl-color-gray-2`** → `#64748b` (current `#334155` is too dark for muted text vs landing)
-3. **Dark mode `--sl-color-gray-4`** → `#111118` or `#0f1520` to align with landing surface color
+1. ~~**Light mode `--sl-color-gray-6`** → `#f8fafc`~~ — done.
+2. **Light mode `--sl-color-gray-2`** → `#64748b` (current `#475569` is still darker than landing's muted text; a prior pass moved this from `#334155` toward the target but didn't land on it)
+3. ~~**Dark mode `--sl-color-gray-4`** → `#111118`~~ — done.
 
 ---
 
