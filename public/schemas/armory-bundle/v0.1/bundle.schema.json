@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.agentmux.ai/schemas/armory-bundle/v0.1/bundle.schema.json",
+  "title": "Armory Bundle Format (ABF) manifest",
+  "description": "Manifest schema for an Armory Bundle Format (ABF) v0.1 bundle -- armory.json. BETA: this schema may change in a future v0.x release before 1.0. See https://docs.agentmux.ai/abf for the full specification.",
+  "type": "object",
+  "required": ["name", "version", "components"],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of this schema, for editor/tooling validation."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+      "description": "Bundle name. Reverse-DNS recommended for registry publication (e.g. com.acme.backend-dev), but not required for local/directory use."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+      "description": "Semantic version (semver.org). Immutable once published to a registry."
+    },
+    "description": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "object",
+      "description": "Hint, not a constraint -- a bundle may run under any compatible provider.",
+      "properties": {
+        "preferred": { "type": "string" },
+        "model": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "components": {
+      "type": "object",
+      "description": "Paths (relative to the bundle root) to each component category. All keys are optional -- a bundle may declare only a subset. Unrecognized keys MUST be ignored by readers, not rejected -- this keeps the manifest forward-compatible with a future 'memory' component key without a breaking version bump (see the 'Dynamic memory' note on https://docs.agentmux.ai/abf).",
+      "properties": {
+        "instructions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Ordered list of AGENTS.md-convention instruction file paths."
+        },
+        "skills": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to Agent Skills (SKILL.md) directories, verbatim -- no ABF-specific extensions."
+        },
+        "mcpServers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to MCP server.json files, verbatim."
+        },
+        "accounts": {
+          "type": "string",
+          "description": "Path to the credential requirements declaration (see requirements.schema.json). Never contains secret values."
+        }
+      },
+      "additionalProperties": true
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "agentmux": {
+          "type": "string",
+          "description": "Semver range this bundle is compatible with, e.g. '>=0.54'."
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Free-form. Foreign fields (e.g. from an overlapping Claude Code plugin.json or npm package.json) are tolerated, not stripped -- a bundle directory can simultaneously be a valid Claude Code plugin.",
+      "additionalProperties": true
+    }
+  }
+}
