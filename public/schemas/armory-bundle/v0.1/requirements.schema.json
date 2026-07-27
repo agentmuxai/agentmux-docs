@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.agentmux.ai/schemas/armory-bundle/v0.1/requirements.schema.json",
+  "title": "Armory Bundle Format (ABF) credential requirements",
+  "description": "Declares which identities a bundle needs, resolved locally by the importer against its own account store at import/launch time. Secret VALUES are never present in this file, or anywhere in an ABF bundle -- only the shape of what's required. BETA: this schema may change in a future v0.x release before 1.0. See https://docs.agentmux.ai/abf for the full specification.",
+  "type": "object",
+  "required": ["requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "provider", "kind", "env"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this requirement within the bundle, referenced by import-review UIs."
+          },
+          "provider": {
+            "type": "string",
+            "description": "e.g. 'github', 'anthropic', 'aws' -- matches the importer's own account-provider taxonomy."
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["api-key", "oauth"],
+            "description": "Credential mechanism."
+          },
+          "scopes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Advisory only -- shown to the user at import, not enforced by the schema."
+          },
+          "env": {
+            "type": "string",
+            "description": "Environment variable name the resolved credential is injected as at launch, e.g. 'GITHUB_TOKEN'."
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, the bundle functions (in a reduced capacity) without this credential resolved."
+          }
+        }
+      }
+    }
+  }
+}

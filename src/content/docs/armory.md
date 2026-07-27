@@ -90,12 +90,13 @@ Note: the previous design had two separate pane-header icons (a "Brain" icon for
 
 ## Portable bundles (beta spec)
 
-The five Armory primitives above are stored in AgentMux's own SQLite database today, with no export/import path. **[Armory Bundle Format (ABF)](https://agentmux.ai/abf)** is a beta specification for packaging a Bundle's instructions, skills, MCP servers, and credential requirements into one portable, versioned directory — composing existing standards (Agent Skills/SKILL.md, MCP server.json, AGENTS.md) rather than inventing new ones. It's a proposal with published schemas, not a shipped feature yet — see the [rollout plan](https://agentmux.ai/abf#rollout-plan) for what's built vs. planned.
+The five Armory primitives above are stored in AgentMux's own SQLite database today, with no export/import path. **[Armory Bundle Format (ABF)](/abf/)** is a beta specification for packaging a Bundle's instructions, skills, MCP servers, and credential requirements into one portable, versioned directory — composing existing standards (Agent Skills/SKILL.md, MCP server.json, AGENTS.md) rather than inventing new ones. It's a proposal with published schemas, not a shipped feature yet — see the [rollout plan](/abf/#rollout-plan) for what's built vs. planned.
 
 ## See also
 
 - [Auth flows](/auth/) — per-provider OAuth flows, API key storage, and credential storage model
 - [Identity bundles](/identity/) — full Identity bundle reference
 - [Memory bundles](/memory/) — full Bundle reference
+- [Bundle Format (ABF)](/abf/) — beta spec for portable, exportable bundles
 - [Agent App API](/internals/agent-app-api/) — `mcp.*`, `skill.*`, `bundle.*`, `identity.*`, and `memory.*` RPC catalogs
 - [First Agent Setup](/first-agent/) — connecting your first provider

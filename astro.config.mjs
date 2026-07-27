@@ -147,6 +147,7 @@ export default defineConfig({
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
 								{ label: 'Armory', slug: 'armory' },
+								{ label: 'Bundle Format (ABF)', slug: 'abf' },
 								{ label: 'Memory bundles', slug: 'memory' },
 								{ label: 'Identity bundles', slug: 'identity' },
 								{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
