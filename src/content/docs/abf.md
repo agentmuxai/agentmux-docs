@@ -7,7 +7,7 @@ description: A portable, versioned unit for an agent's instructions, skills, MCP
 ABF is a **v0.1 beta spec, not a shipped AgentMux feature**. The manifest and requirements schemas below may change before 1.0, and AgentMux's own exporter/importer hasn't been built yet — this page documents the target format. See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
 :::
 
-ABF is a portable, versioned unit for an agent's instructions, skills, MCP servers, and credential requirements — composing existing won standards (Agent Skills, MCP `server.json`, AGENTS.md) instead of inventing new ones, and standardizing only the two things nobody else has: the composition manifest and the credential-requirement declaration.
+ABF is a portable, versioned unit for an agent's instructions, skills, MCP servers, and credential requirements — composing already-established standards (Agent Skills, MCP `server.json`, AGENTS.md) instead of inventing new ones, and standardizing only the two things nobody else has: the composition manifest and the credential-requirement declaration.
 
 Full research behind this proposal — four adversarially-verified deep-research passes, ~61 confirmed claims — lives in [`docs/specs/REPORT_ARMORY_BUNDLE_STANDARD_RESEARCH_2026_07_16.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/REPORT_ARMORY_BUNDLE_STANDARD_RESEARCH_2026_07_16.md) in the AgentMux repo.
 
@@ -24,7 +24,7 @@ No standard — formal or de facto — bundles an agent's instructions, MCP conf
 | Dynamic memory | None — least converged category of all | None | Explicit non-goal for v0.1 |
 | Composition | Young (APM, AFPS, Claude plugins) | DB-only, no export | The open space — nothing owns it yet |
 
-ABF's design principle: **compose won standards, invent only where nothing exists.**
+ABF's design principle: **compose already-established standards, invent only where nothing exists.**
 
 ## On-disk format
 
