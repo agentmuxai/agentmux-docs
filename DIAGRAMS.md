@@ -1,7 +1,22 @@
 # AgentMux Docs — Diagram System
 
-Comprehensive audit, tool evaluation, and reusable scheme for all diagrams in `agentmux-docs`.  
-Future agents: **start at §6 (Agent Guide)**.
+> **§§3–7 (D2/Graphviz pipeline) are SUPERSEDED — not what's shipped.** The org
+> evaluated D2/Graphviz here (June 2026) but ultimately rejected build-time
+> auto-layout tooling in favor of **hand-authored SVGs**, which is what actually
+> shipped: all 7 "high-value re-render" diagrams this doc's own audit (§2)
+> identified now exist as hand-authored SVGs in `public/diagrams/`, and
+> `package.json` has never contained `astro-d2`/`@beoe/rehype-graphviz`. See
+> `README.md`'s "Diagrams" section for the current, correct, much shorter
+> process — **start there, not at §6.** README's own rationale: auto-layout
+> tools use abstract font metrics that don't match the hand-tuned design tokens
+> in §1 below (which — unlike §§3–7 — is still accurate and used by the SVGs
+> that did ship).
+>
+> Kept for historical reference (§1's design tokens remain the real source of
+> truth for any new hand-authored SVG; §2's diagram audit and §8's research
+> links are still useful context) — not because the D2 plan might still happen.
+
+Comprehensive audit, tool evaluation, and reusable scheme for all diagrams in `agentmux-docs`, as researched June 2026. **For the actual current process, see `README.md` instead of §6 below.**
 
 ---
 
@@ -384,6 +399,8 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 
 ## 3. Tool Evaluation
 
+> **Superseded — not adopted.** See the top of this doc; hand-authored SVGs shipped instead.
+
 Research conducted June 2026. Sources listed in §7.
 
 ### Decision Matrix
@@ -417,6 +434,8 @@ Research conducted June 2026. Sources listed in §7.
 ---
 
 ## 4. Recommendation
+
+> **Superseded — not adopted.** See the top of this doc; hand-authored SVGs shipped instead.
 
 **Primary: `astro-d2`** for architecture, flow, state, and relationship diagrams.  
 **Secondary: `@beoe/rehype-graphviz`** for dependency graphs and call graphs.  
@@ -469,6 +488,8 @@ export default defineConfig({
 ---
 
 ## 5. Visual Style Guide for D2 Diagrams
+
+> **Superseded — not adopted.** See the top of this doc; hand-authored SVGs shipped instead. The underlying color tokens (§1) are still correct — only the D2-specific application of them below is dead.
 
 Apply these D2 style overrides globally in `astro.config.mjs` or per-diagram as needed to match `public/architecture.svg`.
 
@@ -536,7 +557,7 @@ Box fill         #ffffff  /  #1a1a1e (dark)
 
 ## 6. Agent Guide — How to Add or Update a Diagram
 
-> **Read this section first.** It tells you exactly what to write, where, and what to avoid.
+> **Superseded — do NOT follow this section.** Building the D2/DOT pipeline described below was rejected; the shipped process is hand-authored SVG, documented in `README.md`'s "Diagrams" section instead. Kept only so the rejected plan's reasoning stays on record.
 
 ### When to use what format
 
@@ -634,6 +655,8 @@ digraph {
 ---
 
 ## 7. Migration Priority Queue
+
+> **Superseded — moot.** All 9 diagrams marked 🔴/🟡/🟢 below (everything except the 4 "keep as text" rows) were already hand-authored as SVG in `public/diagrams/`, not migrated to D2/DOT — see the top of this doc.
 
 Ordered by diagram informativeness × current rendering deficiency:
 

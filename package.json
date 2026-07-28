@@ -27,13 +27,5 @@
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^6.0.3",
     "unist-util-visit": "^5.1.0"
-  },
-  "deployments": {
-    "prod": {
-      "version": "0.1.4",
-      "commit": "af190c1c1c65",
-      "deployed_at": "2026-06-23T18:29:43.696Z",
-      "deployed_by": "unknown"
-    }
   }
 }
