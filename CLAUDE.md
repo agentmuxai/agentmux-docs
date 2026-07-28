@@ -33,7 +33,13 @@ Custom CSS overrides Starlight's CSS custom properties. Key details:
 
 ### Deployment
 
-No CDK. Static S3 + CloudFront, deployed manually:
+No CDK. Static S3 + CloudFront. **Deploys automatically** via `.github/workflows/deploy.yml`
+on every push to `main` (added 2026-06-27, PR #97) — merging a PR *is* deploying to
+production. There is no separate manual step in the normal flow; don't tell a user
+"merged, but not deployed" without checking the workflow run.
+
+The CI job runs exactly this sequence (also useful to reproduce locally when debugging
+a failed run):
 
 ```bash
 git submodule update --init --recursive   # one-time, makes src/agentmux available
@@ -60,7 +66,7 @@ HTML files referencing it have the same byte length and the same mtime → `s3 s
 them. The old CSS gets deleted but the stale HTML stays → CF serves HTML that references
 a missing CSS file → site unstyled. Always force-upload HTML separately.
 
-**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content.
+**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
 
 `build:full` requires:
 - `cargo` on `PATH` (rustup minimal toolchain is enough). Without cargo, `build:rust-docs` warns and exits 0 — the site still builds but the rustdoc paths return 404 on prod.
@@ -69,6 +75,7 @@ a missing CSS file → site unstyled. Always force-upload HTML separately.
 - **S3 Bucket:** `agentmux-docs-prod`
 - **CloudFront:** `EF4XTPT79GHLS`
 - **Domain:** `docs.agentmux.ai` (Route53 alias to CloudFront, uses `*.agentmux.ai` wildcard cert)
+- **Deploy status:** `gh run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success
 
 ### Content Source
 
@@ -94,7 +101,10 @@ Use `build:full` before any production deploy. `build` is fine for iterating on 
 
 ## Post-Deploy Verification (required)
 
-After every deploy, verify before reporting success:
+`deploy.yml`'s own last step already does this check in CI and fails the run on a
+mismatch — this manual version is for confirming a deploy that happened outside CI
+(a manual re-run of the sequence above) or for debugging a run that reported success
+but the site still looks stale:
 
 ```bash
 # CSS hash in live page must match what's in S3
