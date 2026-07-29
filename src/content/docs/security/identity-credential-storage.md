@@ -7,11 +7,11 @@ The [Identity bundles](/identity/) page covers the *feature* — what they are, 
 
 ## SecretRef — the storage abstraction
 
-A credential in AgentMux is always represented by a `SecretRef` — a *pointer* to the credential, not the value itself. There are three variants:
+A credential in AgentMux is always represented by a `SecretRef` — a *pointer* to the credential, not the value itself. There are five variants:
 
 ### `Env` — environment variable lookup
 
-The credential lives in the user's shell environment. AgentMux stores only the **name** of the variable (`GH_TOKEN`, `AWS_PROFILE`, `ANTHROPIC_API_KEY`, etc.) in the bundle. At agent-launch time, the sidecar reads the value from its own environment and injects it into the agent process.
+The credential lives in the user's shell environment. AgentMux stores only the **name** of the variable (`GH_TOKEN`, `AWS_PROFILE`, `ANTHROPIC_API_KEY`, etc.) on the Account. At agent-launch time, the sidecar reads the value from its own environment and injects it into the agent process.
 
 This is the default and recommended option. The credential never touches disk via AgentMux. Lifetime is the user's shell session.
 
@@ -19,13 +19,21 @@ This is the default and recommended option. The credential never touches disk vi
 
 Reserved for future use. The enum variant exists; the resolver is not yet implemented in shipped releases.
 
-When wired up, the bundle will store the secret ARN; AgentMux will fetch the value at agent-launch time using the user's ambient AWS credentials, inject it into the agent process, and not persist it.
+When wired up, the Account will store the secret ARN; AgentMux will fetch the value at agent-launch time using the user's ambient AWS credentials, inject it into the agent process, and not persist it.
 
 ### `PlaintextDev` — plaintext, debug builds only
 
 For local development convenience. Stores the credential value directly in `store.db` (the account-wide SQLite store under `~/.agentmux/shared/`). **`cfg(debug_assertions)`-gated** — calling this variant in a release build is a hard error at resolve time, not a silent fallback.
 
 If you build AgentMux from source for development, this variant works; the binary releases on `agentmux.ai/download` do not allow it.
+
+### `Keychain` — OS secret store
+
+Stores a pointer into the OS keychain (service string always `"agentmux"`, account string `"acct:<account_id>"`) rather than the value. The plaintext is resolved backend-side only at spawn time.
+
+### `OauthConfigDir` — OAuth CLI config directory
+
+For oauth-class providers (Claude Code, Codex, …). AgentMux stores only the **path** to the CLI's own per-account auth-config directory; the CLI owns the tokens inside it, including refresh — AgentMux never reads or writes the tokens themselves. The resolver dispatches to a config-dir env-var injection mode rather than the api-key env-var path.
 
 ## What's in the database
 

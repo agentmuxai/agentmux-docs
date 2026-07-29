@@ -39,8 +39,9 @@
 name: Deploy production
 
 on:
-  # Manual dispatch only while dormant. Uncomment the `push` block after the
-  # OIDC role is wired up (see activation steps above).
+  # Manual dispatch only. deploy.yml is the live push-to-main pipeline (see
+  # the header above) — this workflow is a documented manual-recovery path,
+  # not wired into normal CI.
   workflow_dispatch:
   # push:
   #   branches: [main]
