@@ -69,7 +69,7 @@ AgentMux logs the *names* of credentials it resolves (so you can debug which Ide
 - The log line for a successful resolve records: bundle name, provider class, env-var name (or ARN reference), and "resolved=ok".
 - The log line for a failed resolve records: same fields plus a human-readable error category (`missing-env-var`, `aws-fetch-failed`, etc.). The actual value (or attempted value) is never logged.
 
-You can audit this for yourself: `grep -r "redact\|secret\|password\|token" agentmux-srv/src/backend/identity/` — every interpolation into a log macro should reference only metadata.
+You can audit this for yourself: `grep -r "redact\|secret\|password\|token" agentmux-srv/src/identity/` — every interpolation into a log macro should reference only metadata.
 
 ## Rotation
 
@@ -103,9 +103,9 @@ These are intentional trade-offs of running agents as the user. If you need stro
 ---
 
 **Source-of-truth references**:
-- `agentmux-srv/src/backend/storage/wstore.rs` — `SecretRef` enum + database schema
-- `agentmux-srv/src/backend/identity/resolver.rs` — resolution + `cfg(debug_assertions)` gate
-- `agentmux-srv/src/backend/blockcontroller/subprocess.rs` — agent spawn + env injection
+- `agentmux-srv/src/backend/storage/identities.rs` — `SecretRef` enum + database schema
+- `agentmux-srv/src/identity/resolver/` — resolution (`inject.rs`, `secret.rs`) + `cfg(debug_assertions)` gate
+- `agentmux-srv/src/backend/blockcontroller/subprocess/` — agent spawn + env injection (`host_spawn.rs`, `container_spawn.rs`)
 - `store.db` (the account-wide store under `~/.agentmux/shared/`) — SQLite at rest
 
 **Related**: [Identity bundles](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).

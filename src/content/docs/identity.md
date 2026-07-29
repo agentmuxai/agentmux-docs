@@ -65,16 +65,21 @@ If the selected provider requires OAuth (or an API key) and isn't authenticated 
 
 ## Persistence
 
-Identity bundles live in two SQLite tables in the sidecar's `objects.db`:
+Identity bundles live in three SQLite tables in the account-wide `store.db`
+under `~/.agentmux/shared/` (not the per-channel `objects.db` — the
+`m0011_shared_store_backfill` migration moved identity data into the shared
+store so it's visible across every channel/instance; see
+[Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/)
+for the full split between per-channel and shared databases):
 
 | Table | Owns |
 |---|---|
 | `db_identity_bundles` | Bundle metadata: id, name, description, `is_blank` flag |
 | `db_identity_bindings` | Per-provider binding: `(identity_id, provider) → account_id` |
+| `db_identity_accounts` | The actual credential records |
 
-The actual credential records live in `db_identity_accounts` (the individual-credentials table). `db_identity_bindings` is a junction between Identity bundles and that table.
-
-These tables are part of `objects.db`'s flat schema (`run_object_schema`). See [`SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md) for the canonical model.
+`db_identity_bindings` is a junction between Identity bundles and
+`db_identity_accounts`. See [`SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_CONSOLIDATE_FORGE_IDENTITY_INTO_AGENT_2026_04_13.md) for the original per-channel model this table set was defined under, before the shared-store migration.
 
 ## What Identity is not
 

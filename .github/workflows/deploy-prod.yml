@@ -1,56 +1,38 @@
 # =============================================================================
-# Production deploy — agentmux-docs
+# Production deploy — agentmux-docs (SUPERSEDED, kept as a documented fallback)
 # =============================================================================
 #
-# Status: DORMANT (intentionally). The workflow body is complete but the
-# AWS auth side has not been wired up. Until a human does the steps in
-# §"Activation" below, this workflow only runs on manual dispatch and will
-# fail at the "Configure AWS credentials" step.
+# 2026-07-29 (DOC-007, documentation analyst): the "Activation" section below
+# described one-time OIDC/IAM setup as NOT YET DONE. It's done — `deploy.yml`
+# (added 2026-06-27, PR #97) has been auto-deploying every push to `main` in
+# production since, using an already-provisioned role
+# (`arn:aws:iam::050544946291:role/agentmux-docs-deploy`) and an already-set
+# `CF_DISTRIBUTION_ID` secret. This file's old "DORMANT, needs activation"
+# framing was stale, and — separately — its sync step below was still the
+# single-pass `aws s3 sync --delete` pattern that caused the 2026-05-27
+# partial-deploy incident (stale HTML referencing a deleted CSS bundle,
+# because `normalize-mtimes.mjs` pins mtimes so `s3 sync` skips HTML whose
+# byte size/mtime didn't change even when the CSS hash inside it did).
+# Fixed to the same two-step (asset sync, then forced HTML upload) sequence
+# `deploy.yml` uses. This workflow itself is still `workflow_dispatch`-only
+# and not wired into normal CI — `deploy.yml` is the live pipeline. Whether
+# to delete this file entirely (now that the thing it was building toward
+# already exists and works) or keep it as a documented manual-recovery path
+# is a call for whoever owns this repo's CI, not something to guess at in a
+# doc-accuracy pass — left as-is, just no longer describing false state.
 #
-# Why is this file here at all?
-#   We want production deploys to stop depending on a workstation that
-#   happens to have Rust, the submodule, AWS creds, and an Anthropic
-#   employee at the keyboard. The full build + sync + invalidation logic
-#   is below; the only thing missing is the IAM trust that lets GitHub
-#   call AWS.
-#
-# What this workflow does once activated:
+# What this workflow does (manual dispatch only):
 #   1. Check out the repo with submodules (src/agentmux is required for
 #      build:typedoc and build:rust-docs).
 #   2. Set up Node 22 + a minimal Rust stable toolchain.
 #   3. Cache npm + cargo.
 #   4. npm ci
 #   5. npm run build:full   (typedoc → rustdoc → astro)
-#   6. Assume an AWS IAM role via GitHub OIDC.
-#   7. aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
+#   6. Assume the AWS IAM role via GitHub OIDC.
+#   7. Two-step S3 sync (assets, then forced HTML upload — see deploy.yml's
+#      identical step for why this must be two steps, not one).
 #   8. aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS \
 #                                          --paths "/*"
-#
-# =============================================================================
-# Activation (one-time, separate PRs)
-# =============================================================================
-#
-# 1. Shared infrastructure: add a GitHub OIDC identity provider to the AWS
-#    account (`token.actions.githubusercontent.com`, audience `sts.amazonaws.com`,
-#    standard GitHub Actions thumbprints). One provider per account, then
-#    reused by all repos. Recommend a new construct in shared-infrastructure.
-#
-# 2. Shared infrastructure: add an IAM role (e.g. `agentmux-docs-deploy`)
-#    with trust policy restricted to `repo:agentmuxai/agentmux-docs:ref:refs/heads/main`
-#    and `repo:agentmuxai/agentmux-docs:environment:production`. Permissions:
-#      - s3:ListBucket on agentmux-docs-prod
-#      - s3:GetObject, PutObject, DeleteObject on agentmux-docs-prod/*
-#      - cloudfront:CreateInvalidation on EF4XTPT79GHLS
-#
-# 3. This repo: set a repository variable `AWS_DEPLOY_ROLE_ARN` to the role
-#    ARN from step 2. Variables (not secrets) are fine — ARNs aren't sensitive.
-#
-# 4. This repo: uncomment the `push` trigger in `on:` below so merges to
-#    `main` auto-deploy. Until then, use the **Run workflow** button (manual
-#    dispatch) for any test runs.
-#
-# 5. (Optional) Create a `production` environment in the repo settings with
-#    a required reviewer if you want a human gate on every deploy.
 #
 # =============================================================================
 
@@ -123,12 +105,29 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          # Same role deploy.yml uses — already provisioned and working, not
+          # the not-yet-set-up placeholder this file originally described.
+          role-to-assume: arn:aws:iam::050544946291:role/agentmux-docs-deploy
           aws-region: us-east-1
           # CloudFront is global; us-east-1 is fine for the SDK endpoint.
 
-      - name: Sync to S3
-        run: aws s3 sync dist/ s3://agentmux-docs-prod/ --delete
+      - name: Sync non-HTML assets to S3
+        run: |
+          aws s3 sync dist/ s3://agentmux-docs-prod/ \
+            --delete \
+            --exclude "*.html"
+
+      - name: Force-upload HTML files
+        # normalize-mtimes sets all dist mtimes to a fixed epoch so s3 sync
+        # skips HTML when only the CSS hash inside it changes. Always
+        # force-upload HTML to prevent stale pages referencing deleted CSS
+        # bundles — see deploy.yml's identical step and the 2026-05-27
+        # incident this pattern caused when it was a single sync step.
+        run: |
+          aws s3 cp dist/ s3://agentmux-docs-prod/ \
+            --recursive \
+            --exclude "*" \
+            --include "*.html"
 
       - name: Invalidate CloudFront cache
         run: |
