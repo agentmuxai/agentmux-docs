@@ -96,8 +96,8 @@ Ordered so every phase is independently shippable and none blocks the others.
 
 | Phase | What | Status |
 |---|---|---|
-| **Phase 0** | Align skills with Agent Skills — add SKILL.md support to `db_skills`, materialize agent-skill-format entries as `.claude/skills/<name>/SKILL.md` at launch alongside the existing slash-command path. | In progress |
-| **Phase 1** | Exporter — `armory export bundle <id>`, serializing a bundle + referenced skills/MCP servers into the on-disk ABF layout. Pure read-side, zero schema risk. | Planned |
+| **Phase 0** | Align skills with Agent Skills — add SKILL.md support to `db_skills`, materialize agent-skill-format entries as `.claude/skills/<name>/SKILL.md` at launch alongside the existing slash-command path. | Shipped |
+| **Phase 1** | Exporter — the `bundle.export` RPC, serializing a bundle + referenced skills/MCP servers into the on-disk ABF layout (`bundle_export.rs`). Pure read-side, zero schema risk. | Shipped |
 | **Phase 2** | Importer + validation — JSON Schema validation of `armory.json`, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Planned |
 | **Phase 3** | Armory UI — export/import buttons on the Bundles rail, with an import-review sheet showing exactly what will be created before anything is. | Planned |
 | **Phase 4** | OCI distribution — `armory push/pull` against any OCI registry, following the Dev Container Features packaging blueprint. Private registries (Harbor, Artifactory, GHCR) work day one. | Planned |
