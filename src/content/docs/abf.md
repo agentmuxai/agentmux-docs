@@ -4,7 +4,7 @@ description: A portable, versioned unit for an agent's instructions, skills, MCP
 ---
 
 :::caution[Beta specification]
-ABF is a **v0.1 beta spec, not a shipped AgentMux feature**. The manifest and requirements schemas below may change before 1.0, and AgentMux's own exporter/importer hasn't been built yet — this page documents the target format. See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
+ABF is a **v0.1 beta spec** — the manifest and requirements schemas below may still change before 1.0. AgentMux's own exporter and importer have shipped (Armory's Bundles rail: export any bundle as a single `.abf` file, import one with a selective, collision-aware review step); OCI registry distribution (`armory push/pull`) has not been built yet. See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
 :::
 
 ABF is a portable, versioned unit for an agent's instructions, skills, MCP servers, and credential requirements — composing already-established standards (Agent Skills, MCP `server.json`, AGENTS.md) instead of inventing new ones, and standardizing only the two things nobody else has: the composition manifest and the credential-requirement declaration.
@@ -98,8 +98,8 @@ Ordered so every phase is independently shippable and none blocks the others.
 |---|---|---|
 | **Phase 0** | Align skills with Agent Skills — add SKILL.md support to `db_skills`, materialize agent-skill-format entries as `.claude/skills/<name>/SKILL.md` at launch alongside the existing slash-command path. | Shipped |
 | **Phase 1** | Exporter — the `bundle.export` RPC, serializing a bundle + referenced skills/MCP servers into the on-disk ABF layout (`bundle_export.rs`). Pure read-side, zero schema risk. | Shipped |
-| **Phase 2** | Importer + validation — JSON Schema validation of `armory.json`, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Planned |
-| **Phase 3** | Armory UI — export/import buttons on the Bundles rail, with an import-review sheet showing exactly what will be created before anything is. | Planned |
+| **Phase 2** | Importer + validation — JSON Schema validation of `armory.json`, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Shipped |
+| **Phase 3** | Armory UI — export/import buttons on the Bundles rail, with an import-review sheet showing exactly what will be created before anything is. | Shipped |
 | **Phase 4** | OCI distribution — `armory push/pull` against any OCI registry, following the Dev Container Features packaging blueprint. Private registries (Harbor, Artifactory, GHCR) work day one. | Planned |
 | **Phase 5** | Registry + spec publication — publish the `armory.json`/`requirements.json` schemas at stable, versioned URLs, open a metadata-only bundle index. This page and its schemas are that publication. | Shipped |
 
