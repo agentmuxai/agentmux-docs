@@ -1,12 +1,19 @@
 # Docs vs. Code Audit — 2026-08-10
 
 **Status:** Draft — findings only, no doc edits made in this pass.
-**Scope:** `agentmux-docs`'s `src/agentmux` submodule is pinned at `f0ce9f85a`
-(PR #2274, "large-file modularization scan" — a docs-only commit, not a real
-sync point). Code `main` HEAD is now `6ca8f8a3f` — **211 commits / 75 `feat`
-commits of drift**, the widest gap since the 2026-07-07 audit
-(`AUDIT_DOCS_VS_CODE_2026_07_07.md`) found ~230 changesets over two weeks.
-This one covers roughly five weeks.
+**Correction (2026-08-10, post-codex-review):** the original version of this
+doc computed drift from `f0ce9f85a`, read off a stale local checkout instead
+of `origin/main`'s actual gitlink. The real pin, verified via
+`git ls-tree origin/main src/agentmux`, is `1df15ce6e` (advanced by docs PR
+#108 on 2026-07-29 as part of that PR's own doc sync — not a dedicated bump).
+Every figure below is recomputed from the correct baseline.
+**Scope:** `agentmux-docs`'s `src/agentmux` submodule is pinned at
+`1df15ce6e` (`feat(srv): enforce cross-process session lease on host-mode
+agent turns`, #2359, dated 2026-07-29). Code `main` HEAD is now `6ca8f8a3f` —
+**137 commits / 40 `feat` commits of drift, spanning ~12 days** (2026-07-29 →
+2026-08-10). Smaller than the 2026-07-07 audit's ~230-changeset/two-week
+window, but the same shape: real user-facing features shipped with zero doc
+follow-up.
 
 **Relationship to other recent doc work:**
 - The **2026-07-29 documentation analyst** run (13 findings, tracked in
@@ -20,7 +27,7 @@ This one covers roughly five weeks.
   The weekly documentation-analyst schedule was disabled during an unrelated
   hardening pass on the runner infra and was **just re-enabled today**
   (`weekly-documentation-analyst`, next run: Wednesday 06:00 PST) — its next
-  run will re-scan against a codebase five weeks newer than its last pass, so
+  run will re-scan against a codebase ~12 days newer than its last pass, so
   expect a fresh finding set that will likely overlap with P1 below.
 - This audit is **not** a re-verification of the 2026-07-07 audit's 22 items —
   spot checks below (Armory rename, Bundle model) suggest most of its P0 items
@@ -35,14 +42,22 @@ all ~56 pages (that's what the 2026-07-07 audit did; this one is scoped to
 what's changed since). Two of its ten findings were spot-verified independently
 before writing this doc (grep-confirmed zero `muxspect` hits anywhere in
 `src/`; zero `isolat`/`bind.*agent` hits in `auth.md`/`armory.md`).
+**Codex's review of the PR that added this doc caught a real baseline error**
+(the submodule pin was read from a stale local git checkout instead of
+`origin/main`, understating drift-window precision though not its rough
+size) **and two real scope gaps** (the isolated-auth and Bind-to-Agent
+findings each affect two more pages than the first pass checked) — both
+independently verified via direct file reads before being folded into P0/P1
+above. Left in as a record of what review caught, not smoothed over.
 
 **Bottom line:** unlike 2026-07-07, nothing found here is a page actively
-lying about a renamed concept — the gap this time is **coverage**, not
-**correctness**. Two real exceptions: `memory.md` describes native memory as
-non-durable when it's now cross-channel-durable (a factual regression), and
-`auth.md` unconditionally claims credentials are "shared across all channels"
-when that's no longer true for non-`stable` channels. Everything else is a
-missing section, not a wrong one.
+lying about a renamed concept — the gap this time is mostly **coverage**, not
+**correctness**. Two real exceptions, though wider than the first pass of
+this doc realized: `memory.md` describes native memory as non-durable when
+it's now cross-channel-durable, and **four** pages (`auth.md`, `armory.md`,
+`identity.md`, `multi-instance.md`) unconditionally claim credentials/account
+bindings are shared/creatable-only-one-way when neither is true anymore.
+Everything else is a missing section, not a wrong one.
 
 ---
 
@@ -51,7 +66,7 @@ missing section, not a wrong one.
 | # | Issue | Pages affected | Fix |
 |---|---|---|---|
 | 1 | **Native memory (Brain) described as plain free-form files**, with no mention it's now durably mirrored cross-channel (`db_agent_native_memory`, keyed by stable `AgentDefinition.id`, PR #2459). A user reading this page would still expect an agent's notes to be channel/build-relative — the exact problem `persistence.md`'s "Cross-channel agent persistence" section already documents solving for definitions/instances, just not memory. | `memory.md`, arguably a cross-link from `persistence.md` | Add a subsection describing the durable mirror: same content visible across channels/builds for the same agent identity, live-FS + mirror merge on read. |
-| 2 | **Auth docs unconditionally claim provider credentials are "shared across all channels and instances on the same machine."** As of PR #2431, any non-`stable` channel (dev branches, local `task package` builds) defaults to an **isolated**, empty Armory account list — the global-sharing claim is now conditionally false. Plain (non-identity-bound) agent spawns are unaffected; this only matters for explicitly-bound Armory accounts, but the doc doesn't even carve out that distinction. | `auth.md` ("Auth-config dir storage" section), `armory.md` | State the actual default: `stable` channel shares globally; every other channel isolates by default (`AGENTMUX_ISOLATED_AUTH=0` opts back into the old behavior). Cross-reference `armory.md`'s Accounts section. |
+| 2 | **Four pages, not two, unconditionally claim provider credentials/accounts are shared across every channel and instance.** As of PR #2431, any non-`stable` channel (dev branches, local `task package` builds) defaults to an **isolated**, empty Armory account list — the global-sharing claim is now conditionally false. Plain (non-identity-bound) agent spawns are unaffected; this only matters for explicitly-bound Armory accounts, but none of the four pages carve out that distinction. Codex review on this doc's own PR caught two of the four (`identity.md`, `multi-instance.md`) that the first pass missed. | `auth.md` ("Auth-config dir storage" section), `armory.md`, `identity.md:65-69` ("account store is visible across every channel/instance"), `multi-instance.md:46-52` ("Provider auth" listed unconditionally under "Account-wide... shared across every channel and version") | State the actual default in all four: `stable` channel shares globally; every other channel isolates by default (`AGENTMUX_ISOLATED_AUTH=0` opts back into the old behavior). Cross-reference between the four rather than restating in each. |
 
 ---
 
@@ -65,16 +80,16 @@ missing section, not a wrong one.
 | 6 | **Codex JSONL translation + resume** (#2476) and the **model vendor concept** (#2505, distinct from provider/harness) have no mention in `provider-cli-integration.md`, even though Codex itself is already listed there from earlier work. | `internals/provider-cli-integration.md` | Add a row/section for vendor as a concept the existing provider-abstraction table doesn't have, and note Codex's JSONL (not plain-JSON) wire format + resume semantics. |
 | 7 | **Automatic per-agent display color** (#2477) — every agent now gets a deterministic color (`ui:color`, hash-based, backfilled for existing agents) shown on the pane frame border. `pane-types.md`'s only color content describes the unrelated **manual** right-click swatch pickers (`frame:hue`/`tab:color`) — a reader would reasonably assume that's the only coloring mechanism. | `pane-types.md` or `armory.md` | One short paragraph distinguishing "every agent has an intrinsic color" from "you can also manually recolor a pane/tab." |
 | 8 | **Media pane** (#2299) — a real pane type (`defwidget@media`, pinned in the widget bar) with live directory-watch, missing from `pane-types.md`'s pane-type table entirely. No dedicated page exists either. | `pane-types.md` | Add a Media row + short section: what it watches, what it's for (viewing generator output — e.g. ComfyUI images/video). |
-| 9 | **Armory "Bind to Agent" context menu** (#2485) — right-click an account row to attach an existing login to a specific agent, with live binding annotations. `armory.md`'s Accounts section only describes click-to-connect; zero mention of the bind menu. | `armory.md` | Short addition to the Accounts section. |
+| 9 | **Armory "Bind to Agent" context menu** (#2485) — right-click an account row to attach an existing login to a specific agent, with live binding annotations. `armory.md`'s Accounts section only describes click-to-connect; zero mention of the bind menu. **Also actively contradicted, not just missing, in `identity.md`** (caught by codex review): line ~41 says new account links are created "only from the agent's own launch flow," and the Armory Accounts tab is described (line ~46) as create/edit/delete-only — both now false with the bind menu as a second path. | `armory.md`, `identity.md` | Add the bind-menu description to `armory.md`'s Accounts section, and correct `identity.md`'s two now-false workflow statements to mention the second (Armory-initiated) binding path. |
 | 10 | **Background Bash visibility in the Activity Dock** (#2489, #2502 — "Running in background" status distinct from stuck-looking "Working…"). Confirmed shipped and wired end-to-end as of this audit (dispatch site `agent-view.tsx:1313` + consumer both present) — `pane-types.md`'s Activity Dock blurb only describes the older foreground-promotion behavior. | `pane-types.md` (Agent → Activity dock) | Add the background-task status distinction. |
-| 11 | **Cross-process session-ownership lease** (#2355, #2359) — a file-per-session `LeaseStore` (`<registry_root>/leases/<instance_id>.lease.json`, TTL-based, `boot_id`-scoped) that now prevents two processes from fighting over one agent's turn in host-mode. Zero mention in either `internals/architecture.md`'s "State ownership" section or `internals/persistence.md`'s file-inventory table. | `internals/architecture.md`, `internals/persistence.md` | Dev-facing/lower-priority than 3–10, but it's exactly the kind of cross-process correctness detail those two pages exist to cover, and the lease files live outside the documented `<data-dir>/data/` tree entirely — worth noting as a gap in the "at a glance" file table's completeness, not just a missing feature description. |
+| 11 | **Cross-process session-ownership lease** (#2355, #2359) — a file-per-session `LeaseStore` (`<registry_root>/leases/<instance_id>.lease.json`, TTL-based, `boot_id`-scoped) that now prevents two processes from fighting over one agent's turn in host-mode. Zero mention in either `internals/architecture.md`'s "State ownership" section or `internals/persistence.md`'s file-inventory table. **Note:** #2359 is the commit the submodule is currently pinned at — this isn't part of the 137-commit drift window above, it's a pre-existing gap from *before* the last sync that the drift computation wouldn't have caught. Found only because this page's targeted-page list happened to include it. | `internals/architecture.md`, `internals/persistence.md` | Dev-facing/lower-priority than 3–10, but it's exactly the kind of cross-process correctness detail those two pages exist to cover, and the lease files live outside the documented `<data-dir>/data/` tree entirely — worth noting as a gap in the "at a glance" file table's completeness, not just a missing feature description. |
 
 ---
 
 ## P2 — Root cause: the submodule pin itself
 
 The actual first fix, before any content edit: **bump `src/agentmux` past
-`f0ce9f85a` to current `main` (`6ca8f8a3f`)** and re-run `git submodule
+`1df15ce6e` to current `main` (`6ca8f8a3f`)** and re-run `git submodule
 update --init --recursive`. Every source-file citation in the internals pages
 (`agent-app-api.md`, `env-vars.md`, `ipc-catalog.md`, `state-model.md` — all
 four already flagged as "version-pinned snapshot" pages in the 2026-07-07
@@ -90,7 +105,7 @@ against the bumped tree, not the other way around.
   citation staleness) were not re-checked here — confirm which shipped since
   before assuming any of them are still open.
 - **Weekly documentation analyst's next run** (Wednesday, re-enabled today)
-  will scan a five-week-newer codebase than its last pass — expect overlap
+  will scan a ~12-day-newer codebase than its last pass — expect overlap
   with P1 above; don't duplicate fixes if its report lands before this spec
   is acted on.
 - Full re-read of all ~56 pages, as the 2026-07-07 audit did, is due again —
