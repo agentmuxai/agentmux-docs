@@ -30,14 +30,24 @@ The Accounts tab shows every service AgentMux can connect to. Each entry display
 
 Click any service tile to connect or manage credentials:
 
-- **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in the provider's auth-config dir under `~/.agentmux/shared/providers/<provider>/` (account-wide, never plaintext via AgentMux). Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
+- **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in a per-account credential dir under `~/.agentmux/shared/identities/<account_id>/<provider>/` (never plaintext via AgentMux). Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
 - **API key providers** — clicking **Connect** opens an inline key entry field. The key is validated against the service before it's saved and stored in the provider's auth-config dir with restricted permissions.
 
 See [Auth flows](/auth/) for the full per-provider table and credential storage model.
 
+### Binding an account to an agent
+
+Right-click an account row for a **"Bind to Agent"** context menu — a second path to link an account to an agent, alongside connecting from the agent's own launch flow. The submenu lists the current channel's user-owned agents, with live binding annotations so multi-account disambiguation stays legible at a glance:
+
+- A checkmark on an agent already bound to **this** account.
+- A sublabel showing the currently-bound account's name when it's a *different* account ("bound: work-claude"), or "no account bound".
+- Agents with an open pane sort first with a running indicator; non-running agents are still bindable.
+
+For CLI-OAuth accounts (Claude, Codex, Gemini, OpenClaw), only agents whose provider matches the account's are offered. For service accounts (GitHub, AWS, etc.), every agent is a candidate. Clicking an agent binds the account to it — if that agent already has a different account bound for the same provider, the click rebinds it (the link is a one-per-provider upsert, same as [Identity's direct links](/identity/)). If the target agent has an open pane, the new credentials apply live (a forced, session-preserving respawn) rather than waiting for the next manual restart.
+
 ### Credential storage
 
-Provider credentials are stored account-wide under `~/.agentmux/shared/providers/<provider>/` — they persist across channel upgrades and version changes without re-authentication. See [Auth flows](/auth/) for the credential storage model and per-provider details.
+Ambient provider credentials (used by agents with no Account explicitly bound) are stored account-wide under `~/.agentmux/shared/providers/<provider>/` — always global, unconditionally shared across every channel and version. Credentials for an explicitly-connected or bound **Account**, by contrast, follow a conditional default: shared account-wide on the `stable` channel, but isolated to that one channel by default everywhere else (a fresh non-`stable` channel — a `task dev` branch, or a local `task package` build — starts with zero Armory accounts). See [Auth flows → Isolated auth by channel](/auth/#isolated-auth-by-channel) for the full rule and the override env var.
 
 ### Relationship to Identities
 

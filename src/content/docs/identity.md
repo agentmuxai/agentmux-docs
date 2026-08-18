@@ -38,12 +38,14 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 **Per-agent (read-only):**
 1. Open an Agent pane (pinned in the widget bar).
 2. Click the **Agent setup** icon (`id-card`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
-3. Switch to the **Identity** tab — a read-only Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). No create/edit/delete/bind/unbind here; new links are created from the agent's own launch flow.
+3. Switch to the **Identity** tab — a read-only Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). No create/edit/delete/bind/unbind *here*; this tab is display-only.
 
 **App-wide manager (hamburger menu):**
 1. Click the hamburger (≡) at the top of the tab bar.
 2. Choose **Armory** (formerly "Trust Center").
 3. Switch to the **Accounts** tab — create, edit, and delete Accounts. There is no standalone "Identities" rail tab in the Armory (removed in the Phase 5 consolidation — Armory stays scoped to shared/reusable resources; per-agent bindings live on the agent pane instead).
+
+New account↔agent links are created from **two** places, not one: the agent's own launch flow (selecting an Account per provider dropdown, as below), and — as of the Armory's **"Bind to Agent"** right-click context menu on an account row — from the Accounts tab itself. Right-clicking an account row opens a submenu listing the channel's compatible agents, annotated with which agent is already bound to this account (checkmark) and which is bound to a *different* account for the same provider ("bound: work-claude"); clicking an agent creates or rebinds the link. See [Armory → Binding an account to an agent](/armory/#binding-an-account-to-an-agent) for the full mechanics (candidate filtering, live-apply on a running agent, etc.). This means the Accounts tab is no longer create/edit/delete-only — bind is a fourth, Armory-initiated action available there.
 
 The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but the primary paths are the two above.
 
@@ -62,19 +64,16 @@ If the selected provider requires OAuth (or an API key) and isn't authenticated 
 
 ## Persistence
 
-Accounts and their agent bindings live in two SQLite tables in the account-wide `store.db`
-under `~/.agentmux/shared/` (not the per-channel `objects.db` — the
-`m0011_shared_store_backfill` migration moved identity data into the shared
-store so it's visible across every channel/instance; see
-[Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/)
-for the full split between per-channel and shared databases):
+Accounts and their agent bindings live in two SQLite tables (not the per-channel `objects.db` — see [Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/) for the full split between per-channel and shared databases), but as of `SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md` **the two tables no longer live in the same physical store**:
 
-| Table | Owns |
-|---|---|
-| `db_accounts` | The credential record: id, name, provider, kind, display_name, `secret_ref`, context, status |
-| `db_agent_identity_links` | Direct binding: `(agent_id, provider) → account_id`, one row per agent+provider |
+| Table | Owns | Where it lives |
+|---|---|---|
+| `db_accounts` | The credential record: id, name, provider, kind, display_name, `secret_ref`, context, status | The **account store** — account-wide `store.db` under `~/.agentmux/shared/` on the `stable` channel, but a per-channel-isolated store by default on every other channel. This is the same conditional default covered in [Auth flows → Isolated auth by channel](/auth/#isolated-auth-by-channel); it applies to the Armory's connectable-account *list*, not to a link once created (next row). |
+| `db_agent_identity_links` | Direct binding: `(agent_id, provider) → account_id`, one row per agent+provider | A separate, **permanently-global identity store** — never redirected by channel or by the isolated-auth setting, regardless of which channel created the link. |
 
-`db_agent_identity_links` is a direct junction between an agent definition and `db_accounts` — there is no intermediate bundle/grouping table. The earlier `db_identity_bundles`/`db_identity_bindings` tables it replaced were dropped once Phase 3's backfill migrated every row to a direct link; see `docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` and `docs/specs/SPEC_IDENTITY_DIRECT_LINKS_PHASE3_PRC_2026_07_10.md` in the main repo for the migration.
+**Why this split matters:** a link an agent already has to an Account survives a channel or version switch even though the Armory's underlying account *list* may reset to empty on a fresh non-`stable` channel (see [Auth flows](/auth/#isolated-auth-by-channel)) — don't conflate the two. To keep an existing link resolvable even when its target account row isn't present in the current channel's (possibly-isolated) account store, the account row is also mirrored into the always-global identity store at the moment a link is created; resolving a binding at agent-spawn time falls back to that mirror copy if the channel-local account store doesn't have it. This is what makes "my agent still launches with the right account after I switch channels" hold even though "the Armory account list itself" doesn't.
+
+`db_agent_identity_links` is a direct junction between an agent definition and `db_accounts` — there is no intermediate bundle/grouping table. The earlier `db_identity_bundles`/`db_identity_bindings` tables it replaced were dropped once Phase 3's backfill migrated every row to a direct link; see `docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` and `docs/specs/SPEC_IDENTITY_DIRECT_LINKS_PHASE3_PRC_2026_07_10.md` in the main repo for that migration, and `docs/specs/SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md` for the store split described above.
 
 ## What Identity is not
 
@@ -86,5 +85,6 @@ for the full split between per-channel and shared databases):
 
 - [Bundles](/memory/) — the other half of agent composition (instructions + context files)
 - [First Agent Setup](/first-agent/) — provider login flows
-- [Auth flows](/auth/) — per-provider auth-dir isolation
+- [Auth flows](/auth/) — per-provider auth-dir isolation, and the conditional isolated-auth-by-channel default
+- [Armory](/armory/#binding-an-account-to-an-agent) — the "Bind to Agent" context menu, the second path to creating an account↔agent link
 - [Pane Types](/pane-types/) — where Identity surfaces in the UI

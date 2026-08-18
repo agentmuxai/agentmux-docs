@@ -14,19 +14,30 @@ AgentMux does not call AI provider APIs directly. Instead, it manages a provider
 | Provider | CLI binary | npm package | Controller type | Output format |
 |---|---|---|---|---|
 | Claude Code | `claude` | `@anthropic-ai/claude-code` | `persistent` | `stream-json` (NDJSON) |
-| Codex | `codex` | `@openai/codex` | `subprocess` | JSON |
+| Codex | `codex` | `@openai/codex` | `subprocess` | JSONL — `codex exec --json` (NDJSON, one JSON object per line; not a single JSON blob) |
 | Gemini | `gemini` | `@google/gemini-cli` | `subprocess` | `stream-json` (NDJSON) |
 | OpenClaw | `openclaw` | — | `acp` | JSON-RPC 2.0 over stdio |
 | Kimi | `kimi` | — | `subprocess` | `stream-json` (NDJSON) |
 | Muxcode | `muxcode` | `@agentmuxai/muxcode` | `subprocess` | `stream-json` (NDJSON) — reuses the Claude translator |
+| Antigravity | `agy` | `@google/antigravity-cli` | `subprocess` | `stream-json` (NDJSON) — reuses the Gemini translator |
 
 The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` uses the Agent Communication Protocol over stdio.
 
 :::note
-The current provider registry also includes `pi` and `copilot` (both documented in [Auth flows](/auth/)) and `qwen` — their exact controller type / output format weren't re-verified for this table. **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/).
+The current provider registry also includes `pi` and `copilot` (both documented in [Auth flows](/auth/)) and `qwen` — their exact controller type / output format weren't re-verified for this table. **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/). **Antigravity** is Google's agentic coding CLI harness, added most recently (PR #2558) — it's a sibling of Gemini CLI closely enough that it reuses the Gemini translator rather than shipping a new one.
 :::
 
-Provider definitions live in `frontend/app/view/agent/providers/index.ts`.
+Provider definitions live in `frontend/app/view/agent/providers/index.ts` (frontend) and `agentmux-srv/src/backend/providers.rs` (backend, source of truth for the table above).
+
+## Provider (harness) vs. model vendor
+
+"Provider" throughout this page — and "harness" in some older code/specs, the same axis under a different name — means *which CLI tool is driving the session*: Claude Code, Codex, Gemini, and so on. That is a distinct concept from **model vendor**: the underlying LLM backend actually serving responses for that session.
+
+Each provider declares its default vendor(s) via `supported_vendors` in `agentmux-srv/src/backend/providers.rs` — most-default-first, e.g. Claude Code → `["anthropic"]`, Codex → `["openai"]`, OpenClaw → `["openai", "anthropic", "google"]` since it's model-agnostic. This is purely descriptive/display data (drives the dual-icon vendor badge and the agent picker's default-vendor inference); it doesn't gate anything at spawn time.
+
+What *does* gate spawn-time behavior is `base_url_env_var` — the environment variable a provider reads to redirect its model vendor backend off the default endpoint (e.g. Claude Code's `ANTHROPIC_BASE_URL`, pointing it at Bedrock, Vertex, OpenRouter, or a custom proxy). This is set only where independently verified per provider, not guessed — as of this writing only Claude Code has a confirmed one.
+
+The **effective vendor** an agent is actually using is computed, not stored: a non-empty `model_vendor_base_url` override means the provider has been redirected off its default backend, so the effective vendor reads as `"custom"` regardless of what the provider declares — an empty/absent override means the provider is talking to its own default vendor, the first entry in `supported_vendors` (or the provider id itself as a fallback, for an uncataloged provider). See `resolveEffectiveVendor()` in `frontend/app/view/agent/providers/catalog.ts`.
 
 ## Step 1 — CLI resolution
 
@@ -109,7 +120,7 @@ The blockcontroller state machine has three states: `INIT → RUNNING → DONE`.
 
 ## Step 4 — Output stream parsing
 
-Each provider emits a different JSON format. The backend uses a `Translator` trait (`agentmux-srv/src/agents/translator/mod.rs`) with per-provider implementations:
+Each provider emits a different JSON format. The backend defines a `Translator` trait (`agentmux-srv/src/agents/translator/mod.rs`) for mapping provider-specific JSON frames to the internal `AgentEvent` enum, designed to be provider-agnostic (the runner holds `Box<dyn Translator>`):
 
 ```rust
 pub trait Translator: Send {
@@ -117,7 +128,7 @@ pub trait Translator: Send {
 }
 ```
 
-The runner is provider-agnostic and holds `Box<dyn Translator>`. Each implementation maps provider-specific JSON frames to the internal `AgentEvent` enum.
+**Only Claude Code has a concrete implementation today** (`ClaudeTranslator`, `agents/translator/claude.rs`) — it's what the drone Agent-block's headless runner (`agents/runner.rs`) uses. The interactive subprocess-controller path (what actually drives an agent pane) doesn't route non-Claude providers' frames through this trait yet; see the Codex-specific note below for how Codex is parsed today.
 
 ### Line buffering and fast-reject
 
@@ -145,6 +156,12 @@ Source: `agentmux-srv/src/agents/translator/claude.rs`.
 ### ACP (OpenClaw)
 
 OpenClaw uses JSON-RPC 2.0 over stdio rather than NDJSON. Its controller is in `agentmux-srv/src/backend/blockcontroller/acp.rs`.
+
+### Codex JSONL
+
+Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `agentmux-srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
+
+Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `agentmux-srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
 
 ## Step 5 — Subprocess lifecycle and signal handling
 
@@ -177,7 +194,9 @@ Source: `agentmux-srv/src/backend/blockcontroller/subprocess.rs`.
 
 ### Session resume
 
-Session IDs are captured from the CLI's stdout and persisted in block metadata. On resume, the frontend passes `--resume <session_id>` to the CLI so the conversation context is restored without re-sending history.
+Session IDs are captured from the CLI's stdout and persisted in block metadata. Most providers resume with a trailing flag: on the next turn, the frontend appends `--resume <session_id>` (Claude) or `-r <session_id>` (Gemini) so conversation context is restored without re-sending history.
+
+**Codex is different: it resumes via a subcommand, not a flag.** Its continuation invocation is `codex exec resume <thread_id> [flags] -`, not `codex exec [flags] - --resume <thread_id>`. `ProviderConfig::resume_strategy_str()` reports this as `"codex-exec"` (every other provider reports `"flag"` or `"none"`), and `build_turn_argv`/`build_codex_argv` in `agentmux-srv/src/backend/blockcontroller/subprocess/argv.rs` handle it by inserting `resume <thread_id>` immediately after the `exec` subcommand while keeping the trailing stdin marker `-` last — a plain flag-append would produce an invalid Codex invocation.
 
 ## Provider abstraction summary
 
@@ -188,7 +207,7 @@ The abstraction is **hybrid** — not a single unified interface throughout:
 | Frontend provider definitions | Static lookup table (`PROVIDERS` record), conditional branching on `provider.id` |
 | Argument construction | Conditional logic per provider in `buildRuntimeArgs.ts` |
 | Backend spawn | Conditional on `ProviderDefinition.controllerType` (persistent / subprocess / acp) |
-| Backend stream parsing | Abstract `Translator` trait — each provider implements `translate(frame) -> Vec<AgentEvent>` |
+| Backend stream parsing | Abstract `Translator` trait — currently only Claude Code has a concrete implementation (`translate(frame) -> Vec<AgentEvent>`); other providers' interactive-pane frames are parsed generically inline (see Step 4's Codex note) |
 
 ## See also
 

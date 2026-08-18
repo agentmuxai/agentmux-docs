@@ -14,17 +14,25 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 
 | Item | Shortcut | What it does |
 |------|---------|--------------|
-| **Command Palette** | `Ctrl+P` / `⌘P` | Opens the command palette (see below). |
 | **New Tab** | `Ctrl+T` / `⌘T` | Adds a new tab to the current window. |
 | **New Window** | `Ctrl+Shift+N` / `⌘⇧N` | Opens a second AgentMux window — fully isolated tabs/state from the first. See [Running multiple instances](/multi-instance/). |
 | **Theme** | — | Submenu listing the available color themes. Selection persists via `window:theme` in `settings.json`. |
 | **Opacity** | — | Submenu of preset levels (35% – 100%). Below 100%, the window becomes translucent. Per-window override is in the [InstancePanel](/window-appearance/). |
-| **Help** | — | Opens the in-app Help pane (a quick reference). |
-| **Armory** | — | Opens the Armory pane (formerly "Trust Center") — Accounts, Identities, Brain, Bundles, MCP Servers, Skills. See [Armory](/armory/). |
 | **Settings** | — | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
+| **Command Palette** | `Ctrl+P` / `⌘P` | Opens the command palette (see below). |
+| **Armory** | — | Opens the Armory pane (formerly "Trust Center") — Accounts, Identities, Brain, Bundles, MCP Servers, Skills. See [Armory](/armory/). |
+| **Toolchain** | — | Opens the Toolchain Manager — effective PATH and the detected version, path, and status of every provider CLI and system dependency, with install links for anything missing. |
+| **DevTools** | — | Toggles Chromium DevTools. |
+| **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window (not the whole app — other windows stay open). |
 
 The Theme and Opacity submenus check-mark the currently active value, so you can see at a glance what you're on.
+
+## Restoring your workspace on relaunch
+
+Quitting AgentMux and reopening it reopens the same windows, tabs, and split-pane layout you had open when you quit, instead of reseeding the default 3-pane workspace. AgentMux snapshots the tab/layout tree just before a graceful close and replays it on the next cold start; agent panes relaunch the same agent/harness/working directory, but in-flight conversation state and terminal scrollback aren't restored — only the pane's own history is (the same as reattaching from a **Recent sessions** tab).
+
+This is on by default, and as of this writing there's no in-app toggle to turn it off — a Settings option is planned as a follow-up but hasn't shipped yet. It only applies to a genuine cold start (the first window of a fresh launch); opening an additional window from the hamburger menu or tearing off a tab is unaffected.
 
 ## Command palette (Ctrl+P / ⌘P)
 

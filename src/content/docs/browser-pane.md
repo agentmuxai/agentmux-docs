@@ -28,6 +28,19 @@ Blank-spawned browser panes default to `https://agentmux.ai`. To get a literally
 
 Title and favicon update from the embedded page automatically. Title is fetched from the page's `<title>`; favicon falls back to the `globe` icon if the page doesn't expose one.
 
+## Keyboard shortcuts
+
+Because the embedded page is a native CEF child view and not DOM content, these shortcuts are intercepted at the CEF keyboard-handler layer rather than a JS `keydown` listener, so they work even while the page itself has focus:
+
+| Shortcut | Action |
+|---|---|
+| <kbd>Ctrl+L</kbd> (<kbd>Cmd+L</kbd> on macOS) | Focus the address bar and select its contents |
+| <kbd>Ctrl+R</kbd> (<kbd>Cmd+R</kbd> on macOS) | Reload the current page |
+| <kbd>Alt+Left</kbd> | Go back |
+| <kbd>Alt+Right</kbd> | Go forward |
+
+<kbd>Ctrl+Shift+R</kbd> and <kbd>Ctrl+Shift+L</kbd> are left alone (not intercepted), so Chromium's own hard-reload chord still works. Reload/back/forward call straight into the same `BrowserPaneManager` methods the header buttons use via IPC; focusing the address bar round-trips through an event to the frontend (moving OS/DOM focus can only happen there), then hands off through the same click-to-focus path described below.
+
 ## IPC commands
 
 The host exposes the browser pane's lifecycle via these CEF commands (invoked through `invokeCommand` from the renderer):
@@ -58,11 +71,40 @@ When you click inside the browser pane, the host fires `browser-pane-clicked` ov
 
 DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary. See [Reducer stack](/internals/reducer-stack/) for the broader pattern.
 
+Clicking inside a browser pane also dismisses any open menu or popover elsewhere in the app — the More dropdown, status-bar popovers, tab context menus, and similar flyouts. This rides the same `browser-pane-clicked` event: a second, independent listener synthesizes a `mousedown`/`pointerdown` on the document body whenever the event fires, which every existing "click outside to dismiss" handler already reacts to. It doesn't replace the pane-selection consumer above — it's an additional subscriber to the same event.
+
+Both `browser-pane-clicked` and right-click context-menu delivery (below) are implemented on Windows and macOS; Linux support is not yet in place, so pane click-to-select, the click-dismiss behavior, and the unified context menu don't apply there yet.
+
+## Context menu
+
+Right-clicking inside a browser pane shows **AgentMux's own context menu** — the same menu component every other pane type uses — instead of Chromium's native one. The native menu is suppressed at the CEF layer and replaced with the standard pane menu, extended with browser-specific items:
+
+1. **Back** / **Forward** — disabled when there's nothing to go back/forward to
+2. **Reload**
+3. **Cut** / **Copy** / **Paste** — shown when the click is over a text selection or an editable field
+4. **Copy Link Address** — shown when the click is over a link
+5. **Print**
+6. **View Page Source**
+7. **Inspect Element**
+8. The standard pane items — split up/down/left/right, replace, color, close — same as any other pane's context menu
+
+If the menu can't be delivered to the pane's owning window for some reason, the pane falls back to Chromium's native menu rather than showing nothing.
+
 ## Pane-scope HTTP auth modal
 
 When a page in the browser pane requests HTTP Basic Auth (or similar challenges), the credential prompt appears as a modal **scoped to just this pane**, not the whole app. Other panes stay interactive; you can keep typing in a terminal next door while the auth challenge is up. The pane that's locked is the only one that goes modal.
 
 This is the same `ModalLayer` primitive the agent launch modal uses, parameterized over scope — the browser pane wraps its embedded `CefBrowserView` in a per-pane `ModalLayer`, so the lock region matches the pane bounds exactly. See [`SPEC_MODAL_LAYER_SCOPING`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs) for the underlying design.
+
+## OAuth sign-in stays in-pane
+
+Signing in via OAuth (Google Identity Services in particular) used to sometimes exit the entire AgentMux instance. The old code collapsed any popup a browser pane opened — including a sign-in popup — into the pane's own top-level browser; when the sign-in flow finished and called `window.close()`, it tore down what the pane thought was itself, which cascaded into the main window and could take the whole app down with it.
+
+The fix lets a browser pane open a **real child popup** for sign-in flows, gated on two checks: the popup's destination must be a known identity-provider host, and the URL must look like an OAuth authorization request. A trusted popup shares the pane's browser/request context, so cookies, `window.opener`, and `postMessage` all behave normally, and closing the popup now only closes the popup. Anything else — a non-auth popup to an external site — opens in your system browser instead of hijacking the pane.
+
+## Faster failure feedback
+
+A load-timeout watchdog now bounds how long a browser pane will sit "still loading" before giving up — 20 seconds, well under Chromium's own multi-minute connect-timeout ceiling. If the page hasn't loaded by then, the pane shows a **human-readable error page** (in the style of Chrome's own "This site can't be reached" pages) instead of a raw Chromium error, with a Retry button. The same error-page rendering is used for genuine CEF load failures (DNS, TLS, blocked, etc.) and for the synthetic watchdog timeout, so failures look consistent regardless of cause. A redirect mid-navigation extends the tracked target URL but doesn't reset the 20 s deadline, so a long redirect chain can't be used to dodge the timeout.
 
 ## Per-pane state
 
@@ -84,3 +126,4 @@ The browser pane is the subject of the in-flight reducer slice migration (fronte
 - [Pane types](/pane-types/) — full pane catalog
 - [Reducer stack](/internals/reducer-stack/) — slice #9 status
 - [Architecture overview](/internals/architecture/) — host / sidecar / renderer split
+- The [`SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md) spec in the main repo for the context-menu design
