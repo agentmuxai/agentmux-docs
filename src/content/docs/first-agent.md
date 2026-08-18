@@ -6,7 +6,7 @@ title: "First Agent Setup"
 AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-This guide walks through what it means for an agent to be first-class in AgentMux. Each agent gets its own structured pane — not a terminal wrapper — with a real identity bundle, a memory bundle, a streaming parser, and a lifecycle. AgentMux supports nine providers: `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, and `copilot`. The full list lives in `frontend/app/view/agent/providers/index.ts:PROVIDERS` in the main repo.
+This guide walks through what it means for an agent to be first-class in AgentMux. Each agent gets its own structured pane — not a terminal wrapper — with a real identity bundle, a memory bundle, a streaming parser, and a lifecycle. AgentMux supports ten harnesses — the CLI tools the UI still mostly labels "providers": `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot`, and `antigravity`. The full catalog lives in `frontend/app/view/agent/providers/catalog.ts:PROVIDERS` in the main repo (re-exported unchanged from the old `providers/index.ts` path, so existing imports still work). A harness is distinct from the *model vendor* — the LLM backend actually serving a harness's responses; see [Configure an Agent via Bundles](#configure-an-agent-via-bundles) and the harness-then-model flow under [Launch the Agent](#launch-the-agent).
 
 ## You don't need to preinstall the agent CLIs
 
@@ -21,6 +21,7 @@ AgentMux is self-contained. Pick a provider in the Agent picker and — if the C
 | **GitHub Copilot CLI** | `@github/copilot` | Auto-installed (npm) |
 | **Pi** | `@mariozechner/pi-coding-agent` | Auto-installed (npm) |
 | **Kimi Code CLI** | `kimi-cli` (pip) | Manual today — `pip install kimi-cli`. In-app auto-install for pip-based providers is on the roadmap. |
+| **Antigravity (AGY)** | `@google/antigravity-cli` | Auto-installed (npm, pinned) |
 
 ### System prerequisites
 
@@ -28,7 +29,7 @@ A handful of providers (Claude Code, OpenClaw) need `git` available on your `PAT
 
 ### Auth happens inline too
 
-After the install completes (or immediately, when the CLI is already cached), AgentMux runs the provider's login flow inside the Launch modal via the **Pre-Launch Auth Panel** — OAuth in your browser for Claude / Codex / Gemini / Copilot, an inline key field for OpenClaw / Pi / Kimi. AgentMux isolates each provider's auth config to a per-channel subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable. See [Auth flows](/auth/) for the per-provider isolation map and OAuth state diagram.
+After the install completes (or immediately, when the CLI is already cached), AgentMux runs the provider's login flow inside the Launch modal via the **Pre-Launch Auth Panel** — OAuth in your browser for Claude / Codex / Gemini / Copilot / Antigravity, an inline key field for OpenClaw / Pi / Kimi. AgentMux isolates each provider's auth config to a per-channel subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable (Codex uses `CODEX_HOME`; Antigravity uses `ANTIGRAVITY_CONFIG_DIR`). See [Auth flows](/auth/) for the per-provider isolation map and OAuth state diagram.
 
 ## Configure an Agent via Bundles
 
@@ -43,8 +44,8 @@ Bundles (formerly "Memory bundles"/Presets) are managed app-wide from the [Armor
 | Field | Description |
 |-------|-------------|
 | **Name** | A human-readable name (e.g., `backend-claude`) |
-| **Provider** | Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, or Pi |
-| **Model** | Model identifier passed to the provider. The picker is provider-aware — selecting Claude Code shows Claude models, Codex shows gpt-5.x models, etc. The list is now fetched live from each provider's own models endpoint (using the agent's own auth) and cached per (provider, CLI version), overlaid on a bundled fallback list — so it no longer requires an AgentMux release to pick up a newly released model. |
+| **Provider** | Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, Antigravity (AGY), or Pi |
+| **Model** | Model identifier passed to the harness. The picker is harness-aware — selecting Claude Code shows Claude models, Codex shows gpt-5.x models, Antigravity shows Gemini models, etc. The list is now fetched live from each harness's own models endpoint (using the agent's own auth) and cached per (provider, CLI version), overlaid on a bundled fallback list — so it no longer requires an AgentMux release to pick up a newly released model. Only shown for harnesses that actually support switching models via a CLI flag — see the harness-then-model flow under [Launch the Agent](#launch-the-agent). |
 | **Working Directory** | The project directory the agent works in |
 
 ### Provider Command
@@ -59,6 +60,7 @@ OpenClaw:           acpx --agent openclaw
 Kimi Code CLI:      kimi --print --output-format stream-json --yolo -p ""
 GitHub Copilot CLI: copilot --acp
 Pi:                 pi --json
+Antigravity (AGY):  agy --output-format stream-json --yolo -p ""
 ```
 
 Three providers (OpenClaw, Copilot, Pi) use the Agent Client Protocol (ACP) over stdio; the others use streaming-JSON modes specific to each CLI. AgentMux's controller layer abstracts the difference. You can override `launchArgs` per Memory bundle.
@@ -74,14 +76,25 @@ A Memory bundle holds four kinds of content per agent:
 
 ## Launch the Agent
 
-Open the Launch Agent modal (the same one you reach from the Agent picker). The picker is **two-tier**:
+Open the Agent picker. It's **two-tier**:
 
-- **My Agents** appears on top — every agent you've already created, sorted by recency. This is the fast path for re-launching something you've used before.
-- **+ New from template** below — opens the template gallery for spinning up a fresh agent. Templates are hidden until you explicitly open them (they were Phase-1 friction noise when the My Agents list grew).
+- **My Agents** appears on top — every agent you've already created, sorted by recency. Click one to relaunch it with the harness, model, and bundle it already has. This is the fast path for re-launching something you've used before.
+- **+ New from template** below — one card per harness (Claude Code, Codex, Antigravity, …), for spinning up a fresh agent. Templates are hidden until you explicitly open them (they were Phase-1 friction noise when the My Agents list grew).
 
-The modal also has a **Recent sessions** tab — re-attach to a prior conversation in a specific agent instead of starting a fresh turn. Useful when you closed a pane and want to pick up where you left off; the agent's history loads in the new pane and you continue from that point.
+The picker also has a **Recent sessions** tab — re-attach to a prior conversation in a specific agent instead of starting a fresh turn. Useful when you closed a pane and want to pick up where you left off; the agent's history loads in the new pane and you continue from that point.
 
-Pick your Memory bundle (or accept the one the agent already has), optionally pick an [Identity bundle](/identity/) for credentials, and click **Launch**. A new agent pane opens in your workspace.
+### Creating from a template: harness, then model
+
+Each template card in **+ New from template** is a **harness** — the CLI tool that runs the agent. Clicking one doesn't launch it directly; it opens a **Create new agent from `<Harness>`** modal that clones a new, independent agent from the template (the template itself is untouched and reusable). You pick the harness by which card you click, then everything else — including the **model** that harness uses — is chosen inside that modal. Fields, top to bottom:
+
+1. **Name** — defaults to the template's name.
+2. **Runtime** — *On this computer (host)* or *In a safe sandbox (container)*. Container is greyed out ("Docker not detected") until Docker's daemon is running, and some harnesses without a container image yet (Antigravity, currently) are host-only regardless of Docker status.
+3. **Model** — shown only when the harness supports switching models via a CLI flag; the harness itself stays fixed, only the model changes. Changeable later from the agent pane's own runtime picker.
+4. **Model Vendor / Custom Endpoint** — shown only for harnesses that support redirecting to an alternate API endpoint (Claude Code today). Leave blank to use the harness's default model vendor.
+5. **Identity** — an [Identity bundle](/identity/) for credentials, or "(ambient credentials)".
+6. **Memory** — a Bundle to attach, or "(vanilla CLI)".
+
+Click **Create**. A new agent pane opens in your workspace.
 
 The agent pane shows:
 

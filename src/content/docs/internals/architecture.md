@@ -65,6 +65,8 @@ This is where the [reducer stack](/internals/reducer-stack/) lives. Briefly:
 
 The full layout, slice list, and migration plan are in the [reducer stack page](/internals/reducer-stack/).
 
+Outside this reducer stack sits one more piece of cross-process coordination: a file-per-session **session-ownership lease** (`LeaseStore`, `agentmux-srv/src/registry/leases.rs`) that guards which single process may currently drive turns for a given agent `instance_id` — relevant in host-mode, where more than one process could otherwise reach the same agent. Each lease is `<registry_root>/leases/<instance_id>.lease.json`, TTL-based (renewed every 5s on the same tick as the per-turn health watchdog; reclaimable once ~3 renewals are missed) and scoped to a `boot_id`, and the claim/renew/release sequence is guarded by a real OS advisory lock (`flock` / `LockFileEx`) rather than the atomic-rename-only pattern the rest of the registry uses, so two processes can never both believe they hold the same session. See [Persistence](/internals/persistence/#whats-not-here) for where the lease files live on disk.
+
 ## Data layout on disk
 
 Every running instance resolves its paths through `agentmux-common::DataPaths` ([source](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs)). Resolution happens once in the launcher and is propagated to host + sidecar via the `AGENTMUX_*_DIR` env vars, so all three processes always agree.

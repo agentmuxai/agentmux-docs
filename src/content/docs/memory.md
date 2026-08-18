@@ -66,6 +66,14 @@ Both surfaces, and an agent acting on itself, go through the same primitive:
 
 See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for the full parameter reference.
 
+### Durability across channels and builds
+
+Native memory is durably mirrored, not just live-filesystem state. `db_agent_native_memory` (a global-scoped store, alongside `db_bundles`/`db_accounts`) keys a copy of every memory file's content by `(agent_id, filename)`, where `agent_id` is the same stable `AgentDefinition.id` the Brain tab's handlers already resolve to — not the live filesystem path, which is channel-relative by construction: it depends on the per-channel `working_directory` and the identity's `CLAUDE_CONFIG_DIR`, so the *same logical agent*, opened from two different channels/builds, computes two different on-disk memory paths.
+
+Every `memory.list` / `memory.read` call (and the agent-callable `MemoryList`/`MemoryRead` MCP tools) writes through into this mirror, then merges the live-filesystem file set with the mirror's file set for its response: a file present in both is served from the live FS (it's the freshest — Claude may have written it moments ago); a file present **only** in the mirror — written from a different channel, or the live folder was wiped — is served from the mirror transparently, with no distinguishing "not found on this channel" state. `memory.write`/`MemoryWrite` upserts the mirror the same way on save.
+
+Net effect: once a memory file has been viewed (listed or read) from any channel/build, the same content stays visible from every other channel/build for that same agent identity — reopening an agent's Brain tab after a version upgrade, or from a different `task package` build, still shows everything Claude has written for it, with the user never aware of the underlying `CLAUDE_CONFIG_DIR`/cwd-hash path mechanics. The one known gap: a fact Claude writes autonomously in a session that's never reopened in the Brain tab before that channel's filesystem is wiped is not captured (no filesystem watcher exists yet). See `docs/specs/SPEC_NATIVE_MEMORY_DURABLE_SYNC_2026_08_07.md` in the main repo for the full design.
+
 ## Launch flow
 
 The Launch Agent modal exposes a single **Memory** dropdown alongside the Identity dropdown:

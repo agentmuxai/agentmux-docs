@@ -10,7 +10,7 @@ AgentMux is an **agent operating environment** — a desktop app where AI agents
 
 ## What is AgentMux?
 
-In AgentMux, every agent is a first-class resident — not a terminal wrapper, but a structured pane with its own identity bundle, memory bundle, streaming parser, and lifecycle. Nine providers run as first-class agent types: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, and GitHub Copilot CLI. You see every tool call, file write, and network request in real time. And uniquely: agents can operate the environment itself via the Agent App API — opening panes, renaming tabs, messaging peer agents, navigating the workspace.
+In AgentMux, every agent is a first-class resident — not a terminal wrapper, but a structured pane with its own identity bundle, memory bundle, streaming parser, and lifecycle. Ten harnesses (CLI tools) run as first-class agent types: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI, and Antigravity (AGY). You see every tool call, file write, and network request in real time. And uniquely: agents can operate the environment itself via the Agent App API — opening panes, renaming tabs, messaging peer agents, navigating the workspace.
 
 ## Key Concepts
 
@@ -18,6 +18,7 @@ In AgentMux, every agent is a first-class resident — not a terminal wrapper, b
 - **Self-contained** — AgentMux bundles its own Chromium runtime and installs the agent CLIs for you on first use (in-pane install modal, per-version cache). No `npm install -g` step before launch.
 - **Identity bundles** — Named credential sets (GitHub PAT, AWS profile, Anthropic API key, …) you assign to an agent at launch. Survives renames; swappable without restart.
 - **Bundles** (formerly Memory bundles/Presets) — Reusable agent personality + capability stacks (provider, model, instructions, MCP, skills). Manage app-wide from the [Armory](/armory/)'s Bundles tab.
+- **Harness vs. model vendor** — the *harness* is the CLI tool driving a session (Claude Code, Codex, Antigravity, …); the *model vendor* is the LLM backend actually serving responses. These are independent: a harness talks to a default vendor unless you redirect it — some harnesses (Claude Code today) support pointing at a custom endpoint instead. See [First Agent Setup](/first-agent/) for the harness-then-model flow you go through when creating an agent from a template.
 - **Interagent Comms** — Agents communicate via the MuxBus (Host / LAN / WAN tiers). Use `DiscoverAgents` to find peers and `SendMessage` to send typed messages. An agent's output can also stream into another pane's input.
 - **Agent App API** — Agents inside any pane can control the workspace via a typed MCP + REST API: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. This is what makes AgentMux an _operating_ environment, not just a workspace. See [Agent App API](/internals/agent-app-api/).
 - **Subagent monitoring** — The Swarm pane provides a bird's-eye view of all sub-agents spawned by primary agents; clicking one opens a focused Subagent view.

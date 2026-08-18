@@ -19,6 +19,7 @@ Every widget is pinned by default — the widget bar shows the full set directly
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
+| **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
 | **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
@@ -237,6 +238,21 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 
 10 MB file-size cap on read and write — over that, the editor refuses to load.
 
+## Media
+
+The Media pane is a live-updating image/video viewer for files an agent (or you) produce on disk — the typical case is watching the output of a local generation pipeline (e.g. a ComfyUI-style image/video workflow) land without leaving AgentMux to open a file explorer.
+
+Point it at either:
+
+- **A single file** — renders that image or video and stays on it.
+- **A directory** — watches it and shows the most recently modified matching file, updating automatically (no manual reload) whenever a new or changed file appears. There's no gallery/grid of every file in the directory yet — it always shows one file at a time.
+
+The pane watches the filesystem via the same `notify`-crate mechanism the Editor pane's live-reload uses, generalized from "one open file" to "a whole directory." Supported extensions include common image formats (png, jpg, webp, gif) and video (webm, mp4 — though H.264/AAC `.mp4` playback depends on your build's Chromium codec support; webm typically plays more reliably).
+
+### Opening it programmatically
+
+Agents have a dedicated `OpenMedia` MCP tool — the Media-pane equivalent of `OpenEditor` — to open a specific file in a Media pane next to the conversation (optionally as a split or a floating pane) without the human having to browse for it manually. Useful for "here's the image/video I just generated" moments mid-turn.
+
 ## Agent
 
 The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own identity bundle, memory bundle, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
@@ -271,6 +287,12 @@ Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours`
 
 Long-running shell commands started by the agent are pinned to a **dock at the top of the agent pane** — visible at a glance without scrolling to find the tool call. Click any docked activity row to expand its live log output. The dock entry clears automatically when the process completes.
 
+An ordinary tool call that just happens to run long gets promoted into the dock once it's been running past a threshold (30 seconds) — this is the auto-detected "this is taking a while" case. A Bash call the agent explicitly launched in the background (`run_in_background`) is different: it gets its own dock row **immediately**, with a **"Running in background"** status distinct from the generic "Working…" state, and stays there until the agent reports the task's completion. Splitting these two out matters because a long-lived background process (a dev server, a watch task) is expected to keep running — without the distinct status, it would look identical to a turn that's simply stuck.
+
+### Agent History
+
+Each agent pane keeps its working scrollback scoped to the agent's **current session** — after a fresh session starts, older conversation isn't shown inline (it's still fully retained, just out of the live view). To read the full multi-session history, open **Agent History**: a read-only tab on the agent pane (reachable via the **Earlier conversations** link row that appears at the top of the scrollback after a new session starts, or via the pane's right-click context menu) that shows the entire retained conversation across every session, with day separators and session-boundary dividers, and its own independent scroll/pagination back to the very first message. It's a separate tab, not a view that replaces your live conversation — switch back to the live tab at any time, and an in-progress composer draft survives the round trip.
+
 ### Send-now queue
 
 The composer has a **send-now** mode for messages you want delivered the moment the agent's next tool call completes — useful for mid-turn corrections without interrupting the current operation. Type your message and use the send-now action to queue it; it holds at the tool-call boundary and fires the instant the tool returns. Press `↑` to recall the last queued message.
@@ -297,7 +319,9 @@ Click **Shell** in the composer strip to open a resizable **details drawer** ben
 
 ### Pane and tab colors
 
-Right-click a **pane header** for an inline 12-swatch color picker (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes. Right-click a **tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself. These are two independent color systems (different storage, different swatch sets) by design.
+Every agent has its own **automatically assigned display color** — a deterministic color derived from the agent's id, set the moment the agent is created (and backfilled for agents that existed before this shipped) and shown as the agent pane's border. It requires no action on your part; it's just how you can tell agents apart at a glance across panes.
+
+This is separate from **manual** pane/tab coloring: right-click a **pane header** for an inline 12-swatch color picker (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes, and overrides an agent's automatic color when set. Right-click a **tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself. These are two independent color systems (different storage, different swatch sets) by design.
 
 ### Subsections
 
