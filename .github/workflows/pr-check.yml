@@ -1,0 +1,41 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        # Plain build, not build:full — this only needs to catch broken
+        # frontmatter/markdown/links/structure in content PRs, the same
+        # bar the repo's own review checklist sets for non-prod-bound
+        # changes. build:full (typedoc + rustdoc, needs cargo) stays a
+        # deploy.yml-only, post-merge concern — it's about the generated
+        # API reference content, not doc-page correctness, and adding a
+        # Rust toolchain here would slow down every PR to check something
+        # deploy.yml already verifies before going live.
+        run: npm run build
