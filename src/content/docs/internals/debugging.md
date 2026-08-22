@@ -1,6 +1,6 @@
 ---
 title: Debugging
-description: How to find logs, trace renderer crashes, follow the reducer dispatch ring, and inspect WRR drift in a running AgentMux.
+description: How to find logs, trace renderer crashes, follow the reducer dispatch ring, inspect WRR drift, and open DevTools (including remote CDP access) in a running AgentMux.
 ---
 
 This page is the practical "something's off, where do I look first" reference. AgentMux's three-process design means logs, state, and crash artifacts each live in a specific place — the trick is knowing which.
@@ -146,9 +146,34 @@ INFO agentmux_lib::commands::backend: [fe] my message module=console
 
 So:
 
-- **Don't tell users to open DevTools (F12)** — the frontend logs aren't there.
+- **Don't tell users to open DevTools expecting frontend `console.*` output** — it isn't there (see below for what DevTools' Console tab *does* show).
 - **`muxlog host '\[fe\]'`** filters the host log to frontend output only.
 - **Live tail** during repro: keep the dev terminal open with `task dev`; `[fe]` lines appear inline.
+
+## Inspecting elements and opening DevTools
+
+DevTools is still the right tool for DOM/CSS inspection and network activity — just not for frontend app logs (those are the host log, above). Two ways to reach it, both routed through the same `toggle_devtools`/`inspect_element_at` CEF IPC commands ([`agentmux-cef/src/commands/window/meta.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/window/meta.rs)):
+
+- **Right-click → Inspect Element** — opens DevTools focused on the exact element under the cursor. Works both on regular panes (agent, terminal, editor, etc.) and browser panes. This is a frontend-owned menu entry, not CEF's built-in one: AgentMux's own unified context menu (`ContextMenuModel.showContextMenu`) renders every right-click surface in the app, and on browser panes CEF's native Chromium context menu (which has its own competing "Inspect") is deliberately suppressed so this one custom menu owns the whole surface — see [`docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md) in the app repo.
+- **Toggle DevTools without a specific element** — hamburger menu (≡) → DevTools on Windows/Linux, the native View menu (⌥⌘I) on macOS, or the Command Palette's "Toggle DevTools" command. See [Main Menu](/main-menu/) and [Keybindings](/keybindings/).
+
+Once open, the **Elements**, **Styles**, and **Network** tabs behave like DevTools anywhere — the **Console** tab just won't show `[fe]`-tagged app logs, since those bypass it entirely (previous section).
+
+### Remote debugging via the Chrome DevTools Protocol (CDP)
+
+Beyond the interactive DevTools window, the host also exposes a raw CDP endpoint — useful for scripted inspection or driving a running instance from a test harness, not just clicking around by hand.
+
+**Port:** prefers **9223** in a dev build (`AGENTMUX_DEV=1` / `task dev`) or **9222** in a release build; if that port is already taken (e.g. a second instance is already running), it falls back to any free OS-assigned port instead of failing — don't hardcode 9222/9223 blindly when more than one instance might be up ([`agentmux-cef/src/lib.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/lib.rs)).
+
+**List targets and connect:**
+
+```bash
+curl -s http://127.0.0.1:9223/json/list   # each entry includes webSocketDebuggerUrl
+```
+
+Open the returned `webSocketDebuggerUrl` (`ws://127.0.0.1:9223/devtools/page/<target_id>`) and speak CDP's JSON-RPC-style protocol directly — or, for interactive use, point a Chromium-based browser at `chrome://inspect` → **Configure…** → add `localhost:9223` (or `9222` for a release build), and the AgentMux renderer appears under **Remote Target**.
+
+For a working scripted reference (target discovery + a plain `WebSocket` JSON-RPC client, no external CDP library), see [`test/e2e/harness.ts`](https://github.com/agentmuxai/agentmux/blob/main/test/e2e/harness.ts) in the app repo.
 
 ## Reducer dispatch ring
 
