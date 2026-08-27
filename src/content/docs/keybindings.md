@@ -69,6 +69,28 @@ Most commands also have a direct keyboard shortcut — see the tables below.
 | Split Below | `Cmd + Shift + D` | `Alt + Shift + D` |
 | Split in Direction | `Ctrl + Shift + S`, then Arrow Key |
 
+## Resizing Panes
+
+Pane resizing is mouse-driven, with `Shift` selecting the "surgical" variant of each gesture. The modifier is `Shift` on every platform, and it can be pressed or released **mid-drag** — the layout re-bases fluidly from wherever it is, with no jumps.
+
+### Dragging a pane border
+
+| Gesture | Effect |
+|--------|--------|
+| Drag a pane border | **Resize the whole row/column.** The border under the cursor tracks it exactly; every other pane along that axis adjusts proportionally. |
+| `Shift` + drag a pane border | **Resize a single border.** Only the two panes flanking the dragged border change size; everything else stays put. |
+
+Panes have a 128 px minimum size. When a group resize runs out of room on one side, panes stop at the floor and the drag caps at whatever space was actually available.
+
+### Dragging a window edge
+
+| Gesture | Effect |
+|--------|--------|
+| Drag a window edge | **Proportional.** All panes scale with the window. |
+| `Shift` + drag a window edge | **Only the edge pane resizes.** The pane(s) touching the dragged edge absorb the entire size change; every other pane keeps its exact size. Shrinking floors the edge pane at 128 px, then spills inward pane by pane. |
+
+`Shift` + window-edge resizing is currently **Windows-only**; macOS and Linux always resize proportionally.
+
 ## Customization
 
 Keybindings can be customized in the settings file. See [Configuration](/config) for details on the settings file location and format.
