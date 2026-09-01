@@ -471,7 +471,9 @@ Returns `{ success, error? }`. The message is delivered to the target agent's pa
 
 ### Muxqueue — the shared work queue
 
-`SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is its opposite — **pull, unaddressed, deferred**. Work goes on the queue without naming anyone, and whichever agent asks next takes it.
+`SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is **pull and deferred** — work is enqueued, and an agent takes it when it asks, rather than being handed it.
+
+By default an item is also **unaddressed**: it names nobody, and whichever agent claims next gets it. That is the common case and the reason the queue exists. It is *optionally* addressable though — `target_agent` restricts an item to one agent, `target_group` to the members of an agent group, and a restricted item is simply invisible to everyone else's `WorkClaim`. Targeting narrows *who* may claim; it never changes *when* — the item still waits to be claimed rather than being delivered.
 
 Reach for it when you don't need a *specific* agent, or need something done *eventually* rather than now: "someone should repro this", "this PR needs review when a reviewer frees up". Items survive pane closes, app restarts, and version/channel changes, and are visible to every agent on the machine.
 
@@ -480,10 +482,16 @@ Reach for it when you don't need a *specific* agent, or need something done *eve
 | A specific agent, right now | `SendMessage` |
 | On a schedule | `CronCreate` |
 | **Anyone, when they're free** | **`WorkEnqueue`** |
+| A specific agent, but whenever they get to it | `WorkEnqueue` with `target_agent` |
 
 #### Claiming is a lease, not ownership
 
-`WorkClaim` grants a **time-limited lease** (default 2 minutes). Heartbeat during long work, then complete or release. If the lease expires, the item returns to the pool for someone else — which is what stops a crashed agent from blocking an item forever.
+`WorkClaim` grants a **time-limited lease** (default 2 minutes). Heartbeat during long work, then complete or release. An expired lease is what stops a crashed agent from blocking an item forever — but two details matter, and both are easy to assume wrong:
+
+- **Reaping is lazy.** Nothing sweeps in the background. An expired item stays `claimed` until the next time *some* agent calls `WorkClaim`, which is when the reaper runs. So a queue can show items as `claimed` with nobody working them; [`muxspect work`](/internals/debugging/) flags exactly that.
+- **An expired item does not always come back.** It returns to the pool only if it has attempts left. If the expired claim consumed the item's **final** permitted attempt, it is parked as `failed` and never offered again — the same rule that makes a release on the final attempt terminal.
+
+So "the agent crashed, it'll be retried" holds *until the attempts run out*, and not after.
 
 The claim response includes an **`attempt` number that every later call must echo back**. It fences one claim instance from another: because `agent_id` is stable across claims, a delayed call left over from an expired claim would otherwise operate on a *newer* claim of the same item by the same agent. A stale fence gets HTTP 409, and the only recovery is to claim again.
 
