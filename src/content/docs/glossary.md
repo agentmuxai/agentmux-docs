@@ -45,6 +45,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 
+<a id="muxqueue"></a>**Muxqueue** — The shared work queue: durable items any agent can enqueue and any agent can claim later. The **pull** counterpart to [MuxBus](#agentbus)'s **push** — `SendMessage` names a recipient and delivers now, Muxqueue names nobody and waits for whoever is free. Claiming grants a time-limited *lease*, not ownership, so a crashed claimant's item returns to the pool. Lives in the always-global store, so items cross channels and survive restarts. Exposed as the `Work*` Agent App API tools and `muxspect work`. See [Agent App API](/internals/agent-app-api/#muxqueue--the-shared-work-queue).
+
 **OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
 <a id="pane"></a>**pane** — A UI slot in the workspace layout. Panes have types: terminal, agent, code editor, browser, swarm, subagent, system metrics, code preview. The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).

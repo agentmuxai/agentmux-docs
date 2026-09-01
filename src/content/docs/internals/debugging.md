@@ -130,9 +130,50 @@ node ~/.agentmux/shell/muxspect.mjs dock clear <block_id> <node_id>
 
 The `STUCK?` heuristic has a blind spot for backgrounded launches: an accepted `run_in_background` call's raw status goes terminal (`success`) almost immediately even while the dock row keeps showing `running` while it awaits a `<task-notification>` (that reclassification is purely client-side). `STUCK?` structurally can't flag these — check the `bg` column by hand: a `bg` row with an old `age` and `status: success` is worth checking in the live UI even though `STUCK?` reads clean.
 
+### Inspecting the pane layout
+
+```bash
+node ~/.agentmux/shell/muxspect.mjs layout            # every tab
+node ~/.agentmux/shell/muxspect.mjs layout <tab_id>   # one tab
+```
+
+Prints the persisted layout tree as an indented outline — each node's direction, flex size, block id, and whether it's minimized or magnified — followed by the layout doctor's verdict. Exits non-zero when any tree has invariant violations, so it can gate a script.
+
+Two things to know. It reports what is **persisted**, not what's on screen: minimize geometry is derived fresh on every render and only structural changes are written back, so a tree here can lag what you're looking at. And `[all-minimized]` on a branch is the non-obvious flag — a branch never carries a `minimized` marker of its own; it's *effectively* minimized when every leaf beneath it is, and that derived state is what drives chip geometry.
+
+### Inspecting the work queue
+
+```bash
+node ~/.agentmux/shell/muxspect.mjs work            # every item
+node ~/.agentmux/shell/muxspect.mjs work open       # just the claimable backlog
+node ~/.agentmux/shell/muxspect.mjs work claimed    # what's being worked, by whom
+```
+
+The [Muxqueue](/internals/agent-app-api/#muxqueue--the-shared-work-queue) backlog: state, current holder, attempts burned against the limit, and the `result` field — the completion trace on a `done` item, the reason on a `failed` or handed-back one.
+
+**The signal to look for is `LEASE EXPIRED`.** A claimed item whose lease has lapsed has nobody working it, but the row still says `claimed` — reaping happens when some agent next calls `WorkClaim`, not in a background sweeper. So a queue can look busy while being entirely idle. This flags those rows and totals them, and distinguishes the ones that will be re-offered from the ones whose attempts are spent (those get parked as `failed`, not returned to the pool).
+
+Read-only, like everything in `muxspect` except `dock clear`.
+
+### Finding agents and conversations across channels
+
+```bash
+node ~/.agentmux/shell/muxspect.mjs conversations         # every agent's latest activity
+node ~/.agentmux/shell/muxspect.mjs conversation <agent>  # one agent's transcript tail
+node ~/.agentmux/shell/muxspect.mjs find <block_or_agent> # which instance has this?
+node ~/.agentmux/shell/muxspect.mjs verify-sender <agent> # is this agent registered, and via what tier?
+```
+
+`verify-sender` reports **registry liveness only** — it is not cryptographic sender verification and does not replace checking a jekt's own `TRUST=`/`SIG=` fields. See [Inter-agent comms](/internals/interagent-comms/).
+
 ### Scope
 
-**Phase 1 only queries the instance you're already inside** — it reads `$AGENTMUX_LOCAL_URL`/`$AGENTMUX_AUTH_KEY` from its own environment, the same way `agentmux-mcp` reaches every other `/api/v1/*` route. It cannot yet discover or query a *different* running AgentMux instance — each instance has its own dynamic port and auth key (the same isolation invariants covered in [Multi-instance & dev mode](/multi-instance/)) and there's no cross-instance discovery+auth story yet. Planned as Phase 2.
+**Most commands only query the instance you're already inside** — they read `$AGENTMUX_LOCAL_URL`/`$AGENTMUX_AUTH_KEY` from the environment, the same way `agentmux-mcp` reaches every other `/api/v1/*` route. Each instance has its own dynamic port and auth key (the isolation invariants in [Multi-instance & dev mode](/multi-instance/)), and there's no general cross-instance discovery+auth story yet. Planned as Phase 2.
+
+Two deliberate exceptions:
+
+- **`conversations` / `find`** reach other AgentMux **channels on the same host** via the shared reactive registry (not LAN or WAN content).
+- **`work`** shows items from *any* channel on the host, because the work queue deliberately lives in the always-global identity store. A per-channel queue would defeat its purpose.
 
 Full reference: [`docs/MUXSPECT.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/MUXSPECT.md).
 
