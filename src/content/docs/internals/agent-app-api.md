@@ -469,6 +469,66 @@ Parameters: `to` (target agent name, required), `message` (string, required).
 
 Returns `{ success, error? }`. The message is delivered to the target agent's pane as if a user typed it — the agent picks it up on its next turn.
 
+### Muxqueue — the shared work queue
+
+`SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is its opposite — **pull, unaddressed, deferred**. Work goes on the queue without naming anyone, and whichever agent asks next takes it.
+
+Reach for it when you don't need a *specific* agent, or need something done *eventually* rather than now: "someone should repro this", "this PR needs review when a reviewer frees up". Items survive pane closes, app restarts, and version/channel changes, and are visible to every agent on the machine.
+
+| Instead of | Use |
+|---|---|
+| A specific agent, right now | `SendMessage` |
+| On a schedule | `CronCreate` |
+| **Anyone, when they're free** | **`WorkEnqueue`** |
+
+#### Claiming is a lease, not ownership
+
+`WorkClaim` grants a **time-limited lease** (default 2 minutes). Heartbeat during long work, then complete or release. If the lease expires, the item returns to the pool for someone else — which is what stops a crashed agent from blocking an item forever.
+
+The claim response includes an **`attempt` number that every later call must echo back**. It fences one claim instance from another: because `agent_id` is stable across claims, a delayed call left over from an expired claim would otherwise operate on a *newer* claim of the same item by the same agent. A stale fence gets HTTP 409, and the only recovery is to claim again.
+
+:::caution
+Claiming an item does **not** grant authority you wouldn't otherwise have. The payload is a prompt; every action in it is still subject to its own normal confirmation rules.
+:::
+
+#### `WorkEnqueue`
+
+| Parameter | Type | Description |
+|---|---|---|
+| `title` | string (required) | Short human-scannable summary |
+| `payload` | string (required) | The full instruction injected into whoever claims it. Write it standalone — the claimant has none of your context |
+| `kind` | string (optional) | Free-form tag for filtering claims (`review`, `repro`, …) |
+| `target_agent` | string (optional) | Restrict to one agent id. Mutually exclusive with `target_group` |
+| `target_group` | string (optional) | Restrict to an agent-group id. Mutually exclusive with `target_agent` |
+| `priority` | integer (optional) | Higher claims first; ties break oldest-first. Default 0 |
+| `not_before` | integer (optional) | Unix ms; not claimable before this |
+| `max_attempts` | integer (optional) | Claims before the item is parked as failed. Default 3 |
+
+#### `WorkClaim`
+
+Take the next eligible item and become its holder. Returns `{claimed: false}` when nothing is available — a normal answer, not an error, so it's safe to call speculatively.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `kind` | string (optional) | Only claim items with this tag |
+| `lease_ms` | integer (optional) | Lease length. Default 120000 |
+
+If a previous agent handed the item back, their reason is included — read it before repeating their approach.
+
+#### `WorkHeartbeat` / `WorkComplete` / `WorkRelease`
+
+All three take `id` and the `attempt` fence from your claim.
+
+- **`WorkHeartbeat`** — extend the lease while still working.
+- **`WorkComplete`** — finish. `result` is **required**: once an item is done, it's the only record the work happened.
+- **`WorkRelease`** — hand back with a `reason`. Prefer this over letting a lease lapse; it frees the item immediately and records why. A release still consumes an attempt, and releasing on the **final** attempt parks the item as `failed` rather than reopening it — work nobody can do should stop circulating.
+
+#### `WorkList`
+
+The shared backlog. Filter by `state` (`open`, `claimed`, `done`, `failed`, `cancelled`) and `limit`. Read-only — useful before enqueueing, to avoid duplicates.
+
+For a richer view from a terminal, including stuck-lease detection, see [`muxspect work`](/internals/debugging/).
+
 ---
 
 ## REST API
@@ -500,6 +560,13 @@ This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of th
 | `GET` | `/api/v1/shell/status` | `ShellStatus` |
 | `GET` | `/agentmux/discovery` | `DiscoverAgents` |
 | `POST` | `/agentmux/reactive/inject` | `SendMessage` |
+| `POST` | `/agentmux/work` | `WorkEnqueue` |
+| `GET` | `/agentmux/work` | `WorkList` |
+| `POST` | `/agentmux/work/claim` | `WorkClaim` |
+| `POST` | `/agentmux/work/:id/heartbeat` | `WorkHeartbeat` |
+| `POST` | `/agentmux/work/:id/complete` | `WorkComplete` |
+| `POST` | `/agentmux/work/:id/release` | `WorkRelease` |
+| `DELETE` | `/agentmux/work/:id` | *(cancel — no MCP tool; operator action)* |
 
 :::note
 `Loop`/`LoopStop`/`LoopList` and `CronCreate`/`CronDelete`/`CronList`/`CronPause`/`CronResume` (see [Scheduling](#scheduling)) aren't in this REST table — they're MCP-only today, with no dedicated `/api/v1/*` route.
