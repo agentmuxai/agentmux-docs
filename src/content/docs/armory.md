@@ -4,7 +4,7 @@ description: The AgentMux credential + primitive hub — Accounts, Identities, B
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 The **Armory** is the app-wide hub for every reusable "primitive" an agent can be built from: credentials, identities, native memory, bundles, MCP servers, and skills. It was called **Trust Center** in earlier releases — same pane, new name and a bigger scope.

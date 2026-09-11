@@ -4,7 +4,7 @@ description: What AgentMux injects into every agent session, what the underlying
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 When an agent pane is open and you send a message, there are two distinct layers that add context to the conversation before it reaches the AI provider. Understanding both layers — and how provider-side prompt caching interacts with them — is what distinguishes "sent every turn" (technically true) from "costs full tokens every turn" (not true, after turn 1).

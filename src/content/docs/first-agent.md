@@ -3,7 +3,7 @@ title: "First Agent Setup"
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 This guide walks through what it means for an agent to be first-class in AgentMux. Each agent gets its own structured pane — not a terminal wrapper — with a real identity bundle, a memory bundle, a streaming parser, and a lifecycle. AgentMux supports ten harnesses — the CLI tools the UI still mostly labels "providers": `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot`, and `antigravity`. The full catalog lives in `frontend/app/view/agent/providers/catalog.ts:PROVIDERS` in the main repo (re-exported unchanged from the old `providers/index.ts` path, so existing imports still work). A harness is distinct from the *model vendor* — the LLM backend actually serving a harness's responses; see [Configure an Agent via Bundles](#configure-an-agent-via-bundles) and the harness-then-model flow under [Launch the Agent](#launch-the-agent).

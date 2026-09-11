@@ -4,7 +4,7 @@ description: How the Warden widget is wired — view model, section data flow, p
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented.
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented.
 :::
 
 This page covers the Warden widget's internals: the file layout, the view model pattern, the section data sources, and the design constraint that drove the three-layer split. For what the user sees, see [Warden widget](/warden/).

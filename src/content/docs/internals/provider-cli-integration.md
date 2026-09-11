@@ -4,7 +4,7 @@ description: How AgentMux spawns provider CLIs into PTYs — the blockcontroller
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 AgentMux does not call AI provider APIs directly. Instead, it manages a provider CLI subprocess — `claude`, `codex`, `gemini`, or others — inside a PTY, and communicates with the provider's API through that CLI. This page describes how that subprocess is created, configured, and supervised.
