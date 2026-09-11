@@ -4,7 +4,7 @@ description: How AgentMux instances on the same network discover each other via 
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS) — the same zero-config protocol Bonjour, AirPlay, and printer discovery use. Once enabled, every AgentMux running on your LAN appears in the [Warden widget](/warden/)'s LAN section and in the HostPopover, along with its hostname and version.

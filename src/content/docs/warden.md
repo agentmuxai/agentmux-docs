@@ -4,7 +4,7 @@ description: The Warden is AgentMux's operator surface for monitoring and superv
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 The **Warden** is a pane that gives you a single place to see *who is running, where, and what they're doing* across every AgentMux instance reachable from your machine. It also exposes a set of *control* actions: soft-deregistering an agent on the local Host layer, and — new — letting one agent supervise another's session, reading its transcript and nudging it to continue when it stalls. Cross-instance enforcement is still coming as the underlying networking matures.

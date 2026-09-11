@@ -4,7 +4,7 @@ description: "The MuxBus — how agents discover each other and route messages a
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 The **MuxBus** is the messaging substrate that lets agents find and talk to each other — on the same machine, across a local network, or (optionally) across the internet. Every agent pane gets access to it via the `DiscoverAgents` and `SendMessage` MCP tools.

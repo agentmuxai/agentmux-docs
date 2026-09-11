@@ -4,7 +4,7 @@ description: How the mDNS-based peer discovery module is wired — service defin
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases.
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases.
 :::
 
 This page is the architectural companion to the user-facing [LAN discovery](/lan-discovery/) page. It covers what's actually on disk and what runs at startup vs. on toggle.

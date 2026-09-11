@@ -4,7 +4,7 @@ description: The API that lets agents operate the AgentMux workspace — open pa
 ---
 
 :::caution[Alpha Software]
-AgentMux is in **early alpha** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
+AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
 The **Agent App API** is what makes AgentMux an *operating* environment, not just a workspace. Every agent running inside a pane has access to a typed API that lets it drive the environment itself: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. No human in the loop required.
