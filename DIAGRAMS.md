@@ -586,7 +586,7 @@ Launcher <-> Host: named pipe
 
 # Nested containers
 Host: {
-  Renderer: Chromium 148
+  Renderer: Chromium
   Frontend: SolidJS app
   Renderer -> Frontend: JS bridge
 }

@@ -19,7 +19,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="browser-pane"></a>**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
 
-**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium 148 runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
+**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
 <a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `local-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
 

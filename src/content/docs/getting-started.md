@@ -6,7 +6,7 @@ title: "Getting Started with AgentMux"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux is an **agent operating environment** — a desktop app where AI agents are first-class residents: structured panes with real identity, real memory, and the ability to operate the workspace itself. Built on Rust with a bundled Chromium 148 via CEF and a SolidJS frontend.
+AgentMux is an **agent operating environment** — a desktop app where AI agents are first-class residents: structured panes with real identity, real memory, and the ability to operate the workspace itself. Built on Rust with a bundled Chromium via CEF and a SolidJS frontend.
 
 ## What is AgentMux?
 
