@@ -24,7 +24,7 @@
 # What this workflow does (manual dispatch only):
 #   1. Check out the repo with submodules (src/agentmux is required for
 #      build:typedoc and build:rust-docs).
-#   2. Set up Node 22 + a minimal Rust stable toolchain.
+#   2. Set up Node 24 + a minimal Rust stable toolchain.
 #   3. Cache npm + cargo.
 #   4. npm ci
 #   5. npm run build:full   (typedoc → rustdoc → astro)
@@ -72,10 +72,10 @@ jobs:
           # need it present, not on a moving branch.
           fetch-depth: 1
 
-      - name: Set up Node 22
+      - name: Set up Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
 
       - name: Set up Rust (stable, minimal)
