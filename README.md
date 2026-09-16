@@ -14,6 +14,8 @@ The documentation site for [AgentMux](https://github.com/agentmuxai/agentmux) â€
 
 ## Run locally
 
+**Requires Node.js >=24.11.0** (`.npmrc` sets `engine-strict=true`, so `npm install` hard-fails on an older Node instead of just warning).
+
 ```bash
 git clone --recurse-submodules https://github.com/agentmuxai/agentmux-docs
 cd agentmux-docs
