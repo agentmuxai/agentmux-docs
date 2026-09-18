@@ -6,7 +6,7 @@ title: "Pane Types"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux organizes your workspace into panes — individual views that can be split, rearranged, and magnified. Each pane has a specific type that determines its behavior.
+AgentMux organizes your workspace into panes — individual views that can be split, rearranged, and magnified. A pane isn't locked to one type, though: it holds an ordered list of tabs, and any tab can be any widget type — see [Pane tabs](#pane-tabs) below for how that works and how it differs from a pane *split*.
 
 ## Available Pane Types
 
@@ -455,6 +455,30 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 - **Top bar widgets** — Click the icons on the right side of the top bar
 - **Right-click header** — Right-click a pane header for the widget menu
 - **Keyboard** — `Cmd+N` / `Alt+N` for terminal, `Cmd+Shift+A` / `Alt+Shift+A` for agent panel
+
+### Pane tabs
+
+Every pane's own header doubles as its tab strip — one row, not a title bar
+with a separate strip stacked under it. Click the **+** on any pane's strip
+and pick a widget type; it's added as a new tab *in that same pane*, no new
+split. This works for every widget type, not just more of the pane's own
+kind — an agent pane can pick up a terminal tab and a browser tab right next
+to it, all inside one pane.
+
+This is a different axis from the top-bar/`Cmd+N` actions above and from
+[Splitting](#splitting) below: those create a **new pane**. A pane's own
+`+` adds a **tab to the pane you're already looking at**. Use splits when
+you want two things visible side by side; use tabs when you want to switch
+between things in the same space.
+
+Note this "tab" is scoped to the pane — a different concept from a window
+[Tab tear-off](#tab-tear-off) below, which is about the browser-style strip
+at the very top of the whole window, not a pane's own strip.
+
+Inspired by [cmux](https://github.com/manaflow-ai/cmux)'s
+`Workspace → Pane → Surface → Panel` model — see
+[GitHub: SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN_2026_09_17.md)
+for the full design rationale.
 
 ### Splitting
 
