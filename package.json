@@ -1,12 +1,12 @@
 {
   "name": "agentmux-docs",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "engines": {
     "node": ">=24.11.0"
   },
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "node -e \"try{require('child_process').execSync('git rev-parse --git-dir',{stdio:'ignore'})}catch(e){process.exit(0)}require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})\"",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
