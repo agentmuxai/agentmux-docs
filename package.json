@@ -6,7 +6,7 @@
     "node": ">=24.11.0"
   },
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks",
+    "prepare": "node scripts/setup-git-hooks.cjs",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
