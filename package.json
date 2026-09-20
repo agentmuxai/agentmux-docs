@@ -6,7 +6,7 @@
     "node": ">=24.11.0"
   },
   "scripts": {
-    "prepare": "node scripts/setup-git-hooks.cjs",
+    "prepare": "node -e \"try{require('child_process').execSync('git rev-parse --git-dir',{stdio:'ignore'})}catch(e){process.exit(0)}require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})\"",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
