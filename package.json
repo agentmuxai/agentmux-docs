@@ -6,7 +6,7 @@
     "node": ">=24.11.0"
   },
   "scripts": {
-    "prepare": "node -e \"try{require('child_process').execSync('git ls-files --error-unmatch package.json',{stdio:'ignore'})}catch(e){process.exit(0)}require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})\"",
+    "prepare": "node -e \"try{const cp=require('child_process'),path=require('path');const t=path.resolve(cp.execSync('git rev-parse --show-toplevel',{stdio:['ignore','pipe','ignore']}).toString().trim());if(t!==path.resolve(process.cwd()))process.exit(0)}catch(e){process.exit(0)}require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})\"",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
