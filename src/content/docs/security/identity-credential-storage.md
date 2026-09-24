@@ -1,119 +1,138 @@
 ---
 title: "Identity & credential storage"
-description: "Where Identity bundle credentials live, how they reach agent processes, and what the audit trail looks like."
+description: "Where AgentMux keeps credentials and keys at rest, how they reach agent processes, and what the file permissions actually are."
 ---
 
-The [Identity bundles](/identity/) page covers the *feature* — what they are, how to create them, how to assign them at launch. This page covers the *security model* — where the data lives at rest, how it flows into agent processes, and what an evaluator can verify.
+The [Identity bundles](/identity/) page covers the *feature*: accounts, bundles, and assigning them at launch. This page covers the *security model*: where every credential and key lives at rest, how credentials reach agent processes, and what protects them.
 
-## SecretRef — the storage abstraction
+## Where AgentMux keeps data
 
-A credential in AgentMux is always represented by a `SecretRef` — a *pointer* to the credential, not the value itself. There are five variants:
+Everything lives under one root, `~/.agentmux` (`%USERPROFILE%\.agentmux` on Windows); dev builds use `~/.agentmux/dev/<branch>/` for their per-channel part. See [Data layout](/internals/data-layout/) for the full tree. The parts that matter for security:
 
-### `Env` — environment variable lookup
+| Path | Contents |
+|---|---|
+| `channels/<channel>/versions/<version>/data/db/objects.db` | Panes and their settings, agent definitions, agents' signing keys and identity tokens, held messages |
+| `channels/<channel>/versions/<version>/data/db/filestore.db`, `sagas.db` | Pane output and terminal scrollback; the operation log |
+| `channels/<channel>/versions/<version>/data/authkey.dev`, `ipc-port-<hash>` | The current launch's auth key and host IPC token (see below) |
+| `channels/<channel>/versions/<version>/cef-cache/` | Chromium profile for browser panes: cookies, site storage, cache |
+| `shared/store.db` | Identity accounts, memory bundles, drone definitions, MuxBus credential metadata, per-agent MuxBus machine credentials |
+| `shared/identity-store.db` | Agent-to-account links, skills, MCP servers, the work queue |
+| `shared/agents/transcripts/filestore.db` | Agent conversation transcripts |
+| `shared/providers/<provider>/`, `shared/identities/<account>/<provider>/` | Agent CLIs' own login directories (see [provider CLI logins](#oauthconfigdir-provider-cli-logins)) |
+| `agents/<slug>/` | Default agent working directories, each with an `.mcp.json` holding that agent's signing keys |
+| `agents/<name>.json`, `shared/agents/reactive/` | Registries of running agents, each entry including its instance's auth key |
 
-The credential lives in the user's shell environment. AgentMux stores only the **name** of the variable (`GH_TOKEN`, `AWS_PROFILE`, `ANTHROPIC_API_KEY`, etc.) on the Account. At agent-launch time, the sidecar reads the value from its own environment and injects it into the agent process.
+On channels other than `stable`, `shared/store.db` and `shared/identities/` are replaced by per-channel copies (`channels/<channel>/identity-store.db`, `channels/<channel>/identities/`) unless `AGENTMUX_ISOLATED_AUTH=0` is set (`isolated_auth_enabled` in `agentmux-common/src/data_paths.rs`).
 
-This is the default and recommended option. The credential never touches disk via AgentMux. Lifetime is the user's shell session.
+## File permissions
 
-### `SecretsManager` — AWS Secrets Manager
+**Unix:** AgentMux creates `~/.agentmux` and its subdirectories with a plain recursive create (`DataPaths::ensure_dirs` in `agentmux-common/src/data_paths.rs`), so they get your process umask; nothing forces `0700`. Databases, `.mcp.json` files, logs and transcripts are written with default permissions too. With a typical umask of `022`, other users on the machine can read them unless your home directory stops them.
 
-Reserved for future use. The enum variant exists; the resolver is not yet implemented in shipped releases.
+Only these are explicitly restricted:
 
-When wired up, the Account will store the secret ARN; AgentMux will fetch the value at agent-launch time using the user's ambient AWS credentials, inject it into the agent process, and not persist it.
+| File or directory | Mode |
+|---|---|
+| `authkey.dev` | `0600` |
+| Registry files `agents/<name>.json` and `shared/agents/reactive/<agent>/<channel>.json` | `0600`, set at creation |
+| The launcher's IPC socket directory (`$XDG_RUNTIME_DIR/agentmux/` or `/tmp/agentmux-<uid>/`) | `0700`, and refused if owned by another user |
+| The macOS sign-in helper script, a self-deleting temp file | `0700`, set at creation |
 
-### `PlaintextDev` — plaintext, debug builds only
+Everything else under `~/.agentmux` depends on your umask, including the `ipc-port-<hash>` file, whose token can be exchanged for the auth key.
 
-For local development convenience. Stores the credential value directly in `store.db` (the account-wide SQLite store under `~/.agentmux/shared/`). **`cfg(debug_assertions)`-gated** — calling this variant in a release build is a hard error at resolve time, not a silent fallback.
+**On a multi-user Unix machine, run `chmod 700 ~/.agentmux`.** That closes the whole tree regardless of the modes of the files inside it. If you point agents at working directories outside `~/.agentmux`, those directories' `.mcp.json` files need the same care.
 
-If you build AgentMux from source for development, this variant works; the binary releases on `agentmux.ai/download` do not allow it.
+**Windows:** files inherit the access control of your profile folder, which by default admits only you, SYSTEM and administrators. `authkey.dev` additionally gets an owner-only access list that doesn't inherit from its folder.
 
-### `Keychain` — OS secret store
+## Credentials, by kind
 
-Stores a pointer into the OS keychain (service string always `"agentmux"`, account string `"acct:<account_id>"`) rather than the value. The plaintext is resolved backend-side only at spawn time.
+A credential attached to an identity account is stored as a `SecretRef`, a pointer that says where the value is (`agentmux-srv/src/backend/storage/identities.rs`). Resolution is in `resolve_secret` (`agentmux-srv/src/identity/resolver/secret.rs`).
 
-### `OauthConfigDir` — OAuth CLI config directory
+### `Keychain`: OS secret store
 
-For oauth-class providers (Claude Code, Codex, …). AgentMux stores only the **path** to the CLI's own per-account auth-config directory; the CLI owns the tokens inside it, including refresh — AgentMux never reads or writes the tokens themselves. The resolver dispatches to a config-dir env-var injection mode rather than the api-key env-var path.
+API keys and tokens you add in the Armory (a GitHub personal access token, an Anthropic or OpenAI API key, and so on) are stored in the OS secret store through the `keyring` crate: macOS Keychain, Windows Credential Manager, or Linux Secret Service. The entry uses service `agentmux` and account `acct:<account id>`; the database holds only this pointer and non-secret metadata (`agentmux-srv/src/identity/secret_store.rs`). The value is read at agent launch.
 
-## What's in the database
+On Linux you need a running Secret Service (GNOME Keyring, KWallet or similar). Without one, saving the key fails with an error; AgentMux has no plaintext fallback.
 
-`store.db` (the account-wide SQLite store under `~/.agentmux/shared/`) contains, for each Identity bundle:
+### `Env`: environment variable
 
-- Bundle name and description
-- Per-provider account list (provider class + display name)
-- For each account: the `SecretRef` (variant + reference data — env-var name or future ARN)
-- Created/updated timestamps
+AgentMux stores only the variable name and reads the value at launch from **the AgentMux server's own environment**. That is the environment AgentMux itself was started with, which for an app started from the Start menu, Dock or a desktop launcher is not your shell's. The value is never written to disk by AgentMux.
 
-**What's not in the database:**
+### `OAuthConfigDir`: provider CLI logins
 
-- Token values for `Env` and (future) `SecretsManager` variants — they're never persisted.
-- Token values for `PlaintextDev` — present, but only in debug builds.
+For Claude Code, Codex, Gemini, Copilot and OpenClaw logins, AgentMux stores only a directory path, and points the CLI at it with the CLI's config-directory variable (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GEMINI_CLI_HOME`, `COPILOT_HOME`, `OPENCLAW_HOME`). The CLI writes and refreshes its own tokens there, in its own format; AgentMux does not encrypt them. The directories are:
 
-The database file inherits its permissions from the user's data directory. On Unix, the data directory is mode `0700` (owner-only). On Windows, default ACLs restrict access to the owning user.
+- `shared/providers/<provider>/`, the default login shared by every agent of that provider, on every channel;
+- `shared/identities/<account>/<provider>/`, one per account in an identity bundle;
+- the CLI's usual location in your home directory (for example `~/.claude`), for an agent set to use the ambient login.
+
+AgentMux reads one of these tokens itself: at each launch it uses the Claude login from `shared/providers/claude/` to fetch the current model list from Anthropic. See [Data sovereignty](/security/data-sovereignty/).
+
+### `PlaintextDev`: debug builds only
+
+The value is stored as-is in the database. `resolve_secret` returns it only in debug builds (`cfg(debug_assertions)`); release builds refuse it with an error.
+
+### `SecretsManager`: not implemented
+
+The variant exists, and resolving it always returns an "unsupported" error.
+
+### Credentials that aren't `SecretRef`s
+
+| Credential | Where | At rest |
+|---|---|---|
+| MuxBus Cloud sign-in (access, refresh and ID tokens) | OS secret store; email and expiry in `shared/store.db` | OS secret store |
+| Per-agent MuxBus machine credentials (client id, client secret, cached access token) | `shared/store.db`, table `db_agent_credentials` | **Plaintext** |
+| Passwords saved for HTTP Basic auth in browser panes | OS secret store, one entry per identity and site (`agentmux-srv/src/identity/browser_credential_store.rs`) | OS secret store |
+| Browser-pane cookies and site storage | `cef-cache/` | Chromium is started with `--password-store=basic` (and, on macOS, `--use-mock-keychain`) so it never touches the OS keychain; by the code's own description the cookie store then has only obfuscation-level encryption. Treat it as plaintext. |
+| Agents' signing keys: HMAC key, LAN and WAN Ed25519 private keys | `objects.db`, and the agent's `.mcp.json` in its working directory | **Plaintext** |
+| Agents' identity tokens (`AGENTMUX_AGENT_TOKEN`) | `objects.db` | **Plaintext** |
+| `KEY=VALUE` lines in an agent definition's environment | `objects.db`, and copied into the pane's settings | **Plaintext** |
+| Instance auth key and host IPC token | `authkey.dev` (`0600`), `ipc-port-<hash>` (default permissions), registry files (`0600`) | Plaintext; regenerated at every launch |
+
+### Signing keys in `.mcp.json`
+
+At every launch, AgentMux writes the agent's HMAC key and its LAN and WAN private keys into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**, where its MCP server reads them (`inject_jekt_signing_keys_into_mcp_json` in `agentmux-srv/src/backend/agent_config.rs`). The file is written with default permissions and replaces any `.mcp.json` already there.
+
+The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux overwrites that project's `.mcp.json` with its own, including the agent's signing keys. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
 
 ## How credentials reach agent processes
 
-At launch time, the spawn flow is:
+At each agent launch (`inject_identity_env` in `agentmux-srv/src/identity/resolver/inject.rs`):
 
-1. The user picks a Memory + Identity in the Launch Agent modal.
-2. The sidecar resolves the Identity's `SecretRef`s to actual credential values:
-   - `Env` → read from `std::env::var(name)` in the sidecar's environment.
-   - `SecretsManager` → fetch from AWS (when implemented).
-   - `PlaintextDev` → read from the database (debug only).
-3. The sidecar computes the per-provider environment variables the agent CLI expects (`GH_TOKEN`, `AWS_PROFILE`, etc.).
-4. The agent process is spawned with those env vars set; nothing else from the Identity bundle is exposed.
-5. After spawn, the resolved values are dropped from memory.
+1. AgentMux looks up the accounts linked to the agent's definition.
+2. For an **API-key** account it resolves the `SecretRef` and sets the provider's variables in the process environment: `GITHUB_TOKEN` and `GH_TOKEN` for GitHub, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `MOONSHOT_API_KEY` (Kimi), `AWS_ACCESS_KEY_ID`. A failed resolution is logged and skipped.
+3. For an **OAuth** account it sets the CLI's config-directory variable. If the account can't be resolved, the launch is refused, unless the agent is set to use the ambient login.
+4. Credentials go into the process environment, never onto the command line. Container agents receive them through the Docker API, not `docker exec -e`.
+5. The log records account ids, providers and the number of variables injected, not the values.
 
-The credential is never:
-
-- Written to a temp file.
-- Passed on a command line (where it would show in `ps`).
-- Echoed in logs.
-
-## Log redaction
-
-AgentMux logs the *names* of credentials it resolves (so you can debug which Identity an agent ran with) but never the *values*. Specifically:
-
-- The log line for a successful resolve records: bundle name, provider class, env-var name (or ARN reference), and "resolved=ok".
-- The log line for a failed resolve records: same fields plus a human-readable error category (`missing-env-var`, `aws-fetch-failed`, etc.). The actual value (or attempted value) is never logged.
-
-You can audit this for yourself: `grep -r "redact\|secret\|password\|token" agentmux-srv/src/identity/` — every interpolation into a log macro should reference only metadata.
+AgentMux adds its own variables to every agent process as well: `AGENTMUX_AUTH_KEY` (full control of the local AgentMux server), `AGENTMUX_AGENT_TOKEN`, and, while you're signed in to MuxBus Cloud, `MUXBUS_TOKEN`, your MuxBus account's access token. See the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane).
 
 ## Rotation
 
-To rotate a credential:
-
-- **`Env`** — update the env var in your shell and restart any running agents that reference it. The bundle itself doesn't change.
-- **`SecretsManager`** (future) — rotate at the AWS side; AgentMux fetches the current value on next agent launch.
-- **`PlaintextDev`** — update the value through the Identity editor in the UI; takes effect on next agent launch.
-
-The Identity bundle itself is durable across credential rotations; only the referenced value changes.
-
-## What the audit verified
-
-The 2026-05-11 security audit ([source](/security/trust-model/)) confirmed:
-
-- `PlaintextDev` is genuinely gated to debug builds (`cfg(debug_assertions)` at resolve time).
-- Tokens are not logged on resolve.
-- The spawn path injects via env vars, not command line.
-- `store.db` (the account-wide store under `~/.agentmux/shared/`) permissions inherit from the parent dir (`0700` on Unix).
+- **`Keychain`**: update the account's key; AgentMux rewrites the OS secret-store entry. Agents pick it up at their next launch.
+- **`Env`**: change the variable in the environment AgentMux is started from, then restart AgentMux, not just the agents: the value is read from the server's own environment.
+- **`OAuthConfigDir`**: sign in again through the CLI, or the account's sign-in flow in AgentMux. The CLI refreshes tokens itself.
+- **Agent signing keys**: the HMAC key is replaced at the agent's next launch once it is 24 hours old. LAN and WAN keys are not rotated. All three are deleted with the agent, unless another agent still uses that name.
+- **Instance auth key, host IPC token, `lan_key`**: new at every launch.
 
 ## What's not protected
 
-Be honest about the limits:
+- **Anything running as your OS user** can read the database files, the `.mcp.json` files, the CLI login directories, and the environment of agent processes (for example `/proc/<pid>/environ` on Linux). On Windows and Linux it can also read AgentMux's OS secret-store entries; on macOS the Keychain may prompt first. The OS secret store protects against other users and offline disk access, not against your own processes.
+- **A credential in an agent's environment is available to everything that agent runs.** If you give an agent a GitHub token and it runs `npm install`, every install script gets `GH_TOKEN` too.
+- **The `Env` variant trusts AgentMux's environment.** Whatever set that variable before AgentMux started decides what gets injected.
+- **Root or an administrator** can read all of the above.
 
-- Once a credential is resolved into an agent process's environment, **any code that process runs can read it.** If you grant an agent a GitHub PAT and the agent runs `npm install`, the lifecycle scripts of every installed package have `GH_TOKEN` in their environment.
-- The OS-level `/proc/<pid>/environ` (Linux) and `procfs` equivalents expose the running process's env to anyone who can read it. By default this is owner-only, but a co-administrator or root can read it. AgentMux does not work around this.
-- The `Env` variant trusts your shell environment. If a malicious script earlier in your shell session set `GH_TOKEN=...`, AgentMux will inject that. The credential's quality is your shell's quality.
-
-These are intentional trade-offs of running agents as the user. If you need stronger isolation, the answer is OS-level (containers, sandboxing) — not something AgentMux can paper over.
+These follow from running agents as you. If you need stronger isolation, use OS-level separation: a separate user account, a VM, or a container agent.
 
 ---
 
 **Source-of-truth references**:
-- `agentmux-srv/src/backend/storage/identities.rs` — `SecretRef` enum + database schema
-- `agentmux-srv/src/identity/resolver/` — resolution (`inject.rs`, `secret.rs`) + `cfg(debug_assertions)` gate
-- `agentmux-srv/src/backend/blockcontroller/subprocess/` — agent spawn + env injection (`host_spawn.rs`, `container_spawn.rs`)
-- `store.db` (the account-wide store under `~/.agentmux/shared/`) — SQLite at rest
+- `agentmux-common/src/data_paths.rs` — data root, `ensure_dirs`, `identities_dir`, `provider_auth_dir`, `isolated_auth_enabled`
+- `agentmux-srv/src/backend/storage/identities.rs` — `SecretRef`
+- `agentmux-srv/src/identity/resolver/secret.rs` (`resolve_secret`), `agentmux-srv/src/identity/resolver/inject.rs`, `agentmux-srv/src/identity/resolver/provider.rs` — resolution and injection
+- `agentmux-srv/src/identity/secret_store.rs`, `agentmux-srv/src/identity/browser_credential_store.rs`, `agentmux-srv/src/backend/storage/muxbus.rs` — OS secret store use
+- `agentmux-srv/src/backend/storage/agent_credentials.rs` — per-agent MuxBus machine credentials
+- `agentmux-srv/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`) — signing keys in `.mcp.json`
+- `agentmux-srv/src/backend/reactive/registry.rs`, `agentmux-cef/src/dev_authfile.rs`, `agentmux-launcher/src/ipc/mod.rs` — the explicitly restricted files
+- `agentmux-cef/src/app/mod.rs` — Chromium password-store switches
 
 **Related**: [Identity bundles](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).
