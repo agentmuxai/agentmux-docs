@@ -11,7 +11,7 @@ These are stored only on the local filesystem, under `~/.agentmux` (see [Identit
 
 - **Session state:** panes, layout, settings, terminal scrollback, and agent output, in local SQLite databases.
 - **Conversation transcripts**, including held messages and continuity summaries.
-- **Identity metadata:** accounts, bundles, and pointers to credentials. Secrets themselves are in the OS secret store or the provider CLIs' own login directories.
+- **Identity metadata:** accounts, bundles, and pointers to credentials. Most secrets are in the OS secret store or the provider CLIs' own login directories; [Identity & credential storage](/security/identity-credential-storage/#credentials-that-arent-secretrefs) lists the ones kept in plaintext.
 - **Logs** and, on Windows, crash dumps (written to `C:\CrashDumps\agentmuxsrv\`, never uploaded).
 
 AgentMux doesn't upload any of this. But your prompts and your agents' work do leave the machine whenever an agent talks to its model provider, and AgentMux itself sends excerpts of Claude agents' conversations to Anthropic (see [Background model calls](#background-model-calls)).
