@@ -11,7 +11,7 @@ Everything lives under one root, `~/.agentmux` (`%USERPROFILE%\.agentmux` on Win
 
 | Path | Contents |
 |---|---|
-| `channels/<channel>/versions/<version>/data/db/objects.db` | Panes and their settings, agent definitions, agents' signing keys and identity tokens, held messages |
+| `channels/<channel>/versions/<version>/data/db/objects.db` | Panes and their settings, agents' signing keys and identity tokens, held messages |
 | `channels/<channel>/versions/<version>/data/db/filestore.db`, `sagas.db` | Pane output and terminal scrollback; the operation log |
 | `channels/<channel>/versions/<version>/data/authkey.dev`, `ipc-port-<hash>` | The current launch's auth key and host IPC token (see below) |
 | `channels/<channel>/versions/<version>/cef-cache/` | Chromium profile for browser panes: cookies, site storage, cache |
