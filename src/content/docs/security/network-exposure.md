@@ -1,108 +1,154 @@
 ---
 title: "Network exposure"
-description: "Every port AgentMux opens, on what interface, with what auth — for firewall configurators and IT teams."
+description: "Every socket AgentMux listens on, what it accepts, and what AgentMux connects out to, for firewall configuration and security review."
 ---
 
-This page is for IT teams, network admins, and security reviewers who need to know exactly what AgentMux puts on the wire.
+This page is for IT teams, network admins and security reviewers who need to know exactly what AgentMux puts on the wire.
 
-## Ports at a glance
+## Listeners at a glance
 
-| Process | Port | Interface | Purpose | Auth | Default |
+| Listener | Process | Bind | Protocol | Authentication | When |
 |---|---|---|---|---|---|
-| CEF host (`agentmux-cef`) | random ephemeral | `127.0.0.1` | Serves the SolidJS frontend over HTTP and the IPC bridge | Bearer token (one-shot, per-launch) | On |
-| Sidecar (`agentmux-srv`) | random ephemeral | `127.0.0.1` | WebSocket + HTTP RPC for the frontend, agent panes, and inter-instance forwarding | `X-AuthKey` header (per-launch UUIDv4) | On |
-| mDNS discovery (sidecar) | `5353` | `0.0.0.0` | Announces this instance to other AgentMux instances on the LAN | None (read-only beacon) | **Off** |
-| Sidecar LAN listener (v0.46+) | random ephemeral | LAN interface | Accepts forwarded messages from peer AgentMux instances when LAN discovery is on | `X-AuthKey` header (same auth as loopback listener) | **Off** (follows LAN discovery toggle) |
-| Cloud MuxBus poller (sidecar) | n/a (outbound) | n/a | Inbound message channel from a hosted relay | Bearer token configured at setup | **Off** |
+| AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ephemeral ports | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
+| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP, WebSocket | As above, plus the `lan_key` on three routes | LAN discovery on (default **off**) |
+| mDNS | `agentmux-srv` | UDP 5353, multicast | mDNS / DNS-SD | None | LAN discovery on |
+| UDP discovery responder | `agentmux-srv` | `0.0.0.0:47891` UDP | JSON | None; answers only private, link-local and loopback source addresses | LAN discovery on |
+| Dev proxy | `agentmux-srv` | `127.0.0.1:8090` | HTTP reverse proxy | None | Always (skipped if the port is taken) |
+| OAuth callback | `agentmux-srv` | `127.0.0.1`, ephemeral | HTTP, one request | OAuth `state` and PKCE | Only during a browser sign-in to an account you configured OAuth for |
+| Host IPC server | `agentmux-cef` | `127.0.0.1`, ephemeral | HTTP | Bearer token on `/ipc` and `/agentmux/browser/*`. Public: `/health`, the frontend's static files | Always |
+| Chromium remote debugging (CDP) | `agentmux-cef` | Loopback; port 9222 (release), 9223 (dev), or a free port | HTTP, WebSocket | **None** | **Always** |
+| Launcher IPC | `agentmux-launcher` | Windows named pipe `\\.\pipe\agentmux-<hash>\command`; Unix socket in `$XDG_RUNTIME_DIR/agentmux/` or `/tmp/agentmux-<uid>/` | Newline-delimited JSON | None | Always |
+| Server IPC (Windows) | `agentmux-srv` | Named pipe `\\.\pipe\agentmux-<hash>\srv-command` | Newline-delimited JSON | None | Windows, when started by the launcher |
+| Crash monitor (Windows) | `agentmux-srv` | Unix-domain socket `C:\CrashDumps\agentmuxsrv\monitor.sock` | Minidump IPC | None | Windows, always |
 
-The TL;DR: **no inbound network listener accepts non-loopback traffic by default.** AgentMux requires no inbound firewall rule.
+`agentmux-mcp`, the MCP server each agent runs, talks to its agent over stdio and opens no listener.
 
-## Sidecar HTTP / WebSocket
+**With LAN discovery off, nothing listens on a non-loopback address.** Every TCP listener binds `127.0.0.1`, and the pipes and sockets are local by construction. Loopback is shared by every account on the machine, though: other OS users can reach the loopback listeners too. That matters most for the [remote-debugging port](#chromium-remote-debugging-port).
 
-The sidecar listens on a random ephemeral port (different each launch), bound to `127.0.0.1` only. Every route — except `/` (health check) — requires authentication.
+## The AgentMux server
 
-Auth surface:
+`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `agentmux-srv/src/backend/lan_listeners.rs`); no setting changes it.
 
-- **`X-AuthKey` header on every HTTP request.** Required.
-- **`?authkey=` query parameter on `/ws` only.** The browser WebSocket API can't set custom headers; this is the documented exception. Every other route rejects query-string auth (it leaks into logs, history, and `Referer`). See the [trust model](/security/trust-model/) for the broader picture.
+Authentication (`auth_middleware` in `agentmux-srv/src/server/mod.rs`):
 
-CORS:
+- Every route requires the `X-AuthKey` header to equal the instance auth key. The key is a UUIDv4 the launcher generates at each launch.
+- `/ws` also accepts the key as an `?authkey=` query parameter, because the browser WebSocket API can't set headers. No other route accepts it in the query string.
+- Unauthenticated: `GET /` returns `{"status":"ok","version":"<version>"}`. `/webhook/whatsapp` is the receiver for the WhatsApp bridge; it checks Meta's verify token and `X-Hub-Signature-256` HMAC instead of the auth key, and returns 503 until that bridge is set up.
+- Every response, including unauthenticated ones, carries an `x-agentmux-srv-version` header.
 
-- The sidecar reflects only loopback origins (`http://127.0.0.1:*` and `http://localhost:*`). External origins receive no `Access-Control-Allow-Origin` header, so a malicious web page can't drive the sidecar even if it discovers the port.
-- This explicitly defends against drive-by CSRF from any browser tab the user happens to have open on a different site.
+CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key.
 
-What this does *not* protect against:
+Every terminal pane and agent process receives the auth key as `AGENTMUX_AUTH_KEY`. See the [trust model](/security/trust-model/) for what that means.
 
-- **DNS rebinding attacks** targeting `127.0.0.1` from a malicious web page. The CORS allow-list closes this in practice (a rebound page still presents as the attacker's origin), but if you're hardening a multi-tenant environment, consider host-header validation as defence-in-depth.
-- **Same-machine non-AgentMux processes.** Anything running as the same user can read the auth-key file (`~/.agentmux/authkey.dev`, mode `0600`). The `0600` ACL is the boundary; root or sudo on a shared box defeats it. See [trust model](/security/trust-model/).
+## LAN listeners
 
-## CEF host IPC server
+When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two ports again on **every non-loopback interface address**: all IPv4 addresses, and all IPv6 addresses except link-local. That includes VPN and virtual adapters. It re-checks the interface list every 20 seconds, and removes the listeners when you turn LAN discovery off.
 
-The CEF host runs its own small HTTP server on a separate random ephemeral port (also `127.0.0.1` only). The frontend talks to it for things that don't belong on the sidecar — clipboard, window management, file pickers, etc.
+These listeners serve **the full server API**, with no filtering by source address. From any network that can reach one of those addresses:
 
-Auth is a bearer token injected at startup (checked inside the request handler). **Unlike the sidecar, this server's CORS layer is currently fully permissive** (`CorsLayer::permissive()` in `agentmux-cef/src/ipc.rs`), not scoped to loopback origins — the bearer-token check is the only thing standing between a page that discovers this port and the host IPC API. This is a known gap, tracked separately from the sidecar's tightened CORS predicate (see [IPC catalog](/internals/ipc-catalog/) for the full channel-by-channel audit).
+- anyone can call `GET /` (the version) and the WhatsApp webhook;
+- anyone holding the `lan_key` can call three routes: send a jekt, look up one agent, list agent names (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
+- anyone holding the full auth key can call everything. The full key is never broadcast, but the mobile-pairing QR code in the host popover (**Show QR code**) contains it, together with this machine's LAN address and port. Anyone who sees that code can control the instance over the network until AgentMux restarts.
 
-## mDNS discovery (opt-in)
+The `lan_key` is sent in cleartext to anyone on the local network (next section). Turn LAN discovery on only on networks you trust, and restrict the listeners with your host firewall to the peers or subnet you expect.
 
-When enabled, AgentMux broadcasts on `0.0.0.0:5353` to announce its presence to other AgentMux instances on the local network. This is the only socket that ever binds to a non-loopback interface, and it's **disabled by default**.
+## mDNS and the UDP probe: what they reveal
 
-When mDNS is on, the data broadcast is:
+While LAN discovery is on and at least one LAN listener is bound, the server advertises itself over mDNS as service type `_agentmux._tcp.local.`:
 
-- Instance ID (a UUID, not sensitive)
-- Local sidecar URL (`http://127.0.0.1:<port>`)
+- instance name `agentmux-<hostname>-<port>`, host name `<hostname>.local.`;
+- the server's web port and the machine's IP addresses;
+- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.57.1`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
 
-No session content, no auth keys, no credentials. The mDNS broadcast itself is read-only — nobody can drive AgentMux through the mDNS announcement; it only reveals the instance's real IP and port. However, enabling LAN discovery also enables LAN-tier jekt forwarding (v0.46+): a LAN-enabled instance will open outbound TCP connections to peer sidecars using their discovered IP+port and auth key, and it will accept inbound TCP on a LAN interface from authenticated peers. See [Cross-instance forwarding](#cross-instance-forwarding) below.
+It also listens on UDP port 47891. A datagram `{"type":"agentmux_discover","v":1}` from a private, link-local or loopback address gets a unicast reply:
 
-If you don't want LAN broadcast: don't enable mDNS. It stays off.
+```json
+{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.57.1",
+  "hostname": "<hostname>", "version": "0.57.1", "port": <web port>, "auth_key": "<lan_key>" }
+```
 
-## Cloud MuxBus poller (opt-in)
+Neither channel has confidentiality or authentication. Anyone on the broadcast domain learns the machine's hostname, AgentMux version, server port and `lan_key`, and can then send messages to its agents. The `lan_key` is regenerated at each launch.
 
-If you configure a remote MuxBus relay, the sidecar **outbound-polls** that URL on an interval. Inbound messages arrive over that polled connection; no inbound port is opened.
+While LAN discovery is on, the server also contacts every peer it discovers: every 30 seconds it asks each peer for its agent names, presenting that peer's advertised `lan_key`. A device that fakes an mDNS advertisement can make the server send those requests to an address of its choosing; responses are capped at 64 KiB.
 
-The poller URL and bearer token are user-configurable through the in-pane `/agentmux/reactive/poller/config` endpoint (which requires auth — see audit fix C2 in `agentmux@v0.33.790`). Configure once; rotate the token by re-configuring.
+## Dev proxy
 
-If you don't want any cloud connectivity: don't configure the poller. It stays off.
+`agentmux-srv` always starts a reverse proxy on `127.0.0.1:8090` (`agentmux-srv/src/backend/dev_proxy.rs`). It routes a request whose `Host` is `<key>.localhost` to a dev server an agent registered with the `RegisterDevServer` tool (a port inside that agent's container). Unregistered hosts get 404. It has no authentication: any local process, including other users' processes, can reach a registered dev server through it. If port 8090 is taken, the proxy logs a warning and doesn't start.
 
-## Cross-instance forwarding
+## Host IPC server
 
-AgentMux supports two forwarding scopes, both opt-in:
+The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` port (`agentmux-cef/src/ipc.rs`). It serves the frontend's static files and `/health` without authentication. `/ipc` and the browser-automation routes `/agentmux/browser/*` require `Authorization: Bearer <token>`, a UUIDv4 generated at each start of the host.
 
-**Same-machine forwarding** — Multiple instances on the same machine forward inject messages to each other over `127.0.0.1`. The file-based agent registry (`~/.agentmux/agents/`, mode `0600` per file) contains each instance's URL plus auth key. Peers use these credentials when forwarding.
+- The token is passed to the frontend in the page URL. It is also written to an `ipc-port-<hash>` file in the data directory, with default file permissions, so a second launch can find the running instance.
+- `/ipc` returns the server auth key to the frontend (`get_auth_key`), so the token is as valuable as the auth key itself.
+- The CORS layer is fully permissive (`CorsLayer::permissive()`): the bearer token is the only barrier.
 
-**LAN forwarding (v0.46+)** — When LAN discovery is enabled, forwarding extends to peer instances on the LAN. The sender reads the peer's real IP and port (discovered via mDNS) and auth key (from the local registry), then connects directly over TCP. The peer sidecar authenticates every request with `X-AuthKey`. No traffic passes through the cloud relay; the forwarding is direct peer-to-peer.
+## Chromium remote-debugging port
 
-Network implications of enabling LAN discovery + forwarding:
+The CEF host always enables Chromium's remote-debugging (DevTools Protocol) server (`agentmux-cef/src/lib.rs`). It uses port 9222 for release builds and 9223 for dev builds, or an OS-assigned free port when that one is taken. The port actually used is written to `authkey.dev` in the data directory. AgentMux uses this port for its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools).
 
-- The local sidecar opens outbound TCP connections to peer IP addresses on their backend port.
-- The local sidecar also binds a LAN-interface listener so it can accept forwarded messages from peers — this is the one case where a sidecar socket accepts non-loopback connections. **This listener is only active when LAN discovery is on.**
-- Firewall rule required: allow inbound TCP on the ephemeral sidecar port from trusted LAN peers (or restrict to the LAN subnet).
+AgentMux doesn't set `--remote-debugging-address`, so Chromium binds it to loopback, its default. The server has **no authentication**, and AgentMux starts Chromium with `--remote-allow-origins=*` (`agentmux-cef/src/app/mod.rs`), which disables Chromium's check on the origin of DevTools WebSocket connections.
+
+What this means in practice:
+
+- Any process on the machine that can open a loopback TCP connection can attach to AgentMux's windows, run script in them and read what they display. **On a multi-user machine, that includes processes of other OS users.**
+- The AgentMux UI holds the server auth key, so attaching to it gives full control of AgentMux: running commands as you, reading files, driving agents.
+- There is no setting to turn the port off.
+
+Mitigations: run AgentMux on a machine where you are the only interactive user. On a shared host, block other accounts from the port with a per-user firewall rule if your OS supports one (on Linux, an `iptables` `owner` match on the loopback interface). Remember that the port can change when 9222 is taken; read it from `authkey.dev`.
+
+## Local IPC
+
+The launcher, the CEF host and the server talk over local IPC (`agentmux-launcher/src/ipc/server.rs`, `agentmux-srv/src/srv_ipc/server.rs`). None of these channels uses a token; the first message a client sends declares what it is.
+
+- **Unix:** the launcher's socket lives in a directory AgentMux creates with mode `0700`, owned by you. It refuses to use the directory if it is a symlink, isn't a directory, or is owned by another user. Other OS users can't connect; any process running as you can.
+- **Windows:** the named pipes are created without an explicit security descriptor, so Windows' default named-pipe security applies. Microsoft documents that default as full control for LocalSystem, administrators and the creator, and read access for Everyone and anonymous. Remote clients are rejected.
+- **Windows crash monitor:** a helper process receives crash reports over a Unix-domain socket at the fixed path `C:\CrashDumps\agentmuxsrv\monitor.sock`, shared by all users and instances, and writes minidumps to `C:\CrashDumps\agentmuxsrv\`. The directory gets no explicit access control.
+
+## What AgentMux connects out to
+
+[Data sovereignty](/security/data-sovereignty/) lists every outbound call with its trigger. In summary:
+
+| Destination | When |
+|---|---|
+| Your agents' model providers | Made by the agent CLIs, not by AgentMux |
+| `api.anthropic.com/v1/models` | At each launch, when a Claude login token is found |
+| `muxbus.agentmux.ai`, `muxbus-ws.agentmux.ai` | Only after you sign in to MuxBus Cloud |
+| `registry.npmjs.org` (or your configured npm registry) | Installing an agent CLI; checking CLI versions in the Toolchain pane |
+| `github.com` release downloads | Installing jq or ripgrep from the tool catalog |
+| `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
+| `agentmux.ai` | Opening a browser pane with no URL (its default start page) |
+| winget, Homebrew or your Linux package manager | One-click installs of Node.js, Git or Python |
+| Groq, Hugging Face, Discord, Telegram, Slack, WhatsApp, OAuth providers, key-validation endpoints | Only when you configure or use those features |
+| LAN peers | Only with LAN discovery on |
+
+There is no telemetry endpoint, crash-report upload, update check or license check.
 
 ## Firewall configuration
 
-For a typical workstation: **no firewall rule needed.** AgentMux runs entirely on loopback.
+**Workstation, LAN discovery off:** no inbound rule is needed. Every listener is loopback or local IPC.
 
-For a managed deployment that wants belt-and-suspenders:
+**LAN discovery on:** the server's ports are chosen at each launch, so allow the program rather than fixed ports. Windows Firewall prompts for this the first time you turn LAN discovery on. Peers need:
 
-- Allow outbound HTTPS to whatever LLM providers your agents use (Anthropic, OpenAI, Google, GitHub).
-- Allow outbound to your tool catalog hosts (typically GitHub release assets).
-- If using the cloud MuxBus poller: allow outbound to that relay.
-- If using LAN discovery + forwarding (v0.46+): allow inbound TCP from trusted LAN peers on the ephemeral sidecar port. Without this rule, incoming LAN-forwarded messages are dropped by the OS firewall before AgentMux sees them.
-- If NOT using LAN: block inbound to ports 1024-65535 from non-loopback interfaces (defence-in-depth — AgentMux doesn't accept inbound on those when LAN is off, but this catches misconfigurations).
+- inbound TCP to the server's two ports (they change at every launch);
+- inbound UDP 5353 (mDNS) and, for probe-based discovery, UDP 47891.
 
-## What we don't put on the wire
+Restrict these to your LAN subnet or to known peers.
 
-- **No SNMP, no LDAP, no SMB, no Kerberos.** Not part of the product.
-- **No telemetry endpoint.** See [data sovereignty](/security/data-sovereignty/).
-- **No update endpoint.** See [update model](/security/update-model/).
-- **No license-server check-in.** Open source under Apache 2.0.
+**Outbound:** allow whatever your agents' providers need, plus the destinations above for the features you use. Blocking `muxbus.agentmux.ai` and `muxbus-ws.agentmux.ai` disables MuxBus Cloud. Blocking the npm registry disables in-app CLI installs.
 
 ---
 
 **Source-of-truth references**:
-- `agentmux-srv/src/main.rs` — sidecar bind (`127.0.0.1` only); mDNS opt-in
-- `agentmux-srv/src/server/mod.rs` — CORS predicate + auth middleware
+- `agentmux-srv/src/bootstrap.rs` (`bind_listeners_and_network`) — loopback startup listeners
+- `agentmux-srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
+- `agentmux-srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
+- `agentmux-srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
+- `agentmux-srv/src/config.rs` — `lan_key` generation
+- `agentmux-srv/src/backend/dev_proxy.rs` — dev proxy
+- `agentmux-srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
 - `agentmux-cef/src/ipc.rs` — host IPC server
-- `agentmux-srv/src/backend/reactive/registry.rs` — cross-instance forwarding registry (`0600` files)
-- `agentmux-srv/src/server/reactive.rs` — poller config endpoint
+- `agentmux-cef/src/lib.rs`, `agentmux-cef/src/app/mod.rs` — remote-debugging port and switches
+- `agentmux-launcher/src/ipc/server.rs`, `agentmux-launcher/src/ipc/mod.rs`, `agentmux-srv/src/srv_ipc/server.rs`, `agentmux-srv/src/crash_monitor.rs` — local IPC
 
-**Marketing claims this page substantiates**: "data sovereignty by default", "runs on your machine" on [agentmux.ai](https://agentmux.ai).
+**Marketing claims this page substantiates**: "runs on your machine" on [agentmux.ai](https://agentmux.ai).
