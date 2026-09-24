@@ -8,17 +8,24 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 ## Report a Bug or Issue
 
-Found a bug, unexpected behavior, or incorrect information in the app or docs?
+Found a bug, unexpected behavior, or incorrect information in the app or docs? First check the [open issues](https://github.com/agentmuxai/agentmux/issues) in case it's already reported.
 
 **[Open an issue on GitHub →](https://github.com/agentmuxai/agentmux/issues/new)**
 
-When reporting, please include:
+The bug report form asks for:
 
-- **What happened** — Describe the issue clearly
-- **Steps to reproduce** — How can we trigger the same behavior?
-- **Expected behavior** — What should have happened instead?
-- **Platform** — OS, version, and AgentMux version
-- **Screenshots or logs** — If applicable
+- **Current behavior**: what happened
+- **Expected behavior**: what should have happened instead
+- **Steps to reproduce**: how to trigger the same behavior
+- **AgentMux version**
+- **Platform**, **OS version** and **architecture**
+- Anything else, such as screenshots or logs
+
+To find the version, click the version number (for example `v0.57.1`) at the right end of the status bar. The panel that opens shows the version, channel and build, each with a copy button.
+
+Logs are in `~/.agentmux/channels/<channel>/versions/<version>/logs/` (on Windows, under `%USERPROFILE%\.agentmux\`). Release builds use the `stable` channel. Logs can include file paths and prompts, so review them before attaching.
+
+The same page also has a feature request form.
 
 ## AI-Generated Content
 
@@ -30,5 +37,5 @@ If you encounter issues with AI-generated content within AgentMux:
 
 ## Other Channels
 
-- **Discord** — [Join our community](https://discord.com/invite/96erama9Ar) for real-time help and discussion
-- **GitHub Discussions** — [Ask questions](https://github.com/agentmuxai/agentmux/discussions) or share ideas
+- **Discord**: [join our community](https://discord.com/invite/96erama9Ar) for real-time help and discussion
+- **GitHub Discussions**: [ask questions](https://github.com/agentmuxai/agentmux/discussions) or share ideas
