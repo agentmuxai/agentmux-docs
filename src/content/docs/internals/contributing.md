@@ -116,9 +116,11 @@ agentmux/
 Every PR is auto-reviewed by:
 
 - **`reagentx-workflow[bot]`** — surfaces P1/P2/P3 issues; addresses correctness, missing tests, and consistency
-- **`chatgpt-codex-connector[bot]`** — second-opinion review focused on code quality and architecture
+- **`chatgpt-codex-connector[bot]`** — second-opinion review focused on code quality and architecture. Codex isn't run on every push: reagent asks it once reagent has approved a commit, and again only when a push could change its answer.
 
-Address every `CHANGES_REQUESTED` finding from reagent. Codex inline comments are P2-level signal — read both `/pulls/N/comments` (inline) and `/issues/N/comments` (top-level). Codex auto-fires on PR open and on `@codex review` comments.
+Address every `CHANGES_REQUESTED` finding from reagent. Codex inline comments are P2-level signal — read both `/pulls/N/comments` (inline) and `/issues/N/comments` (top-level).
+
+To ask for another Codex pass, comment `@reagentx-workflow codex re-review` on the PR (collaborators and the project's agent accounts; at most twice an hour). Codex only responds to requests from the maintainer account, so a direct `@codex review` from anyone else is ignored — reagent relays the request for you.
 
 ### State-machine discipline
 
