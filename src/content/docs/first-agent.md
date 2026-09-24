@@ -6,163 +6,153 @@ title: "First Agent Setup"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-This guide walks through what it means for an agent to be first-class in AgentMux. Each agent gets its own structured pane — not a terminal wrapper — with a real identity bundle, a memory bundle, a streaming parser, and a lifecycle. AgentMux supports ten harnesses — the CLI tools the UI still mostly labels "providers": `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot`, and `antigravity`. The full catalog lives in `frontend/app/view/agent/providers/catalog.ts:PROVIDERS` in the main repo (re-exported unchanged from the old `providers/index.ts` path, so existing imports still work). A harness is distinct from the *model vendor* — the LLM backend actually serving a harness's responses; see [Configure an Agent via Bundles](#configure-an-agent-via-bundles) and the harness-then-model flow under [Launch the Agent](#launch-the-agent).
+This guide walks through creating and running an agent. In AgentMux an agent is not a terminal wrapper: each one gets its own structured pane, with an identity, optional memory, a streaming parser and a lifecycle.
+
+## Harnesses and providers
+
+A **harness** is the CLI tool that runs an agent, such as Claude Code or Codex CLI. The UI and the code mostly call it a "provider". A harness is distinct from the **model vendor**, the LLM backend that actually serves its responses.
+
+AgentMux knows ten providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `agentmux-srv/src/backend/providers.rs`. The agent picker has a template for eight of them. Mux Code and Qwen Code don't have one yet.
+
+| Provider | How AgentMux runs it | Installed from | Sign-in |
+|---|---|---|---|
+| **Claude Code** | `claude --input-format stream-json --output-format stream-json …`, one long-running process. Container agents run `claude -p …` once per turn instead. | npm `@anthropic-ai/claude-code` | OAuth |
+| **Codex CLI** | `codex exec --json --dangerously-bypass-approvals-and-sandbox -`, once per turn | npm `@openai/codex` | OAuth |
+| **Mux Code** | `muxcode run -p`, once per turn | npm `@agentmuxai/muxcode` | API key or local model |
+| **Gemini CLI** | `gemini --output-format stream-json --yolo -p ""`, once per turn | npm `@google/gemini-cli` | OAuth |
+| **Qwen Code** | `qwen --output-format stream-json --yolo -p ""`, once per turn | npm `@qwen-code/qwen-code` | API key |
+| **Kimi Code CLI** | `kimi --print --output-format stream-json --yolo -p ""`, once per turn | You install it: `pip install kimi-cli` | API key |
+| **OpenClaw** | `openclaw acp`, the Agent Client Protocol (ACP) over stdio. It needs OpenClaw's own Gateway daemon running. | npm `openclaw` | OAuth |
+| **GitHub Copilot CLI** | `copilot --acp` (ACP) | npm `@github/copilot` | OAuth |
+| **Pi** | `pi --json` (ACP) | npm `@mariozechner/pi-coding-agent` | API key |
+| **Antigravity (AGY)** | `agy --output-format stream-json --yolo -p ""`, once per turn | npm `@google/antigravity-cli` | OAuth |
+
+See [Auth flows](/auth/) for each provider's login command and credential location.
 
 ## You don't need to preinstall the agent CLIs
 
-AgentMux is self-contained. Pick a provider in the Agent picker and — if the CLI isn't already in AgentMux's per-version cache — an **install modal** opens inline, runs the install for you, and streams the output in an xterm panel. Click **Install now** to start, **Continue to Launch** when it finishes. The cached binary is reused on subsequent launches for the same AgentMux version.
+AgentMux installs every npm-based CLI itself. It runs `npm install <package>@<version>`, at the version it was tested with, into a folder per AgentMux version: `~/.agentmux/instances/v<version>/cli/<provider>/`. It always uses that copy, never a CLI you installed globally. After an AgentMux update, each CLI is installed again for the new version the first time you use it.
 
-| Provider | Package | Install path |
-|---|---|---|
-| **Claude Code** | `@anthropic-ai/claude-code` | Auto-installed (npm) |
-| **Codex CLI** | `@openai/codex` | Auto-installed (npm, pinned) |
-| **Gemini CLI** | `@google/gemini-cli` | Auto-installed (npm, pinned) |
-| **OpenClaw** | `openclaw` | Auto-installed (npm) |
-| **GitHub Copilot CLI** | `@github/copilot` | Auto-installed (npm) |
-| **Pi** | `@mariozechner/pi-coding-agent` | Auto-installed (npm) |
-| **Kimi Code CLI** | `kimi-cli` (pip) | Manual today — `pip install kimi-cli`. In-app auto-install for pip-based providers is on the roadmap. |
-| **Antigravity (AGY)** | `@google/antigravity-cli` | Auto-installed (npm, pinned) |
+When you pick a harness whose CLI isn't installed yet, an install dialog opens. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**, then **Continue to Launch** when it finishes. The install needs an internet connection.
+
+Kimi Code CLI is the exception. It's a Python tool, so install it yourself with `pip install kimi-cli` and make sure `kimi` is on your `PATH`.
 
 ### System prerequisites
 
-A handful of providers (Claude Code, OpenClaw) need `git` available on your `PATH` at runtime. If it's missing when you launch, AgentMux opens a separate **prereq modal** with the upstream install link — install it on your machine, click **Refresh**, and proceed.
+The npm-based CLIs need **Node.js** and **npm**. Claude Code and OpenClaw also need **Git**. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. **≡ → Toolchain** shows the same information for all tools at any time.
 
-### Auth happens inline too
+## Create an agent
 
-After the install completes (or immediately, when the CLI is already cached), AgentMux runs the provider's login flow inside the Launch modal via the **Pre-Launch Auth Panel** — OAuth in your browser for Claude / Codex / Gemini / Copilot / Antigravity, an inline key field for OpenClaw / Pi / Kimi. AgentMux isolates each provider's auth config to a per-channel subdirectory using the provider's own `*_HOME` / `*_CONFIG_DIR` environment variable (Codex uses `CODEX_HOME`; Antigravity uses `ANTIGRAVITY_CONFIG_DIR`). See [Auth flows](/auth/) for the per-provider isolation map and OAuth state diagram.
+Open an Agent pane. The starter layout already has one; you can also click **Agent** in the widget bar, or run **Open Agent** from the command palette (`Ctrl + P`). An empty Agent pane shows the **agent picker**:
 
-## Configure an Agent via Bundles
+- A filter bar and sort control.
+- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, you can fork the conversation into a new agent or switch to that pane. Each row's menu has **View History**.
+- **New Agent**: one card per harness. Each card is a template.
 
-Bundles (formerly "Memory bundles"/Presets) are managed app-wide from the [Armory](/armory/) today — there's no per-agent "Bundle" tab in the current agent-pane setup modal.
+Clicking a card first runs the install and prerequisite checks above. It then opens **Create new agent from &lt;template&gt;**, which makes a new, independent agent and leaves the template unchanged. Fields, top to bottom:
 
-1. Open the hamburger menu (≡) → **Armory** → **Bundles** tab.
-2. Click **+ New** to create a new bundle (or pick an existing one to edit).
-3. Fill in the bundle configuration:
+1. **Name**: defaults to the template's name. Names must be unique among your agents (ignoring case), so give a second agent from the same template a different name.
+2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
+3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
+4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
+5. **Identity**: an Armory account for this provider, or **(ambient credentials)**. If you have an account for the provider, the first one is preselected.
+6. **Memory**: a [bundle](#bundles), or **(vanilla CLI)**.
 
-### Basic Settings
+Click **Create**. The agent is created and launched in the pane.
+
+The model lists are built into AgentMux. For Claude Code only, if the shared login folder `~/.agentmux/shared/providers/claude/` holds a Claude Code login, AgentMux also asks Anthropic's models API for the current models at startup and updates the list.
+
+## Sign in
+
+When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI isn't signed in, the pane shows **Not signed in** with these actions:
+
+- **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and, for CLIs that ask for one (Claude Code, OpenClaw), gives you a box to paste the authorization code into. If the CLI prints no link, a terminal window opens for the login instead.
+- **Login via terminal**: runs the login in a terminal window straight away.
+- **Armory → Accounts**: opens the Armory. If you already have signed-in accounts for this provider, this action is replaced by **Bind** (one account) or **Bind account** (several), which links an existing account to this agent.
+
+For Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw, a successful login is saved as an Armory account and linked to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
+
+## Bundles
+
+A **bundle** is a reusable set of instructions and tools that you attach to agents. It's optional: **(vanilla CLI)** runs the harness with no bundle. Create bundles in the [Armory](/armory/): **≡ → Armory → Bundles → + New Bundle**.
 
 | Field | Description |
 |-------|-------------|
-| **Name** | A human-readable name (e.g., `backend-claude`) |
-| **Provider** | Claude Code, Codex CLI, Gemini CLI, OpenClaw, Kimi Code CLI, GitHub Copilot CLI, Antigravity (AGY), or Pi |
-| **Model** | Model identifier passed to the harness. The picker is harness-aware — selecting Claude Code shows Claude models, Codex shows gpt-5.x models, Antigravity shows Gemini models, etc. The list is now fetched live from each harness's own models endpoint (using the agent's own auth) and cached per (provider, CLI version), overlaid on a bundled fallback list — so it no longer requires an AgentMux release to pick up a newly released model. Only shown for harnesses that actually support switching models via a CLI flag — see the harness-then-model flow under [Launch the Agent](#launch-the-agent). |
-| **Working Directory** | The project directory the agent works in |
+| **Name** | Required. |
+| **Description** | Optional. |
+| **Provider** | Required. It can't be changed after the bundle is saved. |
+| **Model vendor** | Required, and shown only when the provider supports more than one vendor. |
+| **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
+| **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-### Provider Command
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads.
 
-Each provider ships with default launch arguments tuned for non-interactive multi-turn use. The full set lives in `PROVIDERS[id].launchArgs`:
+A bundle's provider decides which harness an agent launches with, so attach bundles that match the agent's harness. See [Memory bundles](/memory/) for the full configuration surface.
 
-```
-Claude Code:        claude -p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions
-Codex CLI:          codex exec --json --dangerously-bypass-approvals-and-sandbox -
-Gemini CLI:         gemini --output-format stream-json --yolo -p ""
-OpenClaw:           acpx --agent openclaw
-Kimi Code CLI:      kimi --print --output-format stream-json --yolo -p ""
-GitHub Copilot CLI: copilot --acp
-Pi:                 pi --json
-Antigravity (AGY):  agy --output-format stream-json --yolo -p ""
-```
-
-Three providers (OpenClaw, Copilot, Pi) use the Agent Client Protocol (ACP) over stdio; the others use streaming-JSON modes specific to each CLI. AgentMux's controller layer abstracts the difference. You can override `launchArgs` per Memory bundle.
-
-### Bundle Content
-
-A Memory bundle holds four kinds of content per agent:
-
-- **Soul** — The agent's system prompt and personality. Defines how the agent behaves and what it prioritizes.
-- **Instructions** — Project-specific instructions (equivalent to `CLAUDE.md` or similar). Loaded into the agent's context on launch.
-- **MCP** — Model Context Protocol server configuration baked inline into the bundle (a copy, not a reference to the [MCP Server primitive](/armory/#mcp-servers) catalog). Add tools the agent can use (filesystem access, GitHub, databases, etc.).
-- **Env** — Environment variables passed to the agent process. Use this for API keys, feature flags, and project-specific config.
-
-## Launch the Agent
-
-Open the Agent picker. It's **two-tier**:
-
-- **My Agents** appears on top — every agent you've already created, sorted by recency. Click one to relaunch it with the harness, model, and bundle it already has. This is the fast path for re-launching something you've used before.
-- **+ New from template** below — one card per harness (Claude Code, Codex, Antigravity, …), for spinning up a fresh agent. Templates are hidden until you explicitly open them (they were Phase-1 friction noise when the My Agents list grew).
-
-The picker also has a **Recent sessions** tab — re-attach to a prior conversation in a specific agent instead of starting a fresh turn. Useful when you closed a pane and want to pick up where you left off; the agent's history loads in the new pane and you continue from that point.
-
-### Creating from a template: harness, then model
-
-Each template card in **+ New from template** is a **harness** — the CLI tool that runs the agent. Clicking one doesn't launch it directly; it opens a **Create new agent from `<Harness>`** modal that clones a new, independent agent from the template (the template itself is untouched and reusable). You pick the harness by which card you click, then everything else — including the **model** that harness uses — is chosen inside that modal. Fields, top to bottom:
-
-1. **Name** — defaults to the template's name.
-2. **Runtime** — *On this computer (host)* or *In a safe sandbox (container)*. Container is greyed out ("Docker not detected") until Docker's daemon is running, and some harnesses without a container image yet (Antigravity, currently) are host-only regardless of Docker status.
-3. **Model** — shown only when the harness supports switching models via a CLI flag; the harness itself stays fixed, only the model changes. Changeable later from the agent pane's own runtime picker.
-4. **Model Vendor / Custom Endpoint** — shown only for harnesses that support redirecting to an alternate API endpoint (Claude Code today). Leave blank to use the harness's default model vendor.
-5. **Identity** — an [Identity bundle](/identity/) for credentials, or "(ambient credentials)".
-6. **Memory** — a Bundle to attach, or "(vanilla CLI)".
-
-Click **Create**. A new agent pane opens in your workspace.
+## The agent pane
 
 The agent pane shows:
 
-- **Streaming output** — Text as the agent generates it
-- **Tool calls** — Each tool invocation with name and arguments
-- **File diffs** — Side-by-side diffs when the agent modifies files
-- **Status** — Active, idle, or completed
-- **Disconnected banner** — surfaces if the WebSocket drops mid-turn; click to reconnect
+- **Streaming output**, as the agent generates it.
+- **Tool calls**, each with a status icon and a one-line summary of its arguments.
+- **File edits** as unified diffs.
+- **Working status**: "Working…" with a timer while a turn runs.
+- A **Disconnected from stream** banner with a **Reconnect** button, if the pane loses its stream while a turn is running.
 
-## Sending shell commands directly
+### Running a shell command
 
-Prefix any message in the composer with `!cmd` to run it as a shell command in the agent's working directory instead of sending it to the model. Useful for quick checks without leaving the pane:
+Start a message with `!` to run it as a shell command in the agent's working directory instead of sending it to the model:
 
 ```
-!cmd git status
-!cmd cat .env.example
-!cmd ls -la dist/
+!git status
+!ls -la dist/
 ```
 
-The output streams into the pane thread like a tool result.
+The pane's details drawer opens, and the command's output appears there when it finishes. Commands time out after 5 minutes.
 
-## AskUserQuestion
+### When the agent asks you a question
 
-Agents can pause and ask you a question via the **AskUserQuestion panel** — an interactive prompt that appears inline in the pane above the composer. Answer directly and submit; the agent resumes automatically. If the agent stalls after receiving your answer, AgentMux auto-resumes it after a short delay.
+Some agents can stop and ask you a question. The panel ("The agent is asking") appears above the message box, with **Cancel**, **Accept Recommended** and **Submit answer**. If you don't answer, it picks the recommended answers after 30 seconds (the `agent:askquestiontimeoutms` setting). Hovering over the panel or typing pauses the countdown. For Claude Code, if the agent produces no output within 4 seconds of your answer, AgentMux re-sends the answer as a follow-up message.
 
 ## When an agent fails
 
-AgentMux classifies failures so you know exactly what happened and what to do:
+AgentMux classifies each failure (`agentmux-srv/src/agents/failure.rs`) and shows a row with the actions that fit it (`frontend/app/view/agent/failure/failure-accessory.ts`):
 
-| Error class | What you see | Recovery |
-|---|---|---|
-| **Auth** | Red banner — credentials rejected or expired | **Re-authenticate** button opens the inline OAuth / key flow — no restart |
-| **Rate limit** | Banner with estimated retry delay | Auto-retries after the delay (5 s default) |
-| **Context exceeded** | Banner — context window full | Summarize and continue in a new turn |
-| **Killed** | Banner — process killed (OOM or external signal) | Restart; reduce context or container memory limits |
-| **Crash** | Banner with crash class | **Restart** button; the prior partial turn is preserved |
+| Failure | Actions |
+|---|---|
+| Not signed in, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Armory → Accounts** or **Bind** |
+| Rate limited, API overloaded, network error | Retries automatically after about 5, 15, 30, 60 and then 120 seconds, then waits for you. **Retry now** at any time. |
+| Usage limit reached | **Armory (switch / upgrade)**. Retrying won't help until the limit resets. |
+| Context window exceeded | **New session** |
+| Hit the turn limit | **Continue** |
+| CLI couldn't start | **Provider setup** |
+| Process killed, no output, or other error | **Retry** |
+| Agent was deleted | No retry |
 
-## Agent Types
+Rows with an explanation or captured CLI output also have **Details**, and every row has a dismiss button.
 
-### Host Agents
+## Host and container agents
 
-Run directly on your machine. The agent CLI process spawns as a child process with access to your local filesystem and tools.
+**Host agents** run the CLI directly on your machine, with access to your files, environment and credentials.
 
-### Container Agents
+**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is host-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the dialog notices within a few seconds.
 
-Run inside Docker containers. AgentMux connects to the container and manages the agent lifecycle. Useful for isolated environments or when agents need specific toolchains.
-
-Requires Docker installed **and the Docker daemon running** (e.g. Docker Desktop started) — having the `docker` CLI installed isn't enough on its own if the daemon itself is stopped. If the Container option is greyed out as "Docker not detected," start Docker Desktop. On recent AgentMux versions this is picked up automatically within a few seconds; on older versions, restart AgentMux after starting Docker Desktop.
-
-### Import from Claw
-
-If you use [Claw](https://github.com/a5af/claw) for container agent management, you can import existing agent configurations directly into Memory bundles. Click **Import from Claw** in the empty state or from the Memory pane's header menu.
+The Claude template suggests the container runtime, so when Docker is running, **Create new agent from Claude** preselects it. Choose **On this computer (host)** if you want a host agent.
 
 ## Skills
 
-Each agent can have custom skills — reusable prompt templates, commands, workflows, or MCP tool configurations. Skills are their own primitive (not nested inside a Bundle) — manage them per-agent from the **Stash** icon → **Skills** tab, or app-wide from the [Armory](/armory/#skills)'s Skills tab.
+Skills are reusable instructions an agent can call. Manage them app-wide from the [Armory](/armory/#skills)'s **Skills** tab (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
 
-Skill types:
-
-| Type | Description |
+| Kind | Description |
 |------|-------------|
-| `prompt` | A reusable prompt template |
-| `command` | A shell command or script |
-| `workflow` | A multi-step sequence |
-| `mcp-tool` | An MCP tool configuration |
+| **Slash command (/trigger)** | A prompt the agent runs when you type its trigger |
+| **Agent Skill (SKILL.md)** | A skill in the SKILL.md format (beta) |
+
+AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`agentmux-srv/src/backend/agent_config.rs`, `build_config_files`).
 
 ## Next Steps
 
-- [Memory bundles](/memory/) — full bundle reference (provider, model, instructions, MCP, skills)
-- [Pane Types](/pane-types) — All pane types including agent panes
-- [Configuration](/config) — Global and per-agent settings
+- [Auth flows](/auth/): sign-in and credential storage per provider
+- [Memory bundles](/memory/): the full bundle reference
+- [Pane Types](/pane-types/): all pane types, including agent panes
+- [Configuration](/config/): global and per-agent settings
