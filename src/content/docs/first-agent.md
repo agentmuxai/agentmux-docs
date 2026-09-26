@@ -33,20 +33,20 @@ See [Auth flows](/auth/) for each provider's login command and credential locati
 
 AgentMux installs every npm-based CLI itself. It runs `npm install <package>@<version>`, at the version it was tested with, into a folder per AgentMux version: `~/.agentmux/instances/v<version>/cli/<provider>/`. It always uses that copy, never a CLI you installed globally. After an AgentMux update, each CLI is installed again for the new version the first time you use it.
 
-When you pick a harness whose CLI isn't installed yet, an install dialog opens. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**, then **Continue to Launch** when it finishes. The install needs an internet connection.
+When you pick a harness whose CLI isn't installed yet, an install dialog opens. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**, then **Continue to Launch** when it finishes. If the install fails, click **Retry**. The install needs an internet connection.
 
 Kimi Code CLI is the exception. It's a Python tool, so install it yourself with `pip install kimi-cli` and make sure `kimi` is on your `PATH`.
 
 ### System prerequisites
 
-The npm-based CLIs need **Node.js** and **npm**. Claude Code and OpenClaw also need **Git**. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. **≡ → Toolchain** shows the same information for all tools at any time.
+The npm-based CLIs need **Node.js** and **npm**. Claude Code and OpenClaw also need **Git**. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Launch anyway** continues. **≡ → Toolchain** shows the same information for all tools at any time.
 
 ## Create an agent
 
 Open an Agent pane. The starter layout already has one; you can also click **Agent** in the widget bar, or run **Open Agent** from the command palette (`Ctrl + P`). An empty Agent pane shows the **agent picker**:
 
 - A filter bar and sort control.
-- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, you can fork the conversation into a new agent or switch to that pane. Each row's menu has **View History**.
+- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History** and **Delete**.
 - **New Agent**: one card per harness. Each card is a template.
 
 Clicking a card first runs the install and prerequisite checks above. It then opens **Create new agent from &lt;template&gt;**, which makes a new, independent agent and leaves the template unchanged. Fields, top to bottom:
@@ -55,22 +55,24 @@ Clicking a card first runs the install and prerequisite checks above. It then op
 2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
 3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
-5. **Identity**: an Armory account for this provider, or **(ambient credentials)**. If you have an account for the provider, the first one is preselected.
-6. **Memory**: a [bundle](#bundles), or **(vanilla CLI)**.
+5. **Identity**: an Armory account for this provider, or **(ambient credentials)** (no account). If you have an account for the provider, the first one is preselected. For the providers that need an account (see [Sign in](#sign-in)), an agent left on **(ambient credentials)** can't start until you sign in or bind an account.
+6. **Memory**: a [bundle](#bundles), or **(vanilla CLI)** for none. If you have any bundles, the first one in the list is preselected, so pick **(vanilla CLI)** if you want none.
 
 Click **Create**. The agent is created and launched in the pane.
 
-The model lists are built into AgentMux. For Claude Code only, if the shared login folder `~/.agentmux/shared/providers/claude/` holds a Claude Code login, AgentMux also asks Anthropic's models API for the current models at startup and updates the list.
+The model lists are built into AgentMux. For Claude Code only, AgentMux also asks Anthropic's models API for the current models at startup and updates the list. It needs a token for that: a Claude Code login in the shared folder `~/.agentmux/shared/providers/claude/`, or the `CLAUDE_CODE_OAUTH_TOKEN` environment variable. A login saved as an Armory account isn't used for this. Without a token, the built-in list stays.
 
 ## Sign in
 
-When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI isn't signed in, the pane shows **Not signed in** with these actions:
+Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw need an Armory account bound to the agent. AgentMux refuses to start them without one; it doesn't fall back to a login in a shared folder. The other providers use AgentMux's shared login for that provider.
 
-- **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and, for CLIs that ask for one (Claude Code, OpenClaw), gives you a box to paste the authorization code into. If the CLI prints no link, a terminal window opens for the login instead.
+When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI isn't signed in, the pane shows **Not signed in**. If the provider needs an account and none is bound, it shows **No account linked**. Both rows have these actions:
+
+- **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and shows it in the pane, with a box to paste an authorization code into if the CLI asks for one. If the CLI prints no link, a terminal window opens for the login instead.
 - **Login via terminal**: runs the login in a terminal window straight away.
-- **Armory → Accounts**: opens the Armory. If you already have signed-in accounts for this provider, this action is replaced by **Bind** (one account) or **Bind account** (several), which links an existing account to this agent.
+- **Armory → Accounts**: opens the Armory. If you already have signed-in accounts for this provider, this action is replaced by **Bind: &lt;account&gt;** (one account) or **Bind account** (several), which links an existing account to this agent.
 
-For Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw, a successful login is saved as an Armory account and linked to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
+For the five providers above, a successful login is saved as an Armory account and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
 
 ## Bundles
 
@@ -99,6 +101,12 @@ The agent pane shows:
 - **Working status**: "Working…" with a timer while a turn runs.
 - A **Disconnected from stream** banner with a **Reconnect** button, if the pane loses its stream while a turn is running.
 
+The pane header shows the agent as a tab, with its name and its provider's logo. Double-click the tab to rename the agent. Closing the last agent tab in a pane returns the pane to **My Agents** instead of closing it.
+
+### Ending an agent
+
+Type `/quit` (or `/exit`) in the message box to end the agent gracefully. AgentMux releases the agent's work claims, stops the shells it started and closes its tab. The conversation is kept: pick the agent in **My Agents** to resume it.
+
 ### Running a shell command
 
 Start a message with `!` to run it as a shell command in the agent's working directory instead of sending it to the model:
@@ -108,11 +116,11 @@ Start a message with `!` to run it as a shell command in the agent's working dir
 !ls -la dist/
 ```
 
-The pane's details drawer opens, and the command's output appears there when it finishes. Commands time out after 5 minutes.
+The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes.
 
 ### When the agent asks you a question
 
-Some agents can stop and ask you a question. The panel ("The agent is asking") appears above the message box, with **Cancel**, **Accept Recommended** and **Submit answer**. If you don't answer, it picks the recommended answers after 30 seconds (the `agent:askquestiontimeoutms` setting). Hovering over the panel or typing pauses the countdown. For Claude Code, if the agent produces no output within 4 seconds of your answer, AgentMux re-sends the answer as a follow-up message.
+Some agents can stop and ask you a question. The panel ("The agent is asking") appears above the message box, with **Cancel**, **Accept Recommended** and **Submit answer**. If you don't answer, it picks the recommended answers after 30 seconds (the `agent:askquestiontimeoutms` setting). Hovering over the panel or pressing a key in it pauses the countdown for 15 seconds, after which it starts again from the full timeout. For Claude Code, if the agent produces no output within 4 seconds of your answer, AgentMux re-sends the answer as a follow-up message.
 
 ## When an agent fails
 
@@ -120,7 +128,7 @@ AgentMux classifies each failure (`agentmux-srv/src/agents/failure.rs`) and show
 
 | Failure | Actions |
 |---|---|
-| Not signed in, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Armory → Accounts** or **Bind** |
+| Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Armory → Accounts** or **Bind** |
 | Rate limited, API overloaded, network error | Retries automatically after about 5, 15, 30, 60 and then 120 seconds, then waits for you. **Retry now** at any time. |
 | Usage limit reached | **Armory (switch / upgrade)**. Retrying won't help until the limit resets. |
 | Context window exceeded | **New session** |
@@ -128,6 +136,7 @@ AgentMux classifies each failure (`agentmux-srv/src/agents/failure.rs`) and show
 | CLI couldn't start | **Provider setup** |
 | Process killed, no output, or other error | **Retry** |
 | Agent was deleted | No retry |
+| Running in another AgentMux instance | **Take over**, then **Confirm take over**. This stops the agent in the other instance and runs it here. |
 
 Rows with an explanation or captured CLI output also have **Details**, and every row has a dismiss button.
 

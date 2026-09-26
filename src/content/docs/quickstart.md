@@ -35,11 +35,11 @@ Around the panes:
 
 In the Agent pane, under **New Agent**, click a harness card, for example **Claude**. Each card is a harness, the CLI that runs the agent.
 
-1. **Install the CLI.** If the harness's CLI isn't installed yet, an install dialog opens. Click **Install now**, then **Continue to Launch**. It needs an internet connection, and Node.js and npm. If they're missing, AgentMux lists them with an install option; click **Refresh** once they're installed.
-2. **Fill in Create new agent.** Keep the suggested **Name**. For **Runtime**, choose **On this computer (host)**; the Claude template preselects the container runtime when Docker is running. Leave **Identity** on **(ambient credentials)** and **Memory** on **(vanilla CLI)**, then click **Create**.
-3. **Sign in.** If the CLI isn't signed in yet, the pane shows **Not signed in**. Click **Log in** and finish the login in your browser. For Claude Code, paste the authorization code back into the pane if it asks for one.
+1. **Install the CLI.** If the harness's CLI isn't installed yet, an install dialog opens. Click **Install now**, then **Continue to Launch**. It needs an internet connection, and Node.js and npm (Claude Code also needs Git). If they're missing, AgentMux lists them with an install option; click **Refresh** once they're installed.
+2. **Fill in Create new agent.** Keep the suggested **Name**. For **Runtime**, choose **On this computer (host)**; the Claude template preselects the container runtime when Docker is running. If you have no account yet, leave **Identity** on **(ambient credentials)**. Set **Memory** to **(vanilla CLI)**; if you have any bundles, the first one is preselected. Click **Create**.
+3. **Sign in.** Claude Code only starts with an Armory account bound to the agent. Without one, the pane shows **Not signed in** or **No account linked**. Click **Log in** and finish the login in your browser. For Claude Code, paste the authorization code back into the pane if it asks for one. AgentMux saves the login as an Armory account and binds it to the agent. See [Auth flows](/auth/).
 
-The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead.
+The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead. Type `/quit` (or `/exit`) to end the agent and close its tab; the conversation is kept.
 
 See [First Agent Setup](/first-agent/) for the details of every step.
 

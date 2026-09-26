@@ -17,7 +17,7 @@ On Windows and Linux, the Alt shortcuts below take priority over the same keys i
 
 ## Command palette
 
-Press **`Ctrl + P`** on any platform to open the command palette, a searchable list of commands. While it's open, all other shortcuts are paused.
+Press **`Ctrl + P`** on any platform to open the command palette, a searchable list of commands. While it's open, all other app shortcuts are paused.
 
 | Key | Action |
 |---|---|
@@ -47,12 +47,16 @@ Its commands (`frontend/app/store/command-registry.ts`, `registerDefaultCommands
 |---|---|---|
 | New tab | `Cmd + T` | `Alt + T` |
 | Close tab | `Cmd + Shift + W` | `Alt + Shift + W` |
-| Next tab | `Cmd + ]` or `Cmd + Shift + ]` | `Alt + ]` or `Alt + Shift + ]` |
-| Previous tab | `Cmd + [` or `Cmd + Shift + [` | `Alt + [` or `Alt + Shift + [` |
+| Next tab | `Cmd + ]` | `Alt + ]` |
+| Previous tab | `Cmd + [` | `Alt + [` |
 | Go to tab 1–9 | `Cmd + 1` … `Cmd + 9` | `Alt + 1` … `Alt + 9` |
 | New window | `Ctrl + Shift + N` | `Ctrl + Shift + N` |
 
-New tabs and windows open with the starter layout: Agent, Sysinfo and Swarm. Closing a tab asks for confirmation unless the `tab:skipcloseconfirm` setting is on, and the last tab in a window can't be closed.
+New tabs and windows open with the starter layout: Agent, Sysinfo and Swarm. Closing a tab with `Cmd + Shift + W` asks for confirmation unless the `tab:skipcloseconfirm` setting is on, and the last tab in a window can't be closed.
+
+Double-click a tab to rename it. `Enter` saves the name and `Esc` cancels.
+
+While the window is still loading, `F5` or `Ctrl + R` (`Cmd + R` on macOS) reloads it. This only works during startup, for a window stuck on a startup error.
 
 ## Panes
 
@@ -71,13 +75,17 @@ New tabs and windows open with the starter layout: Agent, Sysinfo and Swarm. Clo
 | Replace the focused pane with the widget launcher | `Ctrl + Shift + K` | `Ctrl + Shift + K` |
 | Change the connection of a Terminal or Sysinfo pane | `Cmd + G` | `Alt + G` |
 | Search in a Terminal pane | `Cmd + F` | `Alt + F` |
-| Close the open dialog or search bar | `Esc` | `Esc` |
+| Close the open dialog or search bar, or restore a magnified pane | `Esc` | `Esc` |
 
-New panes and splits open a terminal. A new terminal starts in the focused terminal's directory and connection. If the `app:defaultnewblock` setting is `launcher`, they open the widget launcher instead. After `Ctrl + Shift + S` you have 2 seconds to press the arrow key.
+New panes and splits open a terminal. A new terminal starts in the focused terminal's directory and connection. If the `app:defaultnewblock` setting is `launcher`, they open the widget launcher instead. After `Ctrl + Shift + S` you have 2 seconds to press the arrow key. The digit keys for focusing a pane work on the top row or the numpad. Cycling focus moves through the panes in a clockwise spiral, starting at the top left.
 
-`Ctrl + Shift + M` toggles **multi-input**, which sends what you type in one terminal to every terminal pane. It only turns on when there are at least two terminals.
+Closing a pane whose agent is mid-turn or has processes running asks for confirmation first.
 
-`Ctrl + Shift + V` toggles voice input in the focused Agent pane, when voice input is available. In a Terminal pane it pastes instead (see below).
+`Ctrl + Shift + M` toggles **multi-input**, which sends what you type in one terminal to every other terminal pane. It only turns on when there are at least two terminals.
+
+`Ctrl + Shift + V` starts or stops voice input in the focused Agent pane, when voice input is available. If dictation is already running in another pane, it moves to the focused one. In a Terminal pane, and in an Agent pane's Shell drawer, the same keys paste instead (see below).
+
+In the widget launcher, type to filter the widgets, use the arrow keys to move the selection, and press `Enter` to open one. `Esc` clears the search, and with an empty search it goes back out of a widget group.
 
 ## Zoom
 
@@ -93,11 +101,13 @@ With the mouse (`frontend/app/app.tsx`, `AppZoomHandler` and `AppAllPanesZoomHan
 
 | Gesture | Effect |
 |---|---|
-| `Ctrl` + scroll over a pane | Zoom that pane (if it's one of the types above), in 5% steps |
-| `Ctrl` + scroll over the title bar, status bar or a pane header | Zoom the window chrome (title bar and status bar) |
-| `Ctrl + Shift` + scroll | Zoom every zoomable pane in the window together, each from its own current level |
+| `Ctrl` + scroll over a pane | Zoom that pane (if it's one of the types above). Steps are 10% over a Terminal, Editor, Swarm, Armory or Warden pane and 5% over an Agent pane. |
+| `Ctrl` + scroll over the title bar, status bar or a pane header | Zoom the window chrome (title bar and status bar), in 5% steps within 50–200% |
+| `Ctrl + Shift` + scroll | Zoom every zoomable pane in the window together, each from its own current level, in 5% steps. Over the title bar, status bar or a pane header it zooms the chrome instead. |
 
-On macOS, `Cmd` works in place of `Ctrl` for these scroll gestures.
+On macOS, `Cmd` also works in place of `Ctrl` for these scroll gestures, in 5% steps.
+
+An Agent pane's Shell drawer zooms on its own: `Ctrl` + scroll over it changes only the drawer, in 10% steps. The Help pane also has its own zoom: `Ctrl` + scroll over it (5% steps), or `Ctrl + =`, `Ctrl + -` and `Ctrl + 0` while it has focus (`Cmd` works too on macOS).
 
 ## Terminal panes
 
@@ -108,6 +118,7 @@ On macOS, `Cmd` works in place of `Ctrl` for these scroll gestures.
 | Clear the terminal | `Cmd + K` | `Alt + K` |
 | Insert a newline without running | `Shift + Enter` | `Shift + Enter` |
 | Restart the shell after it exits | `Enter` | `Enter` |
+| In the search bar: next / previous match | `Enter` / `Shift + Enter` | `Enter` / `Shift + Enter` |
 
 `Shift + Enter` only inserts a newline when the `term:shiftenternewline` setting is on. These keys are handled in `frontend/app/view/term/termViewModel.ts` (`handleTerminalKeydown`).
 
@@ -125,7 +136,25 @@ In the message box at the bottom of an Agent pane (`frontend/app/view/agent/comp
 | `Tab` or `→` | Accept the suggested next prompt (empty box only) |
 | `↑` / `↓`, `Tab`, `Enter`, `Esc` | In the `/` command list: move, fill in, run, dismiss |
 
-`Ctrl + F`, on every platform, opens or closes the search bar for the conversation.
+Typing `/quit` (or `/exit`) and sending it ends the agent gracefully and closes its tab. Other tabs in the same pane keep running. The conversation is kept, so reopening the agent resumes it (`frontend/app/view/agent/commands/global/quit.ts`).
+
+`Ctrl + F`, on every platform, opens or closes the search bar for the conversation. In the search bar, `Enter` goes to the next match, `Shift + Enter` to the previous one, and `Esc` closes it.
+
+The Shell drawer at the bottom of an Agent pane is a terminal. There, `Ctrl + Shift + V` pastes and `Ctrl + Shift + C` copies the selected text, on every platform, as in a Terminal pane (`frontend/app/view/agent/components/shell-drawer-keys.ts`, `handleShellDrawerKeydown`).
+
+## Editor panes
+
+These keys are handled in `frontend/app/view/editor/editor-view.tsx`:
+
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| Save the file | `Cmd + S` | `Ctrl + S` |
+| Find and replace (source view only) | `Cmd + F` | `Ctrl + F` |
+| Switch a Markdown file between preview and source | `Cmd + Shift + V` | `Ctrl + Shift + V` |
+
+In the file tree, `F2` renames the selected file.
+
+In the memory editors (Global Memory and an agent's native memory files), `Ctrl + S` or `Cmd + S` saves and `Esc` cancels. If there are unsaved changes, `Esc` asks first.
 
 ## Browser panes
 
@@ -137,6 +166,8 @@ A Browser pane's web page receives your keystrokes directly, so while the page h
 | Reload | `Cmd + R` | `Ctrl + R` |
 | Back | `Option + ←` | `Alt + ←` |
 | Forward | `Option + →` | `Alt + →` |
+
+In the address bar, `Enter` opens the address. Text that isn't an address is searched on Google.
 
 ## macOS menu bar
 
@@ -171,7 +202,8 @@ On Windows, AgentMux does its own window snapping (`agentmux-cef/src/client/wind
 - **Drag to the top to maximize.** Drag the title bar until the cursor is at the top edge of the screen (within 12 px). A preview appears; release to maximize. Floating pane windows are excluded.
 - **Drag a maximized window to restore it.** Dragging the title bar of a maximized window restores it to its normal size, under the cursor.
 - **Snap to full height.** Drag the window's top or bottom border to within 12 px of the screen edge and the window fills the screen's height; its width doesn't change. Drag back out of the zone to undo it.
+- **Cancel a drag.** Press `Esc` while dragging the title bar to put the window back where it started.
 
 ## Customization
 
-Keybindings can't be customized. They're fixed in `frontend/app/store/keymodel.ts`, and AgentMux doesn't read a keybindings file.
+Keybindings can't be customized. They're fixed in `frontend/app/store/keymodel.ts`, and AgentMux doesn't read a keybindings file. A `keybindings.json` in the config folder has no effect.

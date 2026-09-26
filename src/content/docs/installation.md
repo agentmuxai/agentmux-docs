@@ -8,24 +8,24 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 AgentMux runs on Windows (x64), macOS (Apple Silicon only) and Linux (x86_64 only). There is no Intel Mac build and no Linux ARM build.
 
-Every release is published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases), which is the source of truth for downloads. The [agentmux.ai](https://agentmux.ai) download buttons point at the same files, except on Windows, where the main button opens the Microsoft Store.
+Every release is published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases), which is the source of truth for downloads. The download buttons on [agentmux.ai](https://agentmux.ai) link to the same files, plus the Microsoft Store listing for Windows.
 
 AgentMux bundles its own Chromium runtime (CEF), so it doesn't use a system browser engine such as WebKitGTK.
 
 ## Downloads
 
-Release files carry the version in their name. The sizes below are for v0.57.1 and change a little from release to release.
+Release files carry the version in their name. The sizes below are for v0.57.5 and change a little from release to release.
 
 | Platform | File | Download size |
 |---|---|---|
-| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 141.8 MB |
-| Windows | `agentmux-<version>-x64-portable.zip` (portable) | 196.3 MB (434 MB extracted) |
-| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 197.0 MB |
-| macOS | `AgentMux_<version>_arm64.dmg` | 155.6 MB |
-| Linux | `AgentMux_<version>_amd64.AppImage` | 165.6 MB |
-| Linux | `AgentMux_<version>_amd64.deb` | 178.7 MB |
-| Linux | `AgentMux-<version>-1.x86_64.rpm` | 178.6 MB |
-| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 179.4 MB (439 MB extracted) |
+| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 142.2 MB |
+| Windows | `agentmux-<version>-x64-portable.zip` (portable) | 196.9 MB (436 MB extracted) |
+| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 197.6 MB |
+| macOS | `AgentMux_<version>_arm64.dmg` | 155.8 MB |
+| Linux | `AgentMux_<version>_amd64.AppImage` | 167.0 MB |
+| Linux | `AgentMux_<version>_amd64.deb` | 180.2 MB |
+| Linux | `AgentMux-<version>-1.x86_64.rpm` | 180.1 MB |
+| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 180.9 MB (443 MB extracted) |
 
 ## Windows
 
@@ -71,7 +71,7 @@ Requirements:
 - **glibc 2.35 or newer.** Release builds are compiled on Ubuntu 22.04 (glibc 2.35). Older distributions such as Ubuntu 20.04 and Debian 11 are not supported.
 - **An X11 or Wayland desktop.** See [Display server](#display-server).
 
-The packages declare no package dependencies; they're built for a standard desktop installation.
+The packages declare no package dependencies; they bundle the runtime libraries they need.
 
 ### AppImage
 
@@ -142,11 +142,11 @@ The first window opens a starter layout of three panes:
 - **Sysinfo** (top right): live system metrics.
 - **Swarm** (bottom right): a live tree of your agent panes, with their subagents, todos and running tools.
 
-New tabs and new windows start with the same layout (`agentmux-srv/src/backend/wcore/mod.rs`, `seed_default_layout`).
+New windows start with the same layout (`agentmux-srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`).
 
 The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Armory** and **Sysinfo** (`agentmux-srv/src/config/widgets.json`). Every other widget is under **more**: Drone, Warden, Terminal, Editor, Browser, Help, Messengers, Media, Toolchain and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
-The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Settings, Command Palette, Armory, Toolchain, DevTools, Online Docs and Exit.
+The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (**Save layout…**), Settings, Command Palette, Armory, Toolchain, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`).
 
 Agents need their CLI tools, and most of those need Node.js and npm. **≡ → Toolchain** shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 

@@ -21,9 +21,9 @@ The bug report form asks for:
 - **Platform**, **OS version** and **architecture**
 - Anything else, such as screenshots or logs
 
-To find the version, click the version number (for example `v0.57.1`) at the right end of the status bar. The panel that opens shows the version, channel and build, each with a copy button.
+To find the version, click the version number (for example `v0.57.5`) at the right end of the status bar. The panel that opens shows the version, channel and build, each with a copy button.
 
-Logs are in `~/.agentmux/channels/<channel>/versions/<version>/logs/` (on Windows, under `%USERPROFILE%\.agentmux\`). Release builds use the `stable` channel. Logs can include file paths and prompts, so review them before attaching.
+Logs are in `~/.agentmux/channels/<channel>/versions/<version>/logs/` (on Windows, under `%USERPROFILE%\.agentmux\`). Release builds use the `stable` channel. Logs can include file paths and other details about your machine, so review them before attaching.
 
 The same page also has a feature request form.
 
