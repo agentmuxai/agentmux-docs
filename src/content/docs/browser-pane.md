@@ -1,129 +1,164 @@
 ---
 title: "Browser pane"
-description: Native CefBrowserView embedded as a child window of the AgentMux frame — full Chromium fidelity, not an iframe.
+description: A Chromium browser embedded in an AgentMux pane through CEF — not an iframe — with bookmarks, a start page, per-pane camera and microphone grants, and HTTP sign-in prompts.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The browser pane is a pinned widget (`Browser`, view `browser`). It embeds a native [`CefBrowserView`](https://bitbucket.org/chromiumembedded/cef/) — **not an iframe**. The pane's HWND sits as a child window of the AgentMux frame, which is why links, popups, OAuth flows, and DRM content all behave like they would in a regular Chromium tab.
+The browser pane (view `browser`) embeds a real Chromium browser through CEF, **not an iframe**. Sites load with their own cookies, storage and scripts, the same as in a Chromium tab.
+
+How it is embedded depends on the platform:
+
+- **Windows:** a CEF browser window placed as a child window inside the AgentMux window (`agentmux-cef/src/browser_pane/creation.rs`).
+- **macOS and Linux:** a CEF browser view laid over the AgentMux window (`agentmux-cef/src/browser_pane/creation_views.rs`).
+
+Some things differ from a normal browser tab:
+
+- Links that open in a new tab (`target="_blank"`) load in the same pane.
+- Popups to other web sites open in your system browser, except sign-in popups (see [Sign-in popups](#sign-in-popups)).
+- The pane won't navigate to `file:` URLs or other schemes that would hand off to the operating system.
 
 ## Opening a browser pane
 
-- Click the **Browser** widget in the top bar (pinned by default).
-- Right-click any pane header → Browser.
-- Programmatically: `pane.open` with `view: "browser"`, `meta.url: "https://example.com"`.
+The Browser widget is **not pinned** to the widget bar by default (`agentmux-srv/src/config/widgets.json`, `defwidget@browser`).
 
-Blank-spawned browser panes default to `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly.
+- Click **more** at the end of the widget bar and choose **Browser**. Right-click it there and choose **Pin to bar** to keep it in the bar.
+- Click **+** on any pane's tab strip and pick **Browser** to open it as a tab in that pane.
+- Right-click a pane header → **Replace With...** → **Browser** replaces that pane.
+- From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`agentmux-srv/src/backend/shellintegration/muxsh.mjs`).
+- From the App API: `pane.open` with `view: "browser"` and a `url`, which is required for this view.
 
-## Header controls
+The **Messengers** widget (Discord, Slack, Telegram, WhatsApp, Teams) opens browser panes too, with the navigation bar hidden.
+
+### Start page
+
+A new browser pane opens its configured URL if it has one, otherwise your start page, otherwise `https://agentmux.ai` (`frontend/app/view/browser/browser-model.ts`). To choose your start page, see [Bookmarks and start page](#bookmarks-and-start-page). For a blank pane, open `about:blank`.
+
+## Navigation bar
 
 | Control | Action |
 |---|---|
-| ← / → | Back / forward — enabled state syncs from the backend |
-| ⟳ | Reload current page |
-| Address bar | Enter URL or search query — defaults to a search if it doesn't parse as a URL |
-| Go | Navigate to the address-bar value |
+| ← / → | Back / Forward. Disabled when there's nowhere to go. |
+| ↻ | Reload |
+| Bookmark icon | Opens the [bookmarks menu](#bookmarks-and-start-page) |
+| Address bar | Enter a URL or search terms ("Enter URL or search...") |
+| → (Go) | Load the address-bar value |
 
-Title and favicon update from the embedded page automatically. Title is fetched from the page's `<title>`; favicon falls back to the `globe` icon if the page doesn't expose one.
+The address bar keeps anything starting with `http://`, `https://` or `about:`. Otherwise, if what you typed contains a dot and no spaces, `https://` is added in front. Anything else is sent to Google search. Type the scheme for addresses without a dot, e.g. `http://localhost:3000`.
+
+The pane title follows the page title, and shows the host name while a page is loading. The pane icon is the site's favicon, or a globe when the site has none.
 
 ## Keyboard shortcuts
 
-Because the embedded page is a native CEF child view and not DOM content, these shortcuts are intercepted at the CEF keyboard-handler layer rather than a JS `keydown` listener, so they work even while the page itself has focus:
+These shortcuts are handled by AgentMux itself (`agentmux-cef/src/client/handlers.rs`), so they work while the page has focus. The page doesn't receive them.
 
 | Shortcut | Action |
 |---|---|
-| <kbd>Ctrl+L</kbd> (<kbd>Cmd+L</kbd> on macOS) | Focus the address bar and select its contents |
-| <kbd>Ctrl+R</kbd> (<kbd>Cmd+R</kbd> on macOS) | Reload the current page |
-| <kbd>Alt+Left</kbd> | Go back |
-| <kbd>Alt+Right</kbd> | Go forward |
+| `Ctrl+L` (`Cmd+L` on macOS) | Focus the address bar and select its contents |
+| `Ctrl+R` (`Cmd+R` on macOS) | Reload |
+| `Alt+Left` | Back |
+| `Alt+Right` | Forward |
 
-<kbd>Ctrl+Shift+R</kbd> and <kbd>Ctrl+Shift+L</kbd> are left alone (not intercepted), so Chromium's own hard-reload chord still works. Reload/back/forward call straight into the same `BrowserPaneManager` methods the header buttons use via IPC; focusing the address bar round-trips through an event to the frontend (moving OS/DOM focus can only happen there), then hands off through the same click-to-focus path described below.
+With `Shift` held (for example `Ctrl+Shift+R`), AgentMux doesn't intercept these keys and leaves them to Chromium. There is no find-in-page (`Ctrl+F`), and the browser has no page tabs of its own; use [pane tabs](/pane-types/) instead.
 
-## IPC commands
+A new browser pane that opens as the selected pane puts the keyboard straight into the page as soon as the page is created, unless you have already clicked into its address bar. Clicking in the page gives it the keyboard; clicking AgentMux's own interface takes it back. On macOS, typing into a browser pane works this way since AgentMux 0.57.5.
 
-The host exposes the browser pane's lifecycle via these CEF commands (invoked through `invokeCommand` from the renderer):
+**Zoom:** on Windows, `Ctrl`+scroll zooms just that browser pane (50%–200%); the zoom lasts until the pane is closed or moved. On macOS and Linux, `Ctrl`+scroll uses Chromium's own page zoom, which applies to every pane showing the same site.
 
-| Command | Purpose |
-|---|---|
-| `browser_pane_create` | Instantiate the `CefBrowserView`; called on first mount |
-| `browser_pane_navigate` | Load a URL |
-| `browser_pane_resize` | Propagate Solid layout changes to the HWND |
-| `browser_pane_reload` | Reload the current page |
-| `browser_pane_focus` | Explicit focus handoff after a click |
-| `browser_pane_close` | Tear down on pane close |
+## Bookmarks and start page
 
-The frontend [`BrowserViewModel`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/browser/browser-model.ts) shows the canonical sequencing.
+The bookmark button next to Reload opens a menu (`frontend/app/view/browser/browser-nav-bar.tsx`). While a page is loaded it shows:
 
-## Address-bar focus + click handoff
+- **Set as Start Page** (reads **This Is Your Start Page** when the current page already is);
+- **Bookmark This Page**, or **Remove Bookmark** if the page is already bookmarked;
+- your bookmarks, each with its favicon and title. Click one to open it. With none saved, the list shows **No bookmarks yet**.
 
-The address bar (a DOM input) and the embedded `CefBrowserView` (a child HWND) compete for keyboard focus. The pane's HWND intercepts clicks at the Win32 level, so the renderer does not see DOM `click` events from inside the page. Two consequences:
+There is no bookmarks bar. To remove a bookmark, open that page and choose **Remove Bookmark**.
 
-- Clicking the address bar releases pane focus to the input. IME state is preserved.
-- Clicking back into the pane fires `browser_pane_focus` to hand keyboard focus back to the embedded HWND.
+Bookmarks and the start page are shared by every browser pane and every AgentMux channel on your machine. They are stored in `~/.agentmux/shared/browser-bookmarks.json` and `~/.agentmux/shared/browser-start-page.json`.
 
-The address-bar input uses `onMouseDown` (not `onMouseEnter`) for the click-to-focus handoff. Hover-focus loops were the original failure mode this design corrects.
+## Camera, microphone and screen sharing
 
-## Click → reducer flow
+When a page asks for the camera, microphone or screen, AgentMux shows a prompt in the AgentMux window, not inside the page (`agentmux-cef/src/browser_panes/media_grants.rs`, `frontend/app/window/pane-media-permission-prompt.tsx`):
 
-When you click inside the browser pane, the host fires `browser-pane-clicked` over the JS bridge. The frontend's browser-pane reducer (slice #9) dispatches a `Clicked` command, which emits a `focus-block` event. A saga turns the event into `refocusNode(blockId)`, updating the layout's focus state so keyboard shortcuts and split commands target the clicked pane.
+- The prompt reads "*site* wants to use your camera" (or microphone, screen contents, system audio), with **Allow** and **Don't allow**. `Esc` or clicking outside it means Don't allow.
+- A prompt left unanswered for 60 seconds is denied.
+- A grant covers one site in one pane, and only the devices it asked for. It lasts until the pane is closed or moved to another window; nothing is saved to disk.
 
-DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary. See [Reducer stack](/internals/reducer-stack/) for the broader pattern.
+While a page is capturing, a red **Camera in use**, **Microphone in use** or **Camera and microphone in use** indicator appears at the bottom-right of the window. Its **Stop** button asks you to confirm ("Stop camera and microphone access?", **Stop and reload**), then removes all of that pane's grants and reloads the page to end the capture.
 
-Clicking inside a browser pane also dismisses any open menu or popover elsewhere in the app — the More dropdown, status-bar popovers, tab context menus, and similar flyouts. This rides the same `browser-pane-clicked` event: a second, independent listener synthesizes a `mousedown`/`pointerdown` on the document body whenever the event fires, which every existing "click outside to dismiss" handler already reacts to. It doesn't replace the pane-selection consumer above — it's an additional subscriber to the same event.
+Limitations:
 
-Both `browser-pane-clicked` and right-click context-menu delivery (below) are implemented on Windows and macOS; Linux support is not yet in place, so pane click-to-select, the click-dismiss behavior, and the unified context menu don't apply there yet.
+- Prompts only appear in regular AgentMux windows. A browser pane in a [floating window](/pane-types/#floating-panes) doesn't show the prompt, so its request is denied after 60 seconds.
+- The packaged macOS app declares microphone access for the operating system but not camera access, so macOS may block camera use.
+
+## Sign-in prompts (HTTP authentication)
+
+When a site or proxy asks for HTTP authentication, a sign-in dialog appears over that pane only; the rest of AgentMux stays usable (`frontend/app/view/browser/components/BrowserAuthModal.tsx`). It shows "*origin* says: *realm*", **Username** and **Password** fields, a **Save this credential** checkbox (off by default), and **Cancel** / **Sign in**.
+
+A saved credential goes to your operating system's keychain, filed under the agent identity linked to the pane. If the pane has no linked agent identity, nothing is saved.
+
+When a saved credential matches a later request, AgentMux asks before using it, in a small separate window: "Use saved sign-in?" with **Approve** and **Deny**. This means an agent controlling the pane never sees the password. The request is denied if you don't answer within 60 seconds. If the site asks again within 15 seconds of an automatic sign-in, AgentMux deletes the saved credential and shows the manual dialog instead.
+
+There is no screen for listing or deleting saved credentials.
+
+## Sign-in popups
+
+When a page opens a sign-in popup, AgentMux opens a real popup window only when both of these are true (`agentmux-cef/src/client/lifecycle.rs`, `on_before_popup`):
+
+- the popup's host is a known sign-in provider, such as Google, GitHub, Microsoft, Apple, Okta or Auth0;
+- its URL looks like an OAuth authorization request.
+
+The popup shares the pane's cookies and session, so the page's sign-in completes normally, and closing the popup closes only the popup. Other popups to web sites open in your system browser; any other popup is blocked.
+
+## Load failures
+
+If a page hasn't loaded after 20 seconds, the pane stops waiting and shows an error page in the style of Chrome's "This site can't be reached", with a **Retry** button. Redirects don't reset the 20-second limit. Other load failures (DNS, TLS, blocked requests) use the same error page. The pane never retries on its own.
 
 ## Context menu
 
-Right-clicking inside a browser pane shows **AgentMux's own context menu** — the same menu component every other pane type uses — instead of Chromium's native one. The native menu is suppressed at the CEF layer and replaced with the standard pane menu, extended with browser-specific items:
+Right-clicking inside a page shows AgentMux's menu instead of Chromium's (`frontend/app/view/browser/browser-model.ts`, `getBodyContextMenuItems`):
 
-1. **Back** / **Forward** — disabled when there's nothing to go back/forward to
-2. **Reload**
-3. **Cut** / **Copy** / **Paste** — shown when the click is over a text selection or an editable field
-4. **Copy Link Address** — shown when the click is over a link
-5. **Print**
-6. **View Page Source**
-7. **Inspect Element**
-8. The standard pane items — split up/down/left/right, replace, color, close — same as any other pane's context menu
+1. **Back**, **Forward**, **Reload**
+2. **Cut**, **Copy**, **Paste**, when you right-click a selection or a text field
+3. **Copy Link Address**, over a link
+4. **Print**, **View Page Source**, **Inspect Element**
+5. The standard pane items: **Copy**, **Split Up/Down/Left/Right**, **Replace With...**, **Magnify Pane**, **Close Pane**, and a second **Inspect Element**
 
-If the menu can't be delivered to the pane's owning window for some reason, the pane falls back to Chromium's native menu rather than showing nothing.
+The first **Inspect Element** opens Chromium DevTools for the page at the element you clicked. The second, from the standard pane items, inspects AgentMux's own interface instead. **View Page Source** shows the source in the same pane, as a normal history entry.
 
-## Pane-scope HTTP auth modal
+If the menu can't be shown, you get Chromium's native menu instead.
 
-When a page in the browser pane requests HTTP Basic Auth (or similar challenges), the credential prompt appears as a modal **scoped to just this pane**, not the whole app. Other panes stay interactive; you can keep typing in a terminal next door while the auth challenge is up. The pane that's locked is the only one that goes modal.
+## Platform differences
 
-This is the same `ModalLayer` primitive the agent launch modal uses, parameterized over scope — the browser pane wraps its embedded `CefBrowserView` in a per-pane `ModalLayer`, so the lock region matches the pane bounds exactly. See [`SPEC_MODAL_LAYER_SCOPING`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs) for the underlying design.
+- **Selecting a pane by clicking in the page** works on Windows and macOS. On Linux, clicking inside a page doesn't make that pane the focused pane and doesn't close open AgentMux menus; click the pane's header instead.
+- **Menus over a page:** a web page draws on top of AgentMux's own menus unless AgentMux makes room. On Windows and macOS, AgentMux cuts the menu's area out of the page (on macOS since AgentMux 0.57.5; before that, the right-click menu opened behind the page). On Linux, AgentMux hides the page and shows a still screenshot of it while the menu is open. `Esc` or a click in the page closes the menu.
 
-## OAuth sign-in stays in-pane
+## Dragging over a browser pane
 
-Signing in via OAuth (Google Identity Services in particular) used to sometimes exit the entire AgentMux instance. The old code collapsed any popup a browser pane opened — including a sign-in popup — into the pane's own top-level browser; when the sign-in flow finished and called `window.close()`, it tore down what the pane thought was itself, which cascaded into the main window and could take the whole app down with it.
+When you drag a pane, a pane tab or a window tab over a browser pane, the page is replaced by a still snapshot of itself for the duration of the drag, so the drop preview shows and the drop lands, including a tab dropped onto the page (`frontend/app/view/browser/browser-view.tsx`). This works on every platform.
 
-The fix lets a browser pane open a **real child popup** for sign-in flows, gated on two checks: the popup's destination must be a known identity-provider host, and the URL must look like an OAuth authorization request. A trusted popup shares the pane's browser/request context, so cookies, `window.opener`, and `postMessage` all behave normally, and closing the popup now only closes the popup. Anything else — a non-auth popup to an external site — opens in your system browser instead of hijacking the pane.
+## What a pane keeps
 
-## Faster failure feedback
+Only the current URL is saved with the pane. Switching to another window tab and back keeps the page as it was. So does switching between pane tabs in the same pane: a browser tab stays loaded while another tab is showing, keeping its scroll position, form input, zoom and history (`frontend/app/view/browser/browser.tsx`, `lifecycle: "keepAlive"`). Moving a browser pane to another window creates a fresh browser at the saved URL, so the page reloads and its back/forward history, scroll position, zoom and camera/microphone grants are lost.
 
-A load-timeout watchdog now bounds how long a browser pane will sit "still loading" before giving up — 20 seconds, well under Chromium's own multi-minute connect-timeout ceiling. If the page hasn't loaded by then, the pane shows a **human-readable error page** (in the style of Chrome's own "This site can't be reached" pages) instead of a raw Chromium error, with a Retry button. The same error-page rendering is used for genuine CEF load failures (DNS, TLS, blocked, etc.) and for the synthetic watchdog timeout, so failures look consistent regardless of cause. A redirect mid-navigation extends the tracked target URL but doesn't reset the 20 s deadline, so a long redirect chain can't be used to dodge the timeout.
+## Driving the browser from an agent
 
-## Per-pane state
+Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools use Chromium's DevTools protocol on the CEF remote-debugging port. Each pane resolves to its own page even when two browser panes show the same URL (`agentmux-cef/src/browser_api/resolver.rs`). See [Agent App API](/internals/agent-app-api/) for the tool reference.
 
-Each browser pane owns its own:
+## Internals
 
-- URL and navigation history (back/forward stack)
-- Title, favicon
-- Loading / error state
-- Scroll position (restored across pane moves)
+The renderer controls each browser pane through host IPC commands (`agentmux-cef/src/ipc.rs`). Examples: `browser_pane_create`, `browser_pane_navigate`, `browser_pane_resize`, `browser_pane_go_back`, `browser_pane_go_forward`, `browser_pane_reload`, `browser_pane_focus` and `browser_pane_close`. Other IPC commands handle printing, view-source, inspect, clipboard and the authentication prompt. Agents don't use these commands.
 
-State persists across pane moves between tabs and windows — drag a browser pane to a new tab and the page keeps loading.
+Per-pane browser state (URL, title, favicon, loading and error state, back/forward availability) lives in a reducer (`frontend/app/store/browser-pane-state/reducer.ts`, wrapped per pane by `frontend/app/store/browser-pane-state-store.ts`); the view model reads it from there. On Windows and macOS, a click inside the page sends a `browser-pane-clicked` event. The reducer turns it into a focus change for that pane, and a separate listener closes any open menus. See [Reducer stack](/internals/reducer-stack/).
 
-## Browser-pane reducer (slice #9)
-
-The browser pane is the subject of the in-flight reducer slice migration (frontend slice #9). Recent commits (`e3173631`, `ba843501`, `4cd960b2`, `540b1f4a`) move per-pane state cells (closed/loading/error → canGoBack/canGoForward → title) into the reducer model. See [Reducer stack](/internals/reducer-stack/) for the slice list and migration plan.
+On Windows and macOS, the address bar and the page compete for keyboard focus at the OS level. Pressing the mouse on the address bar moves OS focus back to the AgentMux window before the text field takes focus, so typed characters go to the address bar and not to the page.
 
 ## See also
 
 - [Pane types](/pane-types/) — full pane catalog
-- [Reducer stack](/internals/reducer-stack/) — slice #9 status
+- [Reducer stack](/internals/reducer-stack/) — the browser-pane reducer
 - [Architecture overview](/internals/architecture/) — host / sidecar / renderer split
-- The [`SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md) spec in the main repo for the context-menu design
+- `docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md` in the main repo — the context-menu design

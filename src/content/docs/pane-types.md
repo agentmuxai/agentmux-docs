@@ -328,7 +328,7 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 The agent pane has a single **Agent setup** icon (`id-card`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed modal (`AgentSetupModal.tsx`):
 
 - **Accounts** — manage this agent's Identity bundle (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …). Renders `AgentIdentityModalPanel`. See [Identity](/identity/).
-- **Memory** — this agent's **native memory** ("Brain") notes, not a Bundle editor. Renders `AgentNativeMemoryModal`. See [Memory bundles → Native memory](/memory/#native-memory-brain).
+- **Memory** — this agent's **native memory** ("Brain") notes, not a Bundle editor. Renders `AgentNativeMemoryModal`. See [Memory bundles → Native memory](/memory/#native-memory).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
 - **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
 

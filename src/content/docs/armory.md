@@ -1,26 +1,27 @@
 ---
 title: "Armory"
-description: The AgentMux credential + primitive hub — Accounts, Identities, Brain, Bundles, MCP Servers, and Skills — all in one place.
+description: The AgentMux credential + primitive hub — Accounts, Memory (Global and Personal), Skills, MCP Servers and Bundles — all in one place.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Armory** is the app-wide hub for every reusable "primitive" an agent can be built from: credentials, identities, native memory, bundles, MCP servers, and skills. It was called **Trust Center** in earlier releases — same pane, new name and a bigger scope.
+The **Armory** is the app-wide hub for every reusable "primitive" an agent can be built from: credentials, memory, skills, MCP servers and bundles. It was called **Trust Center** in earlier releases — same pane, new name and a bigger scope.
 
 Open it from the hamburger menu (≡) in the top tab bar, or pin it from the widget bar (icon: `vault`). Unlike the old Trust Center modal, the Armory is a regular **pane view** — it opens in the widget bar/tab layout like any other pane, not as a floating overlay.
 
-It has six tabs:
+It has five tabs, in a rail down the left side (`frontend/app/view/armory/armory-view.tsx`):
 
 | Tab | What it manages |
 |---|---|
 | **Accounts** | Service connections — OAuth logins and API keys for every provider |
-| **Identities** | Identity bundles — named credential sets assigned to agents at launch |
-| **Brain** | Native memory — free-form `.md` notes an agent reads/writes about itself, app-wide view |
-| **Bundles** | Bundles (formerly "Memory bundles"/Presets) — reusable, provider-agnostic capability packs: instructions, MCP servers, skills |
-| **MCP Servers** | The MCP Server primitive catalog — global servers plus any agent-private ones |
+| **Memory** | **Global** memory every agent inherits at launch, and each agent's **Personal** memory (its native memory files) |
 | **Skills** | The Skill primitive catalog — global skills plus any agent-private ones |
+| **MCP Servers** | The MCP Server primitive catalog — global servers plus any agent-private ones |
+| **Bundles** | Bundles (formerly "Memory bundles"/Presets) — reusable, provider-agnostic capability packs: instructions, MCP servers, skills |
+
+Earlier releases also had an **Identities** tab and a separate **Brain** tab. Both are gone: Brain became Memory → Personal, and an agent's linked accounts are shown in its own [Stash](#opening-the-armory) → **Accounts** tab.
 
 ## Accounts
 
@@ -51,19 +52,36 @@ Ambient provider credentials (used by agents with no Account explicitly bound) a
 
 ### Relationship to Identities
 
-The Accounts tab is the **credential store**. Identities (the Identities tab) are **named pointers** into that store — they group credentials and assign a name so you can tell an agent "act as my work identity" at launch. Think of Accounts as the vault and Identities as keys to specific drawers.
+The Accounts tab is the **credential store**. The Armory no longer has a separate Identities tab; to see which accounts a given agent is linked to, open that agent's Stash → **Accounts** tab. See [Identity bundles](/identity/) for how agents and accounts are linked.
 
-## Identities
+## Memory
 
-The app-wide view of all Identity bundles. See [Identity bundles](/identity/) for the full reference.
+The Memory tab has a **Global** / **Personal** switch at the top.
 
-The quick version: an Identity bundle is a named credential set — GitHub PAT, AWS profile, API keys — that you assign to an agent at launch. The same agent definition (Bundle) can run as different identities without restarting.
+### Global
 
-## Brain
+**Global Memory** is a set of entries that every agent inherits at launch (`frontend/app/view/global-bundle/global-bundle-manager.tsx`). The tab reads "Every agent inherits this at launch — takes effect after a restart. Drag entries to change their order." It shows a tile per entry, a read-only `CLAUDE.md` tile, a **Combined preview** of what agents receive, and **+ Add memory**. Click a tile to open the entry with its history, a diff view and revert.
 
-The app-wide view of every agent's **native memory** — free-form `.md` files an agent reads and writes about itself (notes, running context, anything it wants to persist between turns). This is a different primitive from a Bundle: a Bundle is a reusable *definition* you select at launch; native memory is a scratchpad an already-running agent maintains for itself.
+Every change to Global Memory is also written to a Global Memory record that keeps each entry's versions and the order of entries (`agentmux-srv/src/backend/global_memory_record.rs`). Channels that share your main accounts share one Global Memory; an isolated channel (for example a development build) keeps its own.
 
-Per-agent, the same primitive is reached via the agent pane's **Agent setup → Memory** tab (see [Pane Types](/pane-types/#agent)). Under the hood both surfaces call the same `memory.list` / `memory.read` / `memory.write` App API commands (and the `MemoryList` / `MemoryRead` / `MemoryWrite` MCP tools an agent can call on itself — see [Agent App API](/internals/agent-app-api/)).
+On an isolated channel, the Global view shows a banner when another scope has entries this channel doesn't: "This channel keeps its own Global Memory. … has N entries it doesn't: …". **Bring them here** copies them in (an entry whose name is already taken is renamed); agents get them at their next launch. Nothing is shared without this click (`frontend/app/view/global-bundle/GlobalMemoryImportBanner.tsx`).
+
+Agents can read and change Global Memory with the `GlobalMemoryList`, `GlobalMemoryRead`, `GlobalMemoryWrite`, `GlobalMemoryRemove`, `GlobalMemoryHistory`, `GlobalMemoryDiff` and `GlobalMemoryRevert` MCP tools.
+
+### Personal
+
+The app-wide view of every agent's **native memory** — free-form `.md` files an agent reads and writes about itself (notes, running context, anything it wants to persist between turns). This is a different primitive from a Bundle: a Bundle is a reusable *definition* you select at launch; native memory is a scratchpad an already-running agent maintains for itself. Pick an agent, then a file, to see its content, history and diffs, and to revert to an earlier version. See [Memory bundles → Native memory](/memory/#native-memory) for how AgentMux keeps it.
+
+Above an agent's files, two collapsible panels (`frontend/app/view/native-memory/`):
+
+- **Earlier memory found under N other account(s)** appears when the agent has memory folders from accounts it used before, or files held back because their content matches another agent's memory. Tick the folders and choose **Adopt selected…**.
+- **Memory folders this agent claims (N)** lists the folders the agent holds, when each was claimed, and whether other agents also use it. **Release…** gives a folder up, so another agent that uses it can sync its memory there; if the agent still uses it, its next launch claims it again.
+
+Adopting and releasing are confirmed in a separate AgentMux window ("Adopt earlier memory into *agent*?" with **Cancel** / **Adopt**; "Release *agent*'s claim on this folder?" with **Cancel** / **Release**), not in the pane, so an agent driving the UI can't confirm them for you. A request left unanswered expires after 10 minutes (`agentmux-cef/src/memory_adoption.rs`). Adopted files appear in the agent's folder at its next launch.
+
+An **Unverified folder** badge next to the agent's name means AgentMux found the folder from the agent's settings rather than from the agent's own launch; it is read-only until the agent launches.
+
+Per-agent, the same memory is reached via the agent pane's **Stash → Personal Memory** tab. Agents use the `MemoryList`, `MemoryRead`, `MemoryWrite`, `MemoryHistory`, `MemoryDiff` and `MemoryRevert` MCP tools on their own memory — see [Agent App API](/internals/agent-app-api/).
 
 ## Bundles
 
@@ -92,15 +110,13 @@ The catalog of Skill primitives, with the same global-vs-private shape as MCP Se
 
 **Widget bar:** pin the Armory (`vault` icon) from the widget bar's overflow, or use the command palette.
 
-**Per-agent shortcuts** — several Armory tabs have a per-agent equivalent reached from inside an agent pane:
-1. Open any Agent pane → click the **Agent setup** icon (`id-card`) in the pane header.
-2. The modal opens with tabs: **Accounts · Memory (native, i.e. Brain) · MCP Servers · Skills · Startup**. This scopes each tab to that specific agent rather than the app-wide catalog. The Startup tab selects which existing Bundle (if any) supplies this agent's Session Context startup instructions — it doesn't create or edit Bundles. (Briefs and full Bundle management are not yet wired into this per-agent modal — use the Armory for those.)
-
-Note: the previous design had two separate pane-header icons (a "Brain" icon for Memory and an "id-card" icon for Identity) — these are now consolidated into the single **Agent setup** icon.
+**Per-agent shortcuts: the Stash** — several Armory tabs have a per-agent equivalent reached from inside an agent pane:
+1. Open any Agent pane → click the **Stash** icon (`backpack`) in the pane header.
+2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Startup · Registration** (`frontend/app/view/agent/components/AgentStashModal.tsx`). This scopes each tab to that specific agent rather than the app-wide catalog. The Startup tab selects which existing Bundle (if any) supplies this agent's Session Context startup instructions — it doesn't create or edit Bundles. The Registration tab shows the agent's message-delivery registration. (Full Bundle management is not in the Stash — use the Armory for that.)
 
 ## Portable bundles (beta spec)
 
-The five Armory primitives above are stored in AgentMux's own SQLite database today, with no export/import path. **[Armory Bundle Format (ABF)](/abf/)** is a beta specification for packaging a Bundle's instructions, skills, MCP servers, and credential requirements into one portable, versioned directory — composing existing standards (Agent Skills/SKILL.md, MCP server.json, AGENTS.md) rather than inventing new ones. It's a proposal with published schemas, not a shipped feature yet — see the [rollout plan](/abf/#rollout-plan) for what's built vs. planned.
+**[Armory Bundle Format (ABF)](/abf/)** is a beta specification for packaging a Bundle's instructions, skills, MCP servers, and credential requirements into one portable, versioned directory — composing existing standards (Agent Skills/SKILL.md, MCP server.json, AGENTS.md) rather than inventing new ones. The Bundles tab has an **Import Bundle** button for bringing in an ABF bundle. See the [rollout plan](/abf/#rollout-plan) for what's built vs. planned.
 
 ## See also
 
@@ -109,4 +125,5 @@ The five Armory primitives above are stored in AgentMux's own SQLite database to
 - [Memory bundles](/memory/) — full Bundle reference
 - [Bundle Format (ABF)](/abf/) — beta spec for portable, exportable bundles
 - [Agent App API](/internals/agent-app-api/) — `mcp.*`, `skill.*`, `bundle.*`, `identity.*`, and `memory.*` RPC catalogs
+- `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo — the memory record, adoption and folder claims
 - [First Agent Setup](/first-agent/) — connecting your first provider

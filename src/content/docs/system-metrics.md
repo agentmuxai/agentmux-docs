@@ -1,27 +1,34 @@
 ---
 title: "System Metrics"
+description: The Sysinfo pane plots this machine's CPU, memory, network and disk usage live.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The Sysinfo pane displays live system metrics as time-series line plots. It supports local and remote monitoring.
+The Sysinfo pane displays live system metrics for the machine AgentMux runs on, as time-series line plots.
 
 ## Opening Sysinfo
 
-- Click the **chart** icon in the top bar
-- Right-click a pane header and select **Sysinfo**
-- Use the launcher widget
+- Click **Sysinfo** (chart icon) in the widget bar. It is pinned by default.
+- Command palette (`Ctrl+P`): **Open System Info**.
+- Click **+** on any pane's tab strip and pick **Sysinfo**.
+- Right-click a pane header → **Replace With...** → **Sysinfo** replaces that pane.
+- Press `Ctrl+Shift+K` to turn the focused pane into the widget launcher, then choose **Sysinfo**.
+
+The starter layout on first launch, and in each new window, includes a Sysinfo pane above Swarm, next to the Agent pane.
 
 ## Available Metrics
+
+The backend collects these values on every sample (`agentmux-srv/src/backend/sysinfo.rs`). Memory values are in GB (1024³ bytes) and throughput in MB/s (1024² bytes per second).
 
 ### CPU
 
 | Metric Key | Description |
 |-----------|-------------|
-| `cpu` | Overall CPU usage percentage (0–100%) |
-| `cpu:0` – `cpu:31` | Per-core CPU usage (up to 32 cores) |
+| `cpu` | Overall CPU usage, the average across all cores (0–100%) |
+| `cpu:0`, `cpu:1`, … | Usage of each core |
 
 ### Memory
 
@@ -30,7 +37,7 @@ The Sysinfo pane displays live system metrics as time-series line plots. It supp
 | `mem:used` | Memory in use (GB) |
 | `mem:free` | Free memory (GB) |
 | `mem:available` | Available memory (GB) |
-| `mem:total` | Total system memory (GB, used for Y-axis scale) |
+| `mem:total` | Total system memory (GB), used as the ceiling of the memory plots |
 
 ### Network
 
@@ -50,32 +57,34 @@ The Sysinfo pane displays live system metrics as time-series line plots. It supp
 
 ## Plot Types
 
-The Sysinfo pane supports preset plot configurations:
+Each Sysinfo pane shows one plot type (`frontend/app/view/sysinfo/sysinfo-types.ts`, `PlotTypes`). The default is **CPU**. To switch, right-click the pane header and open **Plot Type**, or right-click the chart itself. The choice is saved with the pane, and the pane's title shows the current plot type.
 
 | Plot Type | Metrics Shown |
 |-----------|--------------|
 | **CPU** | Overall CPU % |
 | **Mem** | Memory used |
-| **CPU + Mem** | Both in one view |
+| **CPU + Mem** | Both, one above the other |
 | **Net** | Total network throughput |
 | **Net (Sent/Recv)** | Sent and received separately |
-| **CPU + Mem + Net** | All three combined |
+| **CPU + Mem + Net** | All three, one above another |
 | **Disk I/O** | Total disk throughput |
 | **Disk I/O (R/W)** | Read and write separately |
-| **All CPU** | Per-core usage (grid of plots, up to 32) |
+| **All CPU** | One plot per core |
 
-When more than two metrics are displayed, plots arrange in a 2-column grid. Each plot auto-scales its Y-axis based on the metric type.
+When a plot type shows more than two metrics, the charts are arranged in a 2-column grid, except **CPU + Mem + Net**, which stacks them in one column. **All CPU** labels the first 32 cores; cores beyond that are plotted without a label.
+
+The Y-axis depends on the metric: CPU is fixed at 0–100%; memory scales with usage up to total memory, with a floor of 1 GB; network and disk scale with the data, with a floor of 1 MB/s.
 
 ## Data Collection
 
-- Data is collected by the backend at a configurable interval (default: 1 second)
-- Points are streamed to the frontend via WebSocket events (`sysinfo` event type)
-- The default display window is **120 data points** (2 minutes at 1s interval)
-- Gap detection inserts blank segments when data is missing (e.g., after sleep/wake)
+- The backend samples once per second by default. Change this in **Settings → Advanced → Sysinfo widget → Sample interval** (`telemetry:interval`). The settings field accepts 1 second or more; the backend clamps the value to 0.2–2 seconds, so values below 1 second can only be set in the settings file, and anything above 2 samples every 2 seconds.
+- Samples are streamed to the frontend as `sysinfo` events over the app's WebSocket. The backend keeps the latest 1024 samples so a newly opened pane can fill in its history.
+- A plot shows the latest **120** samples by default (2 minutes at the default interval). Change this with **History length** (`telemetry:numpoints`, 30 to 1024) in the same settings section.
+- If one to three samples are missed, the plot repeats the last value. A longer gap, such as after sleep/wake, leaves a break in the line.
 
 ## Plot Colors
 
-Each metric type has a distinct CSS variable for theming:
+Each metric type has a CSS variable for theming (`frontend/app/theme.scss`):
 
 | Metric | CSS Variable |
 |--------|-------------|
@@ -84,14 +93,17 @@ Each metric type has a distinct CSS variable for theming:
 | Network | `--sysinfo-net-color` |
 | Disk | `--sysinfo-net-color` (shared with network) |
 
-## Remote Monitoring
+## Local machine only
 
-:::caution[Needs re-verification]
-This section previously described remote-host monitoring via a `wsh` binary deployed over SSH. `wsh` was fully retired (see `specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` in the main repo) — the crate, its remote-deploy path, and the `wsh view`/`wsh edit` commands no longer exist in source. Whether Sysinfo still supports monitoring a remote host by some other mechanism, or whether this capability was removed along with `wsh`, hasn't been re-confirmed since the retirement. Don't rely on this section until it's verified against current source.
-:::
+Sysinfo monitors only the machine AgentMux runs on: the backend runs a single, local collector. Remote-host monitoring, which earlier releases offered through the now-retired `wsh` helper (see `docs/specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` in the main repo), is not supported.
+
+The pane header still shows a connection selector. Leave it on the local connection: choosing any other connection leaves the pane blank.
+
+## Per-pane CPU and memory badges
+
+The same collector also measures the CPU and memory used by each pane's processes, shown as a small badge on the pane header. For terminal panes you can hide it with **Settings → Terminal → Show CPU/mem badge** (`term:showstatsbadge`).
 
 ## See Also
 
-- [Pane Types](/pane-types) — Sysinfo pane overview
-- [Configuration](/config) — Settings that affect sysinfo display
-- [Interagent Communication](/internals/interagent-comms/) — Event system for metric streaming
+- [Pane Types](/pane-types/) — every pane type
+- [Settings reference](/settings/) — where settings live

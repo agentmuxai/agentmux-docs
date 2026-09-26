@@ -10,7 +10,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 A **Memory bundle** is a reusable, **provider-agnostic** capability pack — system prompt ("Soul"), instructions, context files, MCP servers, skills. Provider and model belong to the agent, chosen separately at launch, not to the bundle. Selectable at launch from the Launch Agent modal.
 
 :::note[Also called "Bundle"]
-The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The underlying storage, page name, and concepts on this page are unchanged; only the label changed. The App API's older `preset.*` commands still work today as compatibility aliases for `bundle.*`.
+The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The page name and concepts on this page are unchanged. The App API's older `preset.*` compatibility aliases have been retired; `bundle.*` is the only command set now (`agentmux-srv/src/backend/rpc_types/commands.rs`).
 :::
 
 ## What goes in a Memory
@@ -33,7 +33,7 @@ A Memory bundle keeps a sequence of **session zones** — one per agent-anchored
 
 If you want a brand-new conversation instead, the Launch modal's **Recent sessions** tab lets you pick a specific older session to re-attach to (or click + to start a fresh zone). The default is "continue most recent" because that matches the workflow people actually have — close a pane, reopen, keep going.
 
-Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too. The Swarm pane's history tab is the canonical browser for zones across all your agents.
+Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too.
 
 ## How Memory bundles are reached
 
@@ -44,35 +44,38 @@ Bundles are **app-wide only today** — there is no per-agent "Bundle" tab in th
 2. Choose **Armory**.
 3. Switch to the **Bundles** tab.
 
-:::caution[Naming collision with the per-agent "Memory" tab]
-An agent pane's own setup modal (**Agent setup** icon → **Memory** tab) does **not** open the Bundle editor described on this page — it opens the agent's **native memory** ("Brain") notes instead, a different primitive covered below. This is a real, easy-to-trip naming collision: "Memory bundle" (this page, now labeled "Bundle") and "native memory" (below, labeled "Brain" in the Armory) are two distinct things that happen to share the word "memory."
+:::caution[Naming collision with the "Memory" tabs]
+An agent pane's **Stash** → **Personal Memory** tab, and the Armory's **Memory** tab, do **not** open the Bundle editor described on this page — they open **native memory** and **Global Memory**, different primitives covered below and on the [Armory](/armory/#memory) page. "Memory bundle" (this page, now labeled "Bundle") and "native memory" are two distinct things that happen to share the word "memory."
 :::
 
 The view registration (`view: "memory"`) and `MemoryPaneViewModel` exist so `pane.open` RPC and right-click menus can reach a bundle-scoped view, but the primary path today is the Armory's Bundles tab.
 
-## Native memory ("Brain")
+## Native memory
 
-Distinct from a Bundle, **native memory** is a set of free-form `.md` files an already-running agent reads and writes about itself — notes, running context, anything it wants to persist across turns, independent of any bundle definition.
+Distinct from a Bundle, **native memory** is a set of free-form `.md` files an already-running agent reads and writes about itself — notes, running context, anything it wants to persist across turns, independent of any bundle definition. (Earlier releases labeled it "Brain".)
 
-- **Per-agent:** open an Agent pane → **Agent setup** icon (`id-card`) → **Memory** tab.
-- **App-wide:** hamburger menu (≡) → **Armory** → **Brain** tab, browsing every agent's notes in one place.
+- **Per-agent:** open an Agent pane → **Stash** icon (`backpack`) → **Personal Memory** tab.
+- **App-wide:** hamburger menu (≡) → **Armory** → **Memory** tab → **Personal**, browsing every agent's notes in one place. This is also where you adopt an agent's earlier memory and release its memory folders — see [Armory → Personal](/armory/#personal).
 
 Both surfaces, and an agent acting on itself, go through the same primitive:
 
 | Surface | Commands |
 |---|---|
 | App API | `memory.list`, `memory.read`, `memory.write` |
-| MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite` |
+| MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite`, `MemoryHistory`, `MemoryDiff`, `MemoryRevert` |
 
 See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for the full parameter reference.
 
-### Durability across channels and builds
+### The memory record: memory follows the agent
 
-Native memory is durably mirrored, not just live-filesystem state. `db_agent_native_memory` (a global-scoped store, alongside `db_bundles`/`db_accounts`) keys a copy of every memory file's content by `(agent_id, filename)`, where `agent_id` is the same stable `AgentDefinition.id` the Brain tab's handlers already resolve to — not the live filesystem path, which is channel-relative by construction: it depends on the per-channel `working_directory` and the identity's `CLAUDE_CONFIG_DIR`, so the *same logical agent*, opened from two different channels/builds, computes two different on-disk memory paths.
+A provider keeps an agent's memory files in a folder tied to its account and working directory (for Claude Code, `$CLAUDE_CONFIG_DIR/projects/<cwd>/memory`), so switching account, working directory or channel used to leave them behind. AgentMux now keeps its own **memory record** for each agent, keyed by the agent's ID rather than by account, folder or channel, and treats it as the source of truth (`agentmux-srv/src/backend/memory_record.rs`). The record keeps every version of every file, which is what the history, diff and revert views show.
 
-Every `memory.list` / `memory.read` call (and the agent-callable `MemoryList`/`MemoryRead` MCP tools) writes through into this mirror, then merges the live-filesystem file set with the mirror's file set for its response: a file present in both is served from the live FS (it's the freshest — Claude may have written it moments ago); a file present **only** in the mirror — written from a different channel, or the live folder was wiped — is served from the mirror transparently, with no distinguishing "not found on this channel" state. `memory.write`/`MemoryWrite` upserts the mirror the same way on save.
+- **At each launch**, before the provider CLI starts, AgentMux reconciles the agent's memory folder with the record: files missing from the folder are written back, and changes found on disk are recorded (`agentmux-srv/src/backend/memory_reconcile.rs`). If a file changed on both sides, the disk version wins and the other is kept beside it as a `<name>__conflict_<id>.md` file. This is how memory follows an agent into a new account, working directory or channel.
+- **While the agent runs**, AgentMux watches its memory folder and records a file Claude writes once it has been unchanged for about 2 seconds, with a periodic sweep as a backup (`agentmux-srv/src/backend/native_memory_drift.rs`).
+- **AgentMux's own writes** — `MemoryWrite`, edits in the Armory, revert — go into the record first, then to the file.
+- **Shared folders:** two agents can end up with the same memory folder (same account and working directory, for example). AgentMux only syncs the record with a folder it can show belongs to this agent alone; a shared folder is left as it is (`agentmux-srv/src/backend/memory_dir_claims.rs`). The first time an agent's record meets a folder, a file whose content another agent's record already has is held for you to review instead of being taken over; it shows up in the Armory's adoption panel.
 
-Net effect: once a memory file has been viewed (listed or read) from any channel/build, the same content stays visible from every other channel/build for that same agent identity — reopening an agent's Brain tab after a version upgrade, or from a different `task package` build, still shows everything Claude has written for it, with the user never aware of the underlying `CLAUDE_CONFIG_DIR`/cwd-hash path mechanics. The one known gap: a fact Claude writes autonomously in a session that's never reopened in the Brain tab before that channel's filesystem is wiped is not captured (no filesystem watcher exists yet). See `docs/specs/SPEC_NATIVE_MEMORY_DURABLE_SYNC_2026_08_07.md` in the main repo for the full design.
+The older `db_agent_native_memory` mirror is still written through on list, read and write, but it is no longer the main mechanism. See `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo for the design.
 
 ## Launch flow
 
@@ -95,24 +98,28 @@ If Memory is blank, the agent launches with the provider's defaults — no instr
 
 ## Persistence
 
-Memory bundles live in `db_memory_bundles` in the sidecar's `objects.db`:
+Memory bundles live in the `db_bundles` table (named `db_memory_bundles` before a storage rename):
 
 ```
-id              TEXT PRIMARY KEY
-name            TEXT NOT NULL UNIQUE
-description     TEXT
-is_blank        INTEGER NOT NULL DEFAULT 0
-provider        TEXT
-model           TEXT
-instructions    TEXT
-context_files   TEXT  -- JSON
-mcp_servers     TEXT  -- JSON
-skills          TEXT  -- JSON
-created_at      TEXT NOT NULL
-updated_at      TEXT NOT NULL
+id                        TEXT PRIMARY KEY
+name                      TEXT NOT NULL UNIQUE
+description               TEXT
+is_blank                  INTEGER  -- the "vanilla CLI session" bundle
+is_global                 INTEGER  -- a Global Memory entry
+provider                  TEXT
+model                     TEXT
+instructions              TEXT
+instructions_by_provider  TEXT  -- JSON
+context_files             TEXT  -- JSON
+mcp_servers               TEXT  -- JSON
+skills                    TEXT  -- JSON
+sort_order                INTEGER
+created_at                INTEGER
+updated_at                INTEGER
+is_system                 INTEGER
 ```
 
-`db_memory_bundles` is part of `objects.db`'s flat schema (`run_object_schema`). Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
+The table is defined in `agentmux-srv/src/backend/storage/migrations.rs`, both in `objects.db`'s flat schema (`run_object_schema`) and in the shared store's schema (`run_shared_store_schema`). [Global Memory](/armory/#global) entries are rows in the same table with `is_global` set. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
 
 ## Memory and per-instance overrides
 
@@ -122,7 +129,7 @@ When you launch an agent, AgentMux composes the bundle's settings with whatever 
 
 ## See also
 
-- [Armory](/armory/) — where Bundles, native memory, MCP Servers, and Skills are all managed
+- [Armory](/armory/) — where Bundles, Global Memory, native memory, MCP Servers, and Skills are all managed
 - [Identity bundles](/identity/) — the other half of agent composition
 - [First Agent Setup](/first-agent/) — provider login flows
 - [Pane Types](/pane-types/) — where Bundles and native memory surface in the UI
