@@ -10,7 +10,7 @@ This page is for IT teams, network admins and security reviewers who need to kno
 | Listener | Process | Bind | Protocol | Authentication | When |
 |---|---|---|---|---|---|
 | AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ephemeral ports | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
-| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP, WebSocket | As above, plus the `lan_key` on three routes | LAN discovery on (default **off**) |
+| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP, WebSocket | As above, plus the `lan_key` on four routes | LAN discovery on (default **off**) |
 | mDNS | `agentmux-srv` | UDP 5353, multicast | mDNS / DNS-SD | None | LAN discovery on |
 | UDP discovery responder | `agentmux-srv` | `0.0.0.0:47891` UDP | JSON | None; answers only private, link-local and loopback source addresses | LAN discovery on |
 | Dev proxy | `agentmux-srv` | `127.0.0.1:8090` | HTTP reverse proxy | None | Always (skipped if the port is taken) |
@@ -47,7 +47,7 @@ When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two p
 These listeners serve **the full server API**, with no filtering by source address. From any network that can reach one of those addresses:
 
 - anyone can call `GET /` (the version) and the WhatsApp webhook;
-- anyone holding the `lan_key` can call three routes: send a jekt, look up one agent, list agent names (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
+- anyone holding the `lan_key` can call four routes: send a jekt, look up one agent, list agent names, and ask whether an agent UID is running here (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
 - anyone holding the full auth key can call everything. The full key is never broadcast, but the mobile-pairing QR code in the host popover (**Show QR code**) contains it, together with this machine's LAN address and port. Anyone who sees that code can control the instance over the network until AgentMux restarts.
 
 The `lan_key` is sent in cleartext to anyone on the local network (next section). Turn LAN discovery on only on networks you trust, and restrict the listeners with your host firewall to the peers or subnet you expect.
@@ -58,18 +58,23 @@ While LAN discovery is on and at least one LAN listener is bound, the server adv
 
 - instance name `agentmux-<hostname>-<port>`, host name `<hostname>.local.`;
 - the server's web port and the machine's IP addresses;
-- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.57.1`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
+- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.57.6`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
 
 It also listens on UDP port 47891. A datagram `{"type":"agentmux_discover","v":1}` from a private, link-local or loopback address gets a unicast reply:
 
 ```json
-{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.57.1",
-  "hostname": "<hostname>", "version": "0.57.1", "port": <web port>, "auth_key": "<lan_key>" }
+{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.57.6",
+  "hostname": "<hostname>", "version": "0.57.6", "port": <web port>, "auth_key": "<lan_key>" }
 ```
 
 Neither channel has confidentiality or authentication. Anyone on the broadcast domain learns the machine's hostname, AgentMux version, server port and `lan_key`, and can then send messages to its agents. The `lan_key` is regenerated at each launch.
 
-While LAN discovery is on, the server also contacts every peer it discovers: every 30 seconds it asks each peer for its agent names, presenting that peer's advertised `lan_key`. A device that fakes an mDNS advertisement can make the server send those requests to an address of its choosing; responses are capped at 64 KiB.
+While LAN discovery is on, the server also contacts every peer it discovers, presenting that peer's advertised `lan_key`:
+
+- every 30 seconds it asks each peer for its agent names; responses are capped at 64 KiB;
+- before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent (`GET /agentmux/agent/holding?uid=<uid>`, 1.5-second timeout), so one agent doesn't run on two computers (`agentmux-srv/src/backend/agent_admission.rs`).
+
+A device that fakes an mDNS advertisement can make the server send these requests to an address of its choosing. Its answers aren't authenticated either: by claiming to hold an agent, it can make this instance refuse to start that agent, or stop it.
 
 ## Dev proxy
 
@@ -79,7 +84,7 @@ While LAN discovery is on, the server also contacts every peer it discovers: eve
 
 The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` port (`agentmux-cef/src/ipc.rs`). It serves the frontend's static files and `/health` without authentication. `/ipc` and the browser-automation routes `/agentmux/browser/*` require `Authorization: Bearer <token>`, a UUIDv4 generated at each start of the host.
 
-- The token is passed to the frontend in the page URL. It is also written to an `ipc-port-<hash>` file in the data directory, with default file permissions, so a second launch can find the running instance.
+- The token is passed to the frontend in the page URL. It is also written to an `ipc-port-<hash>` file in the data directory, with default file permissions (on Unix the data root itself is owner-only), so a second launch can find the running instance.
 - `/ipc` returns the server auth key to the frontend (`get_auth_key`), so the token is as valuable as the auth key itself.
 - The CORS layer is fully permissive (`CorsLayer::permissive()`): the bearer token is the only barrier.
 
@@ -144,6 +149,7 @@ Restrict these to your LAN subnet or to known peers.
 - `agentmux-srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
 - `agentmux-srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
 - `agentmux-srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
+- `agentmux-srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `agentmux-srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
 - `agentmux-srv/src/config.rs` — `lan_key` generation
 - `agentmux-srv/src/backend/dev_proxy.rs` — dev proxy
 - `agentmux-srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback

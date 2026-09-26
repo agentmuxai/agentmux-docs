@@ -54,7 +54,7 @@ The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux
    ];
    ```
 
-   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `agentmux-srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s three routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
+   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `agentmux-srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s four routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
 3. Registers the service, then browses `SERVICE_TYPE`.
 4. Spawns three background tasks, each holding its own `Arc<LanDiscovery>`:
    - the **event loop** (`spawn_blocking`), which handles `ServiceResolved` events and skips resolutions of this instance itself (same port and one of its own addresses);
@@ -94,6 +94,8 @@ The controller also answers the two lookups the reactive bus needs:
 
 - `find_agent(agent_id)` asks every peer's `GET /agentmux/reactive/agent?id=<agent_id>` concurrently and takes the first 2xx. Positive and negative answers are cached for 60 seconds.
 - `find_agent_lan_pubkey(agent_id)` makes the same query for a sender's LAN public key, used to verify LAN signatures. It is rate-limited to 10 peer fan-outs per second; a rate-limited lookup is reported as `RateLimited`, which the verifier treats as a failed signature, not as "no key".
+
+The peer list also serves one live instance per agent. `bootstrap.rs` hands the controller to `agent_admission::set_lan_discovery`, and `agent_admission::lan_holders(uid)` asks every peer's `GET /agentmux/agent/holding?uid=<uid>` concurrently, with the peer's `lan_key` and a 1.5-second timeout. It runs before an agent starts and every 30 seconds while it runs (every sixth 5-second lease renewal). Answers from this host are ignored, unreachable peers and peers without the route are skipped, and `peer_wins` decides between two hosts running the same agent: the earlier start wins, and starts within 10 seconds of each other go to the lower hostname. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
 
 ### Live disable
 
@@ -135,7 +137,7 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 ## HTTP endpoint
 
-`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the three `lan_key` routes. The Warden's LAN section polls it every 5 seconds (`WARDEN_REFRESH_MS`).
+`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the four `lan_key` routes. The Warden's LAN section polls it every 5 seconds (`WARDEN_REFRESH_MS`).
 
 ## Boot semantics
 
@@ -155,6 +157,7 @@ Turning LAN discovery on exposes the full server API on the network, broadcasts 
 - `agentmux-srv/src/bootstrap.rs`, `agentmux-srv/src/main.rs` — boot wiring
 - `agentmux-srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
 - `agentmux-srv/src/server/mod.rs` — `/api/lan-instances` and the `lan_key` routes
+- `agentmux-srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `agentmux-srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
 - `agentmux-srv/src/config.rs` — `lan_key`
 - `frontend/app/statusbar/HostPopover.tsx` — toggle and peer list
 - `frontend/app/store/global.ts` — `lanInstancesAtom`, `lanDiscoveryErrorAtom`, event handlers

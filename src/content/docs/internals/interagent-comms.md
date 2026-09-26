@@ -31,7 +31,7 @@ No parameters. Returns what is reachable from here, as JSON (`handle_discovery` 
 ```json
 {
   "host": {
-    "version": "0.57.1",
+    "version": "0.57.6",
     "hostname": "desk",
     "local_url": "http://127.0.0.1:52011",
     "addressable": [
@@ -47,7 +47,7 @@ No parameters. Returns what is reachable from here, as JSON (`handle_discovery` 
     ]
   },
   "lan": [
-    { "instance_id": "v0.57.1", "hostname": "lab-pc", "version": "0.57.1", "address": "192.168.1.20",
+    { "instance_id": "v0.57.6", "hostname": "lab-pc", "version": "0.57.6", "address": "192.168.1.20",
       "port": 51873, "auth_key": "…", "agents": ["reviewer"],
       "first_seen": 1758690000, "last_seen": 1758700000, "other_ttl_secs": 4500 }
   ],
@@ -70,15 +70,18 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 | Result | Meaning |
 |---|---|
 | `Delivered to <to> — injected into their conversation.` | Delivered on the Host, Channel or LAN tier. |
+| `QUEUED for <to> — they're mid-turn, so it has not reached them yet. …` | Accepted by the recipient's AgentMux while the recipient is writing a reply. It reaches the agent at its next tool call or when its turn ends. Don't resend it. |
 | `QUEUED for <to> via the cloud relay — NOT yet delivered. …` | MuxBus Cloud accepted it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed. |
 | `HELD for <to> — not delivered yet. <to> is not running; this AgentMux instance (channel) keeps the message and delivers it when <to> starts here, for up to 24 hours. Do not resend it.` | Held for a known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
-How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel, even in the middle of a turn. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
+How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel; while the agent is writing, the message is held and released at its next tool call or turn boundary. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
 
 ## Host and Channel tiers
 
 Every agent pane registers with its instance's in-process handler on startup and unregisters on shutdown. Registration also writes a file to a machine-wide registry (`~/.agentmux/agents/<name>.json` and `~/.agentmux/shared/agents/reactive/<name>/<channel>.json`, mode `0600` on Unix), holding the instance's URL and auth key. That is how an instance on the same machine finds and reaches an agent it doesn't host. Entries older than 4 hours are removed at startup, and an entry is removed when a delivery to it fails and it looks stale.
+
+An agent runs in only one instance at a time. A pane whose agent is already running in another instance on this machine is refused registration (HTTP 409), so it can't pull that instance's messages to itself; see [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
 
 ## LAN tier
 
@@ -92,7 +95,11 @@ With [LAN discovery](/lan-discovery/) on in both instances:
 
 The WAN tier is **MuxBus Cloud**, AgentMux's hosted relay. It is off until you sign in with the **MuxBus Cloud** control in the host popover (click the hostname in the status bar). Once signed in, the instance holds a WebSocket to `wss://muxbus-ws.agentmux.ai` for wake signals and exchanges messages with `https://muxbus.agentmux.ai`. A message is relayed only when no local, same-machine or LAN tier could take it. There is no setting to use a different relay.
 
-The claim on a cloud message is atomic and happens before local delivery, so when two instances on one machine register the same agent name, only one of them delivers each cloud message. A claimed message whose local delivery fails is released back to the relay for retry.
+The claim on a cloud message is atomic and happens before local delivery, so when two instances register the same agent name, only one of them delivers each cloud message. A claimed message whose local delivery fails is released back to the relay for retry.
+
+Before it pulls an agent's messages, the instance claims that agent's lease on the relay and renews it every 20 seconds while the agent is registered. While another instance holds the lease, the relay refuses this instance's pulls (HTTP 409), and this instance stops its own copy of the agent.
+
+A message between two installs signed in to the same MuxBus Cloud account can carry the sender's WAN signature, which the receiver verifies (`TRUST=wan-verified`). The signature is carried only once the sending agent's key has been published to the relay's key directory; until then the message is relayed unsigned. See [WAN signing](/security/reactive-event-bus/#wan-signing).
 
 ## Message delivery semantics
 
@@ -128,11 +135,11 @@ Every delivered message is wrapped in a marker the server computes. The first li
 [JEKT:FROM=<sender> TO=<target> TIER=<info|coord|sensitive> DELIVERY=<host|channel|lan|wan> TRUST=<trust> MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 ```
 
-with `HELD_FOR=`, `SIG=` and `ESCALATE=` added when they apply.
+with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=` and `ESCALATE=` added when they apply.
 
-- **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified` or `lan-verified` (a signature checked out), `unverified` (a signature was expected and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof).
+- **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a signature checked out), `unverified` (a signature was expected and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof). `wan-verified` comes with `INSTANCE=` and `INSTANCE_STATUS=`, which say which install sent it and whether it is this install (`approved`), another one (`new`), or revoked.
 - **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text contains credential or destructive keywords, or when the message is a transcript request.
-- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational.
+- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational. A `wan-verified` message from a `new` install still gets `ESCALATE=required`.
 
 These labels are enforced by the server, but whether an agent actually pauses depends on the agent following the instruction. See [Reactive event bus](/security/reactive-event-bus/#the-trust-marker) for every field and rule.
 

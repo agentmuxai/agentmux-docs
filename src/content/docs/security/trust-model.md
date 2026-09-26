@@ -22,10 +22,10 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 | UI → CEF host | A bearer token generated at each start of the host, passed to the UI in the page URL. The host returns the server auth key to the UI over this channel. |
 | UI → server | The auth key, in the `X-AuthKey` header or, for the WebSocket, the `?authkey=` query parameter. |
 | Terminal panes and agents → server | **The same auth key**, as `AGENTMUX_AUTH_KEY`, with the server URL as `AGENTMUX_LOCAL_URL`. See the next section. |
-| CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker and the host's registration for UI automation. |
+| CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker, adopting or releasing an agent's earlier memory folders (confirmed in a host window), and the host's registration for UI automation. |
 | Agent → server, UI automation | The agent's own signing key (`AGENTMUX_JEKT_KEY`) proves which pane the agent may automate. |
 | Other instances on this machine | Each other's auth keys, read from registry files under `~/.agentmux/` (mode `0600` on Unix). |
-| LAN peers | The `lan_key`, which opens three messaging routes. It is broadcast on the LAN while LAN discovery is on. See [Network exposure](/security/network-exposure/). |
+| LAN peers | The `lan_key`, which opens four routes: three for messaging and one that says whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. See [Network exposure](/security/network-exposure/). |
 
 ## The auth key is in every pane
 
@@ -35,11 +35,11 @@ The key grants the same local API the AgentMux UI uses. With it, a process can, 
 
 - run commands in new shells (`/api/v1/shell/create`, the RPC service);
 - read any file your user can read (`/agentmux/stream-local-file`);
-- read other agents' live transcripts and search their past conversations;
+- read other agents' live transcripts;
 - send messages into any agent's conversation, stop agents, and close panes;
 - change settings.
 
-A few things need more than the auth key. The browser-password broker and host registration require the host-registration secret. UI automation of a pane (`UIScreenshot`, `UIClick`, `UIQuery`, the `Browser*` tools) requires that pane's agent signing key.
+A few things need more than the auth key. The browser-password broker, memory-folder adoption and host registration require the host-registration secret. UI automation of a pane (`UIScreenshot`, `UIClick`, `UIQuery`, the `Browser*` tools) requires that pane's agent signing key. `SearchHistory` searches only the history of the agent whose identity token the request carries (see the next section).
 
 **Implication:** anything you run inside AgentMux (an agent, a tool call, a package install script, a command you paste into a terminal pane) can control AgentMux as fully as you can, and through it act as you. The MCP tool list shows what an agent is *offered*, not a limit on what it can do.
 
@@ -56,11 +56,21 @@ An agent created from a definition has a UID (its row id). At each spawn, AgentM
 
 A quick-launch pane that has no definition gets neither. The server always overwrites or removes both at spawn, so a stale value from a reused pane can't carry over.
 
-The agent's MCP server sends the token as `X-Agent-Token`. The server then **attributes** the request to that UID in audit records, the work queue and cron (`agentmux-srv/src/server/caller.rs`). This is attribution, not authorization. A request with no token, or an unknown one, is still accepted; it is just unattributed. A token is only honored on requests that also carry the full auth key, never on `lan_key` requests. The agent's child processes inherit the token.
+The agent's MCP server sends the token as `X-Agent-Token`. The server then **attributes** the request to that UID in audit records, the work queue and cron (`agentmux-srv/src/server/caller.rs`). This is attribution, not authorization. A request with no token, or an unknown one, is still accepted; it is just unattributed. The exception is `SearchHistory` (`/agentmux/reactive/history/search`), which searches the history of the token's own agent and refuses a request without a token (`agentmux-srv/src/server/reactive.rs`). A token is only honored on requests that also carry the full auth key, never on `lan_key` requests. The agent's child processes inherit the token.
 
 **Name resolution refuses to guess.** Two agents can hold the same name. A message, lookup or unregister addressed to a name that two or more live agents hold is refused with the list of candidates (UID, pane, name), so the caller can retry by UID (`agentmux-srv/src/backend/reactive/handler.rs`). Before delivering, the server also checks the target pane's own identity and rejects a mismatch.
 
 Agent-to-agent messages carry a separate, signature-based trust label; see [Reactive event bus](/security/reactive-event-bus/).
+
+### One live instance per agent
+
+An agent (its UID) runs in at most one place at a time, so two copies don't drive the same conversation and credentials (`agentmux-srv/src/backend/agent_admission.rs`):
+
+- **This machine.** Before an agent's CLI process starts, its pane claims a lease on the agent's UID in a lease store shared by every AgentMux instance on the machine, and holds it while the process runs. A pane whose agent is running in another instance is refused, with a message naming that instance's channel and version; the user can choose **Take over**, which asks the other instance to stop its copy (`POST /agentmux/agent/release`, full auth key only). Registering the agent for messages is refused the same way (HTTP 409 from `/agentmux/reactive/register`).
+- **LAN** (LAN discovery on). The instance asks each peer `GET /agentmux/agent/holding?uid=<uid>` before starting the agent, and again every 30 seconds while it runs. A peer on another host that says it holds the agent refuses the start. If both hosts are already running it, the one that started later stops its copy (starts within 10 seconds of each other go to the lower hostname).
+- **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay (`/agents/lease`, keyed by agent name) before it pulls the agent's messages, and renews it every 20 seconds. While another instance holds the lease, the relay answers this instance's pulls with 409 and the local copy is stopped (`agentmux-srv/src/muxbus/wan_lease.rs`).
+
+This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
 
 ## What an agent can do to other panes and windows
 
@@ -68,14 +78,16 @@ These MCP tools act beyond the calling agent's own pane:
 
 | Tool | Scope | Guard |
 |---|---|---|
-| `ClosePane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted. |
-| `FleetBulkStop` | Any agents, by block id | The auth key only |
+| `ClosePane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted, but another agent's pane closes only after a 15-second window in which you can keep it (a banner in the pane and an OS notification). |
+| `FleetBulkStop` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get the same 15-second window. |
 | `CaptureWindow` | Any window owned by your OS user: other AgentMux instances, and **other applications such as your browser or password manager** | Windows owned by other OS users are refused. Every call is appended to a local audit log, `capture-window-audit.log`. |
 | `DiscoverWindows` | Lists AgentMux windows; with `include_foreign`, other applications' windows and titles too | Audited the same way |
 | `SendMessage` | Any agent's conversation | Sender identity is labelled; see [Reactive event bus](/security/reactive-event-bus/) |
 | `GetAgentTranscript` | Any agent's live transcript on this machine | The auth key only |
 
-`UIScreenshot`, `UIClick`, `UIQuery` and the `Browser*` tools act only on the caller's own pane. The server derives that pane from the caller's signature and never takes a pane id from the request.
+`UIScreenshot`, `UIClick`, `UIQuery` and the `Browser*` tools act only on the caller's own pane. The server derives that pane from the caller's signature and never takes a pane id from the request. The same holds for `QuitSelf` and for `ClosePane` with no block id, which end the caller's own session. `QuitSelf` skips the 15-second window only when the user's own message started the current turn and asked for the quit; `ClosePane` with no block id always waits for it (`agentmux-srv/src/server/app_api/pane.rs`).
+
+The 15-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
 
 ## What AgentMux protects against
 
@@ -88,7 +100,7 @@ These MCP tools act beyond the calling agent's own pane:
 
 ## What AgentMux does not protect against
 
-- **Anything running as your OS user.** It can read the auth key from a pane's environment, `authkey.dev` in the data directory, the registry files, and every agent's signing keys in its `.mcp.json`. With those it can do anything AgentMux can, including signing messages as any agent.
+- **Anything running as your OS user.** It can read the auth key from a pane's environment, `authkey.dev` in the data directory, the registry files, every agent's signing keys in its `.mcp.json`, and the install's WAN instance key in `wan.db`. With those it can do anything AgentMux can, including signing messages as any agent.
 - **A malicious or manipulated agent.** An agent has your permissions and the auth key. AgentMux records what agents do but does not sandbox them.
 - **Malicious model output.** The agent CLI talks directly to its provider. If a model tells an agent to run `rm -rf ~`, only the agent's own safeguards stand in the way.
 - **Other OS users on a shared machine.** See the next section.
@@ -97,13 +109,17 @@ These MCP tools act beyond the calling agent's own pane:
 
 ## Shared multi-user machines
 
-Three defaults expose you to other OS users on the same machine:
+Two defaults expose you to other OS users on the same machine:
 
 1. **The Chromium remote-debugging port is always on and unauthenticated.** Loopback is shared by every account, so another user can attach to your AgentMux window and, through it, control AgentMux as you. See [Network exposure](/security/network-exposure/#chromium-remote-debugging-port). No setting turns it off; use a per-user firewall rule on the port if your OS supports one.
-2. **On Unix, the data directory gets your umask.** AgentMux creates `~/.agentmux` and its subdirectories with default permissions (`agentmux-common/src/data_paths.rs`). With a typical umask of `022`, other users can list and read what's inside, unless your home directory already blocks them: databases with your conversations, agents' `.mcp.json` files with their signing keys, and the `ipc-port-<hash>` file, whose token can be exchanged for the auth key. Only a few files are explicitly restricted to `0600`, such as `authkey.dev` and the registry files. **Mitigation: `chmod 700 ~/.agentmux`** (and keep your home directory closed to other users).
-3. **On Windows, AgentMux's named pipes use Windows' default pipe security**, which Microsoft documents as granting read access to Everyone. See [Local IPC](/security/network-exposure/#local-ipc).
+2. **On Windows, AgentMux's named pipes use Windows' default pipe security**, which Microsoft documents as granting read access to Everyone. See [Local IPC](/security/network-exposure/#local-ipc).
 
-On Windows, `%USERPROFILE%\.agentmux` inherits your profile folder's access control, which by default admits only you, SYSTEM and administrators.
+The data directory itself is closed to other users by default:
+
+- **Unix:** at each launch AgentMux creates `~/.agentmux` with mode `0700`, or removes group and other permissions from an existing one (`ensure_owner_only_dir` in `agentmux-common/src/data_paths.rs`). Files inside still get your umask, but other users can't reach them through the closed directory. This is best effort: if AgentMux can't change the mode (for example, the directory belongs to another user), it logs a warning and starts anyway, so check it with `ls -ld ~/.agentmux`.
+- **Windows:** `%USERPROFILE%\.agentmux` inherits your profile folder's access control, which by default admits only you, SYSTEM and administrators.
+
+Agent working directories outside `~/.agentmux` are not covered by this. The `.mcp.json` AgentMux writes there is owner-only (`0600`) on Unix, but the rest of the directory keeps whatever permissions it has.
 
 ## Posture by deployment
 
@@ -125,8 +141,11 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `agentmux-srv/src/backend/pane_env.rs` (`PANE_ENV_KEEP`) — what reaches pane environments
 - `agentmux-srv/src/server/agent_handlers/input.rs` (`carry_agent_uid_env`) — agent UID and token
 - `agentmux-srv/src/server/caller.rs`, `agentmux-srv/src/backend/storage/agent_tokens.rs` — attribution
-- `agentmux-srv/src/server/ui_handlers.rs` (`verified_block_id`), `agentmux-srv/src/server/app_api/pane.rs` (`handle_close_pane`) — own-pane checks
+- `agentmux-srv/src/server/ui_handlers.rs` (`verified_block_id`), `agentmux-srv/src/server/app_api/pane.rs` (`handle_close_pane`, `handle_quit_self`) — own-pane checks
+- `agentmux-srv/src/sagas/pending_shutdown.rs`, `agentmux-srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 15-second override window
+- `agentmux-srv/src/backend/agent_admission.rs`, `agentmux-srv/src/server/agent_takeover.rs`, `agentmux-srv/src/muxbus/wan_lease.rs` — one live instance per agent
 - `agentmux-mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
-- `agentmux-srv/src/server/service/credential.rs` — host-only credential broker
+- `agentmux-srv/src/server/service/credential.rs`, `agentmux-srv/src/server/service/memory_adopt.rs` — host-only services
+- `agentmux-common/src/data_paths.rs` (`ensure_owner_only_dir`) — owner-only data root on Unix
 - `agentmux-cef/src/dev_authfile.rs` — `authkey.dev` permissions
 - `agentmux-srv/src/server/muxbus_handlers.rs` (`inject_muxbus_env`) — `MUXBUS_TOKEN` in agent environments

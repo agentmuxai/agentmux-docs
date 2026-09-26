@@ -20,16 +20,20 @@ While LAN discovery is on, your instance:
 - **answers discovery probes** on UDP port 47891 from private and link-local addresses, replying with the same details and the same `lan_key`;
 - **browses for peers** and keeps the peer list up to date in the Warden and the host popover;
 - **asks every peer for its agent names** every 30 seconds, so you can see which agents live where;
+- **checks that an agent isn't already running on another computer**: before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent. If one is, the agent isn't started here, or, if both are running it, the later start is stopped. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent);
 - **forwards messages**: a `SendMessage` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud.
 
 What it does not do: enforce any policy on peers, or share workspace state between instances.
 
 ## What the `lan_key` allows
 
-The `lan_key` is sent in cleartext, so **treat it as known to every device on the network.** It is a separate key from the instance's full auth key and opens only three routes. With it, anyone on the LAN can:
+The `lan_key` is sent in cleartext, so **treat it as known to every device on the network.** It is a separate key from the instance's full auth key and opens only four routes. With it, anyone on the LAN can:
 
 - send a message into any of your agents' conversations. The message is marked `DELIVERY=lan` and, unless it carries a valid signature, `TRUST=network-claimed`; it is not flagged sensitive unless its content triggers that;
-- list your agents' names, and look up one agent's registration details and public signing key.
+- list your agents' names, and look up one agent's registration details and public signing key;
+- ask whether a given agent is running on this machine, and since when.
+
+Answers from peers aren't authenticated either: a device that pretends to be a peer and claims to be running one of your agents can keep that agent from starting here, or stop it.
 
 It can't reach anything else in the API. The `lan_key` is regenerated each time AgentMux starts. See [Network exposure](/security/network-exposure/#lan-listeners) and [Reactive event bus](/security/reactive-event-bus/#who-may-call-the-bus) for the details.
 
@@ -64,7 +68,7 @@ While it's on, anyone on your broadcast domain learns:
 
 - your machine's **hostname** and IP addresses;
 - the **AgentMux version** and the server's port;
-- the **`lan_key`**, and through it the **names of your agents**.
+- the **`lan_key`**, and through it the **names of your agents** and which of them are running.
 
 The broadcast carries no conversation content, files, or credentials other than the `lan_key`.
 

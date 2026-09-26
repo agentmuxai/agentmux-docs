@@ -10,7 +10,7 @@ AgentMux runs locally and has no telemetry. It still makes some network calls of
 These are stored only on the local filesystem, under `~/.agentmux` (see [Identity & credential storage](/security/identity-credential-storage/#where-agentmux-keeps-data) for the layout):
 
 - **Session state:** panes, layout, settings, terminal scrollback, and agent output, in local SQLite databases.
-- **Conversation transcripts**, including held messages and continuity summaries.
+- **Conversation transcripts**, continuity summaries, held messages, and AgentMux's record of your agents' memory and Global Memory.
 - **Identity metadata:** accounts, bundles, and pointers to credentials. Most secrets are in the OS secret store or the provider CLIs' own login directories; [Identity & credential storage](/security/identity-credential-storage/#credentials-that-arent-secretrefs) lists the ones kept in plaintext.
 - **Logs** and, on Windows, crash dumps (written to `C:\CrashDumps\agentmuxsrv\`, never uploaded).
 
@@ -39,7 +39,7 @@ Each agent CLI (Claude Code, Codex, Gemini, and the rest) talks directly to its 
 | Link favicons | `https://www.google.com/s2/favicons?domain=<host>` | The hostname of each result | Whenever an agent's web-search or web-fetch results are shown |
 | Markdown images | The image's own server | An ordinary image request | Whenever rendered Markdown contains an image URL |
 | Browser pane start page | `https://agentmux.ai` | An ordinary page load | When a browser pane opens without a URL. Text typed into the address bar that isn't a URL goes to Google search |
-| MuxBus Cloud | `wss://muxbus-ws.agentmux.ai`, `https://muxbus.agentmux.ai` | Your local agent names (to subscribe), relayed message bodies and sender names, keep-alives | **Only after you sign in**; from then on, at every launch until you sign out |
+| MuxBus Cloud | `wss://muxbus-ws.agentmux.ai`, `https://muxbus.agentmux.ai` | Your local agent names (to subscribe), relayed message bodies and sender names, keep-alives. Agent leases, renewed every 20 seconds per registered agent, with this machine's hostname, channel and AgentMux version. Each agent's WAN public key, certified by this install and labelled with the install's id and hostname, for the account's key directory; and, on messages whose signature is carried, that signature and the ids it covers | **Only after you sign in**; from then on, at every launch until you sign out |
 | LAN discovery | Your local network | See [Network exposure](/security/network-exposure/#mdns-and-the-udp-probe-what-they-reveal) | **Only with LAN discovery on** (off by default) |
 
 MuxBus Cloud is AgentMux's hosted relay for agent-to-agent messages across machines. Relayed messages travel over TLS but are not end-to-end encrypted, so the service can read them. Signed out, the app makes no MuxBus connections.
@@ -107,7 +107,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 - `agentmux-srv/src/server/service/client.rs` — `TelemetryUpdate` accepted and ignored
 - `agentmux-srv/src/backend/model_catalog.rs`, `agentmux-srv/src/server/providers_handlers.rs` — model-list call
 - `agentmux-srv/src/server/app_api/session.rs`, `agentmux-srv/src/backend/continuity_state.rs` — background model calls
-- `agentmux-srv/src/muxbus/cloud_subscriber.rs`, `agentmux-srv/src/muxbus/relay.rs`, `agentmux-srv/src/muxbus/pkce.rs` — MuxBus Cloud
+- `agentmux-srv/src/muxbus/cloud_subscriber.rs`, `agentmux-srv/src/muxbus/relay.rs`, `agentmux-srv/src/muxbus/pkce.rs`, `agentmux-srv/src/muxbus/wan_lease.rs`, `agentmux-srv/src/muxbus/wan_publish.rs` — MuxBus Cloud
 - `agentmux-srv/src/identity/key_validator.rs`, `agentmux-srv/src/identity/oauth_client.rs` — validation and OAuth
 - `agentmux-srv/src/server/cli_handlers.rs`, `agentmux-srv/src/backend/tool_store.rs`, `agentmux-srv/src/server/system_install_handlers.rs` — installs
 - `agentmux-srv/src/server/voice.rs` — voice input

@@ -11,13 +11,14 @@ Everything lives under one root, `~/.agentmux` (`%USERPROFILE%\.agentmux` on Win
 
 | Path | Contents |
 |---|---|
-| `channels/<channel>/versions/<version>/data/db/objects.db` | Panes and their settings, agents' signing keys and identity tokens, held messages |
+| `channels/<channel>/versions/<version>/data/db/objects.db` | Panes and their settings, agents' HMAC and LAN signing keys and identity tokens, held messages |
 | `channels/<channel>/versions/<version>/data/db/filestore.db`, `sagas.db` | Pane output and terminal scrollback; the operation log |
 | `channels/<channel>/versions/<version>/data/authkey.dev`, `ipc-port-<hash>` | The current launch's auth key and host IPC token (see below) |
 | `channels/<channel>/versions/<version>/cef-cache/` | Chromium profile for browser panes: cookies, site storage, cache |
+| `channels/<channel>/wan-identity/wan.db` | The install's WAN instance keypair, agents' WAN signing keys, and WAN verification state. Shared by every version of the channel, so upgrades keep them |
 | `shared/store.db` | Identity accounts, memory bundles, drone definitions, MuxBus credential metadata, per-agent MuxBus machine credentials |
 | `shared/identity-store.db` | Agent-to-account links, skills, MCP servers, the work queue |
-| `shared/agents/transcripts/filestore.db` | Agent conversation transcripts |
+| `shared/agents/transcripts/filestore.db` | Agent conversation transcripts, continuity summaries, and AgentMux's record of agents' memory and of Global Memory |
 | `shared/providers/<provider>/`, `shared/identities/<account>/<provider>/` | Agent CLIs' own login directories (see [provider CLI logins](#oauthconfigdir-provider-cli-logins)) |
 | `agents/<slug>/` | Default agent working directories, each with an `.mcp.json` holding that agent's signing keys |
 | `agents/<name>.json`, `shared/agents/reactive/` | Registries of running agents, each entry including its instance's auth key |
@@ -26,20 +27,20 @@ On channels other than `stable`, `shared/store.db` and `shared/identities/` are 
 
 ## File permissions
 
-**Unix:** AgentMux creates `~/.agentmux` and its subdirectories with a plain recursive create (`DataPaths::ensure_dirs` in `agentmux-common/src/data_paths.rs`), so they get your process umask; nothing forces `0700`. Databases, `.mcp.json` files, logs and transcripts are written with default permissions too. With a typical umask of `022`, other users on the machine can read them unless your home directory stops them.
+**Unix:** at each launch, AgentMux makes the data root `~/.agentmux` owner-only: it creates it with mode `0700`, or removes group and other permissions from an existing one, keeping the owner's bits (`ensure_owner_only_dir`, called from `DataPaths::ensure_dirs` in `agentmux-common/src/data_paths.rs`). The subdirectories and most files inside are still created with your umask, but other users can't reach them through the closed root. This is best effort: if the mode can't be changed (for example, the directory belongs to another user or sits on a read-only mount), AgentMux logs a warning and starts anyway. It is also skipped when the data root has been pointed at your home directory itself.
 
-Only these are explicitly restricted:
+These are restricted on their own as well:
 
 | File or directory | Mode |
 |---|---|
 | `authkey.dev` | `0600` |
 | Registry files `agents/<name>.json` and `shared/agents/reactive/<agent>/<channel>.json` | `0600`, set at creation |
+| `.mcp.json` in an agent's working directory, and AgentMux's manifest of the entries it wrote (`.claude/.agentmux-managed-mcp-servers.json`) | `0600`, written to a temporary file and renamed into place |
+| `channels/<channel>/wan-identity/` and its `wan.db` | `0700` and `0600` |
 | The launcher's IPC socket directory (`$XDG_RUNTIME_DIR/agentmux/` or `/tmp/agentmux-<uid>/`) | `0700`, and refused if owned by another user |
 | The macOS sign-in helper script, a self-deleting temp file | `0700`, set at creation |
 
-Everything else under `~/.agentmux` depends on your umask, including the `ipc-port-<hash>` file, whose token can be exchanged for the auth key.
-
-**On a multi-user Unix machine, run `chmod 700 ~/.agentmux`.** That closes the whole tree regardless of the modes of the files inside it. If you point agents at working directories outside `~/.agentmux`, those directories' `.mcp.json` files need the same care.
+An agent working directory outside `~/.agentmux` keeps its own permissions; of the files AgentMux writes there, only `.mcp.json` and its manifest are restricted. To confirm the root is closed, run `ls -ld ~/.agentmux`.
 
 **Windows:** files inherit the access control of your profile folder, which by default admits only you, SYSTEM and administrators. `authkey.dev` additionally gets an owner-only access list that doesn't inherit from its folder.
 
@@ -79,20 +80,21 @@ The variant exists, and resolving it always returns an "unsupported" error.
 
 | Credential | Where | At rest |
 |---|---|---|
-| MuxBus Cloud sign-in (access, refresh and ID tokens) | OS secret store; email and expiry in `shared/store.db` | OS secret store |
+| MuxBus Cloud sign-in (access, refresh and ID tokens) | OS secret store; email and expiry in `shared/store.db`. On Windows the tokens are split into chunks across several Credential Manager entries, because one entry holds at most 2,560 bytes (`agentmux-srv/src/backend/storage/muxbus.rs`) | OS secret store |
 | Per-agent MuxBus machine credentials (client id, client secret, cached access token) | `shared/store.db`, table `db_agent_credentials` | **Plaintext** |
 | Passwords saved for HTTP Basic auth in browser panes | OS secret store, one entry per identity and site (`agentmux-srv/src/identity/browser_credential_store.rs`) | OS secret store |
 | Browser-pane cookies and site storage | `cef-cache/` | Chromium is started with `--password-store=basic` (and, on macOS, `--use-mock-keychain`) so it never touches the OS keychain; by the code's own description the cookie store then has only obfuscation-level encryption. Treat it as plaintext. |
-| Agents' signing keys: HMAC key, LAN and WAN Ed25519 private keys | `objects.db`, and the agent's `.mcp.json` in its working directory | **Plaintext** |
+| Agents' signing keys: HMAC key, LAN and WAN Ed25519 private keys | `objects.db` (HMAC, LAN, and WAN keys minted before `wan.db` existed), `wan.db` (WAN), and the agent's `.mcp.json` in its working directory | **Plaintext** |
+| The install's WAN instance private key, which certifies its agents' WAN keys | `wan.db` | **Plaintext** |
 | Agents' identity tokens (`AGENTMUX_AGENT_TOKEN`) | `objects.db` | **Plaintext** |
 | `KEY=VALUE` lines in an agent definition's environment | `objects.db`, and copied into the pane's settings | **Plaintext** |
-| Instance auth key and host IPC token | `authkey.dev` (`0600`), `ipc-port-<hash>` (default permissions), registry files (`0600`) | Plaintext; regenerated at every launch |
+| Instance auth key and host IPC token | `authkey.dev` (`0600`), `ipc-port-<hash>` (default permissions, inside the owner-only data root on Unix), registry files (`0600`) | Plaintext; regenerated at every launch |
 
 ### Signing keys in `.mcp.json`
 
-At every launch, AgentMux writes the agent's HMAC key and its LAN and WAN private keys into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**, where its MCP server reads them (`inject_jekt_signing_keys_into_mcp_json` in `agentmux-srv/src/backend/agent_config.rs`). The file is written with default permissions and replaces any `.mcp.json` already there.
+At every launch, AgentMux writes the agent's HMAC key and its LAN and WAN private keys into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**, where its MCP server reads them (`inject_jekt_signing_keys_into_mcp_json` and `write_mcp_json_respecting_user_servers` in `agentmux-srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix). An existing `.mcp.json` is merged, not replaced: MCP server entries AgentMux didn't write, and other top-level keys, are kept; the `agentmux` entry is always AgentMux's. A file that can't be read or isn't a JSON object is left untouched, and the agent's MCP servers aren't written for that launch.
 
-The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux overwrites that project's `.mcp.json` with its own, including the agent's signing keys. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
+The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
 
 ## How credentials reach agent processes
 
@@ -106,12 +108,14 @@ At each agent launch (`inject_identity_env` in `agentmux-srv/src/identity/resolv
 
 AgentMux adds its own variables to every agent process as well: `AGENTMUX_AUTH_KEY` (full control of the local AgentMux server), `AGENTMUX_AGENT_TOKEN`, and, while you're signed in to MuxBus Cloud, `MUXBUS_TOKEN`, your MuxBus account's access token. See the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane).
 
+It also sets `GH_CONFIG_DIR` in every agent process on the host (not in container agents), and in commands run on an agent's behalf, to a per-agent directory under AgentMux's config directory that holds no `gh` login; a login made there is removed at the next spawn (`agentmux-srv/src/backend/gh_guard.rs`). A plain `gh` command in an agent therefore can't act as the `gh` login you made on the machine. A GitHub token from the agent's own account (`GH_TOKEN`) still works.
+
 ## Rotation
 
 - **`Keychain`**: update the account's key; AgentMux rewrites the OS secret-store entry. Agents pick it up at their next launch.
 - **`Env`**: change the variable in the environment AgentMux is started from, then restart AgentMux, not just the agents: the value is read from the server's own environment.
 - **`OAuthConfigDir`**: sign in again through the CLI, or the account's sign-in flow in AgentMux. The CLI refreshes tokens itself.
-- **Agent signing keys**: the HMAC key is replaced at the agent's next launch once it is 24 hours old. LAN and WAN keys are not rotated. All three are deleted with the agent, unless another agent still uses that name.
+- **Agent signing keys**: the HMAC key is replaced at the agent's next launch once it is 24 hours old. LAN and WAN keys are not rotated. All three are deleted with the agent, unless another agent still uses that name. The install's WAN instance key is not rotated either.
 - **Instance auth key, host IPC token, `lan_key`**: new at every launch.
 
 ## What's not protected
@@ -126,12 +130,14 @@ These follow from running agents as you. If you need stronger isolation, use OS-
 ---
 
 **Source-of-truth references**:
-- `agentmux-common/src/data_paths.rs` — data root, `ensure_dirs`, `identities_dir`, `provider_auth_dir`, `isolated_auth_enabled`
+- `agentmux-common/src/data_paths.rs` — data root, `ensure_dirs`, `ensure_owner_only_dir`, `wan_identity_dir`, `identities_dir`, `provider_auth_dir`, `isolated_auth_enabled`
+- `agentmux-srv/src/backend/storage/wan_identity.rs` — `wan.db`
+- `agentmux-srv/src/backend/gh_guard.rs` — `GH_CONFIG_DIR` in agent processes
 - `agentmux-srv/src/backend/storage/identities.rs` — `SecretRef`
 - `agentmux-srv/src/identity/resolver/secret.rs` (`resolve_secret`), `agentmux-srv/src/identity/resolver/inject.rs`, `agentmux-srv/src/identity/resolver/provider.rs` — resolution and injection
 - `agentmux-srv/src/identity/secret_store.rs`, `agentmux-srv/src/identity/browser_credential_store.rs`, `agentmux-srv/src/backend/storage/muxbus.rs` — OS secret store use
 - `agentmux-srv/src/backend/storage/agent_credentials.rs` — per-agent MuxBus machine credentials
-- `agentmux-srv/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`) — signing keys in `.mcp.json`
+- `agentmux-srv/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`, `write_mcp_json_respecting_user_servers`) — signing keys in `.mcp.json`
 - `agentmux-srv/src/backend/reactive/registry.rs`, `agentmux-cef/src/dev_authfile.rs`, `agentmux-launcher/src/ipc/mod.rs` — the explicitly restricted files
 - `agentmux-cef/src/app/mod.rs` — Chromium password-store switches
 
