@@ -6,43 +6,42 @@ title: "Getting Started with AgentMux"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux is an **agent operating environment** — a desktop app where AI agents are first-class residents: structured panes with real identity, real memory, and the ability to operate the workspace itself. Built on Rust with a bundled Chromium via CEF and a SolidJS frontend.
+AgentMux is an **agent operating environment**: a desktop app where AI agents are first-class residents, in structured panes with their own identity and memory, and with the ability to operate the workspace itself. It's built in Rust, with a bundled Chromium runtime (CEF) and a SolidJS frontend.
 
 ## What is AgentMux?
 
-In AgentMux, every agent is a first-class resident — not a terminal wrapper, but a structured pane with its own identity bundle, memory bundle, streaming parser, and lifecycle. Ten harnesses (CLI tools) run as first-class agent types: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI, and Antigravity (AGY). You see every tool call, file write, and network request in real time. And uniquely: agents can operate the environment itself via the Agent App API — opening panes, renaming tabs, messaging peer agents, navigating the workspace.
+In AgentMux, an agent is not a terminal wrapper. Each one runs in a structured pane with its own identity, optional memory bundle, streaming parser and lifecycle. AgentMux supports ten harnesses (the CLI tools that run agents): Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). The agent picker has a template for eight of them; Mux Code and Qwen Code don't have one yet. You see each tool call and file edit as it happens.
+
+Agents can also operate the environment itself through AgentMux's own tools: opening panes, renaming tabs, messaging other agents and moving around the workspace.
 
 ## Key Concepts
 
-- **Panes** — Individual workspace units. Each pane has a type (`agent`, `browser`, `terminal`, `editor`, `swarm`, `drone`, `sysinfo`, `warden`, `help`).
-- **Self-contained** — AgentMux bundles its own Chromium runtime and installs the agent CLIs for you on first use (in-pane install modal, per-version cache). No `npm install -g` step before launch.
-- **Identity bundles** — Named credential sets (GitHub PAT, AWS profile, Anthropic API key, …) you assign to an agent at launch. Survives renames; swappable without restart.
-- **Bundles** (formerly Memory bundles/Presets) — Reusable agent personality + capability stacks (provider, model, instructions, MCP, skills). Manage app-wide from the [Armory](/armory/)'s Bundles tab.
-- **Harness vs. model vendor** — the *harness* is the CLI tool driving a session (Claude Code, Codex, Antigravity, …); the *model vendor* is the LLM backend actually serving responses. These are independent: a harness talks to a default vendor unless you redirect it — some harnesses (Claude Code today) support pointing at a custom endpoint instead. See [First Agent Setup](/first-agent/) for the harness-then-model flow you go through when creating an agent from a template.
-- **Interagent Comms** — Agents communicate via the MuxBus (Host / LAN / WAN tiers). Use `DiscoverAgents` to find peers and `SendMessage` to send typed messages. An agent's output can also stream into another pane's input.
-- **Agent App API** — Agents inside any pane can control the workspace via a typed MCP + REST API: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. This is what makes AgentMux an _operating_ environment, not just a workspace. See [Agent App API](/internals/agent-app-api/).
-- **Subagent monitoring** — The Swarm pane provides a bird's-eye view of all sub-agents spawned by primary agents; clicking one opens a focused Subagent view.
-- **Toolchain Manager** — Hamburger menu (≡) → Toolchain Manager shows the effective PATH and the detected version, path, and status of every provider CLI and system dependency, with install links for anything missing.
-- **Reducer stack** — A 4-layer audited dispatch model (launcher / host / sidecar / frontend slices). Every state mutation is structured and logged.
+- **Panes**: the units of the workspace. The widget bar opens them: Agent, Swarm, Armory, Sysinfo, and under **more**, Drone, Warden, Terminal, Editor, Browser, Help, Messengers, Media, Toolchain and Settings. See [Pane Types](/pane-types/).
+- **Self-contained CLIs**: AgentMux installs each npm-based agent CLI itself, into a folder per AgentMux version, the first time you pick it. You don't run `npm install -g` first, but you do need Node.js and npm, which AgentMux can install for you. Kimi Code CLI is the exception: install it with `pip install kimi-cli`.
+- **Accounts**: provider logins and API keys, managed in **≡ → Armory → Accounts**. You link one to an agent through the **Identity** field when you create it, or later with **Bind**. Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI agents need a bound account; the other providers can run on AgentMux's shared login folder for the provider instead. See [Auth flows](/auth/).
+- **Bundles**: reusable sets of instructions, MCP servers and skills, tied to one provider. Manage them in the [Armory](/armory/)'s **Bundles** tab and attach one through the **Memory** field.
+- **Harness vs. model vendor**: the *harness* is the CLI driving a session (Claude Code, Codex CLI, Antigravity, …); the *model vendor* is the LLM backend serving its responses. A harness talks to its default vendor unless you redirect it; today only Claude Code can be pointed at a custom endpoint. See [First Agent Setup](/first-agent/#create-an-agent).
+- **Interagent Comms**: agents message each other over the MuxBus (host, LAN and WAN tiers). They use `DiscoverAgents` to find peers and `SendMessage` to send them messages. See [Interagent Comms](/internals/interagent-comms/).
+- **Agent App API**: AgentMux's MCP server and local API let agents control the workspace: open panes and tabs, rename tabs and windows, switch tabs, and find and message other agents. This is what makes AgentMux an *operating* environment. See [Agent App API](/internals/agent-app-api/).
+- **Swarm**: a live tree of your agent panes, with their subagents, todos and running tools.
+- **Toolchain**: **≡ → Toolchain** shows your `PATH` and the version, path and status of Node.js, npm, Git, Python and every agent CLI, with install links and a one-click install for Git, Node.js, npm and Python.
+- **Reducer stack**: how state moves between AgentMux's processes. See [The reducer stack](/internals/reducer-stack/).
 
 ## Quick Install
 
-### macOS (Apple Silicon)
-Download the `.dmg` from [agentmux.ai](https://agentmux.ai) or the [GitHub releases](https://github.com/agentmuxai/agentmux/releases).
+- **Windows (x64):** install from the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), or download the installer (`.exe`) or portable build (`.zip`) from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
+- **macOS (Apple Silicon):** download the `.dmg` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
+- **Linux (x86_64):** download the AppImage, `.deb`, `.rpm` or `.tar.gz` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). For the AppImage:
 
-### Windows
-Download the installer (`.exe`) or portable (`.zip`) from [agentmux.ai](https://agentmux.ai).
-
-### Linux
-Download the AppImage from [agentmux.ai](https://agentmux.ai):
-```bash
-chmod +x AgentMux_amd64.AppImage
-./AgentMux_amd64.AppImage
-```
+  ```bash
+  chmod +x AgentMux_*_amd64.AppImage
+  ./AgentMux_*_amd64.AppImage
+  ```
 
 ## Next Steps
 
-- [Installation](/installation) — Platform-specific install details
-- [First Agent Setup](/first-agent) — Connect your first AI agent
-- [Configuration](/config) — Customize AgentMux settings
-- [Keybindings](/keybindings) — Keyboard shortcuts reference
+- [Installation](/installation/): platform-specific install details
+- [Quickstart](/quickstart/): your first agent in a few minutes
+- [First Agent Setup](/first-agent/): connect your first AI agent
+- [Configuration](/config/): customize AgentMux settings
+- [Keybindings](/keybindings/): keyboard shortcuts reference

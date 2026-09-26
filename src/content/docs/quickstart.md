@@ -6,81 +6,66 @@ title: "Quickstart"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-Get AgentMux running with your first agent in under 5 minutes.
+Get AgentMux running with your first agent in a few minutes.
 
 ## 1. Install AgentMux
 
-Download from [agentmux.ai](https://agentmux.ai) for your platform:
+Download it from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases) (or the buttons on [agentmux.ai](https://agentmux.ai)):
 
-- **macOS** — `.dmg` installer (Apple Silicon)
-- **Windows** — `.exe` installer or portable `.zip`
-- **Linux** — AppImage
+- **Windows (x64):** the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), the `.exe` installer, or the portable `.zip`
+- **macOS:** the `.dmg`, Apple Silicon only
+- **Linux (x86_64):** AppImage, `.deb`, `.rpm` or portable `.tar.gz`
 
-See [Installation](/installation) for detailed steps.
+See [Installation](/installation/) for the steps on each platform.
 
-## 2. Launch and Orient
+## 2. Launch and orient
 
-When AgentMux opens, you'll see a default terminal pane. This is the agent operating environment — agents run here as first-class panes, not terminal sessions bolted on afterward. The key areas are:
+AgentMux opens a starter layout of three panes:
 
-- **Top bar** — Tab management and widget launcher (right side icons)
-- **Workspace** — Your pane grid, drag to rearrange
-- **Status bar** — Connection status and system info
+- **Agent** (left): the agent picker.
+- **Sysinfo** (top right): live system metrics. Right-click it to choose what it plots.
+- **Swarm** (bottom right): a live tree of your agent panes, with their subagents, todos and running tools.
 
-If any provider CLIs are missing, open the **Toolchain Manager** (hamburger menu ≡ → Toolchain Manager) — it shows the detected version, path, and status of every dependency, with install links.
+Around the panes:
 
-## 3. Create a Memory bundle
+- **Title bar**: tabs, the widget bar (pinned **Agent**, **Swarm**, **Armory** and **Sysinfo**, with everything else under **more**), and the hamburger menu (**≡**).
+- **Status bar** (bottom): backend status, CPU, GPU, memory, disk and network stats, token usage, and the AgentMux version. Click the version for instance details.
 
-Memory bundles are app-wide, not per-agent — create one from the **Armory**: hamburger menu (≡) → **Armory** → **Bundles** tab → **+ New Bundle**. See [Memory bundles](/memory/) for the full configuration surface.
+## 3. Create your first agent
 
-Fill in at least a **Name** (e.g. `my-claude`) — Bundles are provider-agnostic today (provider/model belong to the agent, chosen when you launch it, not the bundle) — then optionally add **Description** and **Instructions**.
+In the Agent pane, under **New Agent**, click a harness card, for example **Claude**. Each card is a harness, the CLI that runs the agent.
 
-Click **Create**.
+1. **Install the CLI.** If the harness's CLI isn't installed yet, an install dialog opens. Click **Install now**, then **Continue to Launch**. It needs an internet connection, and Node.js and npm (Claude Code also needs Git). If they're missing, AgentMux lists them with an install option; click **Refresh** once they're installed.
+2. **Fill in Create new agent.** Keep the suggested **Name**. For **Runtime**, choose **On this computer (host)**; the Claude template preselects the container runtime when Docker is running. If you have no account yet, leave **Identity** on **(ambient credentials)**. Set **Memory** to **(vanilla CLI)**; if you have any bundles, the first one is preselected. Click **Create**.
+3. **Sign in.** Claude Code only starts with an Armory account bound to the agent. Without one, the pane shows **Not signed in** or **No account linked**. Click **Log in** and finish the login in your browser. For Claude Code, paste the authorization code back into the pane if it asks for one. AgentMux saves the login as an Armory account and binds it to the agent. See [Auth flows](/auth/).
 
-## 4. Launch an Agent Session
+The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead. Type `/quit` (or `/exit`) to end the agent and close its tab; the conversation is kept.
 
-Press `Cmd+Shift+A` (`Alt+Shift+A`), or click the **Agent** icon in the top bar, to open the Launch Agent modal. Pick your Memory bundle (and optionally an [Identity bundle](/identity/) for credentials). Click **Launch** to open an agent pane.
+See [First Agent Setup](/first-agent/) for the details of every step.
 
-The first time you pick a provider, AgentMux installs that CLI for you — an inline install modal runs `npm install` and streams the output. No `npm install -g` step beforehand. Once installed, the binary is cached per AgentMux version and reused on every later launch.
+## 4. Add more panes
 
-The agent starts in a new pane within your workspace. You'll see:
+In the tables below, `Cmd` is ⌘ on macOS and Alt on Windows and Linux.
 
-- Real-time streaming output
-- Tool calls as they execute
-- File diffs when the agent writes files
+| Action | Keys |
+|---|---|
+| Split right (opens a terminal) | `Cmd + D` |
+| Split below | `Cmd + Shift + D` |
+| Move focus between panes | `Ctrl + Shift + Arrow` |
+| Open the command palette | `Ctrl + P` |
 
-## 5. Add More Panes
+To start a second agent, click **Agent** in the widget bar (or run **Open Agent** from the command palette). The new Agent pane shows the picker again: create another agent, or pick one from **My Agents**. Agent names must be unique, so give a second agent from the same template a new name.
 
-Run a terminal or a second agent alongside your first:
+Each agent is independent. Agents don't share context unless they message each other (see [Interagent Comms](/internals/interagent-comms/)).
 
-1. Press `Cmd+D` (`Alt+D`) to split right — the new pane opens as a terminal
-2. To launch a second agent, press `Cmd+Shift+A` (`Alt+Shift+A`) to open the agent picker
-3. Navigate between panes with `Ctrl+Shift+Arrow`
+## 5. Add instructions with a bundle (optional)
 
-Each pane is independent — agents don't share context unless you wire them explicitly via the MuxBus or Agent App API.
-
-## 6. Monitor System Resources
-
-Click the chart icon in the top bar to add a **Sysinfo** pane. It shows live CPU, memory, network, and disk I/O graphs.
-
-## 7. Add More Agents
-
-AgentMux supports multiple agents running simultaneously, each on its own provider — provider is chosen per-agent at launch (Bundles are provider-agnostic, see step 3). Each provider ships default launch arguments tuned for non-interactive multi-turn use:
-
-- **Claude Code** — `claude -p --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions`
-- **Codex CLI** — `codex exec --json --dangerously-bypass-approvals-and-sandbox -`
-- **Mux Code** — `muxcode run -p`
-- **Gemini CLI** — `gemini --output-format stream-json --yolo -p ""`
-- **Qwen Code** — `qwen --output-format stream-json --yolo -p ""`
-- **OpenClaw** — `acpx --agent openclaw`
-- **Kimi Code CLI** — `kimi --print --output-format stream-json --yolo -p ""`
-- **GitHub Copilot CLI** — `copilot --acp`
-- **Pi** — `pi --json`
-
-Each agent runs in its own pane. Use the [Swarm](/subagent-watcher) view to monitor all of them at once.
+A bundle is a reusable set of instructions, MCP servers and skills. Create one from **≡ → Armory → Bundles → + New Bundle**. Enter a **Name** and pick a **Provider** that matches the harness you'll use (you can't change it later), add **Instructions**, then click **Save**. Choose the bundle as **Memory** when you create an agent. See [Memory bundles](/memory/).
 
 ## Next Steps
 
-- [First Agent Setup](/first-agent) — Detailed agent configuration
-- [Pane Types](/pane-types) — All available pane types
-- [Keybindings](/keybindings) — Keyboard shortcuts
-- [Configuration](/config) — Customize settings
+- [First Agent Setup](/first-agent/): every provider and option in detail
+- [Auth flows](/auth/): how sign-in works per provider
+- [Keybindings](/keybindings/): all keyboard shortcuts
+- [Pane Types](/pane-types/): all available pane types
+- [Configuration](/config/): customize settings
