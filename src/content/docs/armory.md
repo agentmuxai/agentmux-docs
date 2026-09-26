@@ -96,7 +96,7 @@ The catalog of MCP Server primitives available to agents:
 - **Global servers** — visible to and bindable by any agent. Created/edited here via the catalog (`mcp.catalog.upsert`/`mcp.catalog.delete`).
 - **Private servers** — created by a specific agent (`mcp.upsert`), visible only to that agent until bound elsewhere.
 
-An agent's own MCP Servers tab (Agent setup → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. See [Agent App API](/internals/agent-app-api/#mcp) for the full RPC reference.
+An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. See [Agent App API](/internals/agent-app-api/#mcp) for the full RPC reference.
 
 ## Skills
 

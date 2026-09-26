@@ -37,8 +37,8 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 
 **Per-agent (read-only):**
 1. Open an Agent pane (pinned in the widget bar).
-2. Click the **Agent setup** icon (`id-card`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
-3. Switch to the **Identity** tab — a read-only Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). No create/edit/delete/bind/unbind *here*; this tab is display-only.
+2. Click the **Stash** icon (`backpack`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
+3. Switch to the **Accounts** tab — a read-only Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). No create/edit/delete/bind/unbind *here*; this tab is display-only.
 
 **App-wide manager (hamburger menu):**
 1. Click the hamburger (≡) at the top of the tab bar.

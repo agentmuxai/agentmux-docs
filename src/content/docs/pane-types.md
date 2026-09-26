@@ -31,16 +31,16 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Per-agent: **Agent setup** icon (`id-card`) → **Accounts** tab (renamed from "Identity"). App-wide: hamburger menu (≡) → **Armory** (formerly "Trust Center") → Identities tab. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory (native/"Brain")** | Per-agent: **Agent setup** icon → **Memory** tab (this is native per-agent notes, not the Bundle editor — see below). App-wide: hamburger menu (≡) → **Armory** → **Brain** tab. |
-| **Bundles** (formerly "Memory bundles"/Presets) | App-wide only today: hamburger menu (≡) → **Armory** → **Bundles** tab. No per-agent tab currently exposes bundle editing. |
-| **MCP Servers** | Per-agent: **Agent setup** icon → **MCP Servers** tab. App-wide: **Armory** → MCP Servers tab. |
-| **Skills** | Per-agent: **Agent setup** icon → **Skills** tab. App-wide: **Armory** → Skills tab. |
+| **Identity** | Per-agent: **Stash** icon (`backpack`) → **Accounts** tab (read-only). App-wide: hamburger menu (≡) → **Armory** (formerly "Trust Center") → **Accounts** tab. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Memory (native/"Brain")** | Per-agent: **Stash** icon → **Personal Memory** tab (this is native per-agent notes, not the Bundle editor — see below). App-wide: hamburger menu (≡) → **Armory** → **Memory** tab (Global and Personal). |
+| **Bundles** (formerly "Memory bundles"/Presets) | App-wide: hamburger menu (≡) → **Armory** → **Bundles** tab. Per-agent, the **Stash** icon → **Startup** tab selects an existing Bundle as the agent's startup instructions; no per-agent tab edits bundles. |
+| **MCP Servers** | Per-agent: **Stash** icon → **MCP Servers** tab. App-wide: **Armory** → MCP Servers tab. |
+| **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Armory** → Skills tab. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with its own sections (Appearance/Terminal/Agent/Sounds/Network/Files/Advanced) — no longer just opens `settings.json` in an external editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 | **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
 
-The **Agent setup** icon (`id-card`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Armory](/armory/#opening-the-armory).
+The **Stash** icon (`backpack`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Armory](/armory/#opening-the-armory).
 
 ## Terminal
 
@@ -325,14 +325,16 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 ### Subsections
 
-The agent pane has a single **Agent setup** icon (`id-card`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed modal (`AgentSetupModal.tsx`):
+The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Armory](/armory/):
 
-- **Accounts** — manage this agent's Identity bundle (named credential sets — GitHub PAT, AWS profile, Anthropic API key, …). Renders `AgentIdentityModalPanel`. See [Identity](/identity/).
-- **Memory** — this agent's **native memory** ("Brain") notes, not a Bundle editor. Renders `AgentNativeMemoryModal`. See [Memory bundles → Native memory](/memory/#native-memory).
+- **Accounts** — a read-only view of the accounts linked to this agent. Renders `AgentIdentityLinksPanel`. New links are made from the agent's launch flow or the Armory; see [Identity](/identity/).
+- **Personal Memory** — this agent's **native memory** notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as the Armory's Memory → Personal. See [Memory](/memory/).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
 - **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
+- **Startup** — select an existing Bundle as this agent's startup instructions. Renders `AgentStartupModal`.
+- **Registration** — this agent's live message-delivery status: its local registration, any other instance or channel on this host claiming the same identity, and recent deliveries rejected by the identity-mismatch guard.
 
-Briefs and Bundle management are not yet wired into this per-agent modal — use the [Armory](/armory/) for those. The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the underlying views, but the primary path is this modal.
+Bundles themselves are edited only in the [Armory](/armory/). The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the underlying views, but the primary path is the Stash.
 
 ## Swarm
 
