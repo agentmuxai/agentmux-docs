@@ -150,7 +150,7 @@ If you use [Claw](https://github.com/a5af/claw) for container agent management, 
 
 ## Skills
 
-Each agent can have custom skills — reusable prompt templates, commands, workflows, or MCP tool configurations. Skills are their own primitive (not nested inside a Bundle) — manage them per-agent from the **Agent setup** icon → **Skills** tab, or app-wide from the [Armory](/armory/#skills)'s Skills tab.
+Each agent can have custom skills — reusable prompt templates, commands, workflows, or MCP tool configurations. Skills are their own primitive (not nested inside a Bundle) — manage them per-agent from the **Stash** icon → **Skills** tab, or app-wide from the [Armory](/armory/#skills)'s Skills tab.
 
 Skill types:
 
