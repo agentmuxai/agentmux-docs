@@ -1,154 +1,151 @@
 ---
 title: "Interagent Communication"
-description: "The MuxBus — how agents discover each other and route messages across the Host, LAN, and WAN tiers."
+description: "The MuxBus — how agents discover each other and send messages on one machine, across the LAN, and through MuxBus Cloud."
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **MuxBus** is the messaging substrate that lets agents find and talk to each other — on the same machine, across a local network, or (optionally) across the internet. Every agent pane gets access to it via the `DiscoverAgents` and `SendMessage` MCP tools.
+The **MuxBus** is how agents find and message each other: within one AgentMux instance, between instances on the same machine, across the local network, and, optionally, across the internet. Agents use it through the `DiscoverAgents` and `SendMessage` MCP tools, which every agent pane has. It is one part of the larger [Agent App API](/internals/agent-app-api/).
 
-## Architecture
+## Delivery tiers
 
-The MuxBus has three tiers, ordered by trust and latency:
+`SendMessage` tries these in order and stops at the first that takes the message:
 
-<img src="/diagrams/interagent-comms.svg" alt="Three-tier delivery model: Host tier (purple, always on) → LAN tier (steel-blue, mDNS peers, off by default) → WAN tier (blue, cloud relay, opt-in). Dashed arrows show opt-in escalation path." style="max-width:100%" />
+| Tier | Reaches | How | Default |
+|---|---|---|---|
+| **Host** | Agents in this AgentMux instance | In-process | Always on |
+| **Channel** | Agents in another AgentMux instance on this machine (for example a dev build next to the installed app) | HTTP over `127.0.0.1`, using that instance's auth key from the local registry | Always on |
+| **LAN** | Agents on AgentMux instances on the local network | HTTP to the peer's LAN address, using the key the peer advertises | Off. Turn on [LAN discovery](/lan-discovery/) |
+| **WAN** | Agents anywhere | AgentMux's hosted MuxBus Cloud relay | Off. Sign in to MuxBus Cloud |
 
-| Tier | Scope | How it works | Auth | Default |
-|---|---|---|---|---|
-| **Host** | Same AgentMux instance | In-process reactive handler | Per-launch auth key | Always on |
-| **LAN** | Same local network | mDNS peer discovery + HTTP forward | Peer auth key from mDNS/registry | Off — enable via LAN discovery toggle |
-| **WAN** | Cross-network | Outbound poll to a MuxBus relay | Bearer token you configure | Off — enable via poller config |
+If none of them takes the message and the target is a known agent of this instance that isn't running, the message is **held** and delivered when that agent starts, for up to 24 hours.
 
 ## How agents use it
 
-Two MCP tools cover the full surface. They're available to every agent pane automatically — no configuration required on the Host tier.
-
 ### `DiscoverAgents`
 
-No parameters. Returns the reachable agent population across all active tiers:
+No parameters. Returns what is reachable from here, as JSON (`handle_discovery` in `agentmux-srv/src/server/mod.rs`):
 
 ```json
 {
   "host": {
+    "version": "0.57.6",
+    "hostname": "desk",
+    "local_url": "http://127.0.0.1:52011",
     "addressable": [
-      { "agent_id": "claude", "block_id": "uuid", "provider": "claude" }
+      { "agent_id": "claude", "block_id": "…", "tab_id": "…", "uid": "…",
+        "registered_at": 1758700000000, "last_seen": 1758700000000, "registration_nonce": 3 }
     ],
-    "agents": [ /* full agent records with heartbeat state */ ]
+    "agents": [
+      { "name": "claude", "id": "…", "definition_id": "…", "working_directory": "…",
+        "addressable": true, "block_id": "…" }
+    ],
+    "cross_channel": [
+      { "name": "codex", "channel": "dev-main", "local_url": "http://127.0.0.1:52107", "block_id": "…" }
+    ]
   },
   "lan": [
-    {
-      "host": "peer-machine",
-      "agents": [ { "agent_id": "codex", "provider": "codex" } ]
-    }
+    { "instance_id": "v0.57.6", "hostname": "lab-pc", "version": "0.57.6", "address": "192.168.1.20",
+      "port": 51873, "auth_key": "…", "agents": ["reviewer"],
+      "first_seen": 1758690000, "last_seen": 1758700000, "other_ttl_secs": 4500 }
   ],
-  "wan": {
-    "subscribed_agents": [ /* agents reachable via the cloud relay */ ]
-  }
+  "wan": { "local_agents_subscribed": ["claude"] }
 }
 ```
 
-`host.addressable` is the list you can `SendMessage` to right now. `host.agents` includes all registered agents, including those that may be idle or just missed a heartbeat. LAN and WAN entries appear only when those tiers are active.
+- `host.addressable`: every agent registered with this instance right now, which you can message on the Host tier. `tab_id` and `uid` are omitted when unknown; times are Unix milliseconds.
+- `host.agents`: this instance's agent directory, each entry flagged `addressable` and carrying its live `block_id` when it is running.
+- `host.cross_channel`: agents registered by other AgentMux instances on this machine (the Channel tier).
+- `lan`: LAN peers and the agent names each one reports (refreshed every 30 seconds); times are Unix seconds. `auth_key` is that peer's `lan_key`. Empty unless LAN discovery is on.
+- `wan.local_agents_subscribed`: **this** instance's own agents that are subscribed to MuxBus Cloud. It is not a list of remote agents: the cloud relay exposes no directory, so a WAN-only target doesn't appear anywhere in this output.
+
+Names are matched case-insensitively.
 
 ### `SendMessage`
 
-Parameters: `to` (target agent name, required), `message` (string, required).
+Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) and `message` (text). The tool signs the message with the sending agent's keys and posts it to the local AgentMux server (`agentmux-mcp/src/main.rs`). It returns one of:
 
-Routes the message to the named agent through the appropriate tier — Host if the agent is local, LAN if it's on a discovered peer, WAN via the relay otherwise.
+| Result | Meaning |
+|---|---|
+| `Delivered to <to> — injected into their conversation.` | Delivered on the Host, Channel or LAN tier. |
+| `QUEUED for <to> — they're mid-turn, so it has not reached them yet. …` | Accepted by the recipient's AgentMux while the recipient is writing a reply. It reaches the agent at its next tool call or when its turn ends. Don't resend it. |
+| `QUEUED for <to> via the cloud relay — NOT yet delivered. …` | MuxBus Cloud accepted it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed. |
+| `HELD for <to> — not delivered yet. <to> is not running; this AgentMux instance (channel) keeps the message and delivers it when <to> starts here, for up to 24 hours. Do not resend it.` | Held for a known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. |
+| An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
-Returns `{ "success": true }` on delivery, or `{ "success": false, "error": "..." }` if the agent isn't found or the tier is unavailable.
+How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel; while the agent is writing, the message is held and released at its next tool call or turn boundary. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
 
-The message arrives in the target agent's pane as if a user typed it. The agent picks it up on its next turn.
+## Host and Channel tiers
 
-## Host tier
+Every agent pane registers with its instance's in-process handler on startup and unregisters on shutdown. Registration also writes a file to a machine-wide registry (`~/.agentmux/agents/<name>.json` and `~/.agentmux/shared/agents/reactive/<name>/<channel>.json`, mode `0600` on Unix), holding the instance's URL and auth key. That is how an instance on the same machine finds and reaches an agent it doesn't host. Entries older than 4 hours are removed at startup, and an entry is removed when a delivery to it fails and it looks stale.
 
-The **reactive handler** is the in-process delivery path. Every agent pane registers with it on startup and unregisters on shutdown. Registration writes a per-agent file at `~/.agentmux/agents/<agent_id>.json` so peer instances can also find and forward to it.
-
-Agents that stop sending heartbeats drop from the Host `addressable` list within ~30 s but remain in `agents` for audit purposes until the entry expires (4 hours).
-
-The Host tier is always active — no configuration needed.
+An agent runs in only one instance at a time. A pane whose agent is already running in another instance on this machine is refused registration (HTTP 409), so it can't pull that instance's messages to itself; see [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
 
 ## LAN tier
 
-The LAN tier requires **LAN discovery** to be enabled:
+With [LAN discovery](/lan-discovery/) on in both instances:
 
-1. Click the version chip in the status bar to open the HostPopover.
-2. Toggle **LAN discovery** on.
-3. AgentMux starts advertising via mDNS and browsing for peers.
-
-Once active, peer instances on the same network appear within ~5 s in the Warden widget's LAN section and in `DiscoverAgents`'s `lan` field.
-
-When `SendMessage` targets an agent on a LAN peer:
-1. The local reactive handler checks `~/.agentmux/agents/` for the agent's registry entry.
-2. If not found locally, it checks the mDNS-discovered peer list.
-3. The message is forwarded via HTTP to the peer's sidecar, authenticated with the peer's auth key from the registry entry.
-4. The peer delivers it to the target agent's pane.
-
-LAN forwarding uses the peer's actual IP + port from the mDNS announcement — not `127.0.0.1`. This is the key difference from local cross-instance forwarding (which is 127.0.0.1 only, for same-machine multi-instance scenarios).
+1. The sender's instance asks every discovered peer whether it hosts the target (`GET /agentmux/reactive/agent?id=<name>`, authenticated with the peer's advertised `lan_key`). Answers are cached for 60 seconds.
+2. It forwards the message to the first peer that says yes, at the peer's LAN address.
+3. The peer delivers it, labelled `DELIVERY=lan`.
 
 ## WAN tier
 
-The WAN tier routes messages through a MuxBus cloud relay you configure and operate. AgentMux does not run a relay — you bring your own (the open-source `@agentmuxai/muxbus-server`), or connect the status-bar's **MuxBus Cloud** sign-in chip (shows a sign-in button when logged out, or your account email + a disconnect popover when signed in) to AgentMux's own hosted relay at `auth.muxbus.agentmux.ai`.
+The WAN tier is **MuxBus Cloud**, AgentMux's hosted relay. It is off until you sign in with the **MuxBus Cloud** control in the host popover (click the hostname in the status bar). Once signed in, the instance holds a WebSocket to `wss://muxbus-ws.agentmux.ai` for wake signals and exchanges messages with `https://muxbus.agentmux.ai`. A message is relayed only when no local, same-machine or LAN tier could take it. There is no setting to use a different relay.
 
-To enable manually:
+The claim on a cloud message is atomic and happens before local delivery, so when two instances register the same agent name, only one of them delivers each cloud message. A claimed message whose local delivery fails is released back to the relay for retry.
 
-1. Open any terminal pane in AgentMux.
-2. Configure the poller via the in-app settings panel with `{ muxbus_url, muxbus_token }`.
-3. The sidecar starts polling the relay; inbound messages route through the same reactive handler as local injects.
+Before it pulls an agent's messages, the instance claims that agent's lease on the relay and renews it every 20 seconds while the agent is registered. While another instance holds the lease, the relay refuses this instance's pulls (HTTP 409), and this instance stops its own copy of the agent.
 
-The relay is opt-in and operates under your control. See [Reactive event bus](/security/reactive-event-bus/) for the full WAN trust model and poller configuration details.
+A message between two installs signed in to the same MuxBus Cloud account can carry the sender's WAN signature, which the receiver verifies (`TRUST=wan-verified`). The signature is carried only once the sending agent's key has been published to the relay's key directory; until then the message is relayed unsigned. See [WAN signing](/security/reactive-event-bus/#wan-signing).
 
 ## Message delivery semantics
 
-| Scenario | Behavior |
+| Situation | Result |
 |---|---|
-| Target found on Host tier | In-process inject — synchronous, ~zero latency |
-| Target found on LAN peer | HTTP forward to peer sidecar — ~LAN latency |
-| Target found via WAN relay | Relay delivers on next poll cycle |
-| Target not found anywhere | Returns `{ success: false, error: "agent not found" }` |
-| LAN tier off, agent is on LAN | Returns `agent not found` — tier must be active to route |
+| Target registered in this instance | Delivered in-process |
+| Target in another instance on this machine | Forwarded over loopback, then `Delivered` |
+| Target on a LAN peer, LAN discovery on in both | Forwarded over the LAN, then `Delivered` |
+| Target not running on this machine or the LAN, and you're signed in to MuxBus Cloud | `QUEUED`, even when the target is one of this instance's agents |
+| Target is a known agent of this instance that isn't running, and MuxBus Cloud didn't take it | `HELD` for up to 24 hours (at most 64 per agent and 1,000 per instance) |
+| Two running agents share the target name | Refused, listing the candidates' UIDs |
+| None of the above | `agent not found` |
 
-There is no buffering for offline agents at any tier. If an agent isn't registered and reachable when `SendMessage` is called, the call fails immediately.
+Messages are limited to 10,000 bytes after sanitization (longer ones are truncated) and to 10 deliveries per second per instance.
 
 ## Observing message flow
 
-The **Warden widget** (hamburger ≡ → Warden, or the shield icon in the widget bar) surfaces the reactive handler state:
-
-- **Agent table** — registered agents with last-seen heartbeat
-- **Audit feed** — last 50 message deliveries (source, target, byte count, success/fail)
-- **LAN section** — discovered peer instances and their agent counts
-
-For programmatic inspection, the `/agentmux/reactive/audit` and `/agentmux/reactive/agents` REST endpoints expose the same data.
+The [Warden widget](/warden/) shows registered agents and a feed of the last 50 audit events (deliveries and registrations). The same data is available at `GET /agentmux/reactive/agents` and `GET /agentmux/reactive/audit`, which need the instance auth key. The audit log keeps the last 100 events in memory only, with message lengths and hashes but not message text.
 
 ## Security
 
-The auth model across all three tiers is documented in [Reactive event bus](/security/reactive-event-bus/). The short version:
+The full model is in [Reactive event bus](/security/reactive-event-bus/). In short:
 
-- **Host and local cross-instance:** per-launch auth key gated on every route.
-- **LAN peer-to-peer:** peer's auth key from its registry entry (mode `0600`) presented on forward.
-- **WAN relay:** bearer token you configure, outbound-only connection — the relay never calls into your sidecar.
+- **Host and Channel:** every request needs the instance auth key, which every pane and agent holds.
+- **LAN:** a peer presents the `lan_key` your instance broadcasts on the LAN. Anyone on the network can obtain it.
+- **WAN:** your MuxBus Cloud sign-in. The relay can read messages.
 
-### Message trust markers (JEKT)
+### Message trust markers
 
-Every message delivered via `SendMessage` is wrapped in a marker block before it's injected into the recipient's pane:
+Every delivered message is wrapped in a marker the server computes. The first line looks like this:
 
 ```
-[JEKT:FROM=<sender> TIER=<info|coord|sensitive> TRUST=<host-verified|network-claimed>]
+[JEKT:FROM=<sender> TO=<target> TIER=<info|coord|sensitive> DELIVERY=<host|channel|lan|wan> TRUST=<trust> MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 ```
 
-- **`TRUST`** reflects *how* the message arrived, not who it claims to be from: `host-verified` means it came through the local Host tier (same-machine, in-process); `network-claimed` means it arrived over LAN or WAN — the sender identity is only as trustworthy as the credential that presented it, since transport alone doesn't authenticate the claimed agent name.
-- **`TIER`** signals how much scrutiny the content warrants: `info`/`coord` cover routine work an agent can act on directly. `sensitive` — or a message auto-escalated because it contains credential/destructive keywords (`token`, `api_key`, `secret`, `password`, `--force`, `rm -rf`, `drop table`, `private key`, `ssh key`, `trust center`, `armory`, and similar) — means the receiving agent should stop and get explicit human confirmation before acting, rather than trusting a confirming reply from another agent over MuxBus.
+with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=` and `ESCALATE=` added when they apply.
 
-This convention lives in each agent's own operating instructions (not enforced by the MuxBus transport itself) — see the JEKT security rules in this repo's root `CLAUDE.md` for the canonical wording agents are expected to follow.
+- **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a signature checked out), `unverified` (a signature was expected and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof). `wan-verified` comes with `INSTANCE=` and `INSTANCE_STATUS=`, which say which install sent it and whether it is this install (`approved`), another one (`new`), or revoked.
+- **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text contains credential or destructive keywords, or when the message is a transcript request.
+- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational. A `wan-verified` message from a `new` install still gets `ESCALATE=required`.
 
-### Cross-channel duplicate delivery (fixed)
-
-Two AgentMux channels on the same host (e.g. a dev build and a portable build), each running an agent with the same name, used to be able to receive the *same* cloud-relayed message twice — the old poll→deliver→ack flow let both channels pass the poll step before either acknowledged it. The claim step is now atomic and happens before local delivery, so only one channel delivers a given message.
+These labels are enforced by the server, but whether an agent actually pauses depends on the agent following the instruction. See [Reactive event bus](/security/reactive-event-bus/#the-trust-marker) for every field and rule.
 
 ## See also
 
-- [Reactive event bus](/security/reactive-event-bus/) — auth model, endpoint reference, trust boundaries
-- [LAN discovery](/lan-discovery/) — mDNS setup and peer visibility
-- [Warden widget](/warden/) — observing agent state and audit feed
-- [Agent App API](/internals/agent-app-api/) — DiscoverAgents and SendMessage tool reference
+- [Reactive event bus](/security/reactive-event-bus/): routes, trust marker, signing keys, durable hold
+- [LAN discovery](/lan-discovery/): mDNS setup and what it exposes
+- [Warden widget](/warden/): agent state and the delivery feed
+- [Agent App API](/internals/agent-app-api/): the full MCP tool reference

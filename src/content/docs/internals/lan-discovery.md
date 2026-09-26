@@ -1,172 +1,172 @@
 ---
 title: LAN discovery (internals)
-description: How the mDNS-based peer discovery module is wired — service definition, controller lifecycle, hostname normalization, live toggle, and the events it emits.
+description: How mDNS peer discovery and the LAN listeners are wired — service record, UDP probe responder, listener supervisor, live toggle, and the events they emit.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases.
 :::
 
-This page is the architectural companion to the user-facing [LAN discovery](/lan-discovery/) page. It covers what's actually on disk and what runs at startup vs. on toggle.
+This page is the architectural companion to the user-facing [LAN discovery](/lan-discovery/) page. It covers what runs at startup and what runs on toggle. For the security side, see [Network exposure](/security/network-exposure/).
 
 ## Module layout
 
-All the LAN-discovery code lives in **`agentmux-srv/src/backend/lan_discovery.rs`**:
+Two modules own everything LAN-facing:
 
-| Item | Role |
-|---|---|
-| `SERVICE_TYPE = "_agentmux._tcp.local."` | The mDNS service we advertise / browse |
-| `LanInstance` | One peer's snapshot row (hostname, version, address, port, agents, first/last seen) |
-| `LanDiscovery` | The actual daemon — owns the `ServiceDaemon`, the peer `HashMap`, the EventBus handle, and the event-loop thread |
-| `LanDiscoveryController` | The runtime-toggleable wrapper — owns the start args + a swappable `RwLock<Option<Arc<LanDiscovery>>>` slot |
-| `mdns_hostname()` | Pure helper that appends `.local.` to a bare hostname (mdns-sd requirement) |
+| Item | File | Role |
+|---|---|---|
+| `LanListenerSupervisor` | `agentmux-srv/src/backend/lan_listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
+| `STARTUP_BIND_ADDR` | `agentmux-srv/src/backend/lan_listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
+| `SERVICE_TYPE` | `agentmux-srv/src/backend/lan_discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
+| `LanInstance` | `agentmux-srv/src/backend/lan_discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `first_seen`, `last_seen`, `other_ttl_secs` |
+| `LanDiscovery` | `agentmux-srv/src/backend/lan_discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
+| `LanDiscoveryController` | `agentmux-srv/src/backend/lan_discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
+| `mdns_hostname()` | `agentmux-srv/src/backend/lan_discovery.rs` | Appends `.local.` to a bare hostname, as `mdns-sd` requires |
 
-The crate dependency is [`mdns-sd`](https://crates.io/crates/mdns-sd) — pure-Rust, async-friendly, well-maintained.
+The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) crate, version 0.12.
 
-## The advertise + browse loop
+## The LAN listeners
 
-`LanDiscovery::start()` does five things, in order:
+The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `agentmux-srv/src/bootstrap.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
 
-1. Constructs a fresh `mdns_sd::ServiceDaemon` (binds UDP `5353` on `0.0.0.0`)
-2. Builds a `ServiceInfo` with this instance's TXT records:
+- `lan_bind_addresses()` returns every IPv4 address and every IPv6 address except link-local (`fe80::/10`), from all interfaces;
+- each address gets both ports or neither; a failed bind is logged and skipped;
+- the listeners serve the same router as loopback: the full server API, with its normal authentication;
+- a sweep every 20 seconds (`RECONCILE_INTERVAL_SECS`) re-reads the interface list, so a DHCP renewal, Wi-Fi/Ethernet switch or VPN change is picked up without a toggle.
+
+The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux a wildcard socket on the port makes the per-address binds fail with `EADDRINUSE`, and on Windows and macOS it leaves two sockets on one port.
+
+`sync_advertising` ties mDNS to reachability: the supervisor calls `LanDiscoveryController::apply(enabled && has_lan_listener())` after every reconcile, so the instance never advertises an address nothing listens on.
+
+## The advertise and browse loop
+
+`LanDiscovery::start()`:
+
+1. Constructs a `mdns_sd::ServiceDaemon`, which opens its UDP 5353 multicast sockets.
+2. Builds a `ServiceInfo` with instance name `agentmux-<hostname>-<port>` (`mdns_instance_label`, unique per instance and free of dots), host name `<hostname>.local.`, the web port, `enable_addr_auto()` so the daemon fills in and tracks the machine's addresses, and these TXT properties:
 
    ```rust
    let properties = [
        ("version",     version.as_str()),
        ("hostname",    hostname.as_str()),
        ("instance_id", instance_id.as_str()),
+       ("auth_key",    auth_key.as_str()),
    ];
    ```
 
-3. Calls `daemon.register(service_info)` to advertise
-4. Calls `daemon.browse(SERVICE_TYPE)` to start watching for peers
-5. Spawns a `tokio::task::spawn_blocking` thread that loops on `receiver.recv()`, dispatching `ServiceResolved` / `ServiceRemoved` events to `handle_event()`
+   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `agentmux-srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s four routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
+3. Registers the service, then browses `SERVICE_TYPE`.
+4. Spawns three background tasks, each holding its own `Arc<LanDiscovery>`:
+   - the **event loop** (`spawn_blocking`), which handles `ServiceResolved` events and skips resolutions of this instance itself (same port and one of its own addresses);
+   - the **UDP probe responder** on `0.0.0.0:47891`. It answers `{"type":"agentmux_discover","v":1}` from private, link-local and loopback source addresses with `instance_id`, `hostname`, `version`, `port` and `auth_key` (the `lan_key`). If another local instance already holds the port, the bind fails quietly and mDNS carries on;
+   - the **agent-names refresh**, which every 30 seconds asks each peer's `GET /agentmux/reactive/agent-names` for its agent list, authenticating with that peer's advertised `lan_key`. Responses are capped at 64 KiB, 500 names, and 256 characters per name, because mDNS advertisements are unauthenticated and a peer may be hostile.
 
-The spawned thread holds its own `Arc<LanDiscovery>` clone for the lifetime of the loop. That detail matters — see *Live disable* below.
+A peer is kept until its `last_seen` is older than its own advertised record TTL, clamped to between 300 and 9,000 seconds. `ServiceRemoved` events don't delete peers: they fired on ordinary TTL churn, and re-resolution after a removal came back with an empty TXT record.
 
 ## Hostname normalization
 
-`mdns-sd` requires the host name passed to `ServiceInfo::new()` to end with `.local.`. Bare OS hostnames (`claudius`, `Macbook-Pro`, `pi-lab`) fail the validation outright, causing `LAN discovery start failed: Hostname must end with '.local.'`.
+`mdns-sd` requires the host name passed to `ServiceInfo::new()` to end in `.local.`. `mdns_hostname()` normalizes any input:
 
-`mdns_hostname(os_hostname: &str) -> String` normalizes any input to a valid form. It:
+- appends `.local.` to a bare name (`claudius` → `claudius.local.`);
+- passes an already-normalized name through (`claudius.local.` → `claudius.local.`);
+- adds the trailing dot if it's missing (`claudius.local` → `claudius.local.`);
+- strips a stray trailing dot first, so it never doubles the suffix.
 
-- Appends `.local.` to a bare name (`claudius` → `claudius.local.`)
-- Passes through an already-FQDN name unchanged (`claudius.local.` → `claudius.local.`)
-- Adds the trailing dot if missing (`claudius.local` → `claudius.local.`)
-- Strips a stray trailing dot first so it never doubles the suffix
-
-The helper is unit-tested under `#[cfg(test)] mod tests` in the same file; cases include the bare-hostname path (the most common Windows case), the already-suffixed pass-through, and idempotency under repeated calls.
+It is unit-tested in the same file.
 
 ## The controller
 
-`LanDiscoveryController` is the public surface stored in `AppState.lan_discovery`. It owns:
-
-- `slot: Arc<RwLock<Option<Arc<LanDiscovery>>>>` — the runtime-swappable daemon
-- `instance_id`, `hostname`, `version`, `port` — the start arguments, captured at construction
-- `event_bus: Arc<EventBus>` — for broadcasting peer-list and error events
-
-### `apply(enabled: bool)`
-
-This is the idempotent transition function. It holds the slot's **write lock** for the entire check-and-modify, which closes a TOCTOU race that earlier review feedback flagged (two concurrent setconfig calls could otherwise both see `is_running = false` and both spawn a daemon).
+`LanDiscoveryController::apply(enabled)` is idempotent. It holds the slot's write lock for the whole check-and-modify, so two concurrent calls can't both start a daemon:
 
 ```rust
 pub fn apply(&self, enabled: bool) {
-    let mut slot = self.slot.write();           // exclusive
+    let mut slot = self.slot.write();
     let is_running = slot.is_some();
     match (enabled, is_running) {
-        (true, false)  => /* construct LanDiscovery, populate slot */,
-        (false, true)  => /* lan.shutdown(); *slot = None */,
-        _              => /* no-op */,
+        (true, false) => { /* LanDiscovery::start(..); on error broadcast laninstances:error */ }
+        (false, true) => { /* d.shutdown(); *slot = None; broadcast an empty laninstances */ }
+        _ => {}
     }
 }
 ```
 
+The controller also answers the two lookups the reactive bus needs:
+
+- `find_agent(agent_id)` asks every peer's `GET /agentmux/reactive/agent?id=<agent_id>` concurrently and takes the first 2xx. Positive and negative answers are cached for 60 seconds.
+- `find_agent_lan_pubkey(agent_id)` makes the same query for a sender's LAN public key, used to verify LAN signatures. It is rate-limited to 10 peer fan-outs per second; a rate-limited lookup is reported as `RateLimited`, which the verifier treats as a failed signature, not as "no key".
+
+The peer list also serves one live instance per agent. `bootstrap.rs` hands the controller to `agent_admission::set_lan_discovery`, and `agent_admission::lan_holders(uid)` asks every peer's `GET /agentmux/agent/holding?uid=<uid>` concurrently, with the peer's `lan_key` and a 1.5-second timeout. It runs before an agent starts and every 30 seconds while it runs (every sixth 5-second lease renewal). Answers from this host are ignored, unreachable peers and peers without the route are skipped, and `peer_wins` decides between two hosts running the same agent: the earlier start wins, and starts within 10 seconds of each other go to the lower hostname. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
+
 ### Live disable
 
-Disabling LAN discovery looks deceptively simple — drop the `Arc` and `Drop for LanDiscovery` should run, unregistering from mDNS and shutting down the daemon. **Except it doesn't**, because the event-loop thread holds its own `Arc<LanDiscovery>` clone (see *advertise + browse loop* step 5). As long as that thread is blocked on `receiver.recv()`, the refcount stays ≥ 1 and `Drop` never fires.
-
-The fix is an explicit `shutdown()` method on `LanDiscovery`:
+The background tasks each hold an `Arc<LanDiscovery>`, so dropping the controller's reference never runs `Drop`. `shutdown()` stops everything explicitly:
 
 ```rust
 pub fn shutdown(&self) {
+    // stop the UDP responder and the agent-names refresh via their cancel channels
     let _ = self.daemon.unregister(&self.service_fullname);
     let _ = self.daemon.shutdown();
 }
 ```
 
-The controller's `apply(false, true)` branch calls `shutdown()` first, *then* clears the slot. `daemon.shutdown()` closes the mDNS socket synchronously, which causes the receiver to return `Err`, the event loop to exit, the spawned thread to drop *its* `Arc`, and finally `Drop for LanDiscovery` to fire (idempotently — it just calls `shutdown()` again, which is a no-op once the socket is already closed).
+Shutting down the daemon closes its sockets, so the event loop's receiver returns an error and the loop exits. `Drop` calls `shutdown()` again, which is a no-op by then.
 
 ## Live toggle wiring
 
-Two paths flip `network:lan_discovery`:
-
-| Path | Where | When |
+| Path | Where | Takes effect |
 |---|---|---|
-| HostPopover toggle | `frontend/app/statusbar/HostPopover.tsx` → `RpcApi.SetConfigCommand` | Click |
-| Direct edit | User edits `~/.agentmux/config/settings.json` | Manual |
+| Host popover toggle | `frontend/app/statusbar/HostPopover.tsx` → `RpcApi.SetConfigCommand` | Immediately |
+| Hand edit of `settings.json` | The settings file | At the next start of AgentMux |
 
-Both end up at the WS handler `COMMAND_SET_CONFIG` in `agentmux-srv/src/server/websocket.rs`. After updating the in-memory `SettingsType`, the handler calls:
+The toggle reaches the WebSocket `setconfig` handler in `agentmux-srv/src/server/websocket.rs`. It writes the setting to disk, updates the in-memory settings, and calls:
 
 ```rust
-lan_discovery_setconfig.apply(merged_settings.network_lan_discovery);
+lan_listeners.apply(lan_enabled);
 ```
 
-The controller decides whether anything actually needs to happen. If the toggle stays the same value as before (no-op), `apply()` short-circuits. If it flipped, `apply()` starts or stops the daemon.
-
-Direct edits to `settings.json` currently take effect on the next restart — the fs-watcher path doesn't invoke the controller yet. The HostPopover toggle is the primary path and is what the [user guide](/lan-discovery/) recommends.
+Only the listener supervisor is driven there. It binds or drops the listeners and then gates mDNS through `sync_advertising`, as above. Calling the discovery controller directly would advertise before any listener is bound. The settings-file watcher doesn't call either, which is why hand edits wait for a restart.
 
 ## Events emitted
 
-The Warden and HostPopover both subscribe to two WS events:
-
 | Event | When | Payload |
 |---|---|---|
-| `laninstances` | Peer joins, leaves, or is re-resolved | `Vec<LanInstance>` (full peer list) |
-| `laninstances:error` | Daemon `start()` returned `Err` | `{ "error": "<message>" }` |
+| `laninstances` | A peer is resolved or refreshed, or discovery is turned off (empty list) | `Vec<LanInstance>`, the full peer list |
+| `laninstances:error` | `LanDiscovery::start()` failed | `{ "error": "<message>" }` |
 
-Frontend handlers live in `frontend/app/store/global.ts` — `setLanInstancesAtom` and `setLanDiscoveryErrorAtom`. Successful list broadcasts also clear the error atom, so a successful re-enable wipes any stale "blocked" warning.
+The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAtom`, `setLanDiscoveryErrorAtom`). A successful list broadcast clears the error, so a successful re-enable removes a stale warning.
 
 ## HTTP endpoint
 
-`GET /api/lan-instances` (public route, alongside `/schema/*` and `/docsite/*`) returns the current peer list as JSON. The Warden's LAN section polls this every 5 s; the Warden uses HTTP rather than the WS event stream for the initial render (cleaner cold-start, no race) and for refresh-on-mount.
+`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the four `lan_key` routes. The Warden's LAN section polls it every 5 seconds (`WARDEN_REFRESH_MS`).
 
 ## Boot semantics
 
-`agentmux-srv/src/main.rs` constructs a controller at startup, regardless of the setting value:
+1. `bind_listeners_and_network` (`agentmux-srv/src/bootstrap.rs`) binds the loopback listeners, constructs the `LanDiscoveryController` with the hostname, version, web port and `lan_key`, constructs the `LanListenerSupervisor`, and links the two with `set_discovery`. It does **not** start discovery.
+2. `main.rs` builds the router, hands it to the supervisor with `set_router`, calls `lan_listeners.apply(<network:lan_discovery setting>)`, and starts the reconcile sweep.
 
-```rust
-let lan_discovery = Arc::new(LanDiscoveryController::new(
-    config.instance_id.clone(),
-    hostname,
-    version.clone(),
-    web_addr.port(),
-    event_bus.clone(),
-));
-lan_discovery.apply(config_watcher.get_settings().network_lan_discovery);
-```
+With the setting off (the default), nothing LAN-facing starts. With it on, the listeners bind and mDNS starts during boot.
 
-If the setting is `false` (the default), `apply()` is a no-op and no daemon starts. If `true`, the daemon comes up and starts advertising as part of boot. The setting can be flipped at any point afterwards without touching the controller — the *controller* always exists; the *daemon* slot is what flips.
+## Why it's opt-in
 
-## Why opt-in by default
-
-Earlier history kept LAN discovery off by default to avoid the Windows Firewall prompt that the `0.0.0.0:5353` bind triggers. Flipping the default to `true` would resurrect that prompt on every fresh install. The HostPopover toggle is the discoverability fix: the operator initiates the opt-in, so the firewall prompt arrives as the *expected consequence* of clicking the toggle rather than a surprise on launch.
-
-See `specs/windows-firewall-fix.md` in the main repo for the original investigation.
+Turning LAN discovery on exposes the full server API on the network, broadcasts a key that lets anyone on the LAN send messages to agents, and makes Windows Firewall prompt. Keeping it off by default means a fresh install does none of that; the toggle makes the firewall prompt an expected consequence of a user's choice.
 
 ## Source
 
-- `agentmux-srv/src/backend/lan_discovery.rs` — controller + daemon + tests
-- `agentmux-srv/src/main.rs` — boot wiring
-- `agentmux-srv/src/server/websocket.rs` (setconfig handler) — live toggle hook
-- `agentmux-srv/src/server/mod.rs` — `/api/lan-instances` route + `AppState.lan_discovery`
-- `frontend/app/statusbar/HostPopover.tsx` — UI toggle + peer-list popover
+- `agentmux-srv/src/backend/lan_discovery.rs` — daemon, controller, UDP responder, lookups, tests
+- `agentmux-srv/src/backend/lan_listeners.rs` — LAN listener supervisor
+- `agentmux-srv/src/bootstrap.rs`, `agentmux-srv/src/main.rs` — boot wiring
+- `agentmux-srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
+- `agentmux-srv/src/server/mod.rs` — `/api/lan-instances` and the `lan_key` routes
+- `agentmux-srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `agentmux-srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
+- `agentmux-srv/src/config.rs` — `lan_key`
+- `frontend/app/statusbar/HostPopover.tsx` — toggle and peer list
 - `frontend/app/store/global.ts` — `lanInstancesAtom`, `lanDiscoveryErrorAtom`, event handlers
-- `specs/lan-awareness-and-embedded-jekt-api.md` — the broader plan (Phases 1–5)
-- `specs/lan-discovery-toggle.md` — the toggle UX + live-daemon-lifecycle spec
-- `specs/windows-firewall-fix.md` — the original firewall analysis
+
+Design documents in the main repository (designs, not a description of current behavior): `specs/lan-awareness-and-embedded-jekt-api.md`, `specs/lan-discovery-toggle.md`, `specs/windows-firewall-fix.md`.
 
 ## See also
 
-- [LAN discovery (user guide)](/lan-discovery/) — how to turn it on, what to expect
-- [Warden architecture (internals)](/internals/warden/) — the Warden's LAN section is the primary visualization
-- [Interagent event bus](/internals/interagent-comms/) — the WS-event substrate the `laninstances` events ride
+- [LAN discovery (user guide)](/lan-discovery/) — turning it on, what it exposes
+- [Network exposure](/security/network-exposure/) — every listener
+- [Warden architecture (internals)](/internals/warden/) — the Warden's LAN section
+- [Interagent communication](/internals/interagent-comms/) — how messages use LAN peers

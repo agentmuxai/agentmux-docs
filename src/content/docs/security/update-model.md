@@ -1,81 +1,109 @@
 ---
 title: "Update model"
-description: "AgentMux does not auto-update. This is a deliberate security posture, not a missing feature. Here's how updates actually work."
+description: "AgentMux has no in-app updater. How releases are published and signed, how to update, and how agent CLIs and tools get installed."
 ---
 
-AgentMux is intentionally manual-update. There is no auto-updater, no background download, no version check, no notification system. This page explains why, how to actually stay current, and how tool downloads (a related but separate flow) work.
+AgentMux has no auto-updater and never checks for a newer version of itself. This page covers how releases reach you, what is and isn't signed on each platform, and how agent CLIs and helper tools are installed, which is a separate flow.
 
-## Why manual
+## No in-app updates
 
-A typical desktop app's auto-updater is a privileged service that fetches and runs arbitrary code from the developer's update server. That's a powerful attack surface: a compromise of the update endpoint (or its TLS cert, or its DNS, or a developer's signing key) is a remote-code-execution channel to every installed copy.
+- The app contains no update client and makes no version-check request.
+- The status bar contains update UI, but nothing in the app ever reports an update, so it never appears. The underlying `install_update` command is a stub that does nothing (`agentmux-cef/src/commands/stubs.rs`).
+- **Microsoft Store** installs are updated by the Store.
+- For **every other install** you download and install new releases yourself.
 
-AgentMux opts out. The trade-off is on the user — you check for updates and run the installer yourself — in exchange for removing an entire class of supply-chain attack from the threat model. The same reasoning informs how [Tool downloads](#tool-downloads) work (SHA-pinned, catalog-driven).
+Consequences: nothing can push code to your machine through AgentMux, and nothing brings you security fixes automatically either. To hear about new releases, watch the GitHub releases feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
 
-This is consistent with the rest of the [trust model](/security/trust-model/): AgentMux trusts the user, and the user trusts what the user chooses to install.
+## How releases are published
 
-## How updates actually work
+Releases are built by the `release.yml` workflow in the AgentMux repository and published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). [agentmux.ai/download](https://agentmux.ai/download) serves the same files.
 
-1. We publish a release on GitHub (`https://github.com/agentmuxai/agentmux/releases`). Each release has signed/notarized binaries for macOS, NSIS installer + portable ZIP for Windows, AppImage + .deb for Linux.
-2. The release manifest (`https://agentmux.ai/release.json`) is updated with the new version, the URL of each binary, and its SHA-256.
-3. You can:
-   - Watch the GitHub releases atom feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
-   - Or check `https://agentmux.ai/download` periodically.
-4. You download the binary, verify the SHA-256 (optional but easy — see below), and run the installer.
+| Platform | Files | Architecture |
+|---|---|---|
+| Windows | Installer (`AgentMux-<version>-x64-setup.exe`), portable ZIP, MSIX | x64 only |
+| macOS | `AgentMux_<version>_arm64.dmg` | Apple Silicon only |
+| Linux | AppImage, `.deb`, `.rpm`, portable `.tar.gz` | x86_64 only |
 
-There is no in-app notification when a new release lands. You will not see a "new version available" banner. If you want notifications, subscribe to the atom feed or follow the project on social.
+The Windows installer is built with **Inno Setup** (`packaging/windows/agentmux.iss`). By default it installs for the current user, into `%LOCALAPPDATA%\Programs\AgentMux`, without an administrator prompt; its first dialog lets you install for all users instead. It adds a Start-menu shortcut and, if you tick the box, a desktop shortcut. It creates no firewall rules, services or scheduled tasks.
 
-## Verifying a download (optional)
+Start-at-login is a separate, opt-in setting in the app. On Windows it creates a scheduled task named `AgentMux`. The uninstaller doesn't remove that task; turn the setting off before uninstalling, or remove it with `schtasks /Delete /TN "AgentMux" /F`.
 
-If you want to verify a download's SHA-256 against the manifest:
+## Code signing, per platform
+
+| File | Signed? |
+|---|---|
+| Windows installer and portable ZIP | **No.** Neither the installer nor the executables are Authenticode-signed, so Windows SmartScreen may warn. |
+| Windows MSIX on GitHub Releases | **No**, so Windows won't install it directly. The Microsoft Store signs the copy it distributes. |
+| macOS DMG | **Yes**, with a Developer ID certificate and the hardened runtime. Notarization is attempted on every build. If Apple doesn't accept it, the build logs a warning and still ships a signed but un-notarized DMG. |
+| Linux AppImage, `.deb`, `.rpm`, `.tar.gz` | **No.** No GPG signatures, and no package repository. |
+
+The release workflow publishes **no checksum file**. For Windows and Linux, the only integrity guarantee is HTTPS from GitHub or agentmux.ai. On macOS you can check the signature and notarization yourself:
 
 ```bash
-# Get the expected hash from the manifest
-curl -s https://agentmux.ai/release.json | jq '.assets.macos.arm64.sha256'
-
-# Compute the hash of your downloaded file
-shasum -a 256 ~/Downloads/AgentMux_aarch64.dmg
+codesign --verify --deep --strict /Applications/AgentMux.app
+spctl --assess --type execute -vv /Applications/AgentMux.app
+xcrun stapler validate ~/Downloads/AgentMux_<version>_arm64.dmg
 ```
 
-The strings should match. If they don't, the download is corrupt or tampered — re-download or report.
+`stapler validate` fails for a DMG that shipped without notarization.
 
-On Windows, the equivalent is `Get-FileHash -Algorithm SHA256 path\to\installer.exe`.
+## Agent CLIs
 
-## Tool downloads
+When you launch an agent whose CLI isn't installed, or install it from the Toolchain pane, AgentMux runs npm (`agentmux-srv/src/server/cli_handlers.rs`, `agentmux-srv/src/server/install_handlers.rs`):
 
-Separate from app updates: when you install an agent CLI or other tool through AgentMux's tool catalog, AgentMux downloads the binary on your behalf. This flow has the same security model as the app update — and a stronger guarantee because AgentMux is the one driving it:
+```
+npm install --prefix ~/.agentmux/instances/v<agentmux-version>/cli/<provider> <package>@<pinned version>
+```
 
-- Every entry in the tool catalog includes a SHA-256.
-- AgentMux downloads the binary, computes the SHA-256, and compares.
-- A mismatch aborts the install with an error. The binary is not run.
+| Provider | npm package | Pinned version |
+|---|---|---|
+| Claude Code | `@anthropic-ai/claude-code` | 2.1.280 |
+| Codex | `@openai/codex` | 0.154.0 |
+| Gemini | `@google/gemini-cli` | 0.60.0 |
+| Qwen Code | `@qwen-code/qwen-code` | 0.24.0 |
+| OpenClaw | `openclaw` | 2026.9.4 |
+| Pi | `@mariozechner/pi-coding-agent` | 0.73.1 |
+| Mux Code | `@agentmuxai/muxcode` | 0.1.0 |
+| Copilot | `@github/copilot` | 1.0.85 |
+| Antigravity | `@google/antigravity-cli` | 1.0.0 |
+| Kimi | none: install it yourself (`pip install kimi-cli`) | — |
 
-The catalog itself ships with AgentMux — updates to the catalog come with app updates. Adding a new tool entry is a source-code change, reviewed in a PR. There is no runtime "update the catalog from the internet" path.
+The pins live in `agentmux-srv/src/backend/providers.rs` and change with AgentMux releases.
 
-## Air-gapped operation
+What this does and doesn't guarantee:
 
-AgentMux runs without internet. The only network-dependent features are:
+- Only the top-level package version is pinned. Its dependencies resolve fresh at install time; there is no lockfile.
+- **AgentMux checks no hash.** Integrity is whatever npm provides: TLS to the registry and the registry's own integrity metadata. npm uses your configured registry, so an internal mirror works.
+- Packages' install scripts run. AgentMux removes its own `AGENTMUX_*` variables from their environment.
+- Node.js is not bundled. If npm is missing, AgentMux points you to nodejs.org, or offers a one-click install through winget (`OpenJS.NodeJS.LTS`), Homebrew, or your Linux package manager via `pkexec`. Those package managers do their own verification.
 
-- **Agent CLIs** — they need to reach their LLM provider. If your agent is air-gapped (an on-prem model, a local mock), the agent doesn't need internet.
-- **MCP servers** — those that fetch from external services need internet; local MCPs don't.
-- **Tool downloads** — needed only at install time. Once tools are installed, AgentMux doesn't re-fetch them.
+The Toolchain pane also asks the npm registry for each CLI's latest version, to show whether yours is behind. It only displays the result; nothing is installed.
 
-To operate AgentMux fully offline:
+## Tool catalog
 
-1. Install AgentMux and any tools you need on a connected machine.
-2. Copy the install directory (and `~/.agentmux/` if you want to bring sessions) to the air-gapped machine.
-3. Configure agents to point at on-prem or local model endpoints.
-4. Disable mDNS discovery and cloud MuxBus poller in settings (both are off by default; nothing to do).
+The tool catalog (`agentmux-srv/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`agentmux-srv/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
+
+## Default MCP servers
+
+AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, playwright, context7) starts its servers with `uvx` and `npx` without pinned versions (`agentmux-srv/src/config/starter-mcp-servers.json`). Those packages are downloaded from PyPI or npm, at their current versions, when an agent starts them. If that matters to you, remove them or replace them with pinned versions.
+
+## Offline and managed deployment
+
+- To run offline, install AgentMux and the agent CLIs you need while connected, or from an internal npm mirror. See [Data sovereignty](/security/data-sovereignty/#offline-and-air-gapped-use).
+- For managed fleets, distribute the installer or packages through your own software-delivery tooling (Intune, Jamf, Ansible and the like). The Windows installer's per-user default fits unprivileged deployment.
 
 ## What we don't promise
 
-- **No security-update auto-deployment.** A critical CVE in a dependency means we publish a release; you update on your own schedule.
-- **No telemetry-driven rollback.** If a release breaks something for you, we won't know unless you tell us. Report breakage on GitHub Issues.
-- **No staged rollouts.** Everyone who downloads gets the same binary.
-
-These are conscious trade-offs of the manual-update posture. If your organization needs managed updates (auto-deployment, staged rollouts, telemetry-driven rollback), the answer today is to roll your own with your existing software-delivery infrastructure (Jamf, Intune, Chef, Ansible, etc.) — drop the AgentMux binary into your normal package pipeline.
+- **No automatic security updates.** A fix ships as a release; you install it on your own schedule.
+- **No staged rollouts** and **no telemetry-driven rollback.** Everyone who downloads a version gets the same files, and we learn about breakage only when you report it on GitHub Issues.
 
 ---
 
 **Source-of-truth references**:
-- `agentmux-landing/public/release.json` — release manifest
-- `agentmux-srv/src/backend/tool_store.rs` — SHA-pinned tool downloads
-- (No update endpoint exists in the launcher or sidecar; this is verifiable by code search.)
+- `agentmux-cef/src/commands/stubs.rs` — `install_update` stub
+- `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
+- `packaging/windows/agentmux.iss` — Windows installer
+- `agentmux-launcher/src/autostart/mod.rs` — start-at-login
+- `agentmux-srv/src/backend/providers.rs`, `agentmux-srv/src/server/cli_handlers.rs`, `agentmux-srv/src/server/install_handlers.rs` — agent CLI installs
+- `agentmux-srv/src/server/system_install_handlers.rs` — one-click Node.js, Git and Python installs
+- `agentmux-srv/src/backend/tool_store.rs`, `agentmux-srv/src/config/tool-catalog.json` — SHA-256-checked tool downloads
