@@ -151,7 +151,7 @@ Five higher-level, agent-scoped namespaces wrap the low-level handlers above beh
 | `memory.read` | Read one file's content | `agent_id`, `filename` |
 | `memory.write` | Write/overwrite one file (atomic tmp+rename), 10 MB cap | `agent_id`, `filename`, `content` |
 
-This is the "Brain" primitive — see [Memory bundles → Native memory](/memory/#native-memory-brain) and the [Armory](/armory/#brain). It's distinct from a Bundle (below).
+This is the "Brain" primitive — see [Memory bundles → Native memory](/memory/#native-memory) and the [Armory → Personal](/armory/#personal). It's distinct from a Bundle (below).
 
 #### `mcp.*`
 

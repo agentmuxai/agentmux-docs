@@ -1,156 +1,147 @@
 ---
 title: Warden widget
-description: The Warden is AgentMux's operator surface for monitoring and supervising agents across the Host, LAN, and Internet layers — agent visibility, an audit trail, and Supervisor-driven auto-continue.
+description: The Warden is AgentMux's operator pane for supervising agents — the agents registered on this instance, LAN peers, a jekt and Supervisor audit feed, and opt-in Supervisor auto-continue.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Warden** is a pane that gives you a single place to see *who is running, where, and what they're doing* across every AgentMux instance reachable from your machine. It also exposes a set of *control* actions: soft-deregistering an agent on the local Host layer, and — new — letting one agent supervise another's session, reading its transcript and nudging it to continue when it stalls. Cross-instance enforcement is still coming as the underlying networking matures.
+The **Warden** is a pane for supervising agents. It shows which agents are registered to receive messages on this AgentMux instance, which AgentMux instances are on your local network, and a feed of recent message deliveries and Supervisor decisions. It has two control actions: soft-deregistering an agent on this instance, and choosing which agents a supervising agent may nudge to continue when they stall.
 
 ## Where to find it
 
-The Warden is a pinned widget (icon: shield) in the widget bar. Click it to open a pane. There is no keyboard shortcut yet.
+The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by default (`agentmux-srv/src/config/widgets.json`, `defwidget@warden`). Open it in any of these ways:
+
+- Click **more** at the end of the widget bar and choose **Warden**. Right-click it there and choose **Pin to bar** to keep it in the bar.
+- Right-click a pane header → **Replace With...** → **Warden**.
+- Press `Ctrl+Shift+K` to turn the focused pane into the widget launcher, then choose **Warden**.
+
+There is no keyboard shortcut or command-palette entry for the Warden itself.
 
 ## The five sections
 
-As of the 0.55.7 rebuild, the Warden is a **pane view** (not a floating modal) with a left-hand icon rail — the same rail/tab-bar pattern the [Armory](/armory/) uses, down to the shared chrome styling. On narrow widths the rail collapses to a bottom tab bar.
+The Warden is a pane view with a left-hand icon rail, the same layout the [Armory](/armory/) uses (`frontend/app/view/warden/warden-view.tsx`). As the pane gets narrower the rail shrinks to icons only, and in a very narrow pane it becomes a tab bar across the top. The selected section is saved with the pane.
 
 | Section | Icon | What it covers |
 |---|---|---|
-| **Host** | `server` | Agents registered with this instance's reactive handler, plus soft-deregister |
-| **LAN** | `network-wired` | Peer AgentMux instances on the local network (read-only) |
-| **Internet** | `globe` | Cross-network peers via the MuxBus cloud relay (disabled by default) |
-| **Audit** | `list-check` | The delivery/audit feed — jekts, plus Supervisor nudge/decline decisions |
-| **Supervisor** | `user-shield` | Per-agent auto-continue opt-in, and a feed of recent Supervisor decisions |
+| **Host** | `server` | Agents registered with this instance's message handler, plus soft deregister |
+| **LAN** | `network-wired` | Other AgentMux instances found on the local network (read-only) |
+| **Internet** | `globe` | Placeholder; no functionality yet |
+| **Audit** | `list-check` | Recent jekt deliveries, Supervisor decisions and fleet actions |
+| **Supervisor** | `user-shield` | Per-agent auto-continue opt-in, and recent Supervisor decisions |
 
-Host, LAN, and Internet map onto AgentMux's three trust layers, in order of decreasing trust:
-
-| Layer | What it covers | Trust |
-|------|----------------|-------|
-| **Host** | The AgentMux process on this machine | Trusted — same memory space |
-| **LAN** | Peer AgentMux instances reachable via [LAN discovery](/lan-discovery/) | Semi-trusted — same network |
-| **Internet** | Cross-network peers via the MuxBus cloud relay | Untrusted — opt-in only |
-
-Audit and Supervisor are cross-cutting — they aren't scoped to a single trust layer. All five sections stay mounted once the Warden pane is open, so switching between them is instant; each section keeps its own 5 s poll loop running whether or not it's the one currently visible.
-
-Each of the Host/LAN/Internet sections also carries a small status chip in its header: `live`, `stub`, or `disabled`. That tells you at a glance whether the layer is currently functional (Host: yes), waiting on more substrate (LAN: live if you've enabled mDNS, otherwise empty), or deliberately off until you opt in (Internet: disabled by default).
+All five sections stay mounted while the Warden is showing, so switching between them is instant. Host, LAN, Audit and Supervisor each refresh every 5 seconds, including the sections you aren't looking at; Internet is static. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name, and `Ctrl`+scroll zooms the Warden.
 
 ## Host section
 
-The Host section is where most of the direct agent management lives today.
-
-### Agent table
-
-Lists every agent currently registered with this instance's reactive handler:
+The Host section lists every agent currently registered with this instance's message handler, the component that delivers [jekts](/glossary/#jekt) (`frontend/app/view/warden-host/warden-host-manager.tsx`).
 
 | Column | What |
 |---|---|
-| `agent` | Agent ID (matches what shows in the agent pane title bar) |
-| `pane` | Short hash of the pane ID hosting the agent |
-| `last seen` | Time since the agent last sent a heartbeat (refreshes every second) |
-| `state` | `active` if heartbeat ≤ 30 s ago, else `idle` |
+| `agent` | Agent ID |
+| `block` | First 8 characters of the pane's block ID |
+| `last seen` | Time since the agent last registered |
+| `state` | `active` if it registered less than 30 seconds ago, otherwise `idle` |
 
-The list refreshes every 5 s. Agents that stop heart-beating drop off the table; they re-appear within a few seconds of registering again.
+An agent registers when its pane's agent process starts, and again each time you send it a message from its pane (`agentmux-srv/src/server/agent_handlers/input.rs`). A turn started by a jekt doesn't re-register it, and there is no periodic heartbeat. So `last seen` counts from the process start or your last message, and `state` changes to `idle` about 30 seconds later even if the agent is still busy. It does not tell you whether the agent is working; use [Swarm](/subagent-watcher/) for that.
 
-The audit feed for jekts delivered to Host agents now lives in its own [Audit section](#audit-section), not inline under Host — see below.
+An agent's row disappears when it is unregistered: its pane closes, its process exits, its agent ID changes, or you deregister it here. An agent that is already live in another AgentMux instance, on this machine or elsewhere, is refused registration, so its pane never appears here (`agentmux-srv/src/backend/agent_admission.rs`).
 
 ### Soft deregister
 
-Each agent row has a `×` button. Clicking it (after confirming the dialog) **deregisters** the agent from the reactive handler — future jekts to it return `agent not found`. This is intentionally a **soft** action:
+Each row has a **×** button ("Deregister (soft kill — removes from jekt routing, leaves process running)"). After you confirm, AgentMux removes the agent's routing entry on this instance and its entries in the registries other AgentMux instances on this machine read, stops its MuxBus cloud subscription, and drops its Swarm subagent tracking (`agentmux-srv/src/server/reactive.rs`).
 
-- The agent's underlying process / pane keeps running
-- The agent may re-register on its next heartbeat (if its shell auto-register hook is still alive)
-- Nothing on disk changes — no files removed, no state lost
+- The agent's process and pane keep running. Its conversation and data are untouched.
+- Jekts are no longer delivered to that pane, whether sent from this machine, the LAN or the cloud relay. If the agent has a saved definition, a jekt sent to it can be held for up to 24 hours and delivered when the agent registers again.
+- The agent registers again when its agent process restarts or when you next send it a message from its pane. (The confirmation dialog says it "may re-register on its next heartbeat"; there is no heartbeat, these two events are what re-register it.)
 
-Useful when you want to **stop letting an agent receive jekts** while you investigate something, without killing its process. A real hard-kill (PTY termination, pause-host, kill-all) is a separate, more dangerous capability that hasn't shipped yet.
+Use this to stop an agent receiving messages while you investigate, without killing it. To stop agent processes, use the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar).
 
 ## LAN section
 
-The LAN section populates when you turn on [LAN discovery](/lan-discovery/) via the HostPopover toggle. Once mDNS is up, peer AgentMux instances on your network appear here within ~5 s, with their hostname, version, address, agent count, and last-seen age.
+The LAN section lists other AgentMux instances on your network. It fills in once LAN discovery is on: open the host popover in the status bar and tick **LAN discovery** (setting `network:lan_discovery`, off by default). Each instance must have it on. See [LAN discovery](/lan-discovery/).
 
 | Column | What |
 |---|---|
-| `peer` | Peer's hostname (or instance ID if no hostname) |
-| `version` | Peer's AgentMux version |
-| `address` | Peer's IP and backend port |
-| `agents` | Number of agents currently registered on the peer |
-| `last seen` | Time since the peer last announced |
+| `peer` | The peer's hostname, or its instance ID |
+| `version` | The peer's AgentMux version |
+| `address` | The peer's IP address and port |
+| `agents` | Number of agents registered on the peer |
+| `last seen` | Time since the peer was last seen |
 
-Today the LAN section is **read-only in the Warden UI** — you can see peers, but you can't yet jekt to them through the Warden, quarantine them, or push policy. LAN jekt forwarding itself shipped in v0.46 (accessible via `SendMessage` MCP tool); the Warden UI controls for cross-instance jekt and quarantine are a follow-up.
-
-Known issue: the peer-list request currently sits behind the authenticated-routes gate added in the route audit, so it can 401 on load in some setups instead of showing peers — a fix is tracked as a follow-up.
+The section is read-only. Agents can already send jekts to agents on LAN peers with the `SendMessage` MCP tool; the Warden has no controls for LAN peers.
 
 ## Internet section
 
-The Internet section is **closed by default**. Cross-network governance (via the MuxBus cloud relay) ships behind a future opt-in. The section currently shows a status chip of `disabled` and a one-line explanation.
+The Internet section is a placeholder. It shows one line: "Closed by default. Cross-network governance ships behind lan-awareness Phase 4 (cloud fallback)."
+
+Jekt delivery through AgentMux's MuxBus cloud relay does exist, for instances logged in to MuxBus, but the Warden doesn't show it.
 
 ## Audit section
 
-The Audit section is the single feed for everything the reactive handler has recorded: the last 50 [jekt](/glossary/#jekt) deliveries (which agent jekted which, how many bytes, success/failure — failed rows are tinted red with the error message inline) plus every decision the Supervisor has made about a stalled agent (nudged, declined, or attempted-but-failed).
+The Audit section shows recent entries from the message handler's audit log, most recent first (`frontend/app/view/warden-audit/`):
 
-Supervisor-originated rows carry two fields ordinary jekt rows don't:
+- jekt deliveries, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
+- every Supervisor decision (nudged, declined, or nudge failed) with the Supervisor's stated reason;
+- agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `FleetBulkStop`, and `ClosePane` calls in which one agent closed another's pane;
+- agents quitting themselves (`/quit`, `/exit`, the `QuitSelf` tool or `ClosePane` with no arguments), including a self-quit that has to wait for your 15-second override;
+- the 15-second override window that an agent's `FleetBulkStop` or its `ClosePane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`agentmux-srv/src/sagas/pending_shutdown.rs`).
 
-| Field | What |
-|---|---|
-| `outcome` | `nudge_sent`, `nudge_declined`, or `nudge_failed` |
-| `reason` | The Supervisor's stated justification for the decision |
+Each row shows the time, `sender → recipient`, the status, a size in bytes and the reason. Rows for stops, pane closes and quits don't name the action; tell them apart by the reason text. Their byte size is the length of the internal action name, not of a message. A stop from the Swarm toolbar shows `—` as the sender.
 
-The feed shares the 5 s refresh tick with the rest of the Warden's sections and reads from the same backend audit endpoint the reactive handler maintains for its own bookkeeping.
+The Warden requests the latest 50 entries and hides registration events, so it often shows fewer than 50 rows. The log holds the last 100 entries in memory and is cleared when AgentMux restarts.
 
 ## Supervisor section
 
-The Supervisor section is a **control surface**, not a decision-maker — it doesn't itself run any judgment about *when* to nudge a stalled agent. That logic lives in an ordinary spawned AgentMux agent that you designate as a supervisor, using two MCP tools to watch and act on other agents:
+The Supervisor section controls which agents may be nudged. It doesn't decide *when* to nudge. That judgment belongs to an ordinary AgentMux agent you designate as a supervisor, which uses two MCP tools:
 
-- **`GetAgentTranscript`** — reads another agent's transcript tail (default 100 lines, server-capped at 500) and whether that agent is currently mid-turn. Read-only; it never delivers anything to the target.
-- **`SupervisorNudge`** — sends a fixed, server-owned continuation message ("Continue the task you were already doing.") to a stalled agent, or records a `decline` with no delivery. The message text is not caller-supplied by design — this isn't a free-form messaging channel.
+- **`GetAgentTranscript`** reads the tail of another agent's transcript (default 100 lines, at most 500) and whether that agent is mid-turn. It finds agents on this instance and on other AgentMux instances on the same machine, not on LAN peers. It is read-only.
+- **`SupervisorNudge`** either sends the fixed message "Continue the task you were already doing." to a stalled agent, or records a `decline` without sending anything. The message text is set by the server and can't be changed by the caller.
 
 ### Auto-continue opt-in
 
-Every agent has a per-agent `auto_continue_enabled` setting, off by default (fail-closed — same posture as ambient login). The Supervisor section lists every agent with a checkbox to flip it. A `SupervisorNudge` **nudge** call is rejected unless the *target* agent has opted in; **decline** is never gated.
+Each agent has an **auto-continue** setting, off by default. The Supervisor section lists your agents (not built-in templates) with their provider and an **auto-continue** checkbox. A nudge to an agent that hasn't opted in is refused with an error and isn't written to the audit log. A decline is never refused.
 
 ### Consecutive-nudge ceiling
 
-To stop a runaway auto-continue loop, the server allows at most **5 consecutive nudges** to the same target within one registration window — the counter resets after roughly 30 minutes without a nudge, or when the target respawns, whichever comes first. Once the ceiling is hit, the next nudge attempt is refused: the Audit feed still records it as a declined outcome (reason: "consecutive-nudge ceiling reached"), and the calling agent gets an error back rather than a silent no-op. The `SupervisorNudge` tool description tells a supervising agent to treat that refusal as a signal to stop nudging and escalate to a human via `SendMessage` instead of retrying.
+To stop runaway loops, the server allows at most **5 consecutive nudges** to the same agent. The count resets 30 minutes after the last successful nudge, or when the agent's pane or registration changes, which for an ordinary agent pane means its agent process restarted. When the ceiling is hit, the nudge is refused: the Audit feed records it as declined with the reason "consecutive-nudge ceiling reached", and the calling agent gets an error. The `SupervisorNudge` tool description tells a supervising agent to escalate to a human via `SendMessage` instead of retrying.
 
 ### Recent decisions
 
-Below the opt-in table, a feed of recent Supervisor decisions shows the same rows as the Audit section, filtered down to Supervisor-originated ones — target agent, nudged/declined/failed, and the stated reason.
+Below the opt-in table, **Recent Supervisor decisions** lists the Supervisor rows from the audit log: target agent, outcome and reason.
 
-There's deliberately no "spawn a Supervisor for this agent" button here — this section only controls which agents a supervisor is *allowed* to act on. You spawn and configure the watcher agent itself the same way you'd spawn any other agent.
+There is no "spawn a Supervisor" button. You create and configure the supervising agent like any other agent.
 
 ## What the Warden is *not*
 
-Two adjacent surfaces sometimes get confused with the Warden:
-
-- The **[Swarm pane](/pane-types/#swarm)** is about *workflow*: which agents are running which tasks, what stage they're at, throughput. The Warden is about *policy*: who exists, what each one is allowed to do, what they've actually done. Both touch agent state, but for different questions.
-- The **HostPopover** in the status bar is a quick-access overview of *this* instance. The Warden is the multi-layer deep-dive — see the same hostname info, plus the agent table, audit feed, and peer list.
+- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery and Supervisor record.
+- The **host popover** in the status bar shows this instance's own details and the LAN discovery toggle. The Warden doesn't repeat the host details.
 
 ## Status today
 
 | Capability | Status |
 |---|---|
-| See agents on this host | ✅ Live |
-| See recent jekts + Supervisor decisions (audit) | ✅ Live |
+| See agents registered on this instance | ✅ Live |
+| Recent jekts, Supervisor decisions and fleet actions (audit) | ✅ Live |
 | Soft-deregister an agent | ✅ Live |
-| See LAN peers via mDNS | ✅ Live (turn on LAN discovery) |
+| See LAN peers | ✅ Live (turn on LAN discovery) |
 | Per-agent auto-continue opt-in | ✅ Live |
-| Read another agent's transcript (`GetAgentTranscript` MCP tool) | ✅ Live (capped at 500 lines) |
-| Nudge or decline a stalled agent (`SupervisorNudge` MCP tool) | ✅ Live (requires target opt-in; capped at 5 consecutive nudges) |
-| Spawn/designate a Supervisor from the Warden UI | ❌ Not planned for v1 — spawn the agent normally |
-| Hard kill (PTY termination) | ❌ Future PR |
-| Pause host / kill-all | ❌ Future PR |
-| `governance.json` policy file | ❌ Future PR |
-| Approval queue (human-in-the-loop) | ❌ Future PR |
-| Cross-instance jekt forwarding via Warden UI | ❌ Future PR |
-| Quarantine a peer / push policy | ❌ Future PR |
-| Internet (cloud) governance | ❌ Blocked on MuxBus cloud relay |
+| Read another agent's transcript (`GetAgentTranscript`) | ✅ Live (at most 500 lines) |
+| Nudge or decline a stalled agent (`SupervisorNudge`) | ✅ Live (target must opt in; at most 5 consecutive nudges) |
+| Stop agent processes | Not in the Warden. Use the Swarm fleet toolbar or `FleetBulkStop` (an agent's `FleetBulkStop` waits for your 15-second override). |
+| Spawn or designate a Supervisor from the Warden | ❌ Not planned; create the agent normally |
+| Pause host / kill all | ❌ Not built |
+| `governance.json` policy file | ❌ Not built |
+| Approval queue (human in the loop) | ❌ Not built |
+| Jekt to or quarantine a LAN peer from the Warden | ❌ Not built |
+| Internet (cloud) section | ❌ Placeholder only |
 
 ## See also
 
-- [Armory](/armory/) — the pane view the Warden's rail/tab layout and chrome are modeled on
+- [Swarm](/subagent-watcher/) — live agent activity and the fleet toolbar
+- [Armory](/armory/) — the pane whose rail layout the Warden shares
 - [LAN discovery](/lan-discovery/) — the substrate the LAN section reads from
 - [Warden architecture (internals)](/internals/warden/) — design, layers, RPC contracts
-- [Interagent communication](/internals/interagent-comms/) — the reactive event system the audit feed reads from
-- The [`SPEC_WARDEN_WIDGET_2026-05-25.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_WARDEN_WIDGET_2026-05-25.md) spec in the main repo for the original Host/LAN/Internet design (predates the 0.55.7 rail rebuild and the Audit/Supervisor sections)
+- [Interagent communication](/internals/interagent-comms/) — how jekts are delivered
+- `docs/specs/SPEC_WARDEN_WIDGET_2026-05-25.md` in the main repo — the original Host/LAN/Internet design (predates the Audit and Supervisor sections)
