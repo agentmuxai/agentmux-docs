@@ -14,18 +14,18 @@ AgentMux bundles its own Chromium runtime (CEF), so it doesn't use a system brow
 
 ## Downloads
 
-Release files carry the version in their name. The sizes below are for v0.57.5 and change a little from release to release.
+Release files carry the version in their name. The sizes below are for v0.57.6 and change a little from release to release.
 
 | Platform | File | Download size |
 |---|---|---|
-| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 142.2 MB |
-| Windows | `agentmux-<version>-x64-portable.zip` (portable) | 196.9 MB (436 MB extracted) |
-| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 197.6 MB |
-| macOS | `AgentMux_<version>_arm64.dmg` | 155.8 MB |
-| Linux | `AgentMux_<version>_amd64.AppImage` | 167.0 MB |
-| Linux | `AgentMux_<version>_amd64.deb` | 180.2 MB |
-| Linux | `AgentMux-<version>-1.x86_64.rpm` | 180.1 MB |
-| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 180.9 MB (443 MB extracted) |
+| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 142.3 MB |
+| Windows | `agentmux-<version>-x64-portable.zip` (portable) | 197.1 MB (437 MB extracted) |
+| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 197.8 MB |
+| macOS | `AgentMux_<version>_arm64.dmg` | 156.1 MB |
+| Linux | `AgentMux_<version>_amd64.AppImage` | 167.2 MB |
+| Linux | `AgentMux_<version>_amd64.deb` | 180.5 MB |
+| Linux | `AgentMux-<version>-1.x86_64.rpm` | 180.4 MB |
+| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 181.1 MB (443 MB extracted) |
 
 ## Windows
 
@@ -150,9 +150,15 @@ The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (*
 
 Agents need their CLI tools, and most of those need Node.js and npm. **≡ → Toolchain** shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 
+### System tray
+
+By default, AgentMux keeps running with an icon in the system tray (the menu bar on macOS) when you close its last window. The icon's menu has **New Window** (**Start AgentMux** if the app isn't running) and **Quit AgentMux**, which shuts AgentMux down completely. On Windows 11 a new tray icon starts in the overflow (^) area; drag it onto the taskbar to keep it visible.
+
+To quit when the last window closes instead, turn off **Keep running in the system tray** in **Settings → Notifications & Tray** (the `app:runinbackground` setting). The change applies at the next launch. On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window quits AgentMux. Starting AgentMux at login is a separate setting, **Start at login**, and is off by default (`agentmux-launcher/src/background_config.rs`, `agentmux-launcher/src/tray/`).
+
 ## Updating
 
-Apart from the Microsoft Store build, AgentMux doesn't update itself. To update, download the new release and install or run it in place of the old one. Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
+Apart from the Microsoft Store build, AgentMux doesn't update itself. To update, download the new release and install or run it in place of the old one. Quit the old version first with **Quit AgentMux** in its tray icon's menu, because closing its windows leaves it running (see [System tray](#system-tray)). Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
 
 ## Next Steps
 

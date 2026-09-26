@@ -79,7 +79,7 @@ While the window is still loading, `F5` or `Ctrl + R` (`Cmd + R` on macOS) reloa
 
 New panes and splits open a terminal. A new terminal starts in the focused terminal's directory and connection. If the `app:defaultnewblock` setting is `launcher`, they open the widget launcher instead. After `Ctrl + Shift + S` you have 2 seconds to press the arrow key. The digit keys for focusing a pane work on the top row or the numpad. Cycling focus moves through the panes in a clockwise spiral, starting at the top left.
 
-Closing a pane whose agent is mid-turn or has processes running asks for confirmation first.
+Closing a pane whose agent is mid-turn or has processes running asks for confirmation first. A closing Agent pane stays on screen with a log of what it's stopping until the agent is down (see [Ending an agent](/first-agent/#ending-an-agent)).
 
 `Ctrl + Shift + M` toggles **multi-input**, which sends what you type in one terminal to every other terminal pane. It only turns on when there are at least two terminals.
 
@@ -136,7 +136,7 @@ In the message box at the bottom of an Agent pane (`frontend/app/view/agent/comp
 | `Tab` or `→` | Accept the suggested next prompt (empty box only) |
 | `↑` / `↓`, `Tab`, `Enter`, `Esc` | In the `/` command list: move, fill in, run, dismiss |
 
-Typing `/quit` (or `/exit`) and sending it ends the agent gracefully and closes its tab. Other tabs in the same pane keep running. The conversation is kept, so reopening the agent resumes it (`frontend/app/view/agent/commands/global/quit.ts`).
+Typing `/quit` (or `/exit`) and sending it ends the agent gracefully, showing what it stops, and closes its tab. Other tabs in the same pane keep running. The conversation is kept, so reopening the agent resumes it (`frontend/app/view/agent/commands/global/quit.ts`).
 
 `Ctrl + F`, on every platform, opens or closes the search bar for the conversation. In the search bar, `Enter` goes to the next match, `Shift + Enter` to the previous one, and `Esc` closes it.
 

@@ -87,7 +87,7 @@ A **bundle** is a reusable set of instructions and tools that you attach to agen
 | **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
 | **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads.
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind in the Armory disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`agentmux-srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
 A bundle's provider decides which harness an agent launches with, so attach bundles that match the agent's harness. See [Memory bundles](/memory/) for the full configuration surface.
 
@@ -106,6 +106,10 @@ The pane header shows the agent as a tab, with its name and its provider's logo.
 ### Ending an agent
 
 Type `/quit` (or `/exit`) in the message box to end the agent gracefully. AgentMux releases the agent's work claims, stops the shells it started and closes its tab. The conversation is kept: pick the agent in **My Agents** to resume it.
+
+Closing an agent pane, with its close button or a shortcut, ends its agents the same way. The pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes. If something can't be stopped, the pane stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
+
+An agent can also end itself, through AgentMux's `QuitSelf` tool. It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. The same 15-second window applies when another agent closes this agent's pane or stops it with `ClosePane` or `FleetBulkStop`, and when an agent calls `ClosePane` with no arguments to close its own tab. Click **Keep running** to cancel the shutdown (`agentmux-srv/src/sagas/pending_shutdown.rs`).
 
 ### Running a shell command
 

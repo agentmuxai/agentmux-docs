@@ -72,6 +72,8 @@ There are two places.
 
 This is `DataPaths::provider_auth_dir` in `agentmux-common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName` (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`). It is account-wide: every channel, version and instance on the machine shares it.
 
+On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `agentmux-common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
+
 Only Mux Code, Qwen Code, Kimi Code CLI, Pi and Antigravity actually run on the ambient directory. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
 
 **Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI or OpenClaw is saved as an Armory account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
