@@ -15,6 +15,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    # The docs live in the agentmux-prod account (167667034757) since
+    # 2026-09-28: bucket, distribution and the deploy role below are its
+    # agentmux-docs-prod stack (agentmuxai/agentmux-landing cdk/lib/docs-stack.ts).
+    # The shared account's agentmux-docs-prod bucket and EF4XTPT79GHLS are
+    # retired; the CF_DISTRIBUTION_ID secret is no longer used.
+    env:
+      DOCS_BUCKET: agentmux-docs-prod-167667034757
+      DOCS_DISTRIBUTION_ID: E4EAW1TLB65KC
 
     steps:
       - name: Checkout (with submodules)
@@ -40,12 +48,12 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::050544946291:role/agentmux-docs-deploy
+          role-to-assume: arn:aws:iam::167667034757:role/agentmux-docs-deploy
           aws-region: us-east-1
 
       - name: Sync non-HTML assets to S3
         run: |
-          aws s3 sync dist/ s3://agentmux-docs-prod/ \
+          aws s3 sync dist/ s3://${{ env.DOCS_BUCKET }}/ \
             --delete \
             --exclude "*.html"
 
@@ -54,7 +62,7 @@ jobs:
         # skips HTML when only the CSS hash inside it changes. Always force-
         # upload HTML to prevent stale pages referencing deleted CSS bundles.
         run: |
-          aws s3 cp dist/ s3://agentmux-docs-prod/ \
+          aws s3 cp dist/ s3://${{ env.DOCS_BUCKET }}/ \
             --recursive \
             --exclude "*" \
             --include "*.html"
@@ -62,20 +70,20 @@ jobs:
       - name: Invalidate CloudFront
         run: |
           INVAL=$(aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.DOCS_DISTRIBUTION_ID }} \
             --paths "/*" \
             --query 'Invalidation.Id' \
             --output text)
           echo "Invalidation ID: $INVAL"
           aws cloudfront wait invalidation-completed \
-            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.DOCS_DISTRIBUTION_ID }} \
             --id "$INVAL"
 
       - name: Verify — CSS hash must match between live site and S3
         run: |
           LIVE=$(curl -sf "https://docs.agentmux.ai/user-guide/" \
             | grep -o 'common\.[^"]*\.css' | head -1)
-          S3=$(aws s3 ls s3://agentmux-docs-prod/_astro/ \
+          S3=$(aws s3 ls s3://${{ env.DOCS_BUCKET }}/_astro/ \
             | grep common | awk '{print $4}')
           echo "Live: $LIVE"
           echo "S3:   $S3"

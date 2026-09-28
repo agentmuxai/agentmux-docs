@@ -21,6 +21,11 @@
 # is a call for whoever owns this repo's CI, not something to guess at in a
 # doc-accuracy pass — left as-is, just no longer describing false state.
 #
+# 2026-09-28: the docs moved to the agentmux-prod account (167667034757),
+# bucket agentmux-docs-prod-167667034757 / distribution E4EAW1TLB65KC and that
+# account's agentmux-docs-deploy role (agentmuxai/agentmux-landing
+# cdk/lib/docs-stack.ts); the targets below follow.
+#
 # What this workflow does (manual dispatch only):
 #   1. Check out the repo with submodules (src/agentmux is required for
 #      build:typedoc and build:rust-docs).
@@ -31,7 +36,7 @@
 #   6. Assume the AWS IAM role via GitHub OIDC.
 #   7. Two-step S3 sync (assets, then forced HTML upload — see deploy.yml's
 #      identical step for why this must be two steps, not one).
-#   8. aws cloudfront create-invalidation --distribution-id EF4XTPT79GHLS \
+#   8. aws cloudfront create-invalidation --distribution-id E4EAW1TLB65KC \
 #                                          --paths "/*"
 #
 # =============================================================================
@@ -108,13 +113,13 @@ jobs:
         with:
           # Same role deploy.yml uses — already provisioned and working, not
           # the not-yet-set-up placeholder this file originally described.
-          role-to-assume: arn:aws:iam::050544946291:role/agentmux-docs-deploy
+          role-to-assume: arn:aws:iam::167667034757:role/agentmux-docs-deploy
           aws-region: us-east-1
           # CloudFront is global; us-east-1 is fine for the SDK endpoint.
 
       - name: Sync non-HTML assets to S3
         run: |
-          aws s3 sync dist/ s3://agentmux-docs-prod/ \
+          aws s3 sync dist/ s3://agentmux-docs-prod-167667034757/ \
             --delete \
             --exclude "*.html"
 
@@ -125,7 +130,7 @@ jobs:
         # bundles — see deploy.yml's identical step and the 2026-05-27
         # incident this pattern caused when it was a single sync step.
         run: |
-          aws s3 cp dist/ s3://agentmux-docs-prod/ \
+          aws s3 cp dist/ s3://agentmux-docs-prod-167667034757/ \
             --recursive \
             --exclude "*" \
             --include "*.html"
@@ -133,5 +138,5 @@ jobs:
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id EF4XTPT79GHLS \
+            --distribution-id E4EAW1TLB65KC \
             --paths "/*"
