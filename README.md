@@ -58,7 +58,7 @@ File paths and line numbers written as inline code in docs prose automatically b
 
 **Rules for writing source references:**
 
-- Always use backtick inline code for file paths: `` `agentmux-srv/src/reducer.rs` ``
+- Always use backtick inline code for file paths: `` `crates/srv/src/reducer.rs` ``
 - Line numbers go after a colon: `` `reducer.rs:42` `` or `` `reducer.rs:42-78` ``
 - The path must contain a `/` or be a registered alias (see `aliases` in `astro.config.mjs`) for the link to fire — bare single-word filenames not in the alias list are skipped (too many false positives with symbol names)
 - Spec/design docs under `specs/` in the repo are reachable as `` `specs/SPEC_NAME.md` `` (remapped to `docs/specs/` automatically)

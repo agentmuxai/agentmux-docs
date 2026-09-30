@@ -12,15 +12,15 @@ export default defineConfig({
 				// Short-name aliases used across docs (defined in internals/env-vars.md preamble)
 				aliases: {
 					// Rust / shell (env-vars page)
-					'shell.rs':                    'agentmux-srv/src/backend/blockcontroller/shell.rs',
-					'data_paths.rs':               'agentmux-common/src/data_paths.rs',
-					'runtime_mode.rs':             'agentmux-common/src/runtime_mode.rs',
-					'srv_spawner.rs':              'agentmux-launcher/src/srv_spawner.rs',
-					'launcher/main.rs':            'agentmux-launcher/src/main.rs',
-					'shellintegration.rs':         'agentmux-srv/src/backend/shellintegration.rs',
-					'bash.sh':                     'agentmux-srv/src/backend/shellintegration/bash.sh',
-					'pwsh.ps1':                    'agentmux-srv/src/backend/shellintegration/pwsh.ps1',
-					'websocket.rs':                'agentmux-srv/src/server/websocket.rs',
+					'shell.rs':                    'crates/srv/src/backend/blockcontroller/shell.rs',
+					'data_paths.rs':               'crates/common/src/data_paths.rs',
+					'runtime_mode.rs':             'crates/common/src/runtime_mode.rs',
+					'srv_spawner.rs':              'crates/launcher/src/srv_spawner.rs',
+					'launcher/main.rs':            'crates/launcher/src/main.rs',
+					'shellintegration.rs':         'crates/srv/src/backend/shellintegration.rs',
+					'bash.sh':                     'crates/srv/src/backend/shellintegration/bash.sh',
+					'pwsh.ps1':                    'crates/srv/src/backend/shellintegration/pwsh.ps1',
+					'websocket.rs':                'crates/srv/src/server/websocket.rs',
 					// Layout model (state-model page)
 					'layoutModel.ts':              'frontend/layout/lib/layoutModel.ts',
 					'layoutTree.ts':               'frontend/layout/lib/layoutTree.ts',

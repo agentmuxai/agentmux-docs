@@ -10,7 +10,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 A **Memory bundle** is a reusable, **provider-agnostic** capability pack — system prompt ("Soul"), instructions, context files, MCP servers, skills. Provider and model belong to the agent, chosen separately at launch, not to the bundle. Selectable at launch from the Launch Agent modal.
 
 :::note[Also called "Bundle"]
-The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The page name and concepts on this page are unchanged. The App API's older `preset.*` compatibility aliases have been retired; `bundle.*` is the only command set now (`agentmux-srv/src/backend/rpc_types/commands.rs`).
+The UI now labels this primitive **Bundle** (the [Armory](/armory/)'s tab is "Bundles"), part of a broader rename that split the old "Preset" into independent primitives — see [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface. The page name and concepts on this page are unchanged. The App API's older `preset.*` compatibility aliases have been retired; `bundle.*` is the only command set now (`crates/srv/src/backend/rpc_types/commands.rs`).
 :::
 
 ## What goes in a Memory
@@ -68,12 +68,12 @@ See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for t
 
 ### The memory record: memory follows the agent
 
-A provider keeps an agent's memory files in a folder tied to its account and working directory (for Claude Code, `$CLAUDE_CONFIG_DIR/projects/<cwd>/memory`), so switching account, working directory or channel used to leave them behind. AgentMux now keeps its own **memory record** for each agent, keyed by the agent's ID rather than by account, folder or channel, and treats it as the source of truth (`agentmux-srv/src/backend/memory_record.rs`). The record keeps every version of every file, which is what the history, diff and revert views show.
+A provider keeps an agent's memory files in a folder tied to its account and working directory (for Claude Code, `$CLAUDE_CONFIG_DIR/projects/<cwd>/memory`), so switching account, working directory or channel used to leave them behind. AgentMux now keeps its own **memory record** for each agent, keyed by the agent's ID rather than by account, folder or channel, and treats it as the source of truth (`crates/srv/src/backend/memory_record.rs`). The record keeps every version of every file, which is what the history, diff and revert views show.
 
-- **At each launch**, before the provider CLI starts, AgentMux reconciles the agent's memory folder with the record: files missing from the folder are written back, and changes found on disk are recorded (`agentmux-srv/src/backend/memory_reconcile.rs`). If a file changed on both sides, the disk version wins and the other is kept beside it as a `<name>__conflict_<id>.md` file. This is how memory follows an agent into a new account, working directory or channel.
-- **While the agent runs**, AgentMux watches its memory folder and records a file Claude writes once it has been unchanged for about 2 seconds, with a periodic sweep as a backup (`agentmux-srv/src/backend/native_memory_drift.rs`).
+- **At each launch**, before the provider CLI starts, AgentMux reconciles the agent's memory folder with the record: files missing from the folder are written back, and changes found on disk are recorded (`crates/srv/src/backend/memory_reconcile.rs`). If a file changed on both sides, the disk version wins and the other is kept beside it as a `<name>__conflict_<id>.md` file. This is how memory follows an agent into a new account, working directory or channel.
+- **While the agent runs**, AgentMux watches its memory folder and records a file Claude writes once it has been unchanged for about 2 seconds, with a periodic sweep as a backup (`crates/srv/src/backend/native_memory_drift.rs`).
 - **AgentMux's own writes** — `MemoryWrite`, edits in the Armory, revert — go into the record first, then to the file.
-- **Shared folders:** two agents can end up with the same memory folder (same account and working directory, for example). AgentMux only syncs the record with a folder it can show belongs to this agent alone; a shared folder is left as it is (`agentmux-srv/src/backend/memory_dir_claims.rs`). The first time an agent's record meets a folder, a file whose content another agent's record already has is held for you to review instead of being taken over; it shows up in the Armory's adoption panel.
+- **Shared folders:** two agents can end up with the same memory folder (same account and working directory, for example). AgentMux only syncs the record with a folder it can show belongs to this agent alone; a shared folder is left as it is (`crates/srv/src/backend/memory_dir_claims.rs`). The first time an agent's record meets a folder, a file whose content another agent's record already has is held for you to review instead of being taken over; it shows up in the Armory's adoption panel.
 
 The older `db_agent_native_memory` mirror is still written through on list, read and write, but it is no longer the main mechanism. See `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo for the design.
 
@@ -119,7 +119,7 @@ updated_at                INTEGER
 is_system                 INTEGER
 ```
 
-The table is defined in `agentmux-srv/src/backend/storage/migrations.rs`, both in `objects.db`'s flat schema (`run_object_schema`) and in the shared store's schema (`run_shared_store_schema`). [Global Memory](/armory/#global) entries are rows in the same table with `is_global` set. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
+The table is defined in `crates/srv/src/backend/storage/migrations.rs`, both in `objects.db`'s flat schema (`run_object_schema`) and in the shared store's schema (`run_shared_store_schema`). [Global Memory](/armory/#global) entries are rows in the same table with `is_global` set. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
 
 ## Memory and per-instance overrides
 

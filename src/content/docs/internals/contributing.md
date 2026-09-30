@@ -70,10 +70,10 @@ git push -u origin yourname/feature-name
 
 ```
 agentmux/
-├── agentmux-launcher/        # 325 KB launcher: spawns the host, owns Layer 1 reducer
-├── agentmux-cef/             # Host: embeds Chromium via CEF, owns the OS window
-├── agentmux-srv/             # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
-├── agentmux-common/          # Shared utilities: path resolution, runtime mode
+├── crates/launcher/        # 325 KB launcher: spawns the host, owns Layer 1 reducer
+├── crates/cef/             # Host: embeds Chromium via CEF, owns the OS window
+├── crates/srv/             # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
+├── crates/common/          # Shared utilities: path resolution, runtime mode
 ├── frontend/                 # SolidJS + TypeScript renderer (Vite)
 │   ├── app/view/             # Pane view implementations (term, browser, agent, drone, …)
 │   ├── app/block/            # Block / pane rendering + registry
@@ -90,10 +90,10 @@ agentmux/
 | You're touching | Start here |
 |---|---|
 | A new pane type | `frontend/app/view/<view>/` + `frontend/app/block/block.tsx` to register |
-| RPC commands the frontend calls | `agentmux-srv/src/server/app_api.rs` (high-level) or the per-domain handler files |
-| Window / pool / OS state | `agentmux-launcher/src/reducer/` + `docs/specs/` |
-| Browser pane behavior | `frontend/app/view/browser/` + `agentmux-cef/src/commands/browser.rs` |
-| Persistence | `agentmux-srv/src/persist*.rs`, `agentmux-srv/src/sagas/`, `agentmux-launcher/src/event_log.rs` |
+| RPC commands the frontend calls | `crates/srv/src/server/app_api.rs` (high-level) or the per-domain handler files |
+| Window / pool / OS state | `crates/launcher/src/reducer/` + `docs/specs/` |
+| Browser pane behavior | `frontend/app/view/browser/` + `crates/cef/src/commands/browser.rs` |
+| Persistence | `crates/srv/src/persist*.rs`, `crates/srv/src/sagas/`, `crates/launcher/src/event_log.rs` |
 | Reducer-stack work | [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) and [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) — append PRs and analyses there, don't fork threads |
 
 ## Style

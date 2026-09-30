@@ -21,7 +21,7 @@ WRR is the launcher arm that says: "I have a model. Here are the host's reports 
 
 ## The drift kinds
 
-WRR records drift events as `Event::HwndDriftDetected { kind, .. }` (see `agentmux-launcher/src/reducer/`). Common kinds:
+WRR records drift events as `Event::HwndDriftDetected { kind, .. }` (see `crates/launcher/src/reducer/`). Common kinds:
 
 | Drift kind | What it means |
 |---|---|
@@ -54,9 +54,9 @@ A proptest in `reducer/tests.rs` (`just_promoted_labels_drained_by_open_or_close
 
 | Location | Role |
 |---|---|
-| `agentmux-launcher/src/reducer/` | The reducer arms that consume host reports and emit drift events |
-| `agentmux-launcher/src/ipc/server.rs` | The launcher-side WRR observability: takes timestamps, broadcasts drift to subscribers |
-| `agentmux-cef/src/commands/window_pool.rs` | The host's emit side — `ReportPoolWindowRemoved`, `ReportPoolWindowPromoted`, `ReportWindowOpened` |
+| `crates/launcher/src/reducer/` | The reducer arms that consume host reports and emit drift events |
+| `crates/launcher/src/ipc/server.rs` | The launcher-side WRR observability: takes timestamps, broadcasts drift to subscribers |
+| `crates/cef/src/commands/window_pool.rs` | The host's emit side — `ReportPoolWindowRemoved`, `ReportPoolWindowPromoted`, `ReportWindowOpened` |
 | `<data-dir>/data/launcher-events.log` | The durable event log where every WRR record lands (JSONL) |
 
 ## Reading the event log

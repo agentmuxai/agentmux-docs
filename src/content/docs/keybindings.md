@@ -158,7 +158,7 @@ In the memory editors (Global Memory and an agent's native memory files), `Ctrl 
 
 ## Browser panes
 
-A Browser pane's web page receives your keystrokes directly, so while the page has focus, AgentMux's other shortcuts don't reach the app. Click another pane first. These keys still work in the page (`agentmux-cef/src/client/handlers.rs`, `browser_pane_shortcut_for`):
+A Browser pane's web page receives your keystrokes directly, so while the page has focus, AgentMux's other shortcuts don't reach the app. Click another pane first. These keys still work in the page (`crates/cef/src/client/handlers.rs`, `browser_pane_shortcut_for`):
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
@@ -197,7 +197,7 @@ Panes have a 128 px minimum size while you drag. When a group resize runs out of
 
 ### Window snapping (Windows)
 
-On Windows, AgentMux does its own window snapping (`agentmux-cef/src/client/window_snap.rs`):
+On Windows, AgentMux does its own window snapping (`crates/cef/src/client/window_snap.rs`):
 
 - **Drag to the top to maximize.** Drag the title bar until the cursor is at the top edge of the screen (within 12 px). A preview appears; release to maximize. Floating pane windows are excluded.
 - **Drag a maximized window to restore it.** Dragging the title bar of a maximized window restores it to its normal size, under the cursor.

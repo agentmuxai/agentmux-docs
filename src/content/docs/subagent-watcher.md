@@ -15,7 +15,7 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 
 ## Opening Swarm
 
-- Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`agentmux-srv/src/config/widgets.json`, `defwidget@swarm`).
+- Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@swarm`).
 - Command palette (`Ctrl+P`): **Open Swarm**.
 - Click **+** on any pane's tab strip and pick **Swarm** to add it as a tab in that pane.
 - Right-click a pane header → **Replace With...** → **Swarm** replaces that pane with Swarm.
@@ -59,7 +59,7 @@ Under an expanded agent, child rows are grouped in this order. A group is hidden
 
 ### Todos
 
-The agent's current todo list, read from its transcript every few seconds (`agentmux-srv/src/backend/reactive/progress_watcher.rs`). AgentMux picks up `TodoWrite`, `TaskCreate` and `TaskUpdate` tool calls, and other tools whose name contains "Todo".
+The agent's current todo list, read from its transcript every few seconds (`crates/srv/src/backend/reactive/progress_watcher.rs`). AgentMux picks up `TodoWrite`, `TaskCreate` and `TaskUpdate` tool calls, and other tools whose name contains "Todo".
 
 - The header reads **Todos** with a done/total count, e.g. `1/3`.
 - Items keep the agent's own order and are marked ✓ (completed), ▸ (in progress) or ○ (pending).
@@ -70,7 +70,7 @@ The last list stays visible after the agent goes idle.
 
 ### Agent Tool
 
-One row per subagent the agent launched with its Agent/Task tool. Subagent tracking is **Claude Code only**: AgentMux reads the subagent transcripts Claude Code writes under its config directory (`agentmux-srv/src/backend/subagent_watcher/mod.rs`).
+One row per subagent the agent launched with its Agent/Task tool. Subagent tracking is **Claude Code only**: AgentMux reads the subagent transcripts Claude Code writes under its config directory (`crates/srv/src/backend/subagent_watcher/mod.rs`).
 
 - The label is a short generated name for the subagent, falling back to its slug and ID.
 - The status chip reads **working** or **idle**, like an agent's. A subagent whose agent went idle before the subagent finished is *interrupted*: its chip reads **idle**, and it has no countdown (see below).
@@ -101,7 +101,7 @@ Each row shows the command and elapsed time. This group only covers agent panes 
 
 ### Background
 
-Commands the agent started in the background (a `Bash` call with `run_in_background`), with the description the agent gave the command, or `Bash` if it gave none (`frontend/app/view/swarm/swarm-background-tasks.tsx`, `agentmux-srv/src/backend/background_task_feed.rs`). A background command a subagent started is shown under that subagent's row in **Agent Tool**, whether or not the row is expanded; it moves to this group once the subagent's row is gone.
+Commands the agent started in the background (a `Bash` call with `run_in_background`), with the description the agent gave the command, or `Bash` if it gave none (`frontend/app/view/swarm/swarm-background-tasks.tsx`, `crates/srv/src/backend/background_task_feed.rs`). A background command a subagent started is shown under that subagent's row in **Agent Tool**, whether or not the row is expanded; it moves to this group once the subagent's row is gone.
 
 Each row shows `$`, the description, a status and the elapsed time, which stops when the command ends:
 
@@ -151,11 +151,11 @@ After either action, the result panel shows a summary such as "Broadcast — 3 s
 
 ### From an agent
 
-Agents can do the same through the App API (`agentmux-mcp/src/tool_schemas.rs`; backend `agentmux-srv/src/server/app_api/fleet.rs`):
+Agents can do the same through the App API (`crates/mcp/src/tool_schemas.rs`; backend `crates/srv/src/server/app_api/fleet.rs`):
 
 - **`FleetList`** lists every agent reachable from the calling agent, with the IDs the other two tools expect.
 - **`FleetBroadcast`** sends one message to many targets. Each message is signed and delivered exactly like `SendMessage`, so it reaches agents on this machine by block ID and agents on LAN peers or the cloud relay by name. Large broadcasts go out in chunks of 10, about a second apart.
-- **`FleetBulkStop`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`agentmux-srv/src/sagas/pending_shutdown.rs`).
+- **`FleetBulkStop`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 See [Agent App API](/internals/agent-app-api/) for the full tool reference.
 

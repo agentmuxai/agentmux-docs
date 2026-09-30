@@ -23,7 +23,7 @@ Before the provider CLI process starts, AgentMux assembles and writes a `CLAUDE.
 | Skills index | Installed skills | `# Available Skills` section listing callable skills |
 | Template vars | Runtime | `{{AGENT}}`, `{{AGENT_DISPLAY}}`, `{{AGENT_ID}}`, `{{DATE}}` substituted at write time. `{{WORKING_DIR}}` is a supported placeholder but is not currently wired up on this path — see the note below. |
 
-Source: `agentmux-srv/src/backend/agent_config.rs` `build_config_files()`, `agentmux-srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
+Source: `crates/srv/src/backend/agent_config.rs` `build_config_files()`, `crates/srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
 
 This file is written **once per agent launch**, not once per turn. AgentMux does not call the provider's API directly — it hands the file off to the CLI and steps back.
 
@@ -54,7 +54,7 @@ AgentMux tracks all three token types — `input_tokens`, `cache_creation_input_
 real_context_tokens = input_tokens + cache_creation_input_tokens + cache_read_input_tokens
 ```
 
-Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation, lines 95-98), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `agentmux-srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
+Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation, lines 95-98), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `crates/srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
 
 **Note:** these three fields are parsed per-turn for the live UI counters only — they are not persisted anywhere queryable. There is currently no way to check historically whether caching landed for a past session; only live, in the moment.
 

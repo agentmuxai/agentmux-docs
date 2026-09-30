@@ -27,16 +27,16 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 ## The AgentMux server
 
-`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `agentmux-srv/src/backend/lan_listeners.rs`); no setting changes it.
+`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv/src/backend/lan_listeners.rs`); no setting changes it.
 
-Authentication (`auth_middleware` in `agentmux-srv/src/server/mod.rs`):
+Authentication (`auth_middleware` in `crates/srv/src/server/mod.rs`):
 
 - Every route requires the `X-AuthKey` header to equal the instance auth key. The key is a UUIDv4 the launcher generates at each launch.
 - `/ws` also accepts the key as an `?authkey=` query parameter, because the browser WebSocket API can't set headers. No other route accepts it in the query string.
 - Unauthenticated: `GET /` returns `{"status":"ok","version":"<version>"}`. `/webhook/whatsapp` is the receiver for the WhatsApp bridge; it checks Meta's verify token and `X-Hub-Signature-256` HMAC instead of the auth key, and returns 503 until that bridge is set up.
 - Every response, including unauthenticated ones, carries an `x-agentmux-srv-version` header.
 
-CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key. `/ws` also refuses a WebSocket upgrade whose `Origin` header is anything other than those two (`ws_origin_guard`); a client that sends no `Origin`, such as the launcher or `agentmux-mcp`, is allowed. Every key and token a caller presents is compared in constant time (`agentmux-common/src/secret_eq.rs`).
+CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key. `/ws` also refuses a WebSocket upgrade whose `Origin` header is anything other than those two (`ws_origin_guard`); a client that sends no `Origin`, such as the launcher or `agentmux-mcp`, is allowed. Every key and token a caller presents is compared in constant time (`crates/common/src/secret_eq.rs`).
 
 Every terminal pane and host agent process receives the auth key as `AGENTMUX_AUTH_KEY`. See the [trust model](/security/trust-model/) for what that means. [Container agents](/security/trust-model/#container-agents) get a narrower per-agent token in the same variable instead.
 
@@ -44,7 +44,7 @@ Every terminal pane and host agent process receives the auth key as `AGENTMUX_AU
 
 When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two ports again on **every non-loopback interface address**: all IPv4 addresses, and all IPv6 addresses except link-local. That includes VPN and virtual adapters. It re-checks the interface list every 20 seconds, and removes the listeners when you turn LAN discovery off.
 
-These listeners serve **only the routes LAN peers need** (`build_routers_with` in `agentmux-srv/src/server/mod.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
+These listeners serve **only the routes LAN peers need** (`build_routers_with` in `crates/srv/src/server/mod.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
 
 - anyone can call `GET /` and `/health` (the version) and the WhatsApp webhook;
 - anyone holding the `lan_key` can call four routes: send a jekt, look up one agent, list agent names, and ask whether an agent UID is running here (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
@@ -74,17 +74,17 @@ Neither channel has confidentiality or authentication. Anyone on the broadcast d
 While LAN discovery is on, the server also contacts every peer it discovers, presenting that peer's advertised `lan_key`:
 
 - every 30 seconds it asks each peer for its agent names; responses are capped at 64 KiB;
-- before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent (`GET /agentmux/agent/holding?uid=<uid>`, 1.5-second timeout), so one agent doesn't run on two computers (`agentmux-srv/src/backend/agent_admission.rs`).
+- before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent (`GET /agentmux/agent/holding?uid=<uid>`, 1.5-second timeout), so one agent doesn't run on two computers (`crates/srv/src/backend/agent_admission.rs`).
 
 A device that fakes an mDNS advertisement can make the server send these requests to an address of its choosing. Its answers aren't authenticated either: by claiming to hold an agent, it can make this instance refuse to start that agent, or stop it.
 
 ## Dev proxy
 
-`agentmux-srv` always starts a reverse proxy on `127.0.0.1:8090` (`agentmux-srv/src/backend/dev_proxy.rs`). It routes a request whose `Host` is `<key>.localhost` to a dev server an agent registered with the `RegisterDevServer` tool (a port inside that agent's container). Unregistered hosts get 404. It has no authentication: any local process, including other users' processes, can reach a registered dev server through it. If port 8090 is taken, the proxy logs a warning and doesn't start.
+`agentmux-srv` always starts a reverse proxy on `127.0.0.1:8090` (`crates/srv/src/backend/dev_proxy.rs`). It routes a request whose `Host` is `<key>.localhost` to a dev server an agent registered with the `RegisterDevServer` tool (a port inside that agent's container). Unregistered hosts get 404. It has no authentication: any local process, including other users' processes, can reach a registered dev server through it. If port 8090 is taken, the proxy logs a warning and doesn't start.
 
 ## Host IPC server
 
-The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` port (`agentmux-cef/src/ipc.rs`). It serves the frontend's static files and `/health` without authentication. `/ipc` and the browser-automation routes `/agentmux/browser/*` require `Authorization: Bearer <token>`, a UUIDv4 generated at each start of the host.
+The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` port (`crates/cef/src/ipc.rs`). It serves the frontend's static files and `/health` without authentication. `/ipc` and the browser-automation routes `/agentmux/browser/*` require `Authorization: Bearer <token>`, a UUIDv4 generated at each start of the host.
 
 - The token is passed to the frontend in the page URL. It is also written to an `ipc-port-<hash>` file in the data directory, with default file permissions (on Unix the data root itself is owner-only), so a second launch can find the running instance.
 - `/ipc` returns the server auth key to the frontend (`get_auth_key`), so the token is as valuable as the auth key itself.
@@ -92,7 +92,7 @@ The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` po
 
 ## Chromium remote-debugging port
 
-Chromium's remote-debugging (DevTools Protocol) server is **off in release builds** (`agentmux-cef/src/cdp_port.rs`). AgentMux doesn't need it: its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools) drives the DevTools Protocol inside the process (`agentmux-cef/src/browser_api/cdp.rs`), and **Inspect Element** opens Chromium's built-in DevTools window.
+Chromium's remote-debugging (DevTools Protocol) server is **off in release builds** (`crates/cef/src/cdp_port.rs`). AgentMux doesn't need it: its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools) drives the DevTools Protocol inside the process (`crates/cef/src/browser_api/cdp.rs`), and **Inspect Element** opens Chromium's built-in DevTools window.
 
 The `AGENTMUX_CDP_PORT` environment variable, read when AgentMux starts, turns it on or off:
 
@@ -105,7 +105,7 @@ The `AGENTMUX_CDP_PORT` environment variable, read when AgentMux starts, turns i
 
 When the preferred port is taken, it uses an OS-assigned free port. The port actually used is written to `authkey.dev` in the data directory.
 
-When the server is on, AgentMux doesn't set `--remote-debugging-address`, so Chromium binds it to loopback, its default. The server has **no authentication**. AgentMux starts Chromium with `--remote-allow-origins` set to `http://127.0.0.1:<port>` and `http://localhost:<port>` only (`agentmux-cef/src/app/mod.rs`, `remote_allow_origins`), so a web page from any other origin can't open a DevTools WebSocket. A client that sends no `Origin` header, which any local program can do, is not stopped by that check.
+When the server is on, AgentMux doesn't set `--remote-debugging-address`, so Chromium binds it to loopback, its default. The server has **no authentication**. AgentMux starts Chromium with `--remote-allow-origins` set to `http://127.0.0.1:<port>` and `http://localhost:<port>` only (`crates/cef/src/app/mod.rs`, `remote_allow_origins`), so a web page from any other origin can't open a DevTools WebSocket. A client that sends no `Origin` header, which any local program can do, is not stopped by that check.
 
 What this means in practice, while the server is on:
 
@@ -116,7 +116,7 @@ Mitigations: leave the server off unless you need it; don't set `AGENTMUX_CDP_PO
 
 ## Local IPC
 
-The launcher, the CEF host and the server talk over local IPC (`agentmux-launcher/src/ipc/server.rs`, `agentmux-srv/src/srv_ipc/server.rs`). None of these channels uses a token; the first message a client sends declares what it is.
+The launcher, the CEF host and the server talk over local IPC (`crates/launcher/src/ipc/server.rs`, `crates/srv/src/srv_ipc/server.rs`). None of these channels uses a token; the first message a client sends declares what it is.
 
 - **Unix:** the launcher's socket lives in a directory AgentMux creates with mode `0700`, owned by you. It refuses to use the directory if it is a symlink, isn't a directory, or is owned by another user. Other OS users can't connect; any process running as you can.
 - **Windows:** the named pipes are created without an explicit security descriptor, so Windows' default named-pipe security applies. Microsoft documents that default as full control for LocalSystem, administrators and the creator, and read access for Everyone and anonymous. Remote clients are rejected.
@@ -157,16 +157,16 @@ Restrict these to your LAN subnet or to known peers.
 ---
 
 **Source-of-truth references**:
-- `agentmux-srv/src/bootstrap.rs` (`bind_listeners_and_network`) — loopback startup listeners
-- `agentmux-srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
-- `agentmux-srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
-- `agentmux-srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
-- `agentmux-srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `agentmux-srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
-- `agentmux-srv/src/config.rs` — `lan_key` generation
-- `agentmux-srv/src/backend/dev_proxy.rs` — dev proxy
-- `agentmux-srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
-- `agentmux-cef/src/ipc.rs` — host IPC server
-- `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs`, `agentmux-cef/src/app/mod.rs` — remote-debugging port and switches; `agentmux-cef/src/browser_api/cdp.rs` — in-process DevTools Protocol for the browser API
-- `agentmux-launcher/src/ipc/server.rs`, `agentmux-launcher/src/ipc/mod.rs`, `agentmux-srv/src/srv_ipc/server.rs`, `agentmux-srv/src/crash_monitor.rs` — local IPC
+- `crates/srv/src/bootstrap.rs` (`bind_listeners_and_network`) — loopback startup listeners
+- `crates/srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
+- `crates/srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
+- `crates/srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
+- `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `crates/srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
+- `crates/srv/src/config.rs` — `lan_key` generation
+- `crates/srv/src/backend/dev_proxy.rs` — dev proxy
+- `crates/srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
+- `crates/cef/src/ipc.rs` — host IPC server
+- `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs`, `crates/cef/src/app/mod.rs` — remote-debugging port and switches; `crates/cef/src/browser_api/cdp.rs` — in-process DevTools Protocol for the browser API
+- `crates/launcher/src/ipc/server.rs`, `crates/launcher/src/ipc/mod.rs`, `crates/srv/src/srv_ipc/server.rs`, `crates/srv/src/crash_monitor.rs` — local IPC
 
 **Marketing claims this page substantiates**: "runs on your machine" on [agentmux.ai](https://agentmux.ai).

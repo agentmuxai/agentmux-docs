@@ -18,7 +18,7 @@ Before the catalog, RPC handlers returned bare strings (`Result<T, String>`), fi
 
 ### 1. Rust enum (`agentmux-common::errors`)
 
-[`agentmux-common/src/errors.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/errors.rs) defines `AgentMuxError`:
+[`crates/common/src/errors.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/errors.rs) defines `AgentMuxError`:
 
 ```rust
 #[derive(Debug, thiserror::Error)]
@@ -95,9 +95,9 @@ RPC handlers serialize this into the existing `Result<T, String>` boundary today
 
 ## Adding a new code
 
-1. Add the variant to `AgentMuxError` in `agentmux-common/src/errors.rs`. Use `thiserror`'s `#[error("...")]` for the Rust-side Display string — that's what ends up in `wire.message`.
+1. Add the variant to `AgentMuxError` in `crates/common/src/errors.rs`. Use `thiserror`'s `#[error("...")]` for the Rust-side Display string — that's what ends up in `wire.message`.
 2. Add the matching variant to `AmxCode` and its `as_str()` arm — pick the next unused number in the relevant prefix bucket.
-3. Update `code()`, `to_wire()` (insert `details` keys), and the `code_strs_unique_and_stable` test in `agentmux-common/src/errors.rs`.
+3. Update `code()`, `to_wire()` (insert `details` keys), and the `code_strs_unique_and_stable` test in `crates/common/src/errors.rs`.
 4. Add the matching entry to `frontend/app/errors/catalog.ts` with the friendly text. Use the lambda form of `retry` if the recovery hint depends on the details payload.
 5. Migrate the call site: replace `Err(format!("..."))` with `Err(AgentMuxError::YourVariant { ... }.to_wire().to_string())`.
 6. Wire any client-side log/banner sites through `translateError()` if they previously rendered `err.message` directly.
@@ -115,5 +115,5 @@ The contract: codes are *forever stable* once shipped. Renaming the Rust variant
 - Design spec: [`docs/specs/SPEC_ERROR_CATALOG_2026_05_17.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_ERROR_CATALOG_2026_05_17.md) — full audit, migration plan, open questions.
 - [Modal system (modal-v2)](/internals/modal-system/) — the universal chrome `<ErrorBanner>` integrates with.
 - Source:
-  - [`agentmux-common/src/errors.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/errors.rs)
+  - [`crates/common/src/errors.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/errors.rs)
   - [`frontend/app/errors/catalog.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/catalog.ts), [`translate.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/translate.ts), [`ErrorBanner.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/ErrorBanner.tsx)

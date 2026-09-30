@@ -11,7 +11,7 @@ The **Warden** is a pane for supervising agents. It shows which agents are regis
 
 ## Where to find it
 
-The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by default (`agentmux-srv/src/config/widgets.json`, `defwidget@warden`). Open it in any of these ways:
+The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by default (`crates/srv/src/config/widgets.json`, `defwidget@warden`). Open it in any of these ways:
 
 - Click **more** at the end of the widget bar and choose **Warden**. Right-click it there and choose **Pin to bar** to keep it in the bar.
 - Right-click a pane header → **Replace With...** → **Warden**.
@@ -44,13 +44,13 @@ The Host section lists every agent currently registered with this instance's mes
 | `last seen` | Time since the agent last registered |
 | `state` | `active` if it registered less than 30 seconds ago, otherwise `idle` |
 
-An agent registers when its pane's agent process starts, and again each time you send it a message from its pane (`agentmux-srv/src/server/agent_handlers/input.rs`). A turn started by a jekt doesn't re-register it, and there is no periodic heartbeat. So `last seen` counts from the process start or your last message, and `state` changes to `idle` about 30 seconds later even if the agent is still busy. It does not tell you whether the agent is working; use [Swarm](/subagent-watcher/) for that.
+An agent registers when its pane's agent process starts, and again each time you send it a message from its pane (`crates/srv/src/server/agent_handlers/input.rs`). A turn started by a jekt doesn't re-register it, and there is no periodic heartbeat. So `last seen` counts from the process start or your last message, and `state` changes to `idle` about 30 seconds later even if the agent is still busy. It does not tell you whether the agent is working; use [Swarm](/subagent-watcher/) for that.
 
-An agent's row disappears when it is unregistered: its pane closes, its process exits, its agent ID changes, or you deregister it here. An agent that is already live in another AgentMux instance, on this machine or elsewhere, is refused registration, so its pane never appears here (`agentmux-srv/src/backend/agent_admission.rs`).
+An agent's row disappears when it is unregistered: its pane closes, its process exits, its agent ID changes, or you deregister it here. An agent that is already live in another AgentMux instance, on this machine or elsewhere, is refused registration, so its pane never appears here (`crates/srv/src/backend/agent_admission.rs`).
 
 ### Soft deregister
 
-Each row has a **×** button ("Deregister (soft kill — removes from jekt routing, leaves process running)"). After you confirm, AgentMux removes the agent's routing entry on this instance and its entries in the registries other AgentMux instances on this machine read, stops its MuxBus cloud subscription, and drops its Swarm subagent tracking (`agentmux-srv/src/server/reactive.rs`).
+Each row has a **×** button ("Deregister (soft kill — removes from jekt routing, leaves process running)"). After you confirm, AgentMux removes the agent's routing entry on this instance and its entries in the registries other AgentMux instances on this machine read, stops its MuxBus cloud subscription, and drops its Swarm subagent tracking (`crates/srv/src/server/reactive.rs`).
 
 - The agent's process and pane keep running. Its conversation and data are untouched.
 - Jekts are no longer delivered to that pane, whether sent from this machine, the LAN or the cloud relay. If the agent has a saved definition, a jekt sent to it can be held for up to 24 hours and delivered when the agent registers again.
@@ -86,7 +86,7 @@ The Audit section shows recent entries from the message handler's audit log, mos
 - every Supervisor decision (nudged, declined, or nudge failed) with the Supervisor's stated reason;
 - agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `FleetBulkStop`, and `ClosePane` calls in which one agent closed another's pane;
 - agents quitting themselves (`/quit`, `/exit`, the `QuitSelf` tool or `ClosePane` with no arguments), including a self-quit that has to wait for your 15-second override;
-- the 15-second override window that an agent's `FleetBulkStop` or its `ClosePane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`agentmux-srv/src/sagas/pending_shutdown.rs`).
+- the 15-second override window that an agent's `FleetBulkStop` or its `ClosePane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 Each row shows the time, `sender → recipient`, the status, a size in bytes and the reason. Rows for stops, pane closes and quits don't name the action; tell them apart by the reason text. Their byte size is the length of the internal action name, not of a message. A stop from the Swarm toolbar shows `—` as the sender.
 

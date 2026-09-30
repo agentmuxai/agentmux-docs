@@ -37,15 +37,15 @@ agentmux-launcher  (J0 Job Object owner)
 ```
 
 Source files cited throughout:
-- `shell.rs` = `agentmux-srv/src/backend/blockcontroller/shell.rs`
-- `data_paths.rs` = `agentmux-common/src/data_paths.rs`
-- `runtime_mode.rs` = `agentmux-common/src/runtime_mode.rs`
-- `srv_spawner.rs` = `agentmux-launcher/src/srv_spawner.rs`
-- `launcher/main.rs` = `agentmux-launcher/src/main.rs`
-- `shellintegration.rs` = `agentmux-srv/src/backend/shellintegration.rs`
-- `bash.sh` = `agentmux-srv/src/backend/shellintegration/bash.sh`
-- `pwsh.ps1` = `agentmux-srv/src/backend/shellintegration/pwsh.ps1`
-- `websocket.rs` = `agentmux-srv/src/server/websocket.rs`
+- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell.rs`
+- `data_paths.rs` = `crates/common/src/data_paths.rs`
+- `runtime_mode.rs` = `crates/common/src/runtime_mode.rs`
+- `srv_spawner.rs` = `crates/launcher/src/srv_spawner.rs`
+- `launcher/main.rs` = `crates/launcher/src/main.rs`
+- `shellintegration.rs` = `crates/srv/src/backend/shellintegration.rs`
+- `bash.sh` = `crates/srv/src/backend/shellintegration/bash.sh`
+- `pwsh.ps1` = `crates/srv/src/backend/shellintegration/pwsh.ps1`
+- `websocket.rs` = `crates/srv/src/server/websocket.rs`
 
 ---
 
@@ -398,7 +398,7 @@ resolve the `current-host-v<AGENTMUX_VERSION>.path` pointer file.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Build script (`agentmux-common/build.rs:37`) from the env at compile time |
+| **Who sets it** | Build script (`crates/common/build.rs:37`) from the env at compile time |
 | **Who reads it** | `data_paths.rs:54-58` as `option_env!` — baked into the binary, not read at runtime |
 | **Example** | `stable` (release CI), `local-main` (local `task package` on `main` branch) |
 
@@ -451,7 +451,7 @@ it (streaming bash runner via `agent.run-command`).
 **SECURITY:** Do not log this value. It authenticates all WebSocket
 connections to the srv instance for the lifetime of that srv process.
 
-**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts only on the agent routes (messaging, work queue, the agent's own memory, self-quit) and refuses everywhere else (`agentmux-srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts only on the agent routes (messaging, work queue, the agent's own memory, self-quit) and refuses everywhere else (`crates/srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
 
 ---
 
@@ -508,8 +508,8 @@ the IPC bridge.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher on the host env, on every platform (`agentmux-launcher/src/host_spawn.rs`; Windows too since v0.58.0) |
-| **Who reads it** | CEF host (`launcher_is_genuine_parent`, `agentmux-cef/src/parent_process.rs`) to verify the launcher is still alive and is genuinely the current parent |
+| **Who sets it** | Launcher on the host env, on every platform (`crates/launcher/src/host_spawn.rs`; Windows too since v0.58.0) |
+| **Who reads it** | CEF host (`launcher_is_genuine_parent`, `crates/cef/src/parent_process.rs`) to verify the launcher is still alive and is genuinely the current parent |
 | **Example** | `5432` |
 
 Used to distinguish a genuine launcher hand-off from an inherited stale
@@ -572,7 +572,7 @@ output chunks to the correct pane subscription.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | You, before starting AgentMux (optional) |
-| **Who reads it** | CEF host at startup (`agentmux-cef/src/cdp_port.rs`, `requested_cdp_port`) |
+| **Who reads it** | CEF host at startup (`crates/cef/src/cdp_port.rs`, `requested_cdp_port`) |
 | **Values** | Unset or empty: CDP server off in release builds, on (port 9223) in dev builds. `1024`–`65535`: on, preferring that port. `1`/`on`/`true`/`yes`/`auto`: on, preferring 9222 (release) or 9223 (dev). `0`/`off`/`false`/`no`: off, dev builds included |
 
 Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's own browser automation doesn't need it. If the preferred port is taken an OS-assigned port is used, and the port in use is written to `authkey.dev`. See [Network exposure](/security/network-exposure/#chromium-remote-debugging-port).
@@ -731,22 +731,22 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 
 | Topic | File | Lines |
 |-------|------|-------|
-| PTY env injection (shell controller) | `agentmux-srv/src/backend/blockcontroller/shell.rs` | 506–611 |
-| Identity strip logic | `agentmux-srv/src/backend/blockcontroller/shell.rs` | 597–608 |
-| Jekt auto-registration | `agentmux-srv/src/backend/blockcontroller/shell.rs` | 652–683 |
-| DataPaths struct and env var names | `agentmux-common/src/data_paths.rs` | 77–127 |
-| DataPaths::to_env_vars() | `agentmux-common/src/data_paths.rs` | 267–296 |
-| DataPaths::from_env() | `agentmux-common/src/data_paths.rs` | 304–344 |
-| RuntimeMode detection | `agentmux-common/src/runtime_mode.rs` | 69–117 |
-| AGENTMUX_LOCAL_URL set point | `agentmux-srv/src/main.rs` | 706–708 |
-| AUTH_KEY strip | `agentmux-srv/src/config.rs` | 37–45 |
-| AUTH_KEY re-inject for streaming bash | `agentmux-srv/src/server/websocket.rs` | 900–912 |
-| Shell integration deployment | `agentmux-srv/src/backend/shellintegration.rs` | 55–94 |
-| Bash integration script | `agentmux-srv/src/backend/shellintegration/bash.sh` | whole file |
-| PowerShell integration script | `agentmux-srv/src/backend/shellintegration/pwsh.ps1` | whole file |
-| Zsh integration script | `agentmux-srv/src/backend/shellintegration/zsh.sh` | whole file |
-| Launcher → srv env vars | `agentmux-launcher/src/srv_spawner.rs` | 127–145 |
-| Launcher → host env vars (Windows) | `agentmux-launcher/src/main.rs` | 319–335 |
-| Launcher → host env vars (Unix) | `agentmux-launcher/src/main.rs` | 397–412 |
+| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell.rs` | 506–611 |
+| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell.rs` | 597–608 |
+| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell.rs` | 652–683 |
+| DataPaths struct and env var names | `crates/common/src/data_paths.rs` | 77–127 |
+| DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` | 267–296 |
+| DataPaths::from_env() | `crates/common/src/data_paths.rs` | 304–344 |
+| RuntimeMode detection | `crates/common/src/runtime_mode.rs` | 69–117 |
+| AGENTMUX_LOCAL_URL set point | `crates/srv/src/main.rs` | 706–708 |
+| AUTH_KEY strip | `crates/srv/src/config.rs` | 37–45 |
+| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/websocket.rs` | 900–912 |
+| Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` | 55–94 |
+| Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` | whole file |
+| PowerShell integration script | `crates/srv/src/backend/shellintegration/pwsh.ps1` | whole file |
+| Zsh integration script | `crates/srv/src/backend/shellintegration/zsh.sh` | whole file |
+| Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` | 127–145 |
+| Launcher → host env vars (Windows) | `crates/launcher/src/main.rs` | 319–335 |
+| Launcher → host env vars (Unix) | `crates/launcher/src/main.rs` | 397–412 |
 | WSH retirement (AGENTMUX sentinel history) | `specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` | — |
 | Data channels design | `docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md` | — |

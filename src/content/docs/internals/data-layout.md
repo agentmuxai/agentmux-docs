@@ -24,11 +24,11 @@ Dev mode lives outside `channels/` on purpose: branches are short-lived and nume
 
 Each local `task package` build is its own isolated AgentMux instance. The channel string is baked into the binary at compile time (`AGENTMUX_BUILD_CHANNEL_DEFAULT`) as `local-<branch>-<hash>-<build-id>`, so two rebuilds of the *same* branch produce *different* channels — different `<hash>`/`<build-id>` — and therefore different data dirs, CEF caches, and single-instance pipes. Launching a freshly-built binary always runs that build rather than joining a still-running sibling. These per-build channels accumulate on disk; clean up unused `~/.agentmux/channels/local-*` manually when no instance from that build is running. Because agent definitions and auth are account-wide under `shared/` (see [Account-wide (shared) contents](#account-wide-shared-contents)), a fresh per-build data dir still shows every agent and stays logged in — only pane layout and memories start fresh.
 
-The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`agentmux-common/src/runtime_mode.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs)). The channel is derived from the mode, with an override:
+The mode is detected at startup by `agentmux-common`'s runtime-mode probe ([`crates/common/src/runtime_mode.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/runtime_mode.rs)). The channel is derived from the mode, with an override:
 
 - `AGENTMUX_CHANNEL=<name>` — pin the channel explicitly. Useful for parallel-channel testing (`AGENTMUX_CHANNEL=beta agentmux.exe`) or for letting a dev build share state with a portable. Has no effect in Dev mode (Dev branches don't traverse `channels/`).
 
-Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths — with one carve-out: the sidecar's own log file is initialized to the shared `~/.agentmux/logs/` directly (see [Log discovery via pointer files](#log-discovery-via-pointer-files) below). The host log respects the per-channel `AGENTMUX_LOG_DIR`. PTY shells spawned by the sidecar also see `AGENTMUX_LOG_DIR=~/.agentmux/logs/`, so `muxlog` lookups resolve uniformly.
+Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs). The launcher resolves once at startup and exports `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, etc. as env vars; host and sidecar read them from env. All three processes always agree on paths — with one carve-out: the sidecar's own log file is initialized to the shared `~/.agentmux/logs/` directly (see [Log discovery via pointer files](#log-discovery-via-pointer-files) below). The host log respects the per-channel `AGENTMUX_LOG_DIR`. PTY shells spawned by the sidecar also see `AGENTMUX_LOG_DIR=~/.agentmux/logs/`, so `muxlog` lookups resolve uniformly.
 
 ### Per-clone isolation in Dev mode
 
@@ -43,7 +43,7 @@ Without this second segment, two clones on the same branch would resolve to the 
 - the launcher's IPC socket/pipe (the second clone's launcher would route opens into the first clone's window),
 - the data dir and logs.
 
-Each `task dev` derives its `clone-id` from `current_exe()` at launch, hashes the canonical lowercase path, and threads it into [`RuntimeMode::Dev { branch, clone_id }`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/runtime_mode.rs). It travels to host and sidecar via `AGENTMUX_CLONE_ID`.
+Each `task dev` derives its `clone-id` from `current_exe()` at launch, hashes the canonical lowercase path, and threads it into [`RuntimeMode::Dev { branch, clone_id }`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/runtime_mode.rs). It travels to host and sidecar via `AGENTMUX_CLONE_ID`.
 
 `task dev` also derives a per-clone **Vite port** the same way (`5173 + cksum(workspace-root) % 200`), so the dev server doesn't fight `--strictPort` on a single hardcoded port either. Override with `AGENTMUX_VITE_PORT=<n> task dev` if you need a specific port.
 

@@ -17,7 +17,7 @@ await writeText("hello");
 const text = await readText();
 ```
 
-Both functions invoke CEF IPC commands implemented in [`agentmux-cef/src/commands/clipboard.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/clipboard.rs):
+Both functions invoke CEF IPC commands implemented in [`crates/cef/src/commands/clipboard.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/clipboard.rs):
 
 - **Windows** — Win32 `OpenClipboard` / `SetClipboardData` (CF_UNICODETEXT).
 - **macOS** — `pbcopy` / `pbpaste`.
@@ -91,7 +91,7 @@ For long-output surfaces (install logs, terminal scrollback, agent transcripts),
 
 - **Save Selection As…** — writes the selection (or `getAll()` if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
 
-Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. Backend handler will live in [`agentmux-srv/src/server/file_handlers.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/server/file_handlers.rs).
+Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. Backend handler will live in [`crates/srv/src/server/file_handlers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/file_handlers.rs).
 
 Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
 
@@ -112,6 +112,6 @@ Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
 - Spec: [`SPEC_UNIFIED_CLIPBOARD_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_CLIPBOARD_2026_05_18.md) — the unified architecture + phased rollout.
 - Source:
   - [`frontend/util/clipboard.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/util/clipboard.ts) — the wrapper.
-  - [`agentmux-cef/src/commands/clipboard.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/clipboard.rs) — host-side impl.
+  - [`crates/cef/src/commands/clipboard.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/clipboard.rs) — host-side impl.
   - [`frontend/app/store/contextmenu.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/contextmenu.ts) — `ContextMenuModel`.
   - [`frontend/app/view/term/termwrap.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/term/termwrap.ts) — reference xterm wiring.

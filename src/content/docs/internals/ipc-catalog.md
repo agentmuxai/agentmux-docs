@@ -26,7 +26,7 @@ This document catalogs every inter-process channel in AgentMux, their wire contr
 11. [Channel I: Chromium Remote Debug Port (CDP)](#11-channel-i-chromium-remote-debug-port-cdp)
 12. [IPC Token and Auth Key — Lifecycle and Leak Surface](#12-ipc-token-and-auth-key--lifecycle-and-leak-surface)
 13. [Launcher ↔ Srv Named Pipe (Reducer Bus)](#13-launcher--srv-named-pipe-reducer-bus)
-14. [Command/Event Domain Mixing in agentmux-common/src/ipc.rs](#14-commandevent-domain-mixing-in-agentmux-commonsrcipcrs)
+14. [Command/Event Domain Mixing in crates/common/src/ipc.rs](#14-commandevent-domain-mixing-in-agentmux-commonsrcipcrs)
 15. [Environment Variable Contract](#15-environment-variable-contract)
 16. [Security Findings Cross-Reference](#16-security-findings-cross-reference)
 
@@ -66,7 +66,7 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 
 ## 3. Channel A: Renderer → Host Local IPC (HTTP)
 
-**Source:** `agentmux-cef/src/ipc.rs`
+**Source:** `crates/cef/src/ipc.rs`
 
 ### Transport
 
@@ -234,7 +234,7 @@ All commands dispatched through `route_command()` (`ipc.rs:181`).
 
 ## 4. Channel B: Host → Renderer Event Push (CEF JS Bridge)
 
-**Source:** `agentmux-cef/src/launcher_event_bridge.rs`, `agentmux-cef/src/srv_event_bridge.rs`
+**Source:** `crates/cef/src/launcher_event_bridge.rs`, `crates/cef/src/srv_event_bridge.rs`
 
 ### Transport
 
@@ -256,7 +256,7 @@ Srv events dispatched as:
 window.__agentmux_srv_event(<JSON Event>)
 ```
 
-Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`agentmux-common/src/ipc.rs:800-1503`).
+Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:800-1503`).
 
 ### Purpose
 
@@ -267,7 +267,7 @@ Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (
 
 ## 5. Channel C: Host ↔ Launcher Named Pipe
 
-**Source:** `agentmux-cef/src/launcher_ipc.rs`, `agentmux-common/src/ipc.rs`
+**Source:** `crates/cef/src/launcher_ipc.rs`, `crates/common/src/ipc.rs`
 
 ### Transport
 
@@ -278,7 +278,7 @@ Dev mode (`task dev` without launcher, or host invoked directly): `AGENTMUX_LAUN
 
 ### Authentication
 
-None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `agentmux-cef/src/main.rs:455-463`).
+None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `crates/cef/src/main.rs:455-463`).
 
 ### Wire Format
 
@@ -354,7 +354,7 @@ All `agentmux_common::ipc::Event` variants propagated. Key ones:
 
 ## 6. Channel D: Host → Srv Named Pipe (Read-only Bridge)
 
-**Source:** `agentmux-cef/src/srv_ipc.rs`
+**Source:** `crates/cef/src/srv_ipc.rs`
 
 ### Transport
 
@@ -379,7 +379,7 @@ Host is a read-only subscriber. No outbound command channel exists today (saga c
 
 ## 7. Channel E: Renderer ↔ Srv WebSocket (RPC)
 
-**Source:** `agentmux-srv/src/server/websocket.rs`
+**Source:** `crates/srv/src/server/websocket.rs`
 
 ### Transport
 
@@ -387,7 +387,7 @@ WebSocket at `ws://127.0.0.1:<srv_port>/ws`.
 
 ### Authentication
 
-`?authkey=<auth_key>` query parameter on the WebSocket upgrade URL (`agentmux-srv/src/server/mod.rs:387-396`). This is the only route that accepts the authkey via query string; all other routes require the `X-AuthKey` header.
+`?authkey=<auth_key>` query parameter on the WebSocket upgrade URL (`crates/srv/src/server/mod.rs:387-396`). This is the only route that accepts the authkey via query string; all other routes require the `X-AuthKey` header.
 
 **Gap (audit C3):** The query-string authkey is visible in browser history, server access logs, and `Referer` headers on cross-origin navigations. Acceptable for WebSocket (where the browser API does not permit custom headers) but represents a key leak risk if the URL is ever logged or forwarded.
 
@@ -448,7 +448,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ## 8. Channel F: Renderer → Srv HTTP Service
 
-**Source:** `agentmux-srv/src/server/service.rs`, `agentmux-srv/src/server/mod.rs`
+**Source:** `crates/srv/src/server/service.rs`, `crates/srv/src/server/mod.rs`
 
 ### Transport
 
@@ -456,7 +456,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ### Authentication
 
-`X-AuthKey: <auth_key>` header required (`agentmux-srv/src/server/mod.rs:374-406`). Auth middleware also accepts `?authkey=` query param exclusively on the `/ws` route.
+`X-AuthKey: <auth_key>` header required (`crates/srv/src/server/mod.rs:374-406`). Auth middleware also accepts `?authkey=` query param exclusively on the `/ws` route.
 
 ### CORS
 
@@ -491,7 +491,7 @@ Updates from service calls are broadcast on the event bus to all WebSocket subsc
 
 ## 9. Channel G: Browser DOM API (HTTP over IPC)
 
-**Source:** `agentmux-cef/src/browser_api/routes.rs`, registered via `crate::browser_api::register_routes(app)` (`ipc.rs:88`)
+**Source:** `crates/cef/src/browser_api/routes.rs`, registered via `crate::browser_api::register_routes(app)` (`ipc.rs:88`)
 
 ### Transport
 
@@ -519,7 +519,7 @@ Same HTTP server as Channel A (`127.0.0.1:<ipc_port>`). Routes under `/agentmux/
 
 ### Mechanism
 
-All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-process**, through CEF's `SendDevToolsMessage` and a DevTools message observer on the target browser (`agentmux-cef/src/browser_api/cdp.rs`). They don't use the remote-debugging port (Channel I), which is off in release builds.
+All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-process**, through CEF's `SendDevToolsMessage` and a DevTools message observer on the target browser (`crates/cef/src/browser_api/cdp.rs`). They don't use the remote-debugging port (Channel I), which is off in release builds.
 
 **Security: `/agentmux/browser/eval` runs arbitrary JS.** The `eval` route accepts a caller-supplied `script` string and executes it in the pane's JS world via `Runtime.evaluate` with no sandbox or isolation (`routes.rs:201`). The script runs in whatever origin the pane currently loads. Any local process holding the `ipc_token` can execute arbitrary JS in any browser pane.
 
@@ -527,7 +527,7 @@ All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-proce
 
 ## 10. Channel H: OSC 16162 — Terminal Shell Integration Escape Sequences
 
-**Source:** `agentmux-srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:177-335`, `frontend/app/view/term/termwrap.ts:160-161`
+**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:177-335`, `frontend/app/view/term/termwrap.ts:160-161`
 
 ### Transport
 
@@ -563,7 +563,7 @@ Scripts are embedded in the srv binary (`shellintegration.rs:16-19`) and deploye
 
 ## 11. Channel I: Chromium Remote Debug Port (CDP)
 
-**Source:** `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs` (port selection), `agentmux-cef/src/app/mod.rs` (`remote_allow_origins`)
+**Source:** `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` (port selection), `crates/cef/src/app/mod.rs` (`remote_allow_origins`)
 
 ### Transport
 
@@ -571,7 +571,7 @@ Chromium DevTools Protocol over HTTP and WebSocket:
 - `http://127.0.0.1:9222/json` — list targets (prod)
 - `ws://127.0.0.1:9222/devtools/page/<target>` — CDP per-target session
 
-**On by default only in dev builds.** A release build starts it only when `AGENTMUX_CDP_PORT` is set to a port or to `1`/`on`/`true`/`yes`/`auto`; `0`/`off`/`false`/`no` turns it off in a dev build too (`agentmux-cef/src/cdp_port.rs`). The preferred port is 9222 in production and 9223 in dev builds, with an OS-assigned fallback when it is taken; the port in use is published in `authkey.dev`. `--remote-allow-origins` is limited to `http://127.0.0.1:<port>` and `http://localhost:<port>` (`agentmux-cef/src/app/mod.rs`, `remote_allow_origins`), so web pages can't open a DevTools WebSocket; clients that send no `Origin` are not affected. No CSP header is configured.
+**On by default only in dev builds.** A release build starts it only when `AGENTMUX_CDP_PORT` is set to a port or to `1`/`on`/`true`/`yes`/`auto`; `0`/`off`/`false`/`no` turns it off in a dev build too (`crates/cef/src/cdp_port.rs`). The preferred port is 9222 in production and 9223 in dev builds, with an OS-assigned fallback when it is taken; the port in use is published in `authkey.dev`. `--remote-allow-origins` is limited to `http://127.0.0.1:<port>` and `http://localhost:<port>` (`crates/cef/src/app/mod.rs`, `remote_allow_origins`), so web pages can't open a DevTools WebSocket; clients that send no `Origin` are not affected. No CSP header is configured.
 
 ### Authentication
 
@@ -634,7 +634,7 @@ There are two distinct secrets:
 
 ## 13. Launcher ↔ Srv Named Pipe (Reducer Bus)
 
-**Source:** `agentmux-common/src/ipc.rs` (shared wire types), `agentmux-launcher/src/` (server side, not read directly)
+**Source:** `crates/common/src/ipc.rs` (shared wire types), `crates/launcher/src/` (server side, not read directly)
 
 ### Transport
 
@@ -665,7 +665,7 @@ All `Command` variants from the second half of `ipc.rs` (Phase E.x):
 
 ### Domain Mixing Note
 
-`agentmux-common/src/ipc.rs` (2034 LOC) contains a single `Command` enum that conflates two distinct domains:
+`crates/common/src/ipc.rs` (2034 LOC) contains a single `Command` enum that conflates two distinct domains:
 
 - **Launcher domain** (`Register`, `Ping`, `ReportWindow*`, `ReportHwnd*`, `SpawnPoolWindow`, `ReapPanes`, `DrainPoolIfLast`, `GetSnapshot`, `GetEvents`, …) — processed by the launcher's reducer.
 - **Srv domain** (`GetSrvSnapshot`, `CreateWorkspace`, `DeleteWorkspace`, `CreateTab`, `LayoutInsertNode`, …) — processed by the srv reducer.
@@ -676,9 +676,9 @@ See `ipc.rs:1-23` for the stated backward-compat policy (externally tagged enums
 
 ---
 
-## 14. Command/Event Domain Mixing in agentmux-common/src/ipc.rs
+## 14. Command/Event Domain Mixing in crates/common/src/ipc.rs
 
-`agentmux-common/src/ipc.rs` is 2034 lines. It defines:
+`crates/common/src/ipc.rs` is 2034 lines. It defines:
 
 - `ClientKind` enum — `Host`, `Renderer`, `Srv`, `Tool`
 - `Command` enum — all commands from both the launcher domain and the srv domain (see §13 above)
@@ -735,7 +735,7 @@ This section maps the sweep findings to the specific code locations documented a
 | **OSC 16162 `E` injects env keys into block meta** | `termosc.ts:262-287` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs:583-591`. | No key allowlist. No value validation. Caused `AGENTMUX_AGENT_COLOR` Win11 bug. |
 | **OSC 16162 `X` reconfigures srv poller** | `termosc.ts:289-316` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
 | **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:90` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`mod.rs:143-150`); host has not. |
-| **CDP port unauthenticated, when on** | `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
+| **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `srv/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
 | **`no_sandbox: 1` in CEF settings** | `main.rs:664` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
 | **WS authkey in query string** | `server/mod.rs:387-396` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |

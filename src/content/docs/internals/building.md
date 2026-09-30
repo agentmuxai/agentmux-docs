@@ -79,9 +79,9 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | Changed | Action |
 |---------|--------|
 | Frontend (TypeScript / SolidJS) | Auto-reloads via Vite HMR |
-| Rust sidecar (`agentmux-srv/`) | `task build:backend`, then restart `task dev` |
-| Rust host (`agentmux-cef/`) | `task build:host`, then restart `task dev` |
-| Launcher (`agentmux-launcher/`) | `task package` (portable / installed builds). Note: `task dev` now runs through the launcher on all platforms as of v0.41.0 — launcher changes are exercised by `task dev`, not just package builds. |
+| Rust sidecar (`crates/srv/`) | `task build:backend`, then restart `task dev` |
+| Rust host (`crates/cef/`) | `task build:host`, then restart `task dev` |
+| Launcher (`crates/launcher/`) | `task package` (portable / installed builds). Note: `task dev` now runs through the launcher on all platforms as of v0.41.0 — launcher changes are exercised by `task dev`, not just package builds. |
 
 ## Build Commands
 
@@ -114,10 +114,10 @@ Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10
 
 ```
 agentmux/
-├── agentmux-launcher/   # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
-├── agentmux-cef/        # CEF host — embeds Chromium, owns the OS window
-├── agentmux-srv/        # Sidecar — RPC engine, SQLite persistence, sagas
-├── agentmux-common/     # Shared utilities (path resolution, runtime mode)
+├── crates/launcher/   # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
+├── crates/cef/        # CEF host — embeds Chromium, owns the OS window
+├── crates/srv/        # Sidecar — RPC engine, SQLite persistence, sagas
+├── crates/common/     # Shared utilities (path resolution, runtime mode)
 ├── frontend/            # SolidJS + TypeScript (Vite)
 ├── docs/                # Architecture docs and specs
 ├── specs/               # Top-level specs
