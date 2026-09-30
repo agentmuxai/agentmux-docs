@@ -69,8 +69,11 @@ a missing CSS file → site unstyled. Always force-upload HTML separately.
 **`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
 
 `build:full` requires:
-- `cargo` on `PATH` (rustup minimal toolchain is enough). Without cargo, `build:rust-docs` warns and exits 0 — the site still builds but the rustdoc paths return 404 on prod.
+- `cargo` on `PATH` (rustup minimal toolchain is enough).
 - The `src/agentmux` submodule initialized.
+- On Linux, the -sys crates' dev packages: `pkg-config libwayland-dev libxkbcommon-dev libdbus-1-dev libxcb1-dev` (the deploy workflows install them). No CEF download is needed: `agentmux-cef` is documented with `--features cef/dox`.
+
+If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves differently by environment. Locally it warns and exits 0, and `/api/rust/` shows only the placeholder, whose crate links 404. In CI (`CI` set, as on GitHub Actions) it exits 1 and fails the deploy, so a broken Rust reference can't go live unseen again (#131). `RUST_DOCS_OPTIONAL=1` restores the lenient behaviour in CI for a deliberate one-off deploy.
 
 - **AWS account:** agentmux-prod `167667034757` since 2026-09-28 (stack `agentmux-docs-prod` in agentmuxai/agentmux-landing `cdk/lib/docs-stack.ts`). The shared account's `agentmux-docs-prod` bucket and `EF4XTPT79GHLS` are retired: don't deploy there.
 - **S3 Bucket:** `agentmux-docs-prod-167667034757`

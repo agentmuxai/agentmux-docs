@@ -33,6 +33,26 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install system libraries for cargo doc
+        # `cargo doc` runs every dependency's build script, and on Linux the
+        # agentmux crates' -sys dependencies look up system libraries with
+        # pkg-config. Without these the Rust reference fails to build
+        # (agentmux-docs#131: wayland-sys could not find wayland-client).
+        # Same set agentmux's own ci-pr.yml installs for its CEF-free crates:
+        #   libwayland-dev, libxkbcommon-dev: agentmux-launcher's splash
+        #   libdbus-1-dev, libxcb1-dev: agentmux-mcp's screen capture (xcap)
+        # agentmux-cef needs nothing extra: build-rust-docs.mjs documents it
+        # with `cef/dox`, which skips the CEF download and native build.
+        #
+        # The runner ships a google-chrome apt source we install nothing from;
+        # a corrupt index there fails `apt-get update` (agentmux saw this on
+        # 2026-09-09), so drop it. `apt-get install` is still the real gate.
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*
+          sudo apt-get update || echo "apt-get update reported errors; continuing (install is the real gate)"
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libwayland-dev libxkbcommon-dev libdbus-1-dev libxcb1-dev
+
       - name: Install Node 24
         uses: actions/setup-node@v4
         with:
