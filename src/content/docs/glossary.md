@@ -15,6 +15,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
+<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the running summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+
 **block** — An immutable persisted unit of pane state. A block is the smallest thing the reducer writes. Terminal output, code block, diff, chat message — each is one or more blocks. Layered structure with reducer-driven mutations. See [The reducer stack](/internals/reducer-stack/).
 
 <a id="browser-pane"></a>**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
@@ -22,6 +24,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 **CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
 <a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `local-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
+
+<a id="context-delivery"></a>**context delivery** — Content an agent is given without you typing it, such as Claude Code's conversation summary after a compaction. The agent pane shows each one as a collapsed card with a title, a size and a one-line excerpt; click it to read the full text. See [Conversation overhead](/internals/conversation-overhead/).
 
 <a id="host"></a>**host** — The CEF process (`agentmux-cef`). One per [instance](#instance). Owns the OS [windows](#window), the [browser panes](#browser-pane), the JS bridge, and IPC fan-out to every [renderer](#renderer). Spawned by the [launcher](#launcher); spawns the Chromium subprocesses. (The [sidecar](#sidecar) is also spawned by the launcher, which owns its lifecycle — see [Architecture overview](/internals/architecture/).)
 

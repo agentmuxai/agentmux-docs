@@ -102,7 +102,12 @@ AgentMux does **not** accumulate or re-send conversation history. History owners
 
 In both cases AgentMux itself never holds or replays the conversation history.
 
-Context compaction (automatic truncation when the context window fills up) is handled entirely inside the CLI. AgentMux does not trigger or control it — the CLI never reports its own context-window size, so AgentMux learns/seeds it from observed usage and applies a fixed buffer to estimate when compaction is imminent.
+Context compaction (summarizing the conversation when the context window fills up) happens inside the CLI. It starts automatically when the CLI decides the window is nearly full, or when you click **Compact** in the agent pane, which sends `/compact`. AgentMux doesn't decide when auto-compaction happens: the CLI never reports its own context-window size, so AgentMux learns/seeds it from observed usage and applies a fixed buffer to estimate when compaction is imminent.
+
+After a compaction the agent pane shows two rows:
+
+- **Context compacted**, with the token count before and after.
+- **Agent given a summary of the conversation**, with a one-line excerpt. Claude Code writes this summary and gives it to the agent; AgentMux only displays it, and sends nothing extra. Click the card to read the full summary. It's a [context delivery](/glossary/#context-delivery), not a message you sent.
 
 Compaction threshold for Claude Code CLI: `contextWindow - 33,000` tokens. Source: `frontend/app/store/agent-pane-state/context-window.ts` — `const COMPACTION_BUFFER = 33_000`.
 
