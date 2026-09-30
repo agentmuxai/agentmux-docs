@@ -10,20 +10,20 @@ This page is for IT teams, network admins and security reviewers who need to kno
 | Listener | Process | Bind | Protocol | Authentication | When |
 |---|---|---|---|---|---|
 | AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ephemeral ports | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
-| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP, WebSocket | As above, plus the `lan_key` on four routes | LAN discovery on (default **off**) |
+| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP | Only four LAN-peer routes, each taking the `lan_key` or the auth key. Public: `GET /`, `/health`, `/webhook/whatsapp` | LAN discovery on (default **off**) |
 | mDNS | `agentmux-srv` | UDP 5353, multicast | mDNS / DNS-SD | None | LAN discovery on |
 | UDP discovery responder | `agentmux-srv` | `0.0.0.0:47891` UDP | JSON | None; answers only private, link-local and loopback source addresses | LAN discovery on |
 | Dev proxy | `agentmux-srv` | `127.0.0.1:8090` | HTTP reverse proxy | None | Always (skipped if the port is taken) |
 | OAuth callback | `agentmux-srv` | `127.0.0.1`, ephemeral | HTTP, one request | OAuth `state` and PKCE | Only during a browser sign-in to an account you configured OAuth for |
 | Host IPC server | `agentmux-cef` | `127.0.0.1`, ephemeral | HTTP | Bearer token on `/ipc` and `/agentmux/browser/*`. Public: `/health`, the frontend's static files | Always |
-| Chromium remote debugging (CDP) | `agentmux-cef` | Loopback; port 9222 (release), 9223 (dev), or a free port | HTTP, WebSocket | **None** | **Always** |
+| Chromium remote debugging (CDP) | `agentmux-cef` | Loopback; port 9222 (release), 9223 (dev), or a free port | HTTP, WebSocket | **None** | Dev builds, or when `AGENTMUX_CDP_PORT` turns it on. **Off** in release builds by default |
 | Launcher IPC | `agentmux-launcher` | Windows named pipe `\\.\pipe\agentmux-<hash>\command`; Unix socket in `$XDG_RUNTIME_DIR/agentmux/` or `/tmp/agentmux-<uid>/` | Newline-delimited JSON | None | Always |
 | Server IPC (Windows) | `agentmux-srv` | Named pipe `\\.\pipe\agentmux-<hash>\srv-command` | Newline-delimited JSON | None | Windows, when started by the launcher |
 | Crash monitor (Windows) | `agentmux-srv` | Unix-domain socket `C:\CrashDumps\agentmuxsrv\monitor.sock` | Minidump IPC | None | Windows, always |
 
 `agentmux-mcp`, the MCP server each agent runs, talks to its agent over stdio and opens no listener.
 
-**With LAN discovery off, nothing listens on a non-loopback address.** Every TCP listener binds `127.0.0.1`, and the pipes and sockets are local by construction. Loopback is shared by every account on the machine, though: other OS users can reach the loopback listeners too. That matters most for the [remote-debugging port](#chromium-remote-debugging-port).
+**With LAN discovery off, nothing listens on a non-loopback address.** Every TCP listener binds `127.0.0.1`, and the pipes and sockets are local by construction. Loopback is shared by every account on the machine, though: other OS users can reach the loopback listeners too. That matters most for the [remote-debugging port](#chromium-remote-debugging-port), when it is on.
 
 ## The AgentMux server
 
@@ -36,19 +36,21 @@ Authentication (`auth_middleware` in `agentmux-srv/src/server/mod.rs`):
 - Unauthenticated: `GET /` returns `{"status":"ok","version":"<version>"}`. `/webhook/whatsapp` is the receiver for the WhatsApp bridge; it checks Meta's verify token and `X-Hub-Signature-256` HMAC instead of the auth key, and returns 503 until that bridge is set up.
 - Every response, including unauthenticated ones, carries an `x-agentmux-srv-version` header.
 
-CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key.
+CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key. `/ws` also refuses a WebSocket upgrade whose `Origin` header is anything other than those two (`ws_origin_guard`); a client that sends no `Origin`, such as the launcher or `agentmux-mcp`, is allowed. Every key and token a caller presents is compared in constant time (`agentmux-common/src/secret_eq.rs`).
 
-Every terminal pane and agent process receives the auth key as `AGENTMUX_AUTH_KEY`. See the [trust model](/security/trust-model/) for what that means.
+Every terminal pane and host agent process receives the auth key as `AGENTMUX_AUTH_KEY`. See the [trust model](/security/trust-model/) for what that means. [Container agents](/security/trust-model/#container-agents) get a narrower per-agent token in the same variable instead.
 
 ## LAN listeners
 
 When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two ports again on **every non-loopback interface address**: all IPv4 addresses, and all IPv6 addresses except link-local. That includes VPN and virtual adapters. It re-checks the interface list every 20 seconds, and removes the listeners when you turn LAN discovery off.
 
-These listeners serve **the full server API**, with no filtering by source address. From any network that can reach one of those addresses:
+These listeners serve **only the routes LAN peers need** (`build_routers_with` in `agentmux-srv/src/server/mod.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
 
-- anyone can call `GET /` (the version) and the WhatsApp webhook;
+- anyone can call `GET /` and `/health` (the version) and the WhatsApp webhook;
 - anyone holding the `lan_key` can call four routes: send a jekt, look up one agent, list agent names, and ask whether an agent UID is running here (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
-- anyone holding the full auth key can call everything. The full key is never broadcast, but the mobile-pairing QR code in the host popover (**Show QR code**) contains it, together with this machine's LAN address and port. Anyone who sees that code can control the instance over the network until AgentMux restarts.
+- nothing else. Every other route, `/ws` included, returns 404 on a LAN listener, even with the full auth key, and the LAN listeners never serve the frontend.
+
+The mobile-pairing QR code in the host popover (**Show QR code**) still contains the full auth key, together with this machine's LAN address and port. Over the network the key reaches only the four routes above, but on this machine it gives full control until AgentMux restarts, so don't show the code where others can see it.
 
 The `lan_key` is sent in cleartext to anyone on the local network (next section). Turn LAN discovery on only on networks you trust, and restrict the listeners with your host firewall to the peers or subnet you expect.
 
@@ -90,17 +92,27 @@ The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` po
 
 ## Chromium remote-debugging port
 
-The CEF host always enables Chromium's remote-debugging (DevTools Protocol) server (`agentmux-cef/src/lib.rs`). It uses port 9222 for release builds and 9223 for dev builds, or an OS-assigned free port when that one is taken. The port actually used is written to `authkey.dev` in the data directory. AgentMux uses this port for its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools).
+Chromium's remote-debugging (DevTools Protocol) server is **off in release builds** (`agentmux-cef/src/cdp_port.rs`). AgentMux doesn't need it: its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools) drives the DevTools Protocol inside the process (`agentmux-cef/src/browser_api/cdp.rs`), and **Inspect Element** opens Chromium's built-in DevTools window.
 
-AgentMux doesn't set `--remote-debugging-address`, so Chromium binds it to loopback, its default. The server has **no authentication**, and AgentMux starts Chromium with `--remote-allow-origins=*` (`agentmux-cef/src/app/mod.rs`), which disables Chromium's check on the origin of DevTools WebSocket connections.
+The `AGENTMUX_CDP_PORT` environment variable, read when AgentMux starts, turns it on or off:
 
-What this means in practice:
+| `AGENTMUX_CDP_PORT` | Server |
+|---|---|
+| Unset or empty | Off in release builds. On in dev builds, preferring port 9223 |
+| A port from 1024 to 65535 | On, preferring that port |
+| `1`, `on`, `true`, `yes` or `auto` | On, preferring 9222 (release) or 9223 (dev) |
+| `0`, `off`, `false` or `no` | Off, dev builds included |
+
+When the preferred port is taken, it uses an OS-assigned free port. The port actually used is written to `authkey.dev` in the data directory.
+
+When the server is on, AgentMux doesn't set `--remote-debugging-address`, so Chromium binds it to loopback, its default. The server has **no authentication**. AgentMux starts Chromium with `--remote-allow-origins` set to `http://127.0.0.1:<port>` and `http://localhost:<port>` only (`agentmux-cef/src/app/mod.rs`, `remote_allow_origins`), so a web page from any other origin can't open a DevTools WebSocket. A client that sends no `Origin` header, which any local program can do, is not stopped by that check.
+
+What this means in practice, while the server is on:
 
 - Any process on the machine that can open a loopback TCP connection can attach to AgentMux's windows, run script in them and read what they display. **On a multi-user machine, that includes processes of other OS users.**
 - The AgentMux UI holds the server auth key, so attaching to it gives full control of AgentMux: running commands as you, reading files, driving agents.
-- There is no setting to turn the port off.
 
-Mitigations: run AgentMux on a machine where you are the only interactive user. On a shared host, block other accounts from the port with a per-user firewall rule if your OS supports one (on Linux, an `iptables` `owner` match on the loopback interface). Remember that the port can change when 9222 is taken; read it from `authkey.dev`.
+Mitigations: leave the server off unless you need it; don't set `AGENTMUX_CDP_PORT` on a shared machine. Dev builds run it by default, so set `AGENTMUX_CDP_PORT=0` there if other people use the machine. If you do turn it on on a shared host, block other accounts from the port with a per-user firewall rule if your OS supports one (on Linux, an `iptables` `owner` match on the loopback interface), and read the port from `authkey.dev`, since it can change.
 
 ## Local IPC
 
@@ -154,7 +166,7 @@ Restrict these to your LAN subnet or to known peers.
 - `agentmux-srv/src/backend/dev_proxy.rs` — dev proxy
 - `agentmux-srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
 - `agentmux-cef/src/ipc.rs` — host IPC server
-- `agentmux-cef/src/lib.rs`, `agentmux-cef/src/app/mod.rs` — remote-debugging port and switches
+- `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs`, `agentmux-cef/src/app/mod.rs` — remote-debugging port and switches; `agentmux-cef/src/browser_api/cdp.rs` — in-process DevTools Protocol for the browser API
 - `agentmux-launcher/src/ipc/server.rs`, `agentmux-launcher/src/ipc/mod.rs`, `agentmux-srv/src/srv_ipc/server.rs`, `agentmux-srv/src/crash_monitor.rs` — local IPC
 
 **Marketing claims this page substantiates**: "runs on your machine" on [agentmux.ai](https://agentmux.ai).

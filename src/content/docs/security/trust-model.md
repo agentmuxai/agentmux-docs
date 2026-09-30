@@ -21,7 +21,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 | Launcher → server and CEF host | At each launch the launcher generates a UUIDv4 **auth key** and a separate **host-registration secret**, and passes both to the server and the CEF host in environment variables. The server removes them from its own environment after reading them. |
 | UI → CEF host | A bearer token generated at each start of the host, passed to the UI in the page URL. The host returns the server auth key to the UI over this channel. |
 | UI → server | The auth key, in the `X-AuthKey` header or, for the WebSocket, the `?authkey=` query parameter. |
-| Terminal panes and agents → server | **The same auth key**, as `AGENTMUX_AUTH_KEY`, with the server URL as `AGENTMUX_LOCAL_URL`. See the next section. |
+| Terminal panes and agents → server | **The same auth key**, as `AGENTMUX_AUTH_KEY`, with the server URL as `AGENTMUX_LOCAL_URL`. See the next section. Container agents get a narrower per-agent token instead; see [Container agents](#container-agents). |
 | CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker, adopting or releasing an agent's earlier memory folders (confirmed in a host window), and the host's registration for UI automation. |
 | Agent → server, UI automation | The agent's own signing key (`AGENTMUX_JEKT_KEY`) proves which pane the agent may automate. |
 | Other instances on this machine | Each other's auth keys, read from registry files under `~/.agentmux/` (mode `0600` on Unix). |
@@ -29,7 +29,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 
 ## The auth key is in every pane
 
-AgentMux puts `AGENTMUX_AUTH_KEY` and `AGENTMUX_LOCAL_URL` into the environment of **every terminal pane and every agent process** (`agentmux-srv/src/backend/pane_env.rs`, `PANE_ENV_KEEP`). The helper CLIs (`muxsh`, `muxopen`) and each agent's `agentmux-mcp` need them to reach the server. Every child process inherits them too: a shell an agent starts, its MCP servers, build scripts, `npm install` lifecycle scripts.
+AgentMux puts `AGENTMUX_AUTH_KEY` and `AGENTMUX_LOCAL_URL` into the environment of **every terminal pane and every agent process on the host** (`agentmux-srv/src/backend/pane_env.rs`, `PANE_ENV_KEEP`). The helper CLIs (`muxsh`, `muxopen`) and each agent's `agentmux-mcp` need them to reach the server. Every child process inherits them too: a shell an agent starts, its MCP servers, build scripts, `npm install` lifecycle scripts.
 
 The key grants the same local API the AgentMux UI uses. With it, a process can, among other things:
 
@@ -45,7 +45,18 @@ A few things need more than the auth key. The browser-password broker, memory-fo
 
 **Mitigation:** run code you don't trust outside AgentMux panes. A process's environment is also readable by other processes running as the same user (for example `/proc/<pid>/environ` on Linux), so the key is not secret from anything else running as you.
 
-When you are signed in to MuxBus Cloud, every agent process also receives `MUXBUS_TOKEN`, your account's MuxBus access token.
+Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` from every agent's environment on every spawn path, even when they come from a saved `cmd:env` (`agentmux-srv/src/backend/account_login_guard.rs`); the server makes every cloud call with its own stored login. That login is still on disk, so an agent that goes looking for it can read it like any other file of yours. This keeps it out of agents' hands by default; it isn't an OS boundary.
+
+### Container agents
+
+A [container agent](/first-agent/#host-and-container-agents)'s `AGENTMUX_AUTH_KEY` is not the instance auth key but a per-pane token starting `amxc_` (`agentmux-srv/src/backend/container_credential.rs`). The server accepts it only on the routes an agent needs to work as an agent, and refuses everything else with 403:
+
+- messaging: sending a jekt, looking up agents, listing agent names, discovery;
+- the work queue;
+- its own identity, and its own Personal Memory; Global Memory is read-only;
+- ending its own session (`QuitSelf`, `ClosePane`) and the shutdown status those use.
+
+Shells and PTYs on the host, host files, the editor, attachments by path, opening panes or agents, UI automation, cron, `/ws` and the RPC service are all refused. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
 
 ## Per-agent identity
 
@@ -109,9 +120,9 @@ The 15-second window is a safeguard on the routes these MCP tools use, not a lim
 
 ## Shared multi-user machines
 
-Two defaults expose you to other OS users on the same machine:
+Two things expose you to other OS users on the same machine:
 
-1. **The Chromium remote-debugging port is always on and unauthenticated.** Loopback is shared by every account, so another user can attach to your AgentMux window and, through it, control AgentMux as you. See [Network exposure](/security/network-exposure/#chromium-remote-debugging-port). No setting turns it off; use a per-user firewall rule on the port if your OS supports one.
+1. **The Chromium remote-debugging port, when it is on, is unauthenticated.** Release builds don't start it unless `AGENTMUX_CDP_PORT` turns it on; dev builds start it by default. Loopback is shared by every account, so while it runs another user can attach to your AgentMux window and, through it, control AgentMux as you. See [Network exposure](/security/network-exposure/#chromium-remote-debugging-port). Leave it off on a shared machine (`AGENTMUX_CDP_PORT=0` for a dev build).
 2. **On Windows, AgentMux's named pipes use Windows' default pipe security**, which Microsoft documents as granting read access to Everyone. See [Local IPC](/security/network-exposure/#local-ipc).
 
 The data directory itself is closed to other users by default:
@@ -124,7 +135,7 @@ Agent working directories outside `~/.agentmux` are not covered by this. The `.m
 ## Posture by deployment
 
 - **Personal machine, single user.** The defaults are designed for this. Treat every agent and everything you run in a pane as trusted code.
-- **Shared multi-user machine.** Apply the mitigations above, and don't run AgentMux while users you don't trust are logged in, because of the remote-debugging port.
+- **Shared multi-user machine.** Apply the mitigations above, and don't run a dev build, or a release build with `AGENTMUX_CDP_PORT` set, while users you don't trust are logged in, because of the remote-debugging port.
 - **Codespace or dev container.** Safe to the extent that everything else in the container is yours. Any other process running as your user can reach AgentMux.
 - **CI or unattended runners.** Not a supported topology. AgentMux is an interactive workstation tool.
 - **Air-gapped network.** AgentMux itself runs offline, but agents need to reach a model endpoint and agent CLIs have to be installed. See [Data sovereignty](/security/data-sovereignty/#offline-and-air-gapped-use).
@@ -148,4 +159,5 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `agentmux-srv/src/server/service/credential.rs`, `agentmux-srv/src/server/service/memory_adopt.rs` — host-only services
 - `agentmux-common/src/data_paths.rs` (`ensure_owner_only_dir`) — owner-only data root on Unix
 - `agentmux-cef/src/dev_authfile.rs` — `authkey.dev` permissions
-- `agentmux-srv/src/server/muxbus_handlers.rs` (`inject_muxbus_env`) — `MUXBUS_TOKEN` in agent environments
+- `agentmux-srv/src/backend/account_login_guard.rs` (`strip_account_login`) — the MuxBus login kept out of agent environments
+- `agentmux-srv/src/backend/container_credential.rs` (`container_route_allowed`) — the container agent token

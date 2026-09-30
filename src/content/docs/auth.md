@@ -95,7 +95,7 @@ Earlier builds kept provider credentials per instance, so switching channels or 
 
 ## Armory: Accounts tab
 
-The **Accounts** tab of the [Armory](/armory/) (**≡ → Armory → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
+The **Accounts** tab of the [Armory](/armory/) (**≡ → Armory → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. If that sign-in stops working (its refresh was refused, or the cloud moved to a new sign-in service), the panel and the host popover in the status bar show your email with a **Sign in again** button, and AgentMux stops reconnecting with the old sign-in until you do (`frontend/app/view/accounts/AgentMuxConnectPanel.tsx`, `frontend/app/statusbar/HostPopover.tsx`). Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
 
 - **Anthropic → Connect with OAuth** runs the Claude Code login inside AgentMux.
 - **GitHub** OAuth uses GitHub's device flow; **Google** and **Slack** use a PKCE browser login. None of the three ships a built-in OAuth client: you create your own OAuth app and paste its client ID (and, for Slack, its client secret) (`frontend/app/view/accounts/oauth-catalog.ts`).

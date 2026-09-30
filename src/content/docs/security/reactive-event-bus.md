@@ -150,8 +150,8 @@ A failed cross-channel signature (`DELIVERY=channel`, a published key exists, si
 
 `ESCALATE` appears only on `TIER=sensitive` and is computed on the server:
 
-- **`ESCALATE=none`** when at least one signature on the message verified: host HMAC, channel, LAN, ReAgent under the production key, or WAN from an install with `INSTANCE_STATUS=approved`. The message carries the lighter "verified sender" warning line.
-- **`ESCALATE=required`** in every other case, including a verified WAN signature from a `new` install. The receiving agent is told to pause and ask the human operator, and that a confirming reply from another agent is not enough. AgentMux also raises a desktop notification, subject to your notification settings, with the fixed text "Open AgentMux to see the sender and trust level before it acts." It never shows the message, sender or trust label.
+- **`ESCALATE=none`** when at least one signature on the message verified: host HMAC, channel, LAN, ReAgent under the production key, or WAN from an install with `INSTANCE_STATUS=approved` or `new`. The message carries the lighter "verified sender" warning line.
+- **`ESCALATE=required`** in every other case, including a verified WAN signature from a `revoked` install. The receiving agent is told to pause and ask the human operator, and that a confirming reply from another agent is not enough. AgentMux also raises a desktop notification, subject to your notification settings, with the fixed text "Open AgentMux to see the sender and trust level before it acts." It never shows the message, sender or trust label.
 - **Exception for `transcript_request`:** even a verified sender gets `ESCALATE=required` when the receiving agent's `conversation_visibility` is `ask`, or is `trusted_peers` and the requester has no grant for that tier. Grants for the `wan` tier are stored but never honored, so on WAN `trusted_peers` behaves like `ask`. Under `private` (the default) the ordinary rule applies. See `resolve_transcript_request_tier_fields` in `agentmux-srv/src/server/reactive.rs`.
 
 The marker is instruction text for the receiving agent. `ESCALATE=required` does not stop the agent from acting; whether it pauses depends on the agent following the instruction. The server-side parts are the labels, the tier, and the notification.
@@ -189,7 +189,7 @@ The sender's public key is fetched from whichever LAN peer answers `GET /agentmu
 
 WAN signatures are checked only between installs signed in to the **same** MuxBus Cloud account. Each install (one per channel on a machine) has an instance keypair, created on first start and kept in `channels/<channel>/wan-identity/wan.db` together with its agents' WAN keys, so upgrades keep the same identity (`agentmux-srv/src/backend/storage/wan_identity.rs`). The instance id is derived from the instance public key: the first 128 bits of its SHA-256, as 26 base32 characters.
 
-- **Publishing.** While you are signed in, the install certifies each agent's WAN public key with its instance key and publishes the record to the relay's key directory (`PUT /agents/<agent>/wan-key`, `agentmux-srv/src/muxbus/wan_publish.rs`). An unpublished key is retried every 5 minutes, or hourly while the relay has no key directory.
+- **Publishing.** While you are signed in, the install certifies each agent's WAN public key with its instance key and publishes the record to the relay's key directory (`PUT /agents/<agent>/wan-key`, `agentmux-srv/src/muxbus/wan_publish.rs`). An unpublished key is retried every 5 minutes, or hourly while the relay has no key directory. A key counts as published per key directory, meaning per relay and account (`wan_agent_key_publications` in `wan.db`), so after you sign in to a different account, or the relay changes, the install publishes its keys again to the directory that hasn't seen them. Until it has, that agent's messages go out unsigned.
 - **Sending.** The relay carries a message's WAN signature only if the sender proved itself on this install with its host signature, signed as this install and channel, the signature verifies under its key in `wan.db`, and that key is confirmed published (`wan_carry_gate` in `agentmux-srv/src/muxbus/relay.rs`). Otherwise the message is relayed unsigned, exactly as before, and arrives `TRUST=network-claimed`. Agents started before `wan.db` existed sign with a hostname instead of an instance id and are sent unsigned until they are restarted.
 - **Receiving.** For a carried signature that the relay marks as same-account, the receiver checks the envelope and freshness, fetches the sender's key record from the directory (2-second timeout, at most 60 fetches a minute), checks that the instance key certified it, verifies the signature, and rejects a message id it has already delivered from that install and agent (`agentmux-srv/src/muxbus/wan_verify.rs`). A directory that is down or slow means "couldn't check", and the message is delivered as `network-claimed`.
 
@@ -198,10 +198,10 @@ WAN signatures are checked only between installs signed in to the **same** MuxBu
 | Status | Meaning | Effect |
 |---|---|---|
 | `approved` | This install itself. AgentMux has no control yet to approve another install | Counts as a verified sender: `ESCALATE=none` |
-| `new` | Any other install on your account | Labelled only; treated like an unverified sender |
+| `new` | Any other install on your account | Counts as a verified sender: `ESCALATE=none` |
 | `revoked` | The relay holds a revocation for the install, signed with that install's own instance key (checked when the install is first seen, then at most hourly). AgentMux has no control yet to file one | Forced sensitive, `ESCALATE=required` |
 
-`new` gets no relaxation because anyone holding your MuxBus account token can create an install and publish keys for it, and every agent process receives that token as `MUXBUS_TOKEN`. `wan-verified` from a `new` install tells you which install sent a message, not that the install is yours. Anyone who copies an install's `wan.db` can sign as that install until it is revoked.
+Creating an install and publishing keys for it takes your MuxBus account login. Agents no longer receive that login in their environment (see the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane)), so a `new` install is treated like any other verified sender (`agentmux-srv/src/backend/reactive/handler.rs`, `inject_message_inner`). The login is still stored on disk, though: a process running as your OS user can read it, or copy an install's `wan.db`, and sign as an install until it is revoked. That is a compromise of your machine, which nothing here defends against.
 
 ## Durable hold
 
@@ -233,7 +233,7 @@ Two kinds of WAN message carry a signature the receiver verifies: ReAgent's (`SI
 
 | Path | What the attacker needs |
 |---|---|
-| Local API | The instance auth key: be a process in an AgentMux pane, read it from such a process's environment, or read `authkey.dev` from the data directory. Any process running as your user can do each of these, and processes of other users can get it through the [remote-debugging port](/security/network-exposure/#chromium-remote-debugging-port). |
+| Local API | The instance auth key: be a process in an AgentMux pane, read it from such a process's environment, or read `authkey.dev` from the data directory. Any process running as your user can do each of these, and, while it is turned on, processes of other users can get it through the [remote-debugging port](/security/network-exposure/#chromium-remote-debugging-port). |
 | Another instance on this machine | That instance's auth key, from `~/.agentmux/agents/` or `~/.agentmux/shared/agents/reactive/` (mode `0600` on Unix). Same boundary: your OS user. |
 | LAN | Nothing beyond network access while LAN discovery is on: the `lan_key` is broadcast. Messages arrive as `DELIVERY=lan`, `TRUST=network-claimed`. |
 | WAN | A message that MuxBus Cloud accepts for your agent. Who may send one is decided by the service, not by the desktop app. Messages arrive as `DELIVERY=wan`, `TRUST=network-claimed`, unless they carry a verified same-account signature (`TRUST=wan-verified`). |

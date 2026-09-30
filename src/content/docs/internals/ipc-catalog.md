@@ -59,7 +59,7 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 | F | Srv HTTP service | `HTTP POST 127.0.0.1:<rnd>/agentmux/service` | renderer→srv | `X-AuthKey` header | Object CRUD, tab/block/workspace ops |
 | G | Browser DOM API | `HTTP POST 127.0.0.1:<rnd>/agentmux/browser/*` | renderer→host | Bearer `ipc_token` | CSS query, JS eval, screenshot, click, key in browser panes |
 | H | OSC 16162 | Terminal escape sequence (PTY output) | shell→renderer | none (data in PTY stream) | Inject env keys into block metadata; configure poller |
-| I | Chromium remote debug | HTTP/WS 127.0.0.1:9222 (prod) / 9223 (dev) | any local process→renderer | none | CDP automation; used internally by Browser DOM API |
+| I | Chromium remote debug | HTTP/WS 127.0.0.1:9222 (prod) / 9223 (dev), or a free port. Off in release builds unless `AGENTMUX_CDP_PORT` turns it on | any local process→renderer | none | External CDP tooling and test harnesses. Not used by the Browser DOM API |
 | 13 | Launcher↔Srv named pipe | Named pipe (Win) / Unix socket | launcher↔srv | none (OS pipe ownership) | Srv reducer Command/Event bus |
 
 ---
@@ -519,7 +519,7 @@ Same HTTP server as Channel A (`127.0.0.1:<ipc_port>`). Routes under `/agentmux/
 
 ### Mechanism
 
-All Browser DOM API routes proxy through the Chromium DevTools Protocol (CDP) WebSocket at `ws://127.0.0.1:<debug_port>/devtools/page/<target>` (`routes.rs:49`, `routes.rs:737-744`). The debug port is 9222 (prod) or 9223 (dev) (`main.rs:652`).
+All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-process**, through CEF's `SendDevToolsMessage` and a DevTools message observer on the target browser (`agentmux-cef/src/browser_api/cdp.rs`). They don't use the remote-debugging port (Channel I), which is off in release builds.
 
 **Security: `/agentmux/browser/eval` runs arbitrary JS.** The `eval` route accepts a caller-supplied `script` string and executes it in the pane's JS world via `Runtime.evaluate` with no sandbox or isolation (`routes.rs:201`). The script runs in whatever origin the pane currently loads. Any local process holding the `ipc_token` can execute arbitrary JS in any browser pane.
 
@@ -563,7 +563,7 @@ Scripts are embedded in the srv binary (`shellintegration.rs:16-19`) and deploye
 
 ## 11. Channel I: Chromium Remote Debug Port (CDP)
 
-**Source:** `agentmux-cef/src/main.rs:652-674`, `agentmux-cef/src/browser_api/routes.rs:49`
+**Source:** `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs` (port selection), `agentmux-cef/src/app/mod.rs` (`remote_allow_origins`)
 
 ### Transport
 
@@ -571,11 +571,11 @@ Chromium DevTools Protocol over HTTP and WebSocket:
 - `http://127.0.0.1:9222/json` — list targets (prod)
 - `ws://127.0.0.1:9222/devtools/page/<target>` — CDP per-target session
 
-Port is 9222 in production, 9223 in dev builds (`main.rs:652`). No CSP header is configured.
+**On by default only in dev builds.** A release build starts it only when `AGENTMUX_CDP_PORT` is set to a port or to `1`/`on`/`true`/`yes`/`auto`; `0`/`off`/`false`/`no` turns it off in a dev build too (`agentmux-cef/src/cdp_port.rs`). The preferred port is 9222 in production and 9223 in dev builds, with an OS-assigned fallback when it is taken; the port in use is published in `authkey.dev`. `--remote-allow-origins` is limited to `http://127.0.0.1:<port>` and `http://localhost:<port>` (`agentmux-cef/src/app/mod.rs`, `remote_allow_origins`), so web pages can't open a DevTools WebSocket; clients that send no `Origin` are not affected. No CSP header is configured.
 
 ### Authentication
 
-**None.** The CDP endpoint is unauthenticated. Any local process can connect and:
+**None.** While it is on, the CDP endpoint is unauthenticated. Any local process can connect and:
 - Enumerate all browser targets (main window and all panes)
 - Execute arbitrary JavaScript in any target (`Runtime.evaluate`)
 - Capture screenshots
@@ -586,7 +586,7 @@ Port is 9222 in production, 9223 in dev builds (`main.rs:652`). No CSP header is
 
 ### Internal Use
 
-The Browser DOM API (Channel G) connects to CDP per-request via `CdpSession::connect()` to serve its `/agentmux/browser/*` routes. The debug port is stored in `state.debug_port` (`main.rs:653`) and read by `routes.rs:48`.
+None in the app. The Browser DOM API (Channel G) drives CDP in-process (see Channel G above), and **Inspect Element** opens CEF's native DevTools. The port exists for external tooling and test harnesses, which is why dev builds keep it on.
 
 ---
 
@@ -735,7 +735,7 @@ This section maps the sweep findings to the specific code locations documented a
 | **OSC 16162 `E` injects env keys into block meta** | `termosc.ts:262-287` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs:583-591`. | No key allowlist. No value validation. Caused `AGENTMUX_AGENT_COLOR` Win11 bug. |
 | **OSC 16162 `X` reconfigures srv poller** | `termosc.ts:289-316` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
 | **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:90` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`mod.rs:143-150`); host has not. |
-| **CDP port 9222 unauthenticated** | `main.rs:674` | Any local process can enumerate targets, execute JS, capture screens, intercept network. Used internally by Channel G. | No auth. `no_sandbox: 1` widens blast radius. |
+| **CDP port unauthenticated, when on** | `agentmux-cef/src/cdp_port.rs`, `agentmux-cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `srv/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
 | **`no_sandbox: 1` in CEF settings** | `main.rs:664` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
 | **WS authkey in query string** | `server/mod.rs:387-396` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |

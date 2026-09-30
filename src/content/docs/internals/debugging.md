@@ -202,7 +202,7 @@ Once open, the **Elements**, **Styles**, and **Network** tabs behave like DevToo
 
 ### Remote debugging via the Chrome DevTools Protocol (CDP)
 
-Beyond the interactive DevTools window, the host also exposes a raw CDP endpoint — useful for scripted inspection or driving a running instance from a test harness, not just clicking around by hand.
+Beyond the interactive DevTools window, the host can also expose a raw CDP endpoint — useful for scripted inspection or driving a running instance from a test harness, not just clicking around by hand. It is **on by default only in dev builds**; a release build starts it only when `AGENTMUX_CDP_PORT` is set (a port number, or `1`/`on` for the default port), and `AGENTMUX_CDP_PORT=0` turns it off in a dev build too ([`agentmux-cef/src/cdp_port.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/cdp_port.rs)). It has no authentication; see [Network exposure](/security/network-exposure/#chromium-remote-debugging-port) before turning it on.
 
 **Port:** prefers **9223** in a dev build (`AGENTMUX_DEV=1` / `task dev`) or **9222** in a release build; if that port is already taken (e.g. a second instance is already running), it falls back to any free OS-assigned port instead of failing — don't hardcode 9222/9223 blindly when more than one instance might be up ([`agentmux-cef/src/lib.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/lib.rs)).
 

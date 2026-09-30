@@ -106,7 +106,7 @@ At each agent launch (`inject_identity_env` in `agentmux-srv/src/identity/resolv
 4. Credentials go into the process environment, never onto the command line. Container agents receive them through the Docker API, not `docker exec -e`.
 5. The log records account ids, providers and the number of variables injected, not the values.
 
-AgentMux adds its own variables to every agent process as well: `AGENTMUX_AUTH_KEY` (full control of the local AgentMux server), `AGENTMUX_AGENT_TOKEN`, and, while you're signed in to MuxBus Cloud, `MUXBUS_TOKEN`, your MuxBus account's access token. See the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane).
+AgentMux adds its own variables to every agent process as well: `AGENTMUX_AUTH_KEY` (full control of the local AgentMux server; a container agent gets a narrower per-agent token in it instead) and `AGENTMUX_AGENT_TOKEN`. Your MuxBus Cloud login is not passed to agents: `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` are removed from every agent's environment. See the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane).
 
 It also sets `GH_CONFIG_DIR` in every agent process on the host (not in container agents), and in commands run on an agent's behalf, to a per-agent directory under AgentMux's config directory that holds no `gh` login; a login made there is removed at the next spawn (`agentmux-srv/src/backend/gh_guard.rs`). A plain `gh` command in an agent therefore can't act as the `gh` login you made on the machine. A GitHub token from the agent's own account (`GH_TOKEN`) still works.
 

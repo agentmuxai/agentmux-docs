@@ -89,6 +89,26 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 | `app:defaultmodel` | string | `""` | Default model for new agent panes (e.g. `"claude-sonnet-4-6"`). When blank, the Launch Agent modal uses the model from the selected Memory bundle, or the provider's default if none is set. |
 | `app:showoverlayblocknums` | boolean | `false` | Show pane numbers as overlay |
 | `app:dismissarchitecturewarning` | boolean | `false` | Suppress the architecture-mismatch notice |
+| `app:showtray` | boolean | `true` | Show the AgentMux icon in the system tray (menu bar on macOS). Applies at the next launch. See [System tray](/installation/#system-tray). |
+| `app:runinbackground` | boolean | `false` | Keep AgentMux running in the tray after its last window closes, instead of quitting. Also shows the tray icon. Applies at the next launch. |
+| `app:startatlogin` | boolean | `false` | Start AgentMux in the tray, without a window, when you log in. Applies immediately; the tray menu has the same switch. |
+
+## File drop and attachment settings
+
+See [Dropping files onto panes](/pane-types/#dropping-files-onto-panes) and [Attaching files](/pane-types/#attaching-files).
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `dnd:enabled` | boolean | `true` | File drops onto agent and terminal panes. Media and editor pane drops, and pasting, aren't affected. |
+| `dnd:agentinserttoken` | boolean | `true` | When a drop copies files into an agent's working folder, insert an `@name` reference for each file into the message box. |
+| `dnd:concurrency` | integer | unlimited | How many files of a multi-file drop are copied at once. |
+| `attachments:enabled` | boolean | `true` | Files dropped on an agent pane are attached to the message. When `false`, they're copied into the agent's working folder instead. |
+| `attachments:maxfiles` | integer | `128` | Most files one message can carry. |
+| `attachments:maxtotalmb` | number | `1024` | Most megabytes (original sizes) one message can carry. |
+| `attachments:sendmaxedge` | integer | `2000` | Long edge, in pixels, of the copy of each image the agent receives. |
+| `attachments:claudeinlinemax` | integer | `20` | Images Claude receives inline in one message; the rest are listed by path. `0` sends paths only. |
+| `attachments:claudesessioninlinemb` | number | `50` | Megabytes of inline images one Claude session may receive; after that, images go by path only. |
+| `attachments:retentiondays` | number | `30` | Days an attachment's files are kept after last use. Files never sent are removed after 7 days. |
 
 ## Shell Environment
 

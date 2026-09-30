@@ -139,7 +139,7 @@ with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=` and `ESCALATE=` added 
 
 - **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a signature checked out), `unverified` (a signature was expected and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof). `wan-verified` comes with `INSTANCE=` and `INSTANCE_STATUS=`, which say which install sent it and whether it is this install (`approved`), another one (`new`), or revoked.
 - **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text contains credential or destructive keywords, or when the message is a transcript request.
-- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational. A `wan-verified` message from a `new` install still gets `ESCALATE=required`.
+- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational. That includes a `wan-verified` message from an `approved` or `new` install; one from a `revoked` install always gets `ESCALATE=required`.
 
 These labels are enforced by the server, but whether an agent actually pauses depends on the agent following the instruction. See [Reactive event bus](/security/reactive-event-bus/#the-trust-marker) for every field and rule.
 
