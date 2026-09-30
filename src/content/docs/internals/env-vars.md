@@ -37,7 +37,7 @@ agentmux-launcher  (J0 Job Object owner)
 ```
 
 Source files cited throughout:
-- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell.rs`
+- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell/mod.rs`
 - `data_paths.rs` = `crates/common/src/data_paths.rs`
 - `runtime_mode.rs` = `crates/common/src/runtime_mode.rs`
 - `srv_spawner.rs` = `crates/launcher/src/srv_spawner.rs`
@@ -731,9 +731,9 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 
 | Topic | File | Lines |
 |-------|------|-------|
-| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell.rs` | 506–611 |
-| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell.rs` | 597–608 |
-| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell.rs` | 652–683 |
+| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell/mod.rs` | 506–611 |
+| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell/mod.rs` | 597–608 |
+| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell/mod.rs` | 652–683 |
 | DataPaths struct and env var names | `crates/common/src/data_paths.rs` | 77–127 |
 | DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` | 267–296 |
 | DataPaths::from_env() | `crates/common/src/data_paths.rs` | 304–344 |

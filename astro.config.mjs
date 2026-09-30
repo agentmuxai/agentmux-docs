@@ -12,7 +12,7 @@ export default defineConfig({
 				// Short-name aliases used across docs (defined in internals/env-vars.md preamble)
 				aliases: {
 					// Rust / shell (env-vars page)
-					'shell.rs':                    'crates/srv/src/backend/blockcontroller/shell.rs',
+					'shell.rs':                    'crates/srv/src/backend/blockcontroller/shell/mod.rs',
 					'data_paths.rs':               'crates/common/src/data_paths.rs',
 					'runtime_mode.rs':             'crates/common/src/runtime_mode.rs',
 					'srv_spawner.rs':              'crates/launcher/src/srv_spawner.rs',

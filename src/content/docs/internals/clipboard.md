@@ -91,7 +91,7 @@ For long-output surfaces (install logs, terminal scrollback, agent transcripts),
 
 - **Save Selection As…** — writes the selection (or `getAll()` if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
 
-Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. Backend handler will live in [`crates/srv/src/server/file_handlers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/file_handlers.rs).
+Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. The backend handler is planned; it does not exist yet.
 
 Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
 

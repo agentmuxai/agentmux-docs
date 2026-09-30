@@ -74,7 +74,7 @@ This means the same agent definition can be launched with different models or ef
 
 ## Step 3 — PTY creation (the blockcontroller)
 
-The **blockcontroller** (`crates/srv/src/backend/blockcontroller/shell.rs`) is the component that creates and supervises the PTY. It owns the agent subprocess from birth to death.
+The **blockcontroller** (`crates/srv/src/backend/blockcontroller/shell/mod.rs`) is the component that creates and supervises the PTY. It owns the agent subprocess from birth to death.
 
 ### PTY creation
 
@@ -140,7 +140,7 @@ Raw bytes from the PTY are accumulated in a line buffer before JSON parsing:
 
 Parsed events are published on the WPS scope `agent_event:<block_id>` and simultaneously written as raw bytes to the xterm.js renderer.
 
-Source: `crates/srv/src/backend/blockcontroller/shell.rs` `extract_agent_events()`.
+Source: `crates/srv/src/backend/blockcontroller/shell/mod.rs` `extract_agent_events()`.
 
 ### Claude stream-json event types
 
@@ -178,7 +178,7 @@ When an agent is stopped (via `agent.stop` RPC or user action):
 **Windows:**
 - `child.kill()` only — no signal support in Win32
 
-Source: `crates/srv/src/backend/blockcontroller/shell.rs` `stop()`.
+Source: `crates/srv/src/backend/blockcontroller/shell/mod.rs` `stop()`.
 
 ### Unexpected crash handling
 
@@ -190,7 +190,7 @@ When the CLI exits unexpectedly:
 4. The last ~40 lines of stderr are retained for failure classification
 5. `crate::agents::failure::AgentFailure` classifies the exit into a structured failure type surfaced to the UI
 
-Source: `crates/srv/src/backend/blockcontroller/subprocess.rs`.
+Source: `crates/srv/src/backend/blockcontroller/subprocess/mod.rs`.
 
 ### Session resume
 

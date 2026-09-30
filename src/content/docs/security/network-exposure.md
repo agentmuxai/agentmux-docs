@@ -157,7 +157,7 @@ Restrict these to your LAN subnet or to known peers.
 ---
 
 **Source-of-truth references**:
-- `crates/srv/src/bootstrap.rs` (`bind_listeners_and_network`) — loopback startup listeners
+- `crates/srv/src/bootstrap/mod.rs` (`bind_listeners_and_network`) — loopback startup listeners
 - `crates/srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
 - `crates/srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
 - `crates/srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS

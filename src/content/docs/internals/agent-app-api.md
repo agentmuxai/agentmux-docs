@@ -43,7 +43,7 @@ The catalog below documents the **app-API RPC commands** by group, with each com
 
 ## App-API RPC catalog
 
-These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_api.rs`, `crates/srv/src/server/agent_handlers.rs`, and the command-name constants in `crates/srv/src/backend/rpc_types.rs`) and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
+These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_api/mod.rs`, `crates/srv/src/server/agent_handlers/mod.rs`, and the command-name constants in `crates/srv/src/backend/rpc_types/mod.rs`) and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
 
 ### Agent lifecycle (`app_api.rs`)
 
@@ -113,7 +113,7 @@ A session zone is bound to the agent *definition* (`definition_id`), so every bl
 
 ### Broader `agent_handlers.rs` surface (grouped)
 
-The backend also registers a large set of management RPCs that the frontend (and tooling) use. These are grouped here rather than exhaustively expanded; names are verified against `crates/srv/src/backend/rpc_types.rs`.
+The backend also registers a large set of management RPCs that the frontend (and tooling) use. These are grouped here rather than exhaustively expanded; names are verified against `crates/srv/src/backend/rpc_types/mod.rs`.
 
 | Group | Commands |
 |---|---|
@@ -195,7 +195,7 @@ The reusable agent-definition primitive (see [Memory bundles](/memory/) — the 
 | `bundle.delete` | Delete a bundle | `id` |
 | `bundle.self.get` | Resolve the calling agent's currently-bound bundle (or the blank singleton) | `agent_id` |
 
-`bundle.*` is backed by the same storage as the older `preset.*` commands (`crates/srv/src/backend/storage/memory_bundles.rs`, table `db_memory_bundles`) — `preset.*` still works today as a compatibility alias registered against the identical handlers, but new code should use `bundle.*`.
+`bundle.*` is backed by the same storage as the older `preset.*` commands (`crates/srv/src/backend/storage/bundles.rs`, table `db_bundles`) — `preset.*` still works today as a compatibility alias registered against the identical handlers, but new code should use `bundle.*`.
 
 Prerequisite these all share: `RpcContext` carries an `agent_id` field populated from `bus_agent_id` in `websocket.rs`, enforcing per-agent scope (an agent can only read/write its own links, private primitives, and bindings — not another agent's).
 
