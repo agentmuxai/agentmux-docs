@@ -27,7 +27,7 @@ The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) cra
 
 ## The LAN listeners
 
-The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `crates/srv/src/bootstrap/mod.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
+The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `crates/srv/src/bootstrap/network.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
 
 - `lan_bind_addresses()` returns every IPv4 address and every IPv6 address except link-local (`fe80::/10`), from all interfaces;
 - each address gets both ports or neither; a failed bind is logged and skipped;
@@ -141,7 +141,7 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 ## Boot semantics
 
-1. `bind_listeners_and_network` (`crates/srv/src/bootstrap/mod.rs`) binds the loopback listeners, constructs the `LanDiscoveryController` with the hostname, version, web port and `lan_key`, constructs the `LanListenerSupervisor`, and links the two with `set_discovery`. It does **not** start discovery.
+1. `bind_listeners_and_network` (`crates/srv/src/bootstrap/network.rs`) binds the loopback listeners, constructs the `LanDiscoveryController` with the hostname, version, web port and `lan_key`, constructs the `LanListenerSupervisor`, and links the two with `set_discovery`. It does **not** start discovery.
 2. `main.rs` builds the router, hands it to the supervisor with `set_router`, calls `lan_listeners.apply(<network:lan_discovery setting>)`, and starts the reconcile sweep.
 
 With the setting off (the default), nothing LAN-facing starts. With it on, the listeners bind and mDNS starts during boot.

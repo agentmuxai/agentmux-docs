@@ -140,7 +140,7 @@ Raw bytes from the PTY are accumulated in a line buffer before JSON parsing:
 
 Parsed events are published on the WPS scope `agent_event:<block_id>` and simultaneously written as raw bytes to the xterm.js renderer.
 
-Source: `crates/srv/src/backend/blockcontroller/shell/mod.rs` `extract_agent_events()`.
+Source: `crates/srv/src/backend/blockcontroller/shell/translation.rs` `extract_agent_events()`.
 
 ### Claude stream-json event types
 
@@ -178,7 +178,7 @@ When an agent is stopped (via `agent.stop` RPC or user action):
 **Windows:**
 - `child.kill()` only — no signal support in Win32
 
-Source: `crates/srv/src/backend/blockcontroller/shell/mod.rs` `stop()`.
+Source: `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` `stop()`.
 
 ### Unexpected crash handling
 
