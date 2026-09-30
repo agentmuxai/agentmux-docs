@@ -21,7 +21,7 @@ Audit of all 11 reference patterns found across 91 doc files:
 | P5 | Plain text path (no backticks) | `crates/srv/src/main.rs` in prose | lan-discovery.md |
 | P6 | `## Source` bullet list | `` - `crates/srv/src/server/reactive.rs` — HTTP handlers `` | reactive-event-bus.md, warden.md, lan-discovery.md |
 | P7 | Existing GitHub markdown link | `[termwrap.ts](https://github.com/...)` | clipboard.md, browser-pane.md |
-| P8 | Abbreviation glossary | `` `shell.rs` = `crates/srv/src/backend/blockcontroller/shell.rs` `` | env-vars.md |
+| P8 | Abbreviation glossary | `` `shell.rs` = `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` `` | env-vars.md |
 | P9 | Path in code comment | `// frontend/util/clipboard.ts` inside a code block | clipboard.md |
 | P10 | Structured reference table | File column + separate Lines column | env-vars.md, state-model.md |
 | P11 | Spec/markdown doc ref | `` `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` `` | reducer-stack.md, contributing.md |
@@ -74,7 +74,7 @@ This deliberately excludes:
 | `` `types.ts:658` `` | `.../types.ts#L658` |
 | `` `types.ts:269-336` `` | `.../types.ts#L269-L336` |
 | `` `types.ts:269–336` `` (em-dash) | same — normalise dash chars to `-` before parsing |
-| `` `shell.rs:604` `` + alias `shell.rs → crates/srv/src/backend/blockcontroller/shell.rs` | `.../crates/srv/src/backend/blockcontroller/shell.rs#L604` |
+| `` `shell.rs:604` `` + alias `shell.rs → crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | `.../crates/srv/src/backend/blockcontroller/shell/lifecycle.rs#L604` |
 | `` `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` `` | `.../docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` |
 | `` `specs/lan-discovery-toggle.md` `` | `.../docs/specs/lan-discovery-toggle.md` (prefix `specs/` → `docs/specs/`) |
 
@@ -117,7 +117,7 @@ markdown: {
       baseUrl: 'https://github.com/agentmuxai/agentmux/blob/main/',
       // Short aliases used in env-vars.md and other files
       aliases: {
-        'shell.rs':           'crates/srv/src/backend/blockcontroller/shell.rs',
+        'shell.rs':           'crates/srv/src/backend/blockcontroller/shell/lifecycle.rs',
         'data_paths.rs':      'crates/common/src/data_paths.rs',
         'runtime_mode.rs':    'crates/common/src/runtime_mode.rs',
         'srv_spawner.rs':     'crates/launcher/src/srv_spawner.rs',

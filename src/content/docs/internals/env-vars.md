@@ -37,7 +37,7 @@ agentmux-launcher  (J0 Job Object owner)
 ```
 
 Source files cited throughout:
-- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell.rs`
+- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs`
 - `data_paths.rs` = `crates/common/src/data_paths.rs`
 - `runtime_mode.rs` = `crates/common/src/runtime_mode.rs`
 - `srv_spawner.rs` = `crates/launcher/src/srv_spawner.rs`
@@ -58,8 +58,8 @@ focused-border colour, pane title, and jekt auto-registration.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs:575-595`) from block `cmd:env` metadata or global settings `cmd_env`; `app_api.rs:306` on `agent.open`; `agent_config.rs:258` for MCP env injection |
-| **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs:440` reads it to decide jekt auto-registration |
+| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata or global settings `cmd_env`; `app_api.rs:306` on `agent.open`; `agent_config.rs:258` for MCP env injection |
+| **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs` reads it to decide jekt auto-registration |
 | **Example value** | `AgentX`, `Aria`, `Terminal` |
 | **Lifetime** | Set once at pane spawn; persists for the lifetime of the PTY session |
 
@@ -68,7 +68,7 @@ focused-border colour, pane title, and jekt auto-registration.
 2. Global settings `cmd_env["AGENTMUX_AGENT_ID"]`
 3. Legacy compat: `WAVEMUX_AGENT_ID` process env (read-only fallback for jekt registration)
 
-**Strip logic** (`shell.rs:597-608`): if none of the above sources provides
+**Strip logic** (`shell.rs`): if none of the above sources provides
 a value, `AGENTMUX_AGENT_ID`, `AGENTMUX_AGENT_COLOR`, `AGENTMUX_AGENT_TEXT_COLOR`,
 `WAVEMUX_AGENT_ID`, and `WAVEMUX_AGENT_COLOR` are _actively removed_ from the
 PTY child's environment so a parent AgentMux pane's identity does not bleed into
@@ -106,7 +106,7 @@ it impossible to tell which pane has keyboard focus. Always use a colour
 that contrasts with your background theme.
 
 **Strip logic:** same as `AGENTMUX_AGENT_ID` — removed when no explicit
-agent identity is configured (`shell.rs:604`).
+agent identity is configured (`shell.rs`).
 
 ---
 
@@ -119,7 +119,7 @@ agent identity is configured (`shell.rs:604`).
 | **Example value** | `#FFFFFF`, `#1A1A1A` |
 
 **Strip logic:** removed at pane spawn when no agent identity is configured
-(`shell.rs:605`). Unlike `AGENTMUX_AGENT_COLOR`, this variable is NOT
+(`shell.rs`). Unlike `AGENTMUX_AGENT_COLOR`, this variable is NOT
 currently forwarded via OSC 16162;E — only `AGENTMUX_AGENT_ID` and
 `AGENTMUX_AGENT_COLOR` are in the OSC payload. Changing it inside a running
 shell has no effect until the next pane restart.
@@ -131,8 +131,8 @@ shell has no effect until the next pane restart.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Deprecated — read-only backward-compat bridge |
-| **Who reads them** | `shell.rs:449` reads `WAVEMUX_AGENT_ID` as the lowest-priority fallback for jekt registration only |
-| **Strip logic** | Both are removed from PTY children when no explicit agent identity is configured (`shell.rs:606-607`) |
+| **Who reads them** | `shell.rs` reads `WAVEMUX_AGENT_ID` as the lowest-priority fallback for jekt registration only |
+| **Strip logic** | Both are removed from PTY children when no explicit agent identity is configured (`shell.rs`) |
 
 These variables were the pre-rebrand names from the WaveMux era. Do not
 set them in new configurations; use `AGENTMUX_*` equivalents instead.
@@ -205,20 +205,20 @@ DATA_DIR/DATA_HOME above.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:273`); also injected into PTY child environment by srv shell controller (`shell.rs:519-523`) with a hardcoded `~/.agentmux/logs` path |
+| **Who sets it** | Launcher (`data_paths.rs:273`); also injected into PTY child environment by srv shell controller (`shell.rs`) with a hardcoded `~/.agentmux/logs` path |
 | **Who reads it** | Shell integration `muxlog` helper (`bash.sh:90-118`, `pwsh.ps1:63-79`); `memory_heartbeat.rs:81`; any process in a pane that wants to locate logs |
 | **Example** | `/home/alice/.agentmux/logs` or `C:\Users\asafe\.agentmux\logs` |
 
 **Note on dual injection:** The launcher sets the canonical per-channel
 log dir; the shell controller re-injects the value into PTY children using
 `dirs::home_dir().join(".agentmux").join("logs")` (a fixed path,
-`shell.rs:519-523`). The two values are identical in production but diverge
+`shell.rs`). The two values are identical in production but diverge
 in test scenarios. PTY children should use whatever value is in their
 environment.
 
 **PITFALL:** On Windows with MSIX packaging, `AGENTMUX_DATA_DIR` and
 friends resolve inside the virtual file system, but `AGENTMUX_LOG_DIR` is
-always under the real home dir (`shell.rs:484-489`) because ConPTY child
+always under the real home dir (`shell.rs`) because ConPTY child
 processes cannot see virtualised MSIX writes at their literal path.
 
 ---
@@ -375,7 +375,7 @@ sanitized value is empty, mode falls through to `Installed`.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs:515`), `shellexec.rs:360`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
+| **Who sets it** | srv shell controller (`shell.rs`), `shellexec.rs:360`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
 | **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:96`, `pwsh.ps1:69`); `srv/main.rs:333` reads it from env as a fallback |
 | **Example** | `0.44.1` |
 
@@ -420,7 +420,7 @@ Child processes inside panes also see some of them (LOCAL_URL, BLOCKID).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv after binding its HTTP listener (`srv/main.rs:708`): `std::env::set_var("AGENTMUX_LOCAL_URL", &local_web_url)` |
-| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs:527-529`); `agentmux-bashwrap` reads it for WPS publish authentication (`wps_client.rs:71`); jekt registry writer uses it for cross-instance registration (`shell.rs:666`) |
+| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`wps_client.rs:71`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
 | **Example** | `http://127.0.0.1:49312` |
 | **Lifetime** | Set once per srv startup; changes only when srv restarts |
 
@@ -548,7 +548,7 @@ effect on Unix builds.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs:513`); websocket handler for agent process spawns (`websocket.rs:917`); `shellexec.rs:352` |
+| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`websocket.rs:917`); `shellexec.rs:352` |
 | **Who reads it** | `agentmux-bashwrap` (`bash_wrap.rs:132,137`) to scope WPS publishes to the correct pane; shell integration scripts have access to it in the PTY environment |
 | **Example** | `550e8400-e29b-41d4-a716-446655440001` (block UUID) |
 
@@ -561,7 +561,7 @@ output chunks to the correct pane subscription.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs:514`); `shellexec.rs:353` |
+| **Who sets it** | srv shell controller (`shell.rs`); `shellexec.rs:353` |
 | **Who reads it** | Shell integration and any process that needs to know which tab it belongs to |
 | **Example** | `550e8400-e29b-41d4-a716-446655440002` (tab UUID) |
 
@@ -591,7 +591,7 @@ Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's ow
 
 ## Group 5 — Terminal Emulator Capability Variables
 
-Set by the srv shell controller (`shell.rs:509-512`) on every interactive
+Set by the srv shell controller (`shell.rs`) on every interactive
 shell pane. These are standard terminal capability variables; values are
 fixed constants.
 
@@ -600,21 +600,21 @@ fixed constants.
 | Attribute | Value |
 |-----------|-------|
 | **Set to** | `xterm-256color` |
-| **Why** | ConPTY on Windows fully supports VT/ANSI sequences. Without TERM, CLI tools (including Claude Code) use different Unicode width tables, causing ANSI colour offset on Windows. `shell.rs:510` |
+| **Why** | ConPTY on Windows fully supports VT/ANSI sequences. Without TERM, CLI tools (including Claude Code) use different Unicode width tables, causing ANSI colour offset on Windows. `shell.rs` |
 
 ### COLORTERM
 
 | Attribute | Value |
 |-----------|-------|
 | **Set to** | `truecolor` |
-| **Why** | Signals 24-bit colour support. Without this, tools that check for truecolor fall back to 256-colour palettes. `shell.rs:511` |
+| **Why** | Signals 24-bit colour support. Without this, tools that check for truecolor fall back to 256-colour palettes. `shell.rs` |
 
 ### TERM_PROGRAM
 
 | Attribute | Value |
 |-----------|-------|
 | **Set to** | `agentmux` |
-| **Why** | Allows CLI tools to detect they are running inside AgentMux and enable specific integrations. `shell.rs:512` |
+| **Why** | Allows CLI tools to detect they are running inside AgentMux and enable specific integrations. `shell.rs` |
 
 ---
 
@@ -627,7 +627,7 @@ Variables set by the `shellintegration.rs` / `get_shell_startup()` logic
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs:535`) |
+| **Who sets it** | srv shell controller (`shell.rs`) |
 | **Set to** | `1` |
 | **Purpose** | Presence-check sentinel for shell integration scripts. Scripts test `[[ -n "$AGENTMUX" ]]` to confirm they are running inside AgentMux |
 
@@ -731,9 +731,9 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 
 | Topic | File | Lines |
 |-------|------|-------|
-| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell.rs` | 506–611 |
-| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell.rs` | 597–608 |
-| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell.rs` | 652–683 |
+| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
+| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
+| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
 | DataPaths struct and env var names | `crates/common/src/data_paths.rs` | 77–127 |
 | DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` | 267–296 |
 | DataPaths::from_env() | `crates/common/src/data_paths.rs` | 304–344 |

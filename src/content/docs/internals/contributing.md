@@ -90,9 +90,9 @@ agentmux/
 | You're touching | Start here |
 |---|---|
 | A new pane type | `frontend/app/view/<view>/` + `frontend/app/block/block.tsx` to register |
-| RPC commands the frontend calls | `crates/srv/src/server/app_api.rs` (high-level) or the per-domain handler files |
+| RPC commands the frontend calls | `crates/srv/src/server/app_api/mod.rs` (high-level) or the per-domain handler files |
 | Window / pool / OS state | `crates/launcher/src/reducer/` + `docs/specs/` |
-| Browser pane behavior | `frontend/app/view/browser/` + `crates/cef/src/commands/browser.rs` |
+| Browser pane behavior | `frontend/app/view/browser/` + `crates/cef/src/browser_pane/` |
 | Persistence | `crates/srv/src/persist*.rs`, `crates/srv/src/sagas/`, `crates/launcher/src/event_log.rs` |
 | Reducer-stack work | [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) and [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) — append PRs and analyses there, don't fork threads |
 

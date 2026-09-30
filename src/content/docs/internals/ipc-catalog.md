@@ -26,7 +26,7 @@ This document catalogs every inter-process channel in AgentMux, their wire contr
 11. [Channel I: Chromium Remote Debug Port (CDP)](#11-channel-i-chromium-remote-debug-port-cdp)
 12. [IPC Token and Auth Key — Lifecycle and Leak Surface](#12-ipc-token-and-auth-key--lifecycle-and-leak-surface)
 13. [Launcher ↔ Srv Named Pipe (Reducer Bus)](#13-launcher--srv-named-pipe-reducer-bus)
-14. [Command/Event Domain Mixing in crates/common/src/ipc.rs](#14-commandevent-domain-mixing-in-agentmux-commonsrcipcrs)
+14. [Command/Event Domain Mixing in crates/common/src/ipc.rs](#14-commandevent-domain-mixing-in-cratescommonsrcipcrs)
 15. [Environment Variable Contract](#15-environment-variable-contract)
 16. [Security Findings Cross-Reference](#16-security-findings-cross-reference)
 
@@ -267,7 +267,7 @@ Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (
 
 ## 5. Channel C: Host ↔ Launcher Named Pipe
 
-**Source:** `crates/cef/src/launcher_ipc.rs`, `crates/common/src/ipc.rs`
+**Source:** `crates/cef/src/launcher_ipc/mod.rs`, `crates/common/src/ipc.rs`
 
 ### Transport
 
@@ -448,7 +448,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ## 8. Channel F: Renderer → Srv HTTP Service
 
-**Source:** `crates/srv/src/server/service.rs`, `crates/srv/src/server/mod.rs`
+**Source:** `crates/srv/src/server/service/mod.rs`, `crates/srv/src/server/mod.rs`
 
 ### Transport
 
