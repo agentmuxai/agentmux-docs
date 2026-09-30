@@ -1,13 +1,13 @@
 ---
 title: "Swarm"
-description: The Swarm pane shows every running agent pane on this AgentMux instance as a tree, with its subagents, workflows, background shells, cron jobs and todo list, plus a fleet toolbar for broadcasting to or stopping several agents at once.
+description: The Swarm pane shows every running agent pane on this AgentMux instance as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, plus a fleet toolbar for broadcasting to or stopping several agents at once.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Swarm** pane is the overview of what your agents are doing right now. It lists every running agent pane on this AgentMux instance as a tree: under each agent you see its subagents, workflow runs, background shells, cron jobs, long-running commands and todo list. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
+The **Swarm** pane is the overview of what your agents are doing right now. It lists every running agent pane on this AgentMux instance as a tree: under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
 
 :::note[This page used to be "Subagent Watcher"]
 Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane has no tabs, and subagent activity now expands inline in the tree instead of opening its own pane.
@@ -47,13 +47,13 @@ An agent row shows:
 | Provider logo and name | The pane's agent name, or "Agent" if it has none |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
-| Status chip | `working`, `tools`, `stopping`, `idle`, `error` or `offline` |
+| Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **idle** (green) otherwise |
 | Activity line | A one-line summary of what the agent is doing, when available |
 | Current tool | The tool the agent is running right now, while it is working |
 
 **Clicking an agent row focuses that agent** (`frontend/app/view/swarm/swarm-view.tsx`, `frontend/app/util/focus-block.ts`): AgentMux switches to the agent's tab, brings its pane tab to the front if the pane has several tabs, and focuses its pane. If the agent is in another window, that window is brought forward. Only the chevron expands or collapses a row, and ticking the checkbox doesn't move focus. Rows start collapsed. Clicking empty space in Swarm focuses the Swarm pane itself.
 
-Rows use the agent's own pane-tab color: the row of the currently focused agent pane has a thin border in that color, and hovering a row tints it with a lighter shade. The color is the pane's **Pane Color** if you set one, otherwise the agent's assigned color.
+Rows use the agent's own pane-tab color: the row of the currently focused agent pane has a thin border in that color, and hovering a row outlines it in a lighter shade of it. The color is the pane's **Pane Color** if you set one, otherwise the agent's assigned color.
 
 Under an expanded agent, child rows are grouped in this order. A group is hidden when it is empty.
 
@@ -73,7 +73,7 @@ The last list stays visible after the agent goes idle.
 One row per subagent the agent launched with its Agent/Task tool. Subagent tracking is **Claude Code only**: AgentMux reads the subagent transcripts Claude Code writes under its config directory (`agentmux-srv/src/backend/subagent_watcher/mod.rs`).
 
 - The label is a short generated name for the subagent, falling back to its slug and ID.
-- The status chip is `working`, `idle` or `interrupted`.
+- The status chip reads **working** or **idle**, like an agent's. A subagent whose agent went idle before the subagent finished is *interrupted*: its chip reads **idle**, and it has no countdown (see below).
 - Click a row to expand its activity feed: text output, tool calls (click to see the input), results and errors (click for a preview), and progress. The feed keeps the latest 500 entries.
 
 ### Workflow
@@ -95,14 +95,26 @@ Cron jobs the agent created: name, cron expression, when it last fired, fire cou
 Long-running `Bash` tool calls (`frontend/app/view/swarm/swarm-longrunning.ts`):
 
 - a call that has been running for more than 30 seconds;
-- a bare `sleep`, from the start, with a "~Ns left" countdown;
-- a command the agent started with `run_in_background`, until the agent is notified that it finished.
+- a bare `sleep`, from the start, with a "~Ns left" countdown.
 
-Each row shows the command and elapsed time. This group only covers agent panes that are currently open in the same window as the Swarm pane.
+Each row shows the command and elapsed time. This group only covers agent panes that are currently open in the same window as the Swarm pane. Commands started in the background are listed under [Background](#background) instead.
+
+### Background
+
+Commands the agent started in the background (a `Bash` call with `run_in_background`), with the description the agent gave the command, or `Bash` if it gave none (`frontend/app/view/swarm/swarm-background-tasks.tsx`, `agentmux-srv/src/backend/background_task_feed.rs`). A background command a subagent started is shown under that subagent's row in **Agent Tool**, whether or not the row is expanded; it moves to this group once the subagent's row is gone.
+
+Each row shows `$`, the description, a status and the elapsed time, which stops when the command ends:
+
+- **running**;
+- **done**, removed after 8 seconds;
+- **stopped**, removed after 3 seconds;
+- **failed**, removed after 15 seconds.
+
+AgentMux reads these statuses from the task reports Claude Code writes to the agent's output stream, including for commands a subagent started, so a finished command no longer stays **running**. Right-click a row for **Copy description**.
 
 ### Clear completed
 
-**Clear completed (N)** dismisses every finished or interrupted Agent Tool row and every retired Workflow row. Dismissals are remembered in this machine's local storage, so they survive reopening Swarm. Nothing is deleted from the agent's own history, and a dismissed row comes back if it shows new activity. Todos, Shell, Cron and Running rows are not affected.
+**Clear completed (N)** dismisses every finished or interrupted Agent Tool row and every retired Workflow row. Dismissals are remembered in this machine's local storage, so they survive reopening Swarm. Nothing is deleted from the agent's own history, and a dismissed row comes back if it shows new activity. Todos, Shell, Cron, Running and Background rows are not affected.
 
 ## Copy menus
 
@@ -117,6 +129,7 @@ Right-click a row for a menu of values to copy (`frontend/app/view/swarm/swarm-v
 | Shell | **Copy command**, **Copy title** (when it differs from the command), **Copy shell ID** |
 | Cron | **Copy name**, **Copy schedule**, **Copy target agent**, **Copy cron ID** |
 | Running | **Copy command** |
+| Background | **Copy description** |
 
 ## Fleet toolbar
 

@@ -451,6 +451,8 @@ it (streaming bash runner via `agent.run-command`).
 **SECURITY:** Do not log this value. It authenticates all WebSocket
 connections to the srv instance for the lifetime of that srv process.
 
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts only on the agent routes (messaging, work queue, the agent's own memory, self-quit) and refuses everywhere else (`agentmux-srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
+
 ---
 
 ### AGENTMUX_BACKEND_WS / AGENTMUX_BACKEND_WEB / AGENTMUX_BACKEND_PID
@@ -502,17 +504,17 @@ the IPC bridge.
 
 ---
 
-### AGENTMUX_LAUNCHER_PID (Unix only)
+### AGENTMUX_LAUNCHER_PID
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher on the host env (Unix only, `launcher/main.rs:411`) |
-| **Who reads it** | CEF host `parent_process.rs:75` to verify the launcher is still alive and is genuinely the current parent |
+| **Who sets it** | Launcher on the host env, on every platform (`agentmux-launcher/src/host_spawn.rs`; Windows too since v0.58.0) |
+| **Who reads it** | CEF host (`launcher_is_genuine_parent`, `agentmux-cef/src/parent_process.rs`) to verify the launcher is still alive and is genuinely the current parent |
 | **Example** | `5432` |
 
 Used to distinguish a genuine launcher hand-off from an inherited stale
 `AGENTMUX_BACKEND_WS` value (when the host is launched inside an agent
-pane). The host calls `getppid()` and compares it to this value.
+pane). The host compares its real parent process id to this value (`getppid()` on Unix, the process snapshot on Windows). A dev host on Windows used to ignore the hand-off and start a second srv on the same data directory; it now adopts the launcher's srv, as on macOS and Linux.
 
 ---
 
@@ -562,6 +564,18 @@ output chunks to the correct pane subscription.
 | **Who sets it** | srv shell controller (`shell.rs:514`); `shellexec.rs:353` |
 | **Who reads it** | Shell integration and any process that needs to know which tab it belongs to |
 | **Example** | `550e8400-e29b-41d4-a716-446655440002` (tab UUID) |
+
+---
+
+### AGENTMUX_CDP_PORT
+
+| Attribute | Value |
+|-----------|-------|
+| **Who sets it** | You, before starting AgentMux (optional) |
+| **Who reads it** | CEF host at startup (`agentmux-cef/src/cdp_port.rs`, `requested_cdp_port`) |
+| **Values** | Unset or empty: CDP server off in release builds, on (port 9223) in dev builds. `1024`–`65535`: on, preferring that port. `1`/`on`/`true`/`yes`/`auto`: on, preferring 9222 (release) or 9223 (dev). `0`/`off`/`false`/`no`: off, dev builds included |
+
+Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's own browser automation doesn't need it. If the preferred port is taken an OS-assigned port is used, and the port in use is written to `authkey.dev`. See [Network exposure](/security/network-exposure/#chromium-remote-debugging-port).
 
 ---
 
@@ -696,7 +710,7 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX_BACKEND_PID` | IPC | launcher → host | No |
 | `AGENTMUX_SRV_PIPE_PATH` | IPC | launcher → srv + host | No |
 | `AGENTMUX_LAUNCHER_PIPE` | IPC | launcher → host | No |
-| `AGENTMUX_LAUNCHER_PID` | IPC (Unix) | launcher → host | No |
+| `AGENTMUX_LAUNCHER_PID` | IPC | launcher → host | No |
 | `AGENTMUX_INSTANCE_ID` | IPC | launcher → srv + host | No |
 | `AGENTMUX_SPLASH_EVENT` | IPC (Windows) | launcher → host | No |
 | `AGENTMUX_BLOCKID` | IPC | shell controller | Yes |

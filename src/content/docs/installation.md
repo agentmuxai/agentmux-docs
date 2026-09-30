@@ -124,6 +124,10 @@ This needs no install step. It isn't covered by the one-time sandbox fix describ
 
 When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwise it uses X11. If you enable window transparency (`window:transparent`), it runs through XWayland instead, because native Wayland has no equivalent of the X11 window-opacity property it uses. To force a backend, set `AGENTMUX_OZONE_PLATFORM=wayland` or `AGENTMUX_OZONE_PLATFORM=x11`. The logic is in `agentmux-cef/src/app/mod.rs` (the Linux Ozone branch).
 
+### GPU
+
+AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardware OpenGL, it starts a short probe to check that the GPU really renders (a render node in `/dev/dri` and a renderer that isn't a software one such as llvmpipe), and falls back to software rendering if not (`agentmux-cef/src/app/gpu.rs`, `agentmux-cef/src/app/gl_probe.rs`). This keeps AgentMux from opening an invisible window in a VM or on a GPU without working 3D. To pick Chromium's ANGLE backend yourself, set `AGENTMUX_ANGLE` (for example `AGENTMUX_ANGLE=gl`); it takes priority over the check.
+
 ### Sandbox blocked by AppArmor (Ubuntu)
 
 AgentMux sandboxes its browser engine with unprivileged user namespaces. Recent Ubuntu releases restrict these through AppArmor, which blocks Chromium-based apps. AgentMux checks for this before starting the browser engine. If it's blocked, a dialog offers three choices:
@@ -150,15 +154,33 @@ The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (*
 
 Agents need their CLI tools, and most of those need Node.js and npm. **≡ → Toolchain** shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 
+A **Local models** section, between the core tools and the agent CLIs, looks for tools for running models on your own machine: Ollama, llama.cpp, LM Studio and llmfit, and the coding agents OpenCode, Goose, Crush and Aider. Each row shows the version and path it found, or "Not installed (optional)", with an install command to copy and a link. There is no one-click install for these, and OpenCode, Goose, Crush and Aider can't be launched as AgentMux agent panes yet (`frontend/app/view/agent/providers/toolchain-catalog.ts`, `LOCAL_MODEL_TOOLS`).
+
 ### System tray
 
-By default, AgentMux keeps running with an icon in the system tray (the menu bar on macOS) when you close its last window. The icon's menu has **New Window** (**Start AgentMux** if the app isn't running) and **Quit AgentMux**, which shuts AgentMux down completely. On Windows 11 a new tray icon starts in the overflow (^) area; drag it onto the taskbar to keep it visible.
+AgentMux shows an icon in the system tray (the menu bar on macOS) while it runs. **Closing the last window quits AgentMux**, unless you've turned on **Keep running after all windows are closed**. The icon's menu has, below any notification items:
 
-To quit when the last window closes instead, turn off **Keep running in the system tray** in **Settings → Notifications & Tray** (the `app:runinbackground` setting). The change applies at the next launch. On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window quits AgentMux. Starting AgentMux at login is a separate setting, **Start at login**, and is off by default (`agentmux-launcher/src/background_config.rs`, `agentmux-launcher/src/tray/`).
+- **New Window** (**Start AgentMux** if the app isn't running).
+- **Start at login**, a check item (see below).
+- **Quit AgentMux**, which shuts AgentMux down completely.
+
+On Windows and Linux, left-clicking the icon opens the oldest pane that needs you, or a new window; on macOS it opens the menu. On Windows 11 a new tray icon starts in the overflow (^) area; drag it onto the taskbar to keep it visible.
+
+The switches are in **Settings → Notifications & Tray**, under **System tray** (`agentmux-launcher/src/background_config.rs`, `agentmux-launcher/src/tray/`):
+
+| Setting | Key | Default | Applies |
+|---|---|---|---|
+| **Show icon in the system tray** | `app:showtray` | On | At the next launch |
+| **Keep running after all windows are closed** | `app:runinbackground` | Off | At the next launch. Turning it on also shows the tray icon, since the icon's menu is then the only way to quit. |
+| **Start at login** | `app:startatlogin` | Off | Immediately. The same switch is in the tray icon's menu. |
+
+**Start at login** starts AgentMux in the tray when you log in, without opening a window; click the tray icon or choose **New Window** to open one. An AgentMux started this way keeps running after you close its windows, whatever **Keep running after all windows are closed** says. If AgentMux is already running when you log in, the login start does nothing (`agentmux-launcher/src/start_at_login.rs`).
+
+On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window always quits AgentMux, and a login start opens a normal window instead of staying hidden.
 
 ## Updating
 
-Apart from the Microsoft Store build, AgentMux doesn't update itself. To update, download the new release and install or run it in place of the old one. Quit the old version first with **Quit AgentMux** in its tray icon's menu, because closing its windows leaves it running (see [System tray](#system-tray)). Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
+Apart from the Microsoft Store build, AgentMux doesn't update itself. To update, download the new release and install or run it in place of the old one. Quit the old version first: close its windows, or, if you turned on **Keep running after all windows are closed** or it was started at login, use **Quit AgentMux** in its tray icon's menu (see [System tray](#system-tray)). Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
 
 ## Next Steps
 

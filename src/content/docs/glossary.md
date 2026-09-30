@@ -49,7 +49,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
-<a id="pane"></a>**pane** — A UI slot in the workspace layout. Panes have types: terminal, agent, code editor, browser, swarm, subagent, system metrics, code preview. The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
+<a id="pane"></a>**pane** — A UI slot in the workspace layout. Panes have types: terminal, agent, code editor, browser, media, swarm, system metrics and more (see [Pane Types](/pane-types/)). The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
 
 <a id="process"></a>**process** — An OS process. **Avoid in user-facing copy** — one [instance](#instance) has 4+ processes ([launcher](#launcher), [sidecar](#sidecar), [host](#host), [renderer](#renderer)s, plus Chromium GPU/utility subprocesses), so "this AgentMux process" is ambiguous. Reserve "process" for internal docs that genuinely discuss the process tree.
 
@@ -67,9 +67,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 
-**subagent** — An agent spawned by another agent. Claude Code's sub-agent feature is the canonical example. AgentMux's Subagent Watcher tracks these and gives each one its own focused activity-stream pane. See [Subagent Watcher](/subagent-watcher/).
+<a id="subagent"></a>**subagent** — An agent spawned by another agent. Claude Code's sub-agent feature is the canonical example. For Claude Code agents, the [Swarm](/subagent-watcher/) pane tracks these and expands each one's activity inline under its parent agent.
 
-**swarm** — The multi-agent orchestration view. Shows every active and completed [subagent](#subagent) across your workspace, with event counts, models, and last-activity timestamps.
+**swarm** — The multi-agent overview pane. Lists every running agent pane on this instance as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
 
 <a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
 

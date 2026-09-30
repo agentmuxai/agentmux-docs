@@ -101,6 +101,8 @@ The agent pane shows:
 - **Working status**: "Working…" with a timer while a turn runs.
 - A **Disconnected from stream** banner with a **Reconnect** button, if the pane loses its stream while a turn is running.
 
+To give the agent files (screenshots, PDFs, Office documents, code), drop them anywhere on the pane or paste them into the message box; they're attached to your next message. See [Attaching files](/pane-types/#attaching-files).
+
 The pane header shows the agent as a tab, with its name and its provider's logo. Double-click the tab to rename the agent. Closing the last agent tab in a pane returns the pane to **My Agents** instead of closing it.
 
 ### Ending an agent
@@ -120,7 +122,7 @@ Start a message with `!` to run it as a shell command in the agent's working dir
 !ls -la dist/
 ```
 
-The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes.
+The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes. They run with `sh -c`; on Windows that is Git for Windows' `sh`, which AgentMux finds even when Git Bash isn't on your `PATH` (set `AGENTMUX_BASH` to the path of a `bash` or `sh` to use a different one). A message with files attached is sent to the agent, not run (`agentmux-srv/src/backend/posix_shell.rs`).
 
 ### When the agent asks you a question
 

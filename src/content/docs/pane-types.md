@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-Every widget is pinned by default — the widget bar shows the full set directly, collapsing to icon-only when the title bar gets narrow. There's no overflow / More dropdown anymore (it existed in earlier builds but was removed; the `widget:icononly` setting force-collapses labels manually if you prefer).
+The widget bar pins **Agent**, **Swarm**, **Armory** and **Sysinfo** by default; every other widget is under **more**. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`agentmux-srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
@@ -20,7 +20,7 @@ Every widget is pinned by default — the widget bar shows the full set directly
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
-| **Swarm** | bee | `swarm` | Multi-agent orchestration and history |
+| **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
 | **Warden** | shield-halved | `warden` | Monitor and control agents across Host / LAN / Internet layers — see [Warden widget](/warden/) |
@@ -38,7 +38,6 @@ These views exist in the codebase but are **not** opened directly from the widge
 | **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Armory** → Skills tab. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with its own sections (Appearance/Terminal/Agent/Sounds/Network/Files/Advanced) — no longer just opens `settings.json` in an external editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
-| **Subagent** | Spawned by clicking a sub-agent in the Swarm pane's overview. Not a top-level pane type the user opens directly. |
 
 The **Stash** icon (`backpack`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Armory](/armory/#opening-the-armory).
 
@@ -67,12 +66,9 @@ Password prompts and TUI apps (vim, less, htop) are safe: the predictor observes
 
 To disable: set `term:predictiveecho = false` in your settings. See [Settings Reference](/settings/).
 
-### File drag-and-drop
+### Dropping files
 
-- Drag a file from your file explorer onto a **terminal pane** to insert its path at the cursor (ready to use in shell commands like `cat`, `open`, or `vim`).
-- Drag a file onto an **agent pane** to attach its contents to the agent's context.
-
-Platform support: Windows (Phase 1, shipped v0.40.1). macOS and Linux Phase 2.
+Dropping files from your file manager onto a terminal pane **copies** them into the terminal's working directory; it doesn't type their paths. See [Dropping files onto panes](#dropping-files-onto-panes).
 
 ## Browser
 
@@ -167,6 +163,8 @@ Three small square buttons at the top of the tree, each with an **instant toolti
 
 A path-input affordance lives at the bottom of the tree column when no file is open — handy when an LLM hands you an absolute path and you don't want to navigate the tree to find it. Once a file is open, the input is hidden to give the tree more vertical space.
 
+You can also drop text files from your file manager onto the editor pane: each opens in its own tab (`frontend/app/view/editor/editor-drop.ts`). See [Dropping files onto panes](#dropping-files-onto-panes).
+
 ### Encoding detection
 
 The editor detects and handles non-UTF-8 files automatically — Windows-1252 `.ini` files, UTF-16 BOM, Shift_JIS, and similar encodings all load correctly. The detected encoding is shown in the status bar. Saves always write back in the file's original encoding unless you choose otherwise.
@@ -247,6 +245,8 @@ Point it at either:
 - **A single file** — renders that image or video and stays on it.
 - **A directory** — watches it and shows the most recently modified matching file, updating automatically (no manual reload) whenever a new or changed file appears. There's no gallery/grid of every file in the directory yet — it always shows one file at a time.
 
+To point it at a file yourself, drop one image, video or audio file onto the pane from your file manager (`frontend/app/view/media/media.tsx`). See [Dropping files onto panes](#dropping-files-onto-panes).
+
 The pane watches the filesystem via the same `notify`-crate mechanism the Editor pane's live-reload uses, generalized from "one open file" to "a whole directory." Supported extensions include common image formats (png, jpg, webp, gif) and video (webm, mp4 — though H.264/AAC `.mp4` playback depends on your build's Chromium codec support; webm typically plays more reliably).
 
 ### Opening it programmatically
@@ -285,9 +285,15 @@ Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours`
 
 ### Activity dock
 
-Long-running shell commands started by the agent are pinned to a **dock at the top of the agent pane** — visible at a glance without scrolling to find the tool call. Click any docked activity row to expand its live log output. The dock entry clears automatically when the process completes.
+Long-running shell commands started by the agent are pinned to a **dock at the top of the agent pane** — visible at a glance without scrolling to find the tool call. Click any docked activity row to expand its live log output. Three rows show at once; the rest fold under "▸ N more".
 
-An ordinary tool call that just happens to run long gets promoted into the dock once it's been running past a threshold (30 seconds) — this is the auto-detected "this is taking a while" case. A Bash call the agent explicitly launched in the background (`run_in_background`) is different: it gets its own dock row **immediately**, with a **"Running in background"** status distinct from the generic "Working…" state, and stays there until the agent reports the task's completion. Splitting these two out matters because a long-lived background process (a dev server, a watch task) is expected to keep running — without the distinct status, it would look identical to a turn that's simply stuck.
+What gets a row (`frontend/app/view/agent/components/ActivityDock.tsx`, `frontend/app/view/agent/activity/tool-adapter.ts`):
+
+- A Bash call that has been running for 30 seconds — the auto-detected "this is taking a while" case. A bare `sleep` gets a row straight away, with a "~Ns left" countdown.
+- A command the agent launched in the background (`run_in_background`), **immediately**, including one a subagent started. A long-lived background process (a dev server, a watch task) is expected to keep running, so it shouldn't look like a stuck turn.
+- Shells and subagents the agent started.
+
+A row shows a glyph for its kind while it runs (`$` for a command), then ✓ (done), ✗ (failed) or ■ (stopped). A finished row leaves the dock after a few seconds: 8 s when done, 3 s when stopped, 15 s when failed. A failed row can be dismissed sooner with **×**. A background command's row ends when the agent is told it finished, or when Claude Code reports that it ended, which is what clears rows for commands a subagent started. The same background commands also appear in the [Swarm](/subagent-watcher/#background) pane.
 
 ### Agent History
 
@@ -312,6 +318,33 @@ After each completed turn, if the composer is still empty, AgentMux may show a d
 ### Composer strip
 
 Mode, Model, and Effort (Claude panes only) render as pill-shaped **drop-up** controls in the composer strip — click one to open a small popup above it rather than a native dropdown; changes apply on the agent's next turn. The **Shell** button (formerly labeled "Log") toggles the resizable details drawer described below.
+
+The strip also shows the account the agent is signed in as. When you have another signed-in account for the same provider, and the agent isn't in the middle of a turn, click it and pick **Switch to &lt;email&gt;** to move the agent to that account. Switching restarts the agent (`frontend/app/view/agent/components/AgentComposerStrip.tsx`).
+
+### Attaching files
+
+You can attach any kind of file to a message: images, PDFs, Word, Excel and PowerPoint files, text, code, archives and more (`frontend/app/view/agent/attachments/`, `agentmux-srv/src/backend/attachments/`). To attach files:
+
+- drop them anywhere on the agent pane (see [Dropping files onto panes](#dropping-files-onto-panes)); a dropped folder adds the files in it, skipping folders such as `node_modules`, `target`, `dist` and `.venv`;
+- paste them with `Ctrl+V` (`Cmd+V`), for example a screenshot or files copied in your file manager;
+- or right-click the message box and choose **Paste**.
+
+Attached files appear above the message box as numbered tiles: a thumbnail for images, SVG and text, or a coloured icon with the file's extension for everything else (PDFs also show their page count). Click a tile to preview it; its **×** removes it, with a few seconds to undo. A header shows the count and total size, with a progress bar while files are being processed. A message can carry up to **128 files** and **1 GB** (`attachments:maxfiles`, `attachments:maxtotalmb`).
+
+What the agent receives:
+
+- **Every agent** gets a numbered list of the files with their paths on disk and a short note on each (type, PDF page count). Office documents and PDFs also get an extracted text version, and its path is listed too.
+- **Claude agents** additionally see images inline, and read PDFs of up to 100 pages directly: up to 20 inline images per message (`attachments:claudeinlinemax`) and 50 MB of inline images per session (`attachments:claudesessioninlinemb`). Beyond those limits, files are listed by path for the agent to open.
+
+Container agents can't take attachments yet: files dropped or pasted into their pane are copied into the agent's working folder instead, with an `@name` reference in the message box. Attachment files are kept for 30 days after they were last used, and files never sent are removed after 7 days (`attachments:retentiondays`).
+
+### Side questions (`/btw`)
+
+Type `/btw <question>` to ask the agent something without interrupting the turn it's running. The answer appears in a floating overlay (`Esc` closes it), and neither the question nor the answer is added to the conversation. It works on Claude, Codex and Gemini agents (`frontend/app/view/agent/commands/providers/btw.ts`).
+
+### Coloured status words
+
+Agents can colour a few words of a reply to mark status: passed, needs attention, failed, a note, de-emphasised, before/after, or a small badge. The colours come from your theme, and AgentMux tells agents how to use them through its Operator Config. Only the classes `am-ok`, `am-warn`, `am-error`, `am-info`, `am-muted`, `am-added`, `am-removed` and `am-badge` are kept; any other class, and any `style` attribute, is stripped (`frontend/app/element/markdown-semantic.ts`).
 
 ### Details drawer & embedded shell
 
@@ -338,25 +371,7 @@ Bundles themselves are edited only in the [Armory](/armory/). The `view: "identi
 
 ## Swarm
 
-The Swarm pane provides a bird's-eye view of all agent activity. It has three tabs:
-
-- **Overview** — Active and completed sub-agents across all agent sessions
-- **History** — Past session metadata with message counts, models, token usage, and git branches
-- **Search** — Full-text search across all agent sessions
-
-Click any sub-agent in the overview to open a dedicated [Subagent](#subagent) pane.
-
-## Subagent
-
-A focused view of a single sub-agent's activity stream. **Not a widget-bar entry** — opened by clicking a sub-agent in the [Swarm pane's overview](#swarm). Shows:
-
-- Agent ID and slug
-- Status badge (active, completed, loading)
-- Event count and last activity time
-- Model being used
-- Event stream: text output, tool uses, tool results, and progress updates
-
-Subagent panes auto-scroll by default. Scroll up to pause, and a "scroll to bottom" button appears.
+The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. See [Swarm](/subagent-watcher/).
 
 ## Drone
 
@@ -507,6 +522,29 @@ Rearrange panes by dragging their headers. You can:
 - Move panes across tabs
 - Drag panes between windows (cross-window drag supported on all platforms)
 
+### Dropping files onto panes
+
+Drag files from your file manager over AgentMux and it shows where they can go (`frontend/app/drag/file-drop.ts`, `frontend/app/drag/DropIndicator.tsx`):
+
+- Every visible pane that would accept the files gets a faint dashed outline in the theme's accent colour.
+- The pane under the cursor is tinted and shows what the drop will do, for example "Drop 2 files to attach" or "Copy 2 files to &lt;folder&gt;".
+- A pane that takes files, but not these ones, shows why instead, for example "The editor opens text files".
+
+Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) show a "no drop" cursor.
+
+| Pane | What a drop does |
+|---|---|
+| **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/first-agent/#host-and-container-agents), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
+| **Terminal** | Copies the files into the terminal's working directory. It doesn't type their paths. |
+| **Media** | Shows the file. Takes exactly one image, video or audio file (png, jpg, jpeg, gif, webp, webm, mp4, mov, wav); the pane then watches that file's folder like any other media pane. |
+| **Editor** | Opens each text file in its own tab. Images, PDFs, Office documents, archives, audio and video are refused. |
+
+Copies land directly in the pane's working folder (`agentmux-common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
+
+If the operating system doesn't give AgentMux a dropped file's path, the file's contents are used instead: they're copied into the working folder, attached, or opened as an untitled editor tab. A media pane shows such a file but can't watch its folder.
+
+`dnd:enabled` turns off drops onto agent and terminal panes; see the [file drop settings](/settings/#file-drop-and-attachment-settings).
+
 ### Tab tear-off
 
 Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree, but the same binary as the source, so it's the same (channel, version) — both share the per-version runtime state (CEF cache, cookies, SQLite stores, host logs) *and* the channel-wide agents/settings. Different channel → fully isolated. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
@@ -521,6 +559,7 @@ Drag a tab below the tab bar to spawn a **new AgentMux instance** containing tha
 | Drag the floating title bar | Move the floating window freely across monitors |
 | Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 180 ms at that speed; release to dock |
 | Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |
+| Tack button (thumbtack, "Always on top"), next to Maximize — **Windows only** | Keeps the floater above every AgentMux window. The button lights up in the theme colour while on. It applies only while AgentMux is the active app, so switching to another app lets that app cover it, and two tacked floaters behave normally toward each other. The tack survives a reload of the pane and is dropped when the pane is redocked (`frontend/app/block/floating-ontop.tsx`). |
 | Close button in floater title bar | Closes the pane (same as closing a docked pane) |
 
 #### Independent windows
