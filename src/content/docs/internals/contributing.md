@@ -70,10 +70,10 @@ git push -u origin yourname/feature-name
 
 ```
 agentmux/
-├── crates/launcher/        # 325 KB launcher: spawns the host, owns Layer 1 reducer
-├── crates/cef/             # Host: embeds Chromium via CEF, owns the OS window
-├── crates/srv/             # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
-├── crates/common/          # Shared utilities: path resolution, runtime mode
+├── crates/launcher/          # 325 KB launcher: spawns the host, owns Layer 1 reducer
+├── crates/cef/               # Host: embeds Chromium via CEF, owns the OS window
+├── crates/srv/               # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
+├── crates/common/            # Shared utilities: path resolution, runtime mode
 ├── frontend/                 # SolidJS + TypeScript renderer (Vite)
 │   ├── app/view/             # Pane view implementations (term, browser, agent, drone, …)
 │   ├── app/block/            # Block / pane rendering + registry

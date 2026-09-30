@@ -114,10 +114,10 @@ Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10
 
 ```
 agentmux/
-├── crates/launcher/   # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
-├── crates/cef/        # CEF host — embeds Chromium, owns the OS window
-├── crates/srv/        # Sidecar — RPC engine, SQLite persistence, sagas
-├── crates/common/     # Shared utilities (path resolution, runtime mode)
+├── crates/launcher/     # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
+├── crates/cef/          # CEF host — embeds Chromium, owns the OS window
+├── crates/srv/          # Sidecar — RPC engine, SQLite persistence, sagas
+├── crates/common/       # Shared utilities (path resolution, runtime mode)
 ├── frontend/            # SolidJS + TypeScript (Vite)
 ├── docs/                # Architecture docs and specs
 ├── specs/               # Top-level specs
