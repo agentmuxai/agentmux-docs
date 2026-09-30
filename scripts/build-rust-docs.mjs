@@ -14,9 +14,23 @@
 //   - public/api/rust/<crate>/index.html ... (rustdoc HTML)
 //   - public/api/rust/index.html (rustdoc's umbrella index)
 //
-// Failure mode: if cargo isn't available, prints a helpful message
-// and exits 0 — Astro's build still succeeds, the /api/rust/ link
-// just 404s. CI should fail loudly; local dev should not be blocked.
+// Failure mode depends on where it runs:
+//   - Local dev: if cargo is missing, the submodule is missing, or
+//     `cargo doc` fails, print a helpful message and exit 0. Astro's
+//     build still succeeds and /api/rust/ shows the placeholder, whose
+//     crate links 404. Local dev should not be blocked.
+//   - CI (`CI` env var set, as on every GitHub Actions runner): the same
+//     conditions exit 1 and fail the build. The deploy used to stay green
+//     while shipping only the placeholder (agentmux-docs#131), so a broken
+//     Rust reference must now stop the deploy instead of going live
+//     unseen. Set RUST_DOCS_OPTIONAL=1 to get the local behaviour in CI
+//     (for example, to ship an urgent content fix while the Rust build is
+//     broken); do that deliberately, never as a standing default.
+//
+// System libraries: `cargo doc` still runs every dependency's build
+// script, so on Linux the -sys crates need their dev packages
+// (libwayland-dev, libxkbcommon-dev, libdbus-1-dev, libxcb1-dev,
+// pkg-config). The deploy workflows install them; see deploy.yml.
 
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, cpSync, readdirSync, readFileSync } from "node:fs";
@@ -30,6 +44,25 @@ const target = resolve(root, "public", "api", "rust");
 
 const CRATES = ["agentmux-cef", "agentmux-srv", "agentmux-launcher", "agentmux-common"];
 
+// See "Failure mode" above. Any non-empty CI value other than "false"
+// counts, matching how GitHub Actions and most CI systems set it.
+const isCI = !!process.env.CI && process.env.CI !== "false";
+const strict = isCI && process.env.RUST_DOCS_OPTIONAL !== "1";
+
+// Skip generation: a warning locally, a build failure in CI.
+function skip(...lines) {
+    for (const line of lines) {
+        (strict ? console.error : console.warn)(`[build-rust-docs] ${line}`);
+    }
+    if (strict) {
+        console.error("[build-rust-docs] Failing because CI is set: /api/rust/ would ship only the placeholder.");
+        console.error("[build-rust-docs]   Set RUST_DOCS_OPTIONAL=1 to deploy without the Rust reference on purpose.");
+        process.exit(1);
+    }
+    console.warn("[build-rust-docs]   Site build continues; /api/rust/ will show the placeholder.");
+    process.exit(0);
+}
+
 function have(cmd) {
     try {
         execSync(`${cmd} --version`, { stdio: "ignore" });
@@ -40,15 +73,17 @@ function have(cmd) {
 }
 
 if (!have("cargo")) {
-    console.warn("[build-rust-docs] cargo not found on PATH — skipping Rust API doc generation.");
-    console.warn("[build-rust-docs]   Install Rust + cargo to populate /api/rust/.");
-    process.exit(0);
+    skip(
+        "cargo not found on PATH — skipping Rust API doc generation.",
+        "  Install Rust + cargo to populate /api/rust/.",
+    );
 }
 
-if (!existsSync(submodule)) {
-    console.warn(`[build-rust-docs] submodule missing at ${submodule}.`);
-    console.warn("[build-rust-docs]   Run: git submodule update --init --recursive");
-    process.exit(0);
+if (!existsSync(join(submodule, "Cargo.toml"))) {
+    skip(
+        `submodule missing or not checked out at ${submodule}.`,
+        "  Run: git submodule update --init --recursive",
+    );
 }
 
 console.log(`[build-rust-docs] cargo doc @ ${submodule}`);
@@ -58,22 +93,28 @@ const cargoDocArgs = [
     "--no-deps",
     "--workspace",
     ...CRATES.flatMap((c) => ["-p", c]),
+    // `cef/dox` is the docs-only mode of the `cef` crate (docs.rs builds it
+    // the same way): it turns `cef-dll-sys`'s build script into a no-op, so
+    // documenting agentmux-cef no longer downloads the ~hundreds-of-MB CEF
+    // binary distribution or compiles its C++ wrapper with cmake/ninja.
+    // The Rust API surface is unchanged; only the native build is skipped.
+    "--features",
+    "cef/dox",
 ];
 
 // Run cargo doc on stable Rust — no nightly-only flags (the previous
 // `--enable-index-page -Zunstable-options` would have failed on stable
-// toolchains). Wrap in try/catch so a build failure here doesn't take
-// down the whole site build; we treat it the same as cargo-not-found.
+// toolchains).
 try {
     execSync(`cargo ${cargoDocArgs.join(" ")}`, {
         cwd: submodule,
         stdio: "inherit",
     });
 } catch (err) {
-    console.warn(`[build-rust-docs] cargo doc failed: ${err.message}`);
-    console.warn("[build-rust-docs]   Site build continues; /api/rust/ will show the placeholder.");
-    console.warn("[build-rust-docs]   For the full Rust reference, fix the build above and rerun `npm run build:rust-docs`.");
-    process.exit(0);
+    skip(
+        `cargo doc failed: ${err.message}`,
+        "  For the full Rust reference, fix the build above and rerun `npm run build:rust-docs`.",
+    );
 }
 
 const generatedDir = resolve(submodule, "target", "doc");
@@ -123,4 +164,14 @@ if (expectedPlaceholderBytes !== null) {
     }
 }
 
-console.log("[build-rust-docs] done.");
+// The placeholder index links to one page per crate in CRATES. Make sure
+// each exists, so a green build means /api/rust/ has no dead crate links.
+const missingCrates = CRATES.map((c) => c.replaceAll("-", "_")).filter(
+    (dir) => !existsSync(join(target, dir, "index.html")),
+);
+if (missingCrates.length > 0) {
+    console.error(`[build-rust-docs] cargo doc produced no index.html for: ${missingCrates.join(", ")}.`);
+    process.exit(1);
+}
+
+console.log(`[build-rust-docs] done: ${CRATES.join(", ")}.`);

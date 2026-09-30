@@ -89,6 +89,15 @@ jobs:
             | sh -s -- -y --profile minimal --default-toolchain stable
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
+      - name: Install system libraries for cargo doc
+        # Same step and package list as deploy.yml; see the comment there
+        # (agentmux-docs#131).
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*
+          sudo apt-get update || echo "apt-get update reported errors; continuing (install is the real gate)"
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config libwayland-dev libxkbcommon-dev libdbus-1-dev libxcb1-dev
+
       - name: Cache cargo registry + target
         uses: actions/cache@v4
         with:
