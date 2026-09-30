@@ -15,7 +15,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 **agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
-<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the running summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
 
 **block** — An immutable persisted unit of pane state. A block is the smallest thing the reducer writes. Terminal output, code block, diff, chat message — each is one or more blocks. Layered structure with reducer-driven mutations. See [The reducer stack](/internals/reducer-stack/).
 
