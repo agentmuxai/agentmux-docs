@@ -11,8 +11,8 @@ The browser pane (view `browser`) embeds a real Chromium browser through CEF, **
 
 How it is embedded depends on the platform:
 
-- **Windows:** a CEF browser window placed as a child window inside the AgentMux window (`agentmux-cef/src/browser_pane/creation.rs`).
-- **macOS and Linux:** a CEF browser view laid over the AgentMux window (`agentmux-cef/src/browser_pane/creation_views.rs`).
+- **Windows:** a CEF browser window placed as a child window inside the AgentMux window (`crates/cef/src/browser_pane/creation.rs`).
+- **macOS and Linux:** a CEF browser view laid over the AgentMux window (`crates/cef/src/browser_pane/creation_views.rs`).
 
 Some things differ from a normal browser tab:
 
@@ -22,12 +22,12 @@ Some things differ from a normal browser tab:
 
 ## Opening a browser pane
 
-The Browser widget is **not pinned** to the widget bar by default (`agentmux-srv/src/config/widgets.json`, `defwidget@browser`).
+The Browser widget is **not pinned** to the widget bar by default (`crates/srv/src/config/widgets.json`, `defwidget@browser`).
 
 - Click **more** at the end of the widget bar and choose **Browser**. Right-click it there and choose **Pin to bar** to keep it in the bar.
 - Click **+** on any pane's tab strip and pick **Browser** to open it as a tab in that pane.
 - Right-click a pane header → **Replace With...** → **Browser** replaces that pane.
-- From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`agentmux-srv/src/backend/shellintegration/muxsh.mjs`).
+- From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`crates/srv/src/backend/shellintegration/muxsh.mjs`).
 - From the App API: `pane.open` with `view: "browser"` and a `url`, which is required for this view.
 
 The **Messengers** widget (Discord, Slack, Telegram, WhatsApp, Teams) opens browser panes too, with the navigation bar hidden.
@@ -52,7 +52,7 @@ The pane title follows the page title, and shows the host name while a page is l
 
 ## Keyboard shortcuts
 
-These shortcuts are handled by AgentMux itself (`agentmux-cef/src/client/handlers.rs`), so they work while the page has focus. The page doesn't receive them.
+These shortcuts are handled by AgentMux itself (`crates/cef/src/client/handlers.rs`), so they work while the page has focus. The page doesn't receive them.
 
 | Shortcut | Action |
 |---|---|
@@ -81,7 +81,7 @@ Bookmarks and the start page are shared by every browser pane and every AgentMux
 
 ## Camera, microphone and screen sharing
 
-When a page asks for the camera, microphone or screen, AgentMux shows a prompt in the AgentMux window, not inside the page (`agentmux-cef/src/browser_panes/media_grants.rs`, `frontend/app/window/pane-media-permission-prompt.tsx`):
+When a page asks for the camera, microphone or screen, AgentMux shows a prompt in the AgentMux window, not inside the page (`crates/cef/src/browser_panes/media_grants.rs`, `frontend/app/window/pane-media-permission-prompt.tsx`):
 
 - The prompt reads "*site* wants to use your camera" (or microphone, screen contents, system audio), with **Allow** and **Don't allow**. `Esc` or clicking outside it means Don't allow.
 - A prompt left unanswered for 60 seconds is denied.
@@ -106,7 +106,7 @@ There is no screen for listing or deleting saved credentials.
 
 ## Sign-in popups
 
-When a page opens a sign-in popup, AgentMux opens a real popup window only when both of these are true (`agentmux-cef/src/client/lifecycle.rs`, `on_before_popup`):
+When a page opens a sign-in popup, AgentMux opens a real popup window only when both of these are true (`crates/cef/src/client/lifecycle.rs`, `on_before_popup`):
 
 - the popup's host is a known sign-in provider, such as Google, GitHub, Microsoft, Apple, Okta or Auth0;
 - its URL looks like an OAuth authorization request.
@@ -146,11 +146,11 @@ Only the current URL is saved with the pane. Switching to another window tab and
 
 ## Driving the browser from an agent
 
-Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`agentmux-cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`agentmux-cef/src/browser_api/resolver.rs`). See [Agent App API](/internals/agent-app-api/) for the tool reference.
+Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [Agent App API](/internals/agent-app-api/) for the tool reference.
 
 ## Internals
 
-The renderer controls each browser pane through host IPC commands (`agentmux-cef/src/ipc.rs`). Examples: `browser_pane_create`, `browser_pane_navigate`, `browser_pane_resize`, `browser_pane_go_back`, `browser_pane_go_forward`, `browser_pane_reload`, `browser_pane_focus` and `browser_pane_close`. Other IPC commands handle printing, view-source, inspect, clipboard and the authentication prompt. Agents don't use these commands.
+The renderer controls each browser pane through host IPC commands (`crates/cef/src/ipc.rs`). Examples: `browser_pane_create`, `browser_pane_navigate`, `browser_pane_resize`, `browser_pane_go_back`, `browser_pane_go_forward`, `browser_pane_reload`, `browser_pane_focus` and `browser_pane_close`. Other IPC commands handle printing, view-source, inspect, clipboard and the authentication prompt. Agents don't use these commands.
 
 Per-pane browser state (URL, title, favicon, loading and error state, back/forward availability) lives in a reducer (`frontend/app/store/browser-pane-state/reducer.ts`, wrapped per pane by `frontend/app/store/browser-pane-state-store.ts`); the view model reads it from there. On Windows and macOS, a click inside the page sends a `browser-pane-clicked` event. The reducer turns it into a focus change for that pane, and a separate listener closes any open menus. See [Reducer stack](/internals/reducer-stack/).
 

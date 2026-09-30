@@ -27,13 +27,13 @@ The **controller type** determines the spawn strategy: `persistent` keeps the CL
 The current provider registry also includes `pi` and `copilot` (both documented in [Auth flows](/auth/)) and `qwen` — their exact controller type / output format weren't re-verified for this table. **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/). **Antigravity** is Google's agentic coding CLI harness, added most recently (PR #2558) — it's a sibling of Gemini CLI closely enough that it reuses the Gemini translator rather than shipping a new one.
 :::
 
-Provider definitions live in `frontend/app/view/agent/providers/index.ts` (frontend) and `agentmux-srv/src/backend/providers.rs` (backend, source of truth for the table above).
+Provider definitions live in `frontend/app/view/agent/providers/index.ts` (frontend) and `crates/srv/src/backend/providers.rs` (backend, source of truth for the table above).
 
 ## Provider (harness) vs. model vendor
 
 "Provider" throughout this page — and "harness" in some older code/specs, the same axis under a different name — means *which CLI tool is driving the session*: Claude Code, Codex, Gemini, and so on. That is a distinct concept from **model vendor**: the underlying LLM backend actually serving responses for that session.
 
-Each provider declares its default vendor(s) via `supported_vendors` in `agentmux-srv/src/backend/providers.rs` — most-default-first, e.g. Claude Code → `["anthropic"]`, Codex → `["openai"]`, OpenClaw → `["openai", "anthropic", "google"]` since it's model-agnostic. This is purely descriptive/display data (drives the dual-icon vendor badge and the agent picker's default-vendor inference); it doesn't gate anything at spawn time.
+Each provider declares its default vendor(s) via `supported_vendors` in `crates/srv/src/backend/providers.rs` — most-default-first, e.g. Claude Code → `["anthropic"]`, Codex → `["openai"]`, OpenClaw → `["openai", "anthropic", "google"]` since it's model-agnostic. This is purely descriptive/display data (drives the dual-icon vendor badge and the agent picker's default-vendor inference); it doesn't gate anything at spawn time.
 
 What *does* gate spawn-time behavior is `base_url_env_var` — the environment variable a provider reads to redirect its model vendor backend off the default endpoint (e.g. Claude Code's `ANTHROPIC_BASE_URL`, pointing it at Bedrock, Vertex, OpenRouter, or a custom proxy). This is set only where independently verified per provider, not guessed — as of this writing only Claude Code has a confirmed one.
 
@@ -48,7 +48,7 @@ Before spawning, AgentMux resolves the CLI binary path via the `ResolveCliComman
 
 AgentMux installs provider CLIs via npm into its own directory so agents always run a known, tested version regardless of what the user has globally installed.
 
-Source: `agentmux-cef/src/commands/providers.rs` `get_local_cli_bin_path()`, `detect_installed_clis()`.
+Source: `crates/cef/src/commands/providers.rs` `get_local_cli_bin_path()`, `detect_installed_clis()`.
 
 ## Step 2 — Argument construction
 
@@ -74,7 +74,7 @@ This means the same agent definition can be launched with different models or ef
 
 ## Step 3 — PTY creation (the blockcontroller)
 
-The **blockcontroller** (`agentmux-srv/src/backend/blockcontroller/shell.rs`) is the component that creates and supervises the PTY. It owns the agent subprocess from birth to death.
+The **blockcontroller** (`crates/srv/src/backend/blockcontroller/shell.rs`) is the component that creates and supervises the PTY. It owns the agent subprocess from birth to death.
 
 ### PTY creation
 
@@ -120,7 +120,7 @@ The blockcontroller state machine has three states: `INIT → RUNNING → DONE`.
 
 ## Step 4 — Output stream parsing
 
-Each provider emits a different JSON format. The backend defines a `Translator` trait (`agentmux-srv/src/agents/translator/mod.rs`) for mapping provider-specific JSON frames to the internal `AgentEvent` enum, designed to be provider-agnostic (the runner holds `Box<dyn Translator>`):
+Each provider emits a different JSON format. The backend defines a `Translator` trait (`crates/srv/src/agents/translator/mod.rs`) for mapping provider-specific JSON frames to the internal `AgentEvent` enum, designed to be provider-agnostic (the runner holds `Box<dyn Translator>`):
 
 ```rust
 pub trait Translator: Send {
@@ -140,7 +140,7 @@ Raw bytes from the PTY are accumulated in a line buffer before JSON parsing:
 
 Parsed events are published on the WPS scope `agent_event:<block_id>` and simultaneously written as raw bytes to the xterm.js renderer.
 
-Source: `agentmux-srv/src/backend/blockcontroller/shell.rs` `extract_agent_events()`.
+Source: `crates/srv/src/backend/blockcontroller/shell.rs` `extract_agent_events()`.
 
 ### Claude stream-json event types
 
@@ -151,17 +151,17 @@ Source: `agentmux-srv/src/backend/blockcontroller/shell.rs` `extract_agent_event
 | `result` frame with `cost_usd` | `Cost` + `Done` events |
 | `result` frame with `is_error: true` | Failure classification |
 
-Source: `agentmux-srv/src/agents/translator/claude.rs`.
+Source: `crates/srv/src/agents/translator/claude.rs`.
 
 ### ACP (OpenClaw)
 
-OpenClaw uses JSON-RPC 2.0 over stdio rather than NDJSON. Its controller is in `agentmux-srv/src/backend/blockcontroller/acp.rs`.
+OpenClaw uses JSON-RPC 2.0 over stdio rather than NDJSON. Its controller is in `crates/srv/src/backend/blockcontroller/acp.rs`.
 
 ### Codex JSONL
 
-Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `agentmux-srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
+Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `crates/srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
 
-Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `agentmux-srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
+Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
 
 ## Step 5 — Subprocess lifecycle and signal handling
 
@@ -178,7 +178,7 @@ When an agent is stopped (via `agent.stop` RPC or user action):
 **Windows:**
 - `child.kill()` only — no signal support in Win32
 
-Source: `agentmux-srv/src/backend/blockcontroller/shell.rs` `stop()`.
+Source: `crates/srv/src/backend/blockcontroller/shell.rs` `stop()`.
 
 ### Unexpected crash handling
 
@@ -190,13 +190,13 @@ When the CLI exits unexpectedly:
 4. The last ~40 lines of stderr are retained for failure classification
 5. `crate::agents::failure::AgentFailure` classifies the exit into a structured failure type surfaced to the UI
 
-Source: `agentmux-srv/src/backend/blockcontroller/subprocess.rs`.
+Source: `crates/srv/src/backend/blockcontroller/subprocess.rs`.
 
 ### Session resume
 
 Session IDs are captured from the CLI's stdout and persisted in block metadata. Most providers resume with a trailing flag: on the next turn, the frontend appends `--resume <session_id>` (Claude) or `-r <session_id>` (Gemini) so conversation context is restored without re-sending history.
 
-**Codex is different: it resumes via a subcommand, not a flag.** Its continuation invocation is `codex exec resume <thread_id> [flags] -`, not `codex exec [flags] - --resume <thread_id>`. `ProviderConfig::resume_strategy_str()` reports this as `"codex-exec"` (every other provider reports `"flag"` or `"none"`), and `build_turn_argv`/`build_codex_argv` in `agentmux-srv/src/backend/blockcontroller/subprocess/argv.rs` handle it by inserting `resume <thread_id>` immediately after the `exec` subcommand while keeping the trailing stdin marker `-` last — a plain flag-append would produce an invalid Codex invocation.
+**Codex is different: it resumes via a subcommand, not a flag.** Its continuation invocation is `codex exec resume <thread_id> [flags] -`, not `codex exec [flags] - --resume <thread_id>`. `ProviderConfig::resume_strategy_str()` reports this as `"codex-exec"` (every other provider reports `"flag"` or `"none"`), and `build_turn_argv`/`build_codex_argv` in `crates/srv/src/backend/blockcontroller/subprocess/argv.rs` handle it by inserting `resume <thread_id>` immediately after the `exec` subcommand while keeping the trailing stdin marker `-` last — a plain flag-append would produce an invalid Codex invocation.
 
 ## Provider abstraction summary
 

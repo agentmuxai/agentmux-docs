@@ -23,7 +23,7 @@ Other senders reach the same delivery code: the cron scheduler, the Slack/Discor
 
 ## Delivery order
 
-`deliver` in `agentmux-srv/src/server/reactive.rs` tries each tier in turn and stops at the first that takes the message:
+`deliver` in `crates/srv/src/server/reactive.rs` tries each tier in turn and stops at the first that takes the message:
 
 | Step | Where the target is | How it gets there | Marker `DELIVERY=` |
 |---|---|---|---|
@@ -62,7 +62,7 @@ All routes live on the local AgentMux server (`agentmux-srv`). See [Network expo
 | `/api/bus/*` | Full auth key | Legacy local message-bus API. Nothing in AgentMux calls it; its inject path runs the same signature check and marker |
 | `/agentmux/reactive/poller/{config,status,stats}` | Full auth key | Legacy. `config` stores a URL and token, and nothing uses them: no poller runs |
 
-The auth checks are `auth_middleware` and `lan_or_full_auth_middleware` in `agentmux-srv/src/server/mod.rs`.
+The auth checks are `auth_middleware` and `lan_or_full_auth_middleware` in `crates/srv/src/server/mod.rs`.
 
 **The full auth key** is the per-launch key every terminal pane and agent process receives as `AGENTMUX_AUTH_KEY`. Holding it is equivalent to being the AgentMux UI. See the [trust model](/security/trust-model/).
 
@@ -77,7 +77,7 @@ A message a LAN device sends is labelled `TRUST=network-claimed` unless it carri
 
 ## The trust marker
 
-Every delivered message is wrapped by `wrap_jekt_message` in `agentmux-srv/src/backend/reactive/sanitize.rs`. The first line is machine-readable; the rest is for people:
+Every delivered message is wrapped by `wrap_jekt_message` in `crates/srv/src/backend/reactive/sanitize.rs`. The first line is machine-readable; the rest is for people:
 
 ```
 [JEKT:FROM=<sender> TO=<target> TIER=<tier> DELIVERY=<delivery> HELD_FOR=<n>s TRUST=<trust> INSTANCE=<label> INSTANCE_STATUS=<status> SIG=<sig> ESCALATE=<escalate> MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
@@ -132,7 +132,7 @@ Sender-controlled text cannot forge marker fields or blocks:
 
 ## When TIER is forced to sensitive
 
-`TIER=sensitive` is set by `Handler::inject_message_inner` in `agentmux-srv/src/backend/reactive/handler.rs`, regardless of the declared tier, when **any** of these holds:
+`TIER=sensitive` is set by `Handler::inject_message_inner` in `crates/srv/src/backend/reactive/handler.rs`, regardless of the declared tier, when **any** of these holds:
 
 - **A host-key check failed.** This instance holds an HMAC key for the claimed sender, and the signature was missing, stale or wrong. The check runs on every request to the inject route, whatever its tier, so a LAN message that claims the name of one of this instance's agents is forced sensitive too (its `TRUST` still reads `network-claimed`). It doesn't run on messages MuxBus Cloud delivers.
 - **A ReAgent signature failed** (`SIG=invalid`) on a WAN message. That includes a signature that is valid under any key other than the production key `reagent-v1`: the retired `reagent-v1-dev` key now yields `SIG=invalid`.
@@ -152,13 +152,13 @@ A failed cross-channel signature (`DELIVERY=channel`, a published key exists, si
 
 - **`ESCALATE=none`** when at least one signature on the message verified: host HMAC, channel, LAN, ReAgent under the production key, or WAN from an install with `INSTANCE_STATUS=approved` or `new`. The message carries the lighter "verified sender" warning line.
 - **`ESCALATE=required`** in every other case, including a verified WAN signature from a `revoked` install. The receiving agent is told to pause and ask the human operator, and that a confirming reply from another agent is not enough. AgentMux also raises a desktop notification, subject to your notification settings, with the fixed text "Open AgentMux to see the sender and trust level before it acts." It never shows the message, sender or trust label.
-- **Exception for `transcript_request`:** even a verified sender gets `ESCALATE=required` when the receiving agent's `conversation_visibility` is `ask`, or is `trusted_peers` and the requester has no grant for that tier. Grants for the `wan` tier are stored but never honored, so on WAN `trusted_peers` behaves like `ask`. Under `private` (the default) the ordinary rule applies. See `resolve_transcript_request_tier_fields` in `agentmux-srv/src/server/reactive.rs`.
+- **Exception for `transcript_request`:** even a verified sender gets `ESCALATE=required` when the receiving agent's `conversation_visibility` is `ask`, or is `trusted_peers` and the requester has no grant for that tier. Grants for the `wan` tier are stored but never honored, so on WAN `trusted_peers` behaves like `ask`. Under `private` (the default) the ordinary rule applies. See `resolve_transcript_request_tier_fields` in `crates/srv/src/server/reactive.rs`.
 
 The marker is instruction text for the receiving agent. `ESCALATE=required` does not stop the agent from acting; whether it pauses depends on the agent following the instruction. The server-side parts are the labels, the tier, and the notification.
 
 ## Signing keys
 
-`agentmux-mcp` signs every `SendMessage` with each key it has. The receiving server checks the one that fits the tier. The verification code is in `agentmux-common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
+`agentmux-mcp` signs every `SendMessage` with each key it has. The receiving server checks the one that fits the tier. The verification code is in `crates/common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
 
 | Key | Scheme | Minted | Verified when | Lifetime |
 |---|---|---|---|---|
@@ -173,7 +173,7 @@ The three agent keys are keyed by agent name, not UID, so two agents with the sa
 
 ### Where the keys live
 
-At every launch, AgentMux writes the agent's HMAC key, its LAN and WAN private keys, and its install's instance id (`AGENTMUX_HOST_LABEL`) into the `mcpServers.agentmux.env` block of `.mcp.json` **in the agent's working directory**, and the MCP server reads them from there (`agentmux-srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix) through a temporary file renamed into place. An existing `.mcp.json` is merged, not replaced: server entries AgentMux didn't write are kept, and the `agentmux` entry is always AgentMux's. A file that isn't valid JSON is left untouched, and the agent's MCP servers aren't written for that launch.
+At every launch, AgentMux writes the agent's HMAC key, its LAN and WAN private keys, and its install's instance id (`AGENTMUX_HOST_LABEL`) into the `mcpServers.agentmux.env` block of `.mcp.json` **in the agent's working directory**, and the MCP server reads them from there (`crates/srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix) through a temporary file renamed into place. An existing `.mcp.json` is merged, not replaced: server entries AgentMux didn't write are kept, and the `agentmux` entry is always AgentMux's. A file that isn't valid JSON is left untouched, and the agent's MCP servers aren't written for that launch.
 
 The default working directory is `~/.agentmux/agents/<slug>/`, which AgentMux excludes from git with a `*` rule in `~/.agentmux/.gitignore`. **If you point an agent at a project directory, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Don't commit it: add `.mcp.json` to that project's `.gitignore`.**
 
@@ -187,11 +187,11 @@ The sender's public key is fetched from whichever LAN peer answers `GET /agentmu
 
 ### WAN signing
 
-WAN signatures are checked only between installs signed in to the **same** MuxBus Cloud account. Each install (one per channel on a machine) has an instance keypair, created on first start and kept in `channels/<channel>/wan-identity/wan.db` together with its agents' WAN keys, so upgrades keep the same identity (`agentmux-srv/src/backend/storage/wan_identity.rs`). The instance id is derived from the instance public key: the first 128 bits of its SHA-256, as 26 base32 characters.
+WAN signatures are checked only between installs signed in to the **same** MuxBus Cloud account. Each install (one per channel on a machine) has an instance keypair, created on first start and kept in `channels/<channel>/wan-identity/wan.db` together with its agents' WAN keys, so upgrades keep the same identity (`crates/srv/src/backend/storage/wan_identity.rs`). The instance id is derived from the instance public key: the first 128 bits of its SHA-256, as 26 base32 characters.
 
-- **Publishing.** While you are signed in, the install certifies each agent's WAN public key with its instance key and publishes the record to the relay's key directory (`PUT /agents/<agent>/wan-key`, `agentmux-srv/src/muxbus/wan_publish.rs`). An unpublished key is retried every 5 minutes, or hourly while the relay has no key directory. A key counts as published per key directory, meaning per relay and account (`wan_agent_key_publications` in `wan.db`), so after you sign in to a different account, or the relay changes, the install publishes its keys again to the directory that hasn't seen them. Until it has, that agent's messages go out unsigned.
-- **Sending.** The relay carries a message's WAN signature only if the sender proved itself on this install with its host signature, signed as this install and channel, the signature verifies under its key in `wan.db`, and that key is confirmed published (`wan_carry_gate` in `agentmux-srv/src/muxbus/relay.rs`). Otherwise the message is relayed unsigned, exactly as before, and arrives `TRUST=network-claimed`. Agents started before `wan.db` existed sign with a hostname instead of an instance id and are sent unsigned until they are restarted.
-- **Receiving.** For a carried signature that the relay marks as same-account, the receiver checks the envelope and freshness, fetches the sender's key record from the directory (2-second timeout, at most 60 fetches a minute), checks that the instance key certified it, verifies the signature, and rejects a message id it has already delivered from that install and agent (`agentmux-srv/src/muxbus/wan_verify.rs`). A directory that is down or slow means "couldn't check", and the message is delivered as `network-claimed`.
+- **Publishing.** While you are signed in, the install certifies each agent's WAN public key with its instance key and publishes the record to the relay's key directory (`PUT /agents/<agent>/wan-key`, `crates/srv/src/muxbus/wan_publish.rs`). An unpublished key is retried every 5 minutes, or hourly while the relay has no key directory. A key counts as published per key directory, meaning per relay and account (`wan_agent_key_publications` in `wan.db`), so after you sign in to a different account, or the relay changes, the install publishes its keys again to the directory that hasn't seen them. Until it has, that agent's messages go out unsigned.
+- **Sending.** The relay carries a message's WAN signature only if the sender proved itself on this install with its host signature, signed as this install and channel, the signature verifies under its key in `wan.db`, and that key is confirmed published (`wan_carry_gate` in `crates/srv/src/muxbus/relay.rs`). Otherwise the message is relayed unsigned, exactly as before, and arrives `TRUST=network-claimed`. Agents started before `wan.db` existed sign with a hostname instead of an instance id and are sent unsigned until they are restarted.
+- **Receiving.** For a carried signature that the relay marks as same-account, the receiver checks the envelope and freshness, fetches the sender's key record from the directory (2-second timeout, at most 60 fetches a minute), checks that the instance key certified it, verifies the signature, and rejects a message id it has already delivered from that install and agent (`crates/srv/src/muxbus/wan_verify.rs`). A directory that is down or slow means "couldn't check", and the message is delivered as `network-claimed`.
 
 `INSTANCE_STATUS` says what is known about the sending install:
 
@@ -201,11 +201,11 @@ WAN signatures are checked only between installs signed in to the **same** MuxBu
 | `new` | Any other install on your account | Counts as a verified sender: `ESCALATE=none` |
 | `revoked` | The relay holds a revocation for the install, signed with that install's own instance key (checked when the install is first seen, then at most hourly). AgentMux has no control yet to file one | Forced sensitive, `ESCALATE=required` |
 
-Creating an install and publishing keys for it takes your MuxBus account login. Agents no longer receive that login in their environment (see the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane)), so a `new` install is treated like any other verified sender (`agentmux-srv/src/backend/reactive/handler.rs`, `inject_message_inner`). The login is still stored on disk, though: a process running as your OS user can read it, or copy an install's `wan.db`, and sign as an install until it is revoked. That is a compromise of your machine, which nothing here defends against.
+Creating an install and publishing keys for it takes your MuxBus account login. Agents no longer receive that login in their environment (see the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane)), so a `new` install is treated like any other verified sender (`crates/srv/src/backend/reactive/handler.rs`, `inject_message_inner`). The login is still stored on disk, though: a process running as your OS user can read it, or copy an install's `wan.db`, and sign as an install until it is revoked. That is a compromise of your machine, which nothing here defends against.
 
 ## Durable hold
 
-When no tier can deliver a message to a known agent of this channel, the message is stored in `db_jekt_held` in the instance's `objects.db` (`agentmux-srv/src/backend/storage/jekt_held.rs`) and replayed when the agent registers. The replay loop also runs every 30 seconds:
+When no tier can deliver a message to a known agent of this channel, the message is stored in `db_jekt_held` in the instance's `objects.db` (`crates/srv/src/backend/storage/jekt_held.rs`) and replayed when the agent registers. The replay loop also runs every 30 seconds:
 
 - Held for up to **24 hours**, then deleted.
 - At most **64** held messages per target agent, and **1,000** per channel (the instance). Past a cap, the send fails with `hold full`.
@@ -242,18 +242,18 @@ Two kinds of WAN message carry a signature the receiver verifies: ReAgent's (`SI
 ---
 
 **Source-of-truth references**:
-- `agentmux-srv/src/server/reactive.rs` — `deliver` (tier order), `verify_jekt_signature`, `verify_reagent_signature`, `verify_lan_signature`, `verify_cross_channel_signature`, `resolve_transcript_request_tier_fields`, `hold_for_absent_target`, `try_cloud_relay`
-- `agentmux-srv/src/backend/reactive/handler.rs` — target resolution, recipient verification, the forced-sensitive and `ESCALATE` rules
-- `agentmux-srv/src/backend/reactive/sanitize.rs` — `wrap_jekt_message`, `marker_field`, `neutralize_markers`, keyword lists
-- `agentmux-srv/src/server/mod.rs` — `lan_forward_routes`, `auth_middleware`, `lan_or_full_auth_middleware`
-- `agentmux-common/src/jekt_sign.rs` — signature schemes and the ReAgent key allow-list (`is_reagent_trusted_signing_key`)
-- `agentmux-srv/src/backend/storage/agent_jekt_keys.rs` — 24 h HMAC key rotation
-- `agentmux-srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
-- `agentmux-srv/src/backend/storage/jekt_held.rs`, `agentmux-srv/src/server/jekt_held.rs` — durable hold and replay
-- `agentmux-srv/src/backend/lan_discovery.rs` — LAN key advertisement and public-key lookup
-- `agentmux-srv/src/muxbus/cloud_subscriber.rs`, `agentmux-srv/src/muxbus/relay.rs` (`wan_carry_gate`), `agentmux-srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
-- `agentmux-srv/src/muxbus/wan_verify.rs`, `agentmux-srv/src/muxbus/wan_publish.rs`, `agentmux-srv/src/backend/storage/wan_identity.rs` — WAN signing
-- `agentmux-srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`
-- `agentmux-mcp/src/main.rs` — `sign_outgoing_jekt`, `SendMessage`
+- `crates/srv/src/server/reactive.rs` — `deliver` (tier order), `verify_jekt_signature`, `verify_reagent_signature`, `verify_lan_signature`, `verify_cross_channel_signature`, `resolve_transcript_request_tier_fields`, `hold_for_absent_target`, `try_cloud_relay`
+- `crates/srv/src/backend/reactive/handler.rs` — target resolution, recipient verification, the forced-sensitive and `ESCALATE` rules
+- `crates/srv/src/backend/reactive/sanitize.rs` — `wrap_jekt_message`, `marker_field`, `neutralize_markers`, keyword lists
+- `crates/srv/src/server/mod.rs` — `lan_forward_routes`, `auth_middleware`, `lan_or_full_auth_middleware`
+- `crates/common/src/jekt_sign.rs` — signature schemes and the ReAgent key allow-list (`is_reagent_trusted_signing_key`)
+- `crates/srv/src/backend/storage/agent_jekt_keys.rs` — 24 h HMAC key rotation
+- `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
+- `crates/srv/src/backend/storage/jekt_held.rs`, `crates/srv/src/server/jekt_held.rs` — durable hold and replay
+- `crates/srv/src/backend/lan_discovery.rs` — LAN key advertisement and public-key lookup
+- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_carry_gate`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
+- `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/wan_publish.rs`, `crates/srv/src/backend/storage/wan_identity.rs` — WAN signing
+- `crates/srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`
+- `crates/mcp/src/main.rs` — `sign_outgoing_jekt`, `SendMessage`
 
 **Related**: [Interagent communication](/internals/interagent-comms/), [Trust model](/security/trust-model/), [Network exposure](/security/network-exposure/).

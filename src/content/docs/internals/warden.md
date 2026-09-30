@@ -18,7 +18,7 @@ The Warden is unusually compact for a widget — most of its surface area is wir
 | `frontend/app/view/warden/warden.tsx` | `WardenViewModel` + `WardenView` (single file, ~400 lines) |
 | `frontend/app/view/warden/warden.scss` | All Warden styling |
 | `frontend/app/block/block.tsx` | `BlockRegistry.set("warden", WardenViewModel)` |
-| `agentmux-srv/src/config/widgets.json` | `defwidget@warden` declaration |
+| `crates/srv/src/config/widgets.json` | `defwidget@warden` declaration |
 
 There's no `warden-model.ts` or `warden-view.tsx` split — the widget is small enough that one file is clearer than three. The view model follows the **`HelpViewModel` pattern** (single class with `viewType`, `blockId`, and a `viewComponent` getter), not the `SwarmViewModel` / `DroneViewModel` multi-file pattern.
 
@@ -131,9 +131,9 @@ This is the same reason `defwidget@warden` carries a single `description` field 
 - `frontend/app/view/warden/warden.tsx` — model + view + section data sources
 - `frontend/app/view/warden/warden.scss` — section styling, audit feed, toggle switches
 - `frontend/app/block/block.tsx` — view registration in `BlockRegistry`
-- `agentmux-srv/src/config/widgets.json` — `defwidget@warden`
-- `agentmux-srv/src/server/reactive.rs` — `/agentmux/reactive/agents`, `/audit`, `/unregister` handlers
-- `agentmux-srv/src/server/mod.rs` — `/api/lan-instances` route
+- `crates/srv/src/config/widgets.json` — `defwidget@warden`
+- `crates/srv/src/server/reactive.rs` — `/agentmux/reactive/agents`, `/audit`, `/unregister` handlers
+- `crates/srv/src/server/mod.rs` — `/api/lan-instances` route
 - `specs/SPEC_WARDEN_WIDGET_2026-05-25.md` — full design spec
 - `specs/lan-awareness-and-embedded-jekt-api.md` — the cascade the layers map onto
 

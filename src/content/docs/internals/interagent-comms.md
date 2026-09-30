@@ -26,7 +26,7 @@ If none of them takes the message and the target is a known agent of this instan
 
 ### `DiscoverAgents`
 
-No parameters. Returns what is reachable from here, as JSON (`handle_discovery` in `agentmux-srv/src/server/mod.rs`):
+No parameters. Returns what is reachable from here, as JSON (`handle_discovery` in `crates/srv/src/server/mod.rs`):
 
 ```json
 {
@@ -65,7 +65,7 @@ Names are matched case-insensitively.
 
 ### `SendMessage`
 
-Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) and `message` (text). The tool signs the message with the sending agent's keys and posts it to the local AgentMux server (`agentmux-mcp/src/main.rs`). It returns one of:
+Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) and `message` (text). The tool signs the message with the sending agent's keys and posts it to the local AgentMux server (`crates/mcp/src/main.rs`). It returns one of:
 
 | Result | Meaning |
 |---|---|

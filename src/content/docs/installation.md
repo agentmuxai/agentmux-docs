@@ -122,11 +122,11 @@ This needs no install step. It isn't covered by the one-time sandbox fix describ
 
 ### Display server
 
-When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwise it uses X11. If you enable window transparency (`window:transparent`), it runs through XWayland instead, because native Wayland has no equivalent of the X11 window-opacity property it uses. To force a backend, set `AGENTMUX_OZONE_PLATFORM=wayland` or `AGENTMUX_OZONE_PLATFORM=x11`. The logic is in `agentmux-cef/src/app/mod.rs` (the Linux Ozone branch).
+When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwise it uses X11. If you enable window transparency (`window:transparent`), it runs through XWayland instead, because native Wayland has no equivalent of the X11 window-opacity property it uses. To force a backend, set `AGENTMUX_OZONE_PLATFORM=wayland` or `AGENTMUX_OZONE_PLATFORM=x11`. The logic is in `crates/cef/src/app/mod.rs` (the Linux Ozone branch).
 
 ### GPU
 
-AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardware OpenGL, it starts a short probe to check that the GPU really renders (a render node in `/dev/dri` and a renderer that isn't a software one such as llvmpipe), and falls back to software rendering if not (`agentmux-cef/src/app/gpu.rs`, `agentmux-cef/src/app/gl_probe.rs`). This keeps AgentMux from opening an invisible window in a VM or on a GPU without working 3D. To pick Chromium's ANGLE backend yourself, set `AGENTMUX_ANGLE` (for example `AGENTMUX_ANGLE=gl`); it takes priority over the check.
+AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardware OpenGL, it starts a short probe to check that the GPU really renders (a render node in `/dev/dri` and a renderer that isn't a software one such as llvmpipe), and falls back to software rendering if not (`crates/cef/src/app/gpu.rs`, `crates/cef/src/app/gl_probe.rs`). This keeps AgentMux from opening an invisible window in a VM or on a GPU without working 3D. To pick Chromium's ANGLE backend yourself, set `AGENTMUX_ANGLE` (for example `AGENTMUX_ANGLE=gl`); it takes priority over the check.
 
 ### Sandbox blocked by AppArmor (Ubuntu)
 
@@ -136,7 +136,7 @@ AgentMux sandboxes its browser engine with unprivileged user namespaces. Recent 
 - **Continue without sandbox this time:** runs this session unsandboxed. The window title shows "— Sandbox Disabled".
 - **Cancel:** exits.
 
-The dialog needs `zenity` or `kdialog`. Without either, AgentMux prints the explanation to the terminal and exits. You can run one session without the sandbox by setting `AGENTMUX_UNSAFE_NOSANDBOX=1`. See `agentmux-cef/src/linux_sandbox.rs` (`build_apparmor_profile`) for the exact profile.
+The dialog needs `zenity` or `kdialog`. Without either, AgentMux prints the explanation to the terminal and exits. You can run one session without the sandbox by setting `AGENTMUX_UNSAFE_NOSANDBOX=1`. See `crates/cef/src/linux_sandbox.rs` (`build_apparmor_profile`) for the exact profile.
 
 ## First launch
 
@@ -146,9 +146,9 @@ The first window opens a starter layout of three panes:
 - **Sysinfo** (top right): live system metrics.
 - **Swarm** (bottom right): a live tree of your agent panes, with their subagents, todos and running tools.
 
-New windows start with the same layout (`agentmux-srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`).
+New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Armory** and **Sysinfo** (`agentmux-srv/src/config/widgets.json`). Every other widget is under **more**: Drone, Warden, Terminal, Editor, Browser, Help, Messengers, Media, Toolchain and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Armory** and **Sysinfo** (`crates/srv/src/config/widgets.json`). Every other widget is under **more**: Drone, Warden, Terminal, Editor, Browser, Help, Messengers, Media, Toolchain and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
 The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (**Save layout…**), Settings, Command Palette, Armory, Toolchain, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`).
 
@@ -166,7 +166,7 @@ AgentMux shows an icon in the system tray (the menu bar on macOS) while it runs.
 
 On Windows and Linux, left-clicking the icon opens the oldest pane that needs you, or a new window; on macOS it opens the menu. On Windows 11 a new tray icon starts in the overflow (^) area; drag it onto the taskbar to keep it visible.
 
-The switches are in **Settings → Notifications & Tray**, under **System tray** (`agentmux-launcher/src/background_config.rs`, `agentmux-launcher/src/tray/`):
+The switches are in **Settings → Notifications & Tray**, under **System tray** (`crates/launcher/src/background_config.rs`, `crates/launcher/src/tray/`):
 
 | Setting | Key | Default | Applies |
 |---|---|---|---|
@@ -174,7 +174,7 @@ The switches are in **Settings → Notifications & Tray**, under **System tray**
 | **Keep running after all windows are closed** | `app:runinbackground` | Off | At the next launch. Turning it on also shows the tray icon, since the icon's menu is then the only way to quit. |
 | **Start at login** | `app:startatlogin` | Off | Immediately. The same switch is in the tray icon's menu. |
 
-**Start at login** starts AgentMux in the tray when you log in, without opening a window; click the tray icon or choose **New Window** to open one. An AgentMux started this way keeps running after you close its windows, whatever **Keep running after all windows are closed** says. If AgentMux is already running when you log in, the login start does nothing (`agentmux-launcher/src/start_at_login.rs`).
+**Start at login** starts AgentMux in the tray when you log in, without opening a window; click the tray icon or choose **New Window** to open one. An AgentMux started this way keeps running after you close its windows, whatever **Keep running after all windows are closed** says. If AgentMux is already running when you log in, the login start does nothing (`crates/launcher/src/start_at_login.rs`).
 
 On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window always quits AgentMux, and a login start opens a normal window instead of staying hidden.
 

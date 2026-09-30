@@ -15,19 +15,19 @@ Two modules own everything LAN-facing:
 
 | Item | File | Role |
 |---|---|---|
-| `LanListenerSupervisor` | `agentmux-srv/src/backend/lan_listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
-| `STARTUP_BIND_ADDR` | `agentmux-srv/src/backend/lan_listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
-| `SERVICE_TYPE` | `agentmux-srv/src/backend/lan_discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
-| `LanInstance` | `agentmux-srv/src/backend/lan_discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `first_seen`, `last_seen`, `other_ttl_secs` |
-| `LanDiscovery` | `agentmux-srv/src/backend/lan_discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
-| `LanDiscoveryController` | `agentmux-srv/src/backend/lan_discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
-| `mdns_hostname()` | `agentmux-srv/src/backend/lan_discovery.rs` | Appends `.local.` to a bare hostname, as `mdns-sd` requires |
+| `LanListenerSupervisor` | `crates/srv/src/backend/lan_listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
+| `STARTUP_BIND_ADDR` | `crates/srv/src/backend/lan_listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
+| `SERVICE_TYPE` | `crates/srv/src/backend/lan_discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
+| `LanInstance` | `crates/srv/src/backend/lan_discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `first_seen`, `last_seen`, `other_ttl_secs` |
+| `LanDiscovery` | `crates/srv/src/backend/lan_discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
+| `LanDiscoveryController` | `crates/srv/src/backend/lan_discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
+| `mdns_hostname()` | `crates/srv/src/backend/lan_discovery.rs` | Appends `.local.` to a bare hostname, as `mdns-sd` requires |
 
 The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) crate, version 0.12.
 
 ## The LAN listeners
 
-The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `agentmux-srv/src/bootstrap.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
+The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `crates/srv/src/bootstrap.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
 
 - `lan_bind_addresses()` returns every IPv4 address and every IPv6 address except link-local (`fe80::/10`), from all interfaces;
 - each address gets both ports or neither; a failed bind is logged and skipped;
@@ -54,7 +54,7 @@ The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux
    ];
    ```
 
-   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `agentmux-srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s four routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
+   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `crates/srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s four routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
 3. Registers the service, then browses `SERVICE_TYPE`.
 4. Spawns three background tasks, each holding its own `Arc<LanDiscovery>`:
    - the **event loop** (`spawn_blocking`), which handles `ServiceResolved` events and skips resolutions of this instance itself (same port and one of its own addresses);
@@ -118,7 +118,7 @@ Shutting down the daemon closes its sockets, so the event loop's receiver return
 | Host popover toggle | `frontend/app/statusbar/HostPopover.tsx` → `RpcApi.SetConfigCommand` | Immediately |
 | Hand edit of `settings.json` | The settings file | At the next start of AgentMux |
 
-The toggle reaches the WebSocket `setconfig` handler in `agentmux-srv/src/server/websocket.rs`. It writes the setting to disk, updates the in-memory settings, and calls:
+The toggle reaches the WebSocket `setconfig` handler in `crates/srv/src/server/websocket.rs`. It writes the setting to disk, updates the in-memory settings, and calls:
 
 ```rust
 lan_listeners.apply(lan_enabled);
@@ -141,7 +141,7 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 ## Boot semantics
 
-1. `bind_listeners_and_network` (`agentmux-srv/src/bootstrap.rs`) binds the loopback listeners, constructs the `LanDiscoveryController` with the hostname, version, web port and `lan_key`, constructs the `LanListenerSupervisor`, and links the two with `set_discovery`. It does **not** start discovery.
+1. `bind_listeners_and_network` (`crates/srv/src/bootstrap.rs`) binds the loopback listeners, constructs the `LanDiscoveryController` with the hostname, version, web port and `lan_key`, constructs the `LanListenerSupervisor`, and links the two with `set_discovery`. It does **not** start discovery.
 2. `main.rs` builds the router, hands it to the supervisor with `set_router`, calls `lan_listeners.apply(<network:lan_discovery setting>)`, and starts the reconcile sweep.
 
 With the setting off (the default), nothing LAN-facing starts. With it on, the listeners bind and mDNS starts during boot.
@@ -152,13 +152,13 @@ Turning LAN discovery on exposes the full server API on the network, broadcasts 
 
 ## Source
 
-- `agentmux-srv/src/backend/lan_discovery.rs` — daemon, controller, UDP responder, lookups, tests
-- `agentmux-srv/src/backend/lan_listeners.rs` — LAN listener supervisor
-- `agentmux-srv/src/bootstrap.rs`, `agentmux-srv/src/main.rs` — boot wiring
-- `agentmux-srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
-- `agentmux-srv/src/server/mod.rs` — `/api/lan-instances` and the `lan_key` routes
-- `agentmux-srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `agentmux-srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
-- `agentmux-srv/src/config.rs` — `lan_key`
+- `crates/srv/src/backend/lan_discovery.rs` — daemon, controller, UDP responder, lookups, tests
+- `crates/srv/src/backend/lan_listeners.rs` — LAN listener supervisor
+- `crates/srv/src/bootstrap.rs`, `crates/srv/src/main.rs` — boot wiring
+- `crates/srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
+- `crates/srv/src/server/mod.rs` — `/api/lan-instances` and the `lan_key` routes
+- `crates/srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
+- `crates/srv/src/config.rs` — `lan_key`
 - `frontend/app/statusbar/HostPopover.tsx` — toggle and peer list
 - `frontend/app/store/global.ts` — `lanInstancesAtom`, `lanDiscoveryErrorAtom`, event handlers
 

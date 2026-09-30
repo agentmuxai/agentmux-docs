@@ -12,7 +12,7 @@ This guide walks through creating and running an agent. In AgentMux an agent is 
 
 A **harness** is the CLI tool that runs an agent, such as Claude Code or Codex CLI. The UI and the code mostly call it a "provider". A harness is distinct from the **model vendor**, the LLM backend that actually serves its responses.
 
-AgentMux knows ten providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `agentmux-srv/src/backend/providers.rs`. The agent picker has a template for eight of them. Mux Code and Qwen Code don't have one yet.
+AgentMux knows ten providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `crates/srv/src/backend/providers.rs`. The agent picker has a template for eight of them. Mux Code and Qwen Code don't have one yet.
 
 | Provider | How AgentMux runs it | Installed from | Sign-in |
 |---|---|---|---|
@@ -87,7 +87,7 @@ A **bundle** is a reusable set of instructions and tools that you attach to agen
 | **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
 | **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind in the Armory disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`agentmux-srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind in the Armory disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
 A bundle's provider decides which harness an agent launches with, so attach bundles that match the agent's harness. See [Memory bundles](/memory/) for the full configuration surface.
 
@@ -111,7 +111,7 @@ Type `/quit` (or `/exit`) in the message box to end the agent gracefully. AgentM
 
 Closing an agent pane, with its close button or a shortcut, ends its agents the same way. The pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes. If something can't be stopped, the pane stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
 
-An agent can also end itself, through AgentMux's `QuitSelf` tool. It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. The same 15-second window applies when another agent closes this agent's pane or stops it with `ClosePane` or `FleetBulkStop`, and when an agent calls `ClosePane` with no arguments to close its own tab. Click **Keep running** to cancel the shutdown (`agentmux-srv/src/sagas/pending_shutdown.rs`).
+An agent can also end itself, through AgentMux's `QuitSelf` tool. It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. The same 15-second window applies when another agent closes this agent's pane or stops it with `ClosePane` or `FleetBulkStop`, and when an agent calls `ClosePane` with no arguments to close its own tab. Click **Keep running** to cancel the shutdown (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 ### Running a shell command
 
@@ -122,7 +122,7 @@ Start a message with `!` to run it as a shell command in the agent's working dir
 !ls -la dist/
 ```
 
-The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes. They run with `sh -c`; on Windows that is Git for Windows' `sh`, which AgentMux finds even when Git Bash isn't on your `PATH` (set `AGENTMUX_BASH` to the path of a `bash` or `sh` to use a different one). A message with files attached is sent to the agent, not run (`agentmux-srv/src/backend/posix_shell.rs`).
+The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes. They run with `sh -c`; on Windows that is Git for Windows' `sh`, which AgentMux finds even when Git Bash isn't on your `PATH` (set `AGENTMUX_BASH` to the path of a `bash` or `sh` to use a different one). A message with files attached is sent to the agent, not run (`crates/srv/src/backend/posix_shell.rs`).
 
 ### When the agent asks you a question
 
@@ -130,7 +130,7 @@ Some agents can stop and ask you a question. The panel ("The agent is asking") a
 
 ## When an agent fails
 
-AgentMux classifies each failure (`agentmux-srv/src/agents/failure.rs`) and shows a row with the actions that fit it (`frontend/app/view/agent/failure/failure-accessory.ts`):
+AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows a row with the actions that fit it (`frontend/app/view/agent/failure/failure-accessory.ts`):
 
 | Failure | Actions |
 |---|---|
@@ -163,7 +163,7 @@ Skills are reusable instructions an agent can call. Manage them app-wide from th
 | **Slash command (/trigger)** | A prompt the agent runs when you type its trigger |
 | **Agent Skill (SKILL.md)** | A skill in the SKILL.md format (beta) |
 
-AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`agentmux-srv/src/backend/agent_config.rs`, `build_config_files`).
+AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
 
 ## Next Steps
 

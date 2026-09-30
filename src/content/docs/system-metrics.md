@@ -21,7 +21,7 @@ The starter layout on first launch, and in each new window, includes a Sysinfo p
 
 ## Available Metrics
 
-The backend collects these values on every sample (`agentmux-srv/src/backend/sysinfo.rs`). Memory values are in GB (1024³ bytes) and throughput in MB/s (1024² bytes per second).
+The backend collects these values on every sample (`crates/srv/src/backend/sysinfo.rs`). Memory values are in GB (1024³ bytes) and throughput in MB/s (1024² bytes per second).
 
 ### CPU
 

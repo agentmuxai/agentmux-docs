@@ -17,13 +17,13 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 
 All five live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
 
-> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, keybindings) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs).
+> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, keybindings) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
 
-Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
+Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
 ## `objects.db` — sidecar reducer state
 
-Owned by `agentmux-srv`. Opened via `WaveStore::open(<data-dir>/db/objects.db)` in `agentmux-srv/src/main.rs`. The historical type name `WaveStore` predates the AgentMux rebrand — the file itself is `objects.db`.
+Owned by `agentmux-srv`. Opened via `WaveStore::open(<data-dir>/db/objects.db)` in `crates/srv/src/main.rs`. The historical type name `WaveStore` predates the AgentMux rebrand — the file itself is `objects.db`.
 
 Stores every:
 
@@ -40,16 +40,16 @@ catalog — formerly "Forge"), **identity** and **memory bundles**, per-launch
 **agent instances**, and **drone** definitions/runs.
 
 The schema is a single flat table set built by `run_object_schema`
-(`agentmux-srv/src/backend/storage/migrations.rs`) — no migration ladder. A
+(`crates/srv/src/backend/storage/migrations.rs`) — no migration ladder. A
 `PRAGMA user_version` stamp acts as a downgrade tripwire.
 
 This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch comes up with a single empty workspace.
 
 ### Bootstrap + persist subscriber
 
-At startup the sidecar's reducer loads its in-memory state from `objects.db` ([`bootstrap_state_from_wstore`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/persist.rs)). During the session, **HTTP/WS RPC writes still go directly to SQLite via `wcore`** — SQLite stays authoritative even if the reducer's session-only projection diverges.
+At startup the sidecar's reducer loads its in-memory state from `objects.db` ([`bootstrap_state_from_wstore`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/persist.rs)). During the session, **HTTP/WS RPC writes still go directly to SQLite via `wcore`** — SQLite stays authoritative even if the reducer's session-only projection diverges.
 
-A separate **persist subscriber** ([`agentmux-srv/src/persist_subscriber.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/persist_subscriber.rs)) consumes the reducer's broadcast bus and mirrors lifecycle events back to SQLite for entities the reducer owns. On a `Lagged` error it does a scoped full-resync (insert/update only, never delete — there's a code comment explaining the migration-window reason).
+A separate **persist subscriber** ([`crates/srv/src/persist_subscriber.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/persist_subscriber.rs)) consumes the reducer's broadcast bus and mirrors lifecycle events back to SQLite for entities the reducer owns. On a `Lagged` error it does a scoped full-resync (insert/update only, never delete — there's a code comment explaining the migration-window reason).
 
 Migration status: workspaces are reducer-driven (E.2c.2 onward); tab + block writes are still mostly RPC-direct.
 
@@ -61,13 +61,13 @@ appear, fully configured, in all of them. That globalization is implemented by a
 **definition-registry mirror** that shadows local `objects.db` agent mutations into
 an account-wide store. See
 [`SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE_2026-06-13.md)
-and [`def_registry_mirror.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/backend/storage/def_registry_mirror.rs).
+and [`def_registry_mirror.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/def_registry_mirror.rs).
 
 ### The two global stores
 
 Both live under `~/.agentmux/shared/agents/` (account-wide, channel- and
 version-independent), as siblings resolved in
-[`registry/paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/registry/paths.rs):
+[`registry/paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/registry/paths.rs):
 
 - **Definition registry** — `~/.agentmux/shared/agents/definitions/` — the global
   copy of each user agent's *definition* (the launchable catalog entry).
@@ -119,7 +119,7 @@ success.
 ### Resume across channels
 
 The instances registry carries a `session_id` (added in schema v1→v2, see
-[`registry/schema.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/registry/schema.rs))
+[`registry/schema.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/registry/schema.rs))
 so a cross-channel agent's **conversation can resume** rather than starting cold
 when it's opened from a different channel or version.
 
@@ -176,7 +176,7 @@ For completeness, things that are NOT stored in these five files:
 - **Agent working directories** — per-agent workspace dirs under the **channel-wide** `~/.agentmux/channels/<channel>/agents/`, again one level above the version dir (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see below)
 - **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version- and channel-independent)
 - **Global agent registry** — user-agent definitions + named instances live account-wide under `~/.agentmux/shared/agents/` (see [Cross-channel agent persistence](#cross-channel-agent-persistence))
-- **Cross-process session-ownership leases** — `~/.agentmux/shared/agents/registry/leases/<instance_id>.lease.json`, a sibling directory of the instances registry above, **not** part of any per-channel/per-version `<data-dir>/data/` tree at all. One JSON file per agent `instance_id`: TTL-based (renewed every 5s, reclaimable once ~3 renewals are missed — `LEASE_TTL_MS`/`RENEW_INTERVAL_MS`) and scoped to a `boot_id`, so at most one process can hold the right to drive a given agent's turns at a time in host-mode. Guarded by a real OS advisory lock (`flock`/`LockFileEx`) for the claim/renew/release critical section, not the atomic-rename-only pattern `Registry::upsert` uses elsewhere. See [`agentmux-srv/src/registry/leases.rs`](https://github.com/agentmuxai/agentmux/blob/main/agentmux-srv/src/registry/leases.rs).
+- **Cross-process session-ownership leases** — `~/.agentmux/shared/agents/registry/leases/<instance_id>.lease.json`, a sibling directory of the instances registry above, **not** part of any per-channel/per-version `<data-dir>/data/` tree at all. One JSON file per agent `instance_id`: TTL-based (renewed every 5s, reclaimable once ~3 renewals are missed — `LEASE_TTL_MS`/`RENEW_INTERVAL_MS`) and scoped to a `boot_id`, so at most one process can hold the right to drive a given agent's turns at a time in host-mode. Guarded by a real OS advisory lock (`flock`/`LockFileEx`) for the claim/renew/release critical section, not the atomic-rename-only pattern `Registry::upsert` uses elsewhere. See [`crates/srv/src/registry/leases.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/registry/leases.rs).
 - **Chromium cache** — version-scoped `~/.agentmux/channels/<channel>/versions/<version>/cef-cache/`
 - **CLI provider configs** — auth-config-dir managed by each provider's CLI
 

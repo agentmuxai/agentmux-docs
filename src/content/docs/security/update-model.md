@@ -8,7 +8,7 @@ AgentMux has no auto-updater and never checks for a newer version of itself. Thi
 ## No in-app updates
 
 - The app contains no update client and makes no version-check request.
-- The status bar contains update UI, but nothing in the app ever reports an update, so it never appears. The underlying `install_update` command is a stub that does nothing (`agentmux-cef/src/commands/stubs.rs`).
+- The status bar contains update UI, but nothing in the app ever reports an update, so it never appears. The underlying `install_update` command is a stub that does nothing (`crates/cef/src/commands/stubs.rs`).
 - **Microsoft Store** installs are updated by the Store.
 - For **every other install** you download and install new releases yourself.
 
@@ -49,7 +49,7 @@ xcrun stapler validate ~/Downloads/AgentMux_<version>_arm64.dmg
 
 ## Agent CLIs
 
-When you launch an agent whose CLI isn't installed, or install it from the Toolchain pane, AgentMux runs npm (`agentmux-srv/src/server/cli_handlers.rs`, `agentmux-srv/src/server/install_handlers.rs`):
+When you launch an agent whose CLI isn't installed, or install it from the Toolchain pane, AgentMux runs npm (`crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs`):
 
 ```
 npm install --prefix ~/.agentmux/instances/v<agentmux-version>/cli/<provider> <package>@<pinned version>
@@ -68,7 +68,7 @@ npm install --prefix ~/.agentmux/instances/v<agentmux-version>/cli/<provider> <p
 | Antigravity | `@google/antigravity-cli` | 1.0.0 |
 | Kimi | none: install it yourself (`pip install kimi-cli`) | — |
 
-The pins live in `agentmux-srv/src/backend/providers.rs` and change with AgentMux releases.
+The pins live in `crates/srv/src/backend/providers.rs` and change with AgentMux releases.
 
 What this does and doesn't guarantee:
 
@@ -81,11 +81,11 @@ The Toolchain pane also asks the npm registry for each CLI's latest version, to 
 
 ## Tool catalog
 
-The tool catalog (`agentmux-srv/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`agentmux-srv/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
+The tool catalog (`crates/srv/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`crates/srv/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
 
 ## Default MCP servers
 
-AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, playwright, context7) starts its servers with `uvx` and `npx` without pinned versions (`agentmux-srv/src/config/starter-mcp-servers.json`). Those packages are downloaded from PyPI or npm, at their current versions, when an agent starts them. If that matters to you, remove them or replace them with pinned versions.
+AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, playwright, context7) starts its servers with `uvx` and `npx` without pinned versions (`crates/srv/src/config/starter-mcp-servers.json`). Those packages are downloaded from PyPI or npm, at their current versions, when an agent starts them. If that matters to you, remove them or replace them with pinned versions.
 
 ## Offline and managed deployment
 
@@ -100,10 +100,10 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 ---
 
 **Source-of-truth references**:
-- `agentmux-cef/src/commands/stubs.rs` — `install_update` stub
+- `crates/cef/src/commands/stubs.rs` — `install_update` stub
 - `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
 - `packaging/windows/agentmux.iss` — Windows installer
-- `agentmux-launcher/src/autostart/mod.rs` — start-at-login
-- `agentmux-srv/src/backend/providers.rs`, `agentmux-srv/src/server/cli_handlers.rs`, `agentmux-srv/src/server/install_handlers.rs` — agent CLI installs
-- `agentmux-srv/src/server/system_install_handlers.rs` — one-click Node.js, Git and Python installs
-- `agentmux-srv/src/backend/tool_store.rs`, `agentmux-srv/src/config/tool-catalog.json` — SHA-256-checked tool downloads
+- `crates/launcher/src/autostart/mod.rs` — start-at-login
+- `crates/srv/src/backend/providers.rs`, `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs` — agent CLI installs
+- `crates/srv/src/server/system_install_handlers.rs` — one-click Node.js, Git and Python installs
+- `crates/srv/src/backend/tool_store.rs`, `crates/srv/src/config/tool-catalog.json` — SHA-256-checked tool downloads

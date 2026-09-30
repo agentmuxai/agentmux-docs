@@ -14,14 +14,14 @@ Audit of all 11 reference patterns found across 91 doc files:
 
 | # | Pattern | Example | Files |
 |---|---------|---------|-------|
-| P1 | Inline code — file path only | `` `agentmux-srv/src/server/mod.rs` `` | prose, source sections |
+| P1 | Inline code — file path only | `` `crates/srv/src/server/mod.rs` `` | prose, source sections |
 | P2 | Inline code — path + single line | `` `layoutModel.ts:359` `` | prose, API refs |
 | P3 | Inline code — path + line range | `` `types.ts:269-336` `` | prose, watchdog tables |
 | P4 | Table cell — bare line number | `506–611` in a "Lines" column | env-vars.md, state-model.md |
-| P5 | Plain text path (no backticks) | `agentmux-srv/src/main.rs` in prose | lan-discovery.md |
-| P6 | `## Source` bullet list | `` - `agentmux-srv/src/server/reactive.rs` — HTTP handlers `` | reactive-event-bus.md, warden.md, lan-discovery.md |
+| P5 | Plain text path (no backticks) | `crates/srv/src/main.rs` in prose | lan-discovery.md |
+| P6 | `## Source` bullet list | `` - `crates/srv/src/server/reactive.rs` — HTTP handlers `` | reactive-event-bus.md, warden.md, lan-discovery.md |
 | P7 | Existing GitHub markdown link | `[termwrap.ts](https://github.com/...)` | clipboard.md, browser-pane.md |
-| P8 | Abbreviation glossary | `` `shell.rs` = `agentmux-srv/src/backend/blockcontroller/shell.rs` `` | env-vars.md |
+| P8 | Abbreviation glossary | `` `shell.rs` = `crates/srv/src/backend/blockcontroller/shell.rs` `` | env-vars.md |
 | P9 | Path in code comment | `// frontend/util/clipboard.ts` inside a code block | clipboard.md |
 | P10 | Structured reference table | File column + separate Lines column | env-vars.md, state-model.md |
 | P11 | Spec/markdown doc ref | `` `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` `` | reducer-stack.md, contributing.md |
@@ -70,11 +70,11 @@ This deliberately excludes:
 
 | Input | Output URL |
 |-------|-----------|
-| `` `agentmux-srv/src/reducer.rs` `` | `.../agentmux-srv/src/reducer.rs` |
+| `` `crates/srv/src/reducer.rs` `` | `.../crates/srv/src/reducer.rs` |
 | `` `types.ts:658` `` | `.../types.ts#L658` |
 | `` `types.ts:269-336` `` | `.../types.ts#L269-L336` |
 | `` `types.ts:269–336` `` (em-dash) | same — normalise dash chars to `-` before parsing |
-| `` `shell.rs:604` `` + alias `shell.rs → agentmux-srv/src/backend/blockcontroller/shell.rs` | `.../agentmux-srv/src/backend/blockcontroller/shell.rs#L604` |
+| `` `shell.rs:604` `` + alias `shell.rs → crates/srv/src/backend/blockcontroller/shell.rs` | `.../crates/srv/src/backend/blockcontroller/shell.rs#L604` |
 | `` `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` `` | `.../docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` |
 | `` `specs/lan-discovery-toggle.md` `` | `.../docs/specs/lan-discovery-toggle.md` (prefix `specs/` → `docs/specs/`) |
 
@@ -117,13 +117,13 @@ markdown: {
       baseUrl: 'https://github.com/agentmuxai/agentmux/blob/main/',
       // Short aliases used in env-vars.md and other files
       aliases: {
-        'shell.rs':           'agentmux-srv/src/backend/blockcontroller/shell.rs',
-        'data_paths.rs':      'agentmux-common/src/data_paths.rs',
-        'runtime_mode.rs':    'agentmux-common/src/runtime_mode.rs',
-        'srv_spawner.rs':     'agentmux-launcher/src/srv_spawner.rs',
-        'launcher/main.rs':   'agentmux-launcher/src/main.rs',
-        'shellintegration.rs':'agentmux-srv/src/backend/shellintegration.rs',
-        'websocket.rs':       'agentmux-srv/src/server/websocket.rs',
+        'shell.rs':           'crates/srv/src/backend/blockcontroller/shell.rs',
+        'data_paths.rs':      'crates/common/src/data_paths.rs',
+        'runtime_mode.rs':    'crates/common/src/runtime_mode.rs',
+        'srv_spawner.rs':     'crates/launcher/src/srv_spawner.rs',
+        'launcher/main.rs':   'crates/launcher/src/main.rs',
+        'shellintegration.rs':'crates/srv/src/backend/shellintegration.rs',
+        'websocket.rs':       'crates/srv/src/server/websocket.rs',
       },
       // Map path prefix to repo prefix (for spec docs)
       pathMap: {
@@ -209,7 +209,7 @@ export default function remarkGithubSourceLinks(opts = {}) {
 In structured reference tables (Pattern 10), file path and line numbers appear in **separate columns** of the same row:
 
 ```markdown
-| PTY env injection | `agentmux-srv/src/.../shell.rs` | 506–611 |
+| PTY env injection | `crates/srv/src/.../shell.rs` | 506–611 |
 ```
 
 Plugin A handles the middle cell (`shell.rs`). Plugin B handles the right cell (`506–611`) — a bare number or range with no file context, which requires looking sideways at its sibling cell.
@@ -343,7 +343,7 @@ a:hover code {
 | Case | Handling |
 |------|----------|
 | em-dash vs hyphen in line ranges (e.g. `506–611`) | Normalise both `–` and `-` to `-` before parsing |
-| Trailing slash (directory refs like `agentmux-srv/src/reducer/`) | No extension match → skipped (link to a directory, not a file) |
+| Trailing slash (directory refs like `crates/srv/src/reducer/`) | No extension match → skipped (link to a directory, not a file) |
 | Backticked path followed by prose anchor like `` `reducer.rs` — comment `` | The dash and text are outside the backticks → Plugin A only sees `reducer.rs` |
 | `specs/` prefix vs `docs/specs/` in repo | `pathMap` config remaps `specs/` → `docs/specs/` at URL construction time |
 | Line numbers that are zero (`types.ts:0`) | Treated as valid — GitHub will show the file at the top |

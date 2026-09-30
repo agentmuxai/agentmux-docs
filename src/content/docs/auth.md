@@ -11,7 +11,7 @@ AgentMux supports ten providers: `claude`, `codex`, `muxcode`, `gemini`, `qwen`,
 
 `muxcode` ("Mux Code") is AgentMux's own agentic coding CLI (npm: `@agentmuxai/muxcode`). It emits Claude-compatible stream-JSON, so AgentMux reuses the Claude translator for it.
 
-The per-provider values come from `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`: `authType`, `authCheckCommand`, `authLoginCommand`, `authConfigDirEnvVar`, `authExtraEnv`) and `agentmux-srv/src/backend/providers.rs`.
+The per-provider values come from `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`: `authType`, `authCheckCommand`, `authLoginCommand`, `authConfigDirEnvVar`, `authExtraEnv`) and `crates/srv/src/backend/providers.rs`.
 
 ## Per-provider summary
 
@@ -34,7 +34,7 @@ AgentMux checks whether a CLI is signed in by running its own status command (fo
 
 Six providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw, GitHub Copilot CLI and Antigravity. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
 
-Five of them (Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI) are account-backed: an agent using one of them must have an Armory account bound for that provider, or AgentMux refuses to start the CLI (`provider_class` in `agentmux-srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `agentmux-srv/src/identity/resolver/inject.rs`). Antigravity is marked `oauth` in the catalog but is not account-backed; it uses the ambient directory described below.
+Five of them (Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI) are account-backed: an agent using one of them must have an Armory account bound for that provider, or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`). Antigravity is marked `oauth` in the catalog but is not account-backed; it uses the ambient directory described below.
 
 AgentMux does not pass an API-key environment variable to these CLIs as a fallback.
 
@@ -61,7 +61,7 @@ For the other providers (the four API-key providers, and Antigravity), no accoun
 
 There are two places.
 
-**Ambient directory.** AgentMux points every agent's CLI at the provider's shared directory unless a bound account overrides it (`agentmux-srv/src/server/app_api/agent_open.rs`):
+**Ambient directory.** AgentMux points every agent's CLI at the provider's shared directory unless a bound account overrides it (`crates/srv/src/server/app_api/agent_open.rs`):
 
 ```
 ~/.agentmux/shared/providers/claude/
@@ -70,9 +70,9 @@ There are two places.
 …
 ```
 
-This is `DataPaths::provider_auth_dir` in `agentmux-common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName` (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`). It is account-wide: every channel, version and instance on the machine shares it.
+This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName` (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`). It is account-wide: every channel, version and instance on the machine shares it.
 
-On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `agentmux-common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
+On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `crates/common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
 
 Only Mux Code, Qwen Code, Kimi Code CLI, Pi and Antigravity actually run on the ambient directory. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
 
@@ -80,7 +80,7 @@ Only Mux Code, Qwen Code, Kimi Code CLI, Pi and Antigravity actually run on the 
 
 ### Isolated auth by channel
 
-Armory accounts are isolated per channel by default, except on `stable` (`agentmux-common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
+Armory accounts are isolated per channel by default, except on `stable` (`crates/common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
 
 - **`stable`** (every release build) shares one account list and one account-directory tree, `~/.agentmux/shared/identities/`.
 - **Any other channel**, such as a `dev-<branch>` build from `task dev` or a local `task package` build's `local-<branch>-<hash>-<build-id>` channel, gets its own account list and keeps account directories under that channel's own directory (`<channel dir>/identities/`). A fresh non-`stable` channel starts with no Armory accounts.
@@ -114,7 +114,7 @@ To bind an account to an agent, right-click it and choose **Bind to Agent**, or 
 | Kimi | `MOONSHOT_API_KEY` |
 | AWS | `AWS_ACCESS_KEY_ID` |
 
-These mappings are in `agentmux-srv/src/identity/resolver/provider.rs` (`provider_class`). Keys for other services are not put in the environment. The Add Account form has no Kimi option.
+These mappings are in `crates/srv/src/identity/resolver/provider.rs` (`provider_class`). Keys for other services are not put in the environment. The Add Account form has no Kimi option.
 
 ## Accounts vs the ambient directory
 

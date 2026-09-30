@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-The widget bar pins **Agent**, **Swarm**, **Armory** and **Sysinfo** by default; every other widget is under **more**. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`agentmux-srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+The widget bar pins **Agent**, **Swarm**, **Armory** and **Sysinfo** by default; every other widget is under **more**. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
@@ -323,7 +323,7 @@ The strip also shows the account the agent is signed in as. When you have anothe
 
 ### Attaching files
 
-You can attach any kind of file to a message: images, PDFs, Word, Excel and PowerPoint files, text, code, archives and more (`frontend/app/view/agent/attachments/`, `agentmux-srv/src/backend/attachments/`). To attach files:
+You can attach any kind of file to a message: images, PDFs, Word, Excel and PowerPoint files, text, code, archives and more (`frontend/app/view/agent/attachments/`, `crates/srv/src/backend/attachments/`). To attach files:
 
 - drop them anywhere on the agent pane (see [Dropping files onto panes](#dropping-files-onto-panes)); a dropped folder adds the files in it, skipping folders such as `node_modules`, `target`, `dist` and `.venv`;
 - paste them with `Ctrl+V` (`Cmd+V`), for example a screenshot or files copied in your file manager;
@@ -539,7 +539,7 @@ Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) s
 | **Media** | Shows the file. Takes exactly one image, video or audio file (png, jpg, jpeg, gif, webp, webm, mp4, mov, wav); the pane then watches that file's folder like any other media pane. |
 | **Editor** | Opens each text file in its own tab. Images, PDFs, Office documents, archives, audio and video are refused. |
 
-Copies land directly in the pane's working folder (`agentmux-common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
+Copies land directly in the pane's working folder (`crates/common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
 
 If the operating system doesn't give AgentMux a dropped file's path, the file's contents are used instead: they're copied into the working folder, attached, or opened as an untitled editor tab. A media pane shows such a file but can't watch its folder.
 
@@ -566,7 +566,7 @@ Drag a tab below the tab bar to spawn a **new AgentMux instance** containing tha
 
 Every floating window is **fully independent**. Each one carries its own backend workspace, tab, and block state, so closing one window — or closing a pane inside it — never closes another window or affects the panes living elsewhere. A floating window only auto-closes when **its own** last pane is removed (the empty window has nothing left to show, so it tidies itself up).
 
-This independence is structural: each floater is an unowned top-level window rather than a child of the window it came from, so there's no cross-window cascade. Minimize, restore, and close are handled per source window explicitly, never propagated across separate floaters. See `agentmux-cef/src/floating_pane.rs` and [floating-pane-workspace.tsx](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/workspace/floating-pane-workspace.tsx) for the lifecycle.
+This independence is structural: each floater is an unowned top-level window rather than a child of the window it came from, so there's no cross-window cascade. Minimize, restore, and close are handled per source window explicitly, never propagated across separate floaters. See `crates/cef/src/floating_pane.rs` and [floating-pane-workspace.tsx](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/workspace/floating-pane-workspace.tsx) for the lifecycle.
 
 #### Tear off from any window
 
@@ -576,7 +576,7 @@ Tear-off works from **every** window, not just the first one you opened — the 
 
 **Redock gesture:** drag the floating pane's title bar close to any open AgentMux window — including secondary windows — and a dock indicator appears once your cursor has stayed near that window for 180 ms at a slow-to-stopped speed (≤400 CSS px/s). The dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock the pane into that window.
 
-Redock resolves correctly into secondary windows because every window — including ones promoted from the prewarm pool — carries a stable backend identity (`backend_window_id`), so the drop target is always unambiguous. The resolution logic lives in [commands/window/motion.rs](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/window/motion.rs).
+Redock resolves correctly into secondary windows because every window — including ones promoted from the prewarm pool — carries a stable backend identity (`backend_window_id`), so the drop target is always unambiguous. The resolution logic lives in [commands/window/motion.rs](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/window/motion.rs).
 
 #### Cross-window pane movement
 
@@ -584,6 +584,6 @@ Because torn-off panes keep their identity, you can move a pane freely between w
 
 #### Why tear-off feels instant
 
-New windows and torn-off panes are served from a hidden **prewarm pool** — a small set of pre-spawned, already-painted windows kept off-screen and ready to go. On tear-off, AgentMux promotes a pooled window in place instead of cold-starting a fresh one, which avoids the 150-300 ms gap that spawning a renderer process and painting the first frame would otherwise cost. The pool refills in the background after each use. On Windows this uses native `WS_POPUP` pool windows (`CreatePanePoolWindowWin32Task` in `agentmux-cef/src/floating_pane.rs`); macOS and Linux use frameless CEF Views windows. Pooled windows stay hidden until they're promoted. Promotion is wired through [commands/window_pool.rs](https://github.com/agentmuxai/agentmux/blob/main/agentmux-cef/src/commands/window_pool.rs).
+New windows and torn-off panes are served from a hidden **prewarm pool** — a small set of pre-spawned, already-painted windows kept off-screen and ready to go. On tear-off, AgentMux promotes a pooled window in place instead of cold-starting a fresh one, which avoids the 150-300 ms gap that spawning a renderer process and painting the first frame would otherwise cost. The pool refills in the background after each use. On Windows this uses native `WS_POPUP` pool windows (`CreatePanePoolWindowWin32Task` in `crates/cef/src/floating_pane.rs`); macOS and Linux use frameless CEF Views windows. Pooled windows stay hidden until they're promoted. Promotion is wired through [commands/window_pool.rs](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/window_pool.rs).
 
 Pooled windows are created with a dark theme background, so tearing off a pane comes up clean rather than briefly flashing white before the pane content paints.

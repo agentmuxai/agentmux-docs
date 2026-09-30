@@ -7,7 +7,7 @@
  *   `path/to/file.rs:42`       → blob link + #L42
  *   `path/to/file.rs:42-78`    → blob link + #L42-L78
  *
- * Short-name aliases (e.g. shell.rs → agentmux-srv/src/.../shell.rs) and
+ * Short-name aliases (e.g. shell.rs → crates/srv/src/.../shell.rs) and
  * path prefix remapping (e.g. specs/ → docs/specs/) are configurable.
  *
  * Nodes already inside a <link> are skipped. Fenced code blocks are never

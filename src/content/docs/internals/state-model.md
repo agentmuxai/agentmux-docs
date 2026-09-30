@@ -280,7 +280,7 @@ This reducer does **not** model focus or highlight.
 
 ### 3.1 Discussion #707
 
-GitHub Discussion **#707** ("Reducer-stack architecture: long-term tracking thread") is the umbrella tracking thread for the multi-layer reducer migration across launcher, host, srv, and frontend. References in codebase: `docs/specs/SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7`, `agentmux-cef/src/reducer/mod.rs:117`, `docs/analysis/LIFECYCLE_DISPATCH_LEAK_2026_05_15.md`.
+GitHub Discussion **#707** ("Reducer-stack architecture: long-term tracking thread") is the umbrella tracking thread for the multi-layer reducer migration across launcher, host, srv, and frontend. References in codebase: `docs/specs/SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7`, `crates/cef/src/reducer/mod.rs:117`, `docs/analysis/LIFECYCLE_DISPATCH_LEAK_2026_05_15.md`.
 
 ### 3.2 Initiative Overview
 
@@ -526,7 +526,7 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 - Writes `rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions` onto the WOS atom
 - Calls `WOS.setObjectValue(waveObj, true)` → `ObjectService.UpdateObject` → srv wcore direct
 
-**Path B — Srv reducer path** (`agentmux-srv/src/persist_subscriber.rs:664-689`):
+**Path B — Srv reducer path** (`crates/srv/src/persist_subscriber.rs:664-689`):
 - `apply_focused_node_changed(wstore, tab_id, node_id)` (called by persist subscriber on `Event::Layout::FocusedNodeChanged`)
 - Writes only `focusednodeid` to `LayoutState` in SQLite
 - Bypasses `rootnode` and other fields; scoped to Phase E.4.A (Option A)
@@ -636,7 +636,7 @@ The frontend `wos.ts:272` version guard (`if (curValue.value.version >= update.o
 | blockAgentColor memo | `blockframe.tsx:711` | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `autotitle.ts:200` | `frontend/app/block/autotitle.ts` |
 | block-focused CSS (border) | `block.scss:489` | `frontend/app/block/block.scss` |
-| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:664` | `agentmux-srv/src/persist_subscriber.rs` |
+| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:664` | `crates/srv/src/persist_subscriber.rs` |
 | Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
 | Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7` | `docs/specs/` |
 | Border fix plan | `pane-highlight-fix-plan.md` | `specs/` |
