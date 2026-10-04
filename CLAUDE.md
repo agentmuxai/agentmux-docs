@@ -97,7 +97,7 @@ Use `build:full` before any production deploy. `build` is fine for iterating on 
 
 ## Review Checklist
 
-- Version bumped in package.json for code changes
+- Version bumped in package.json for code changes (still done in the PR here: this repo has no release step; the changeset is the changelog entry, not the version bump)
 - `npm run build` passes (check page count in output); for prod-bound PRs, `npm run build:full` passes and `dist/api/{typescript,rust}/` contain real reference content (not just the umbrella index)
 - Both dark AND light mode tested when changing `custom.css`
 - Logo/image assets go in `src/assets/` (Astro optimizes them), not `public/`
@@ -116,3 +116,7 @@ curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*\.css"'
 aws s3 ls s3://<docs-bucket>/_astro/ | grep css
 # Hashes must match. If not: HTML wasn't uploaded — run the force-upload step again.
 ```
+
+## Changesets (required on every PR)
+
+Every PR adds a changeset: `scripts/changeset.sh <patch|minor|major> "<one-line summary>"`, then commit the file it writes to `.changesets/`. The `changeset` CI check fails without one; a PR that genuinely needs no entry gets the `no-changeset` label. See `.changesets/README.md`.
