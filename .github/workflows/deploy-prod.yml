@@ -5,9 +5,8 @@
 # 2026-07-29 (DOC-007, documentation analyst): the "Activation" section below
 # described one-time OIDC/IAM setup as NOT YET DONE. It's done — `deploy.yml`
 # (added 2026-06-27, PR #97) has been auto-deploying every push to `main` in
-# production since, using an already-provisioned role
-# (`arn:aws:iam::050544946291:role/agentmux-docs-deploy`) and an already-set
-# `CF_DISTRIBUTION_ID` secret. This file's old "DORMANT, needs activation"
+# production since, using an already-provisioned deploy role. This file's
+# old "DORMANT, needs activation"
 # framing was stale, and — separately — its sync step below was still the
 # single-pass `aws s3 sync --delete` pattern that caused the 2026-05-27
 # partial-deploy incident (stale HTML referencing a deleted CSS bundle,
@@ -21,10 +20,9 @@
 # is a call for whoever owns this repo's CI, not something to guess at in a
 # doc-accuracy pass — left as-is, just no longer describing false state.
 #
-# 2026-09-28: the docs moved to the agentmux-prod account (167667034757),
-# bucket agentmux-docs-prod-167667034757 / distribution E4EAW1TLB65KC and that
-# account's agentmux-docs-deploy role (agentmuxai/agentmux-landing
-# cdk/lib/docs-stack.ts); the targets below follow.
+# The deploy targets come from repository secrets (masked in the public run
+# logs): DOCS_AWS_ACCOUNT_ID (deploy role and bucket name) and
+# DOCS_DISTRIBUTION_ID, the same ones deploy.yml uses.
 #
 # What this workflow does (manual dispatch only):
 #   1. Check out the repo with submodules (src/agentmux is required for
@@ -36,7 +34,7 @@
 #   6. Assume the AWS IAM role via GitHub OIDC.
 #   7. Two-step S3 sync (assets, then forced HTML upload — see deploy.yml's
 #      identical step for why this must be two steps, not one).
-#   8. aws cloudfront create-invalidation --distribution-id E4EAW1TLB65KC \
+#   8. aws cloudfront create-invalidation --distribution-id <distribution-id> \
 #                                          --paths "/*"
 #
 # =============================================================================
@@ -67,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: production
+    env:
+      DOCS_BUCKET: agentmux-docs-prod-${{ secrets.DOCS_AWS_ACCOUNT_ID }}
 
     steps:
       - name: Check out (with submodules)
@@ -122,13 +122,13 @@ jobs:
         with:
           # Same role deploy.yml uses — already provisioned and working, not
           # the not-yet-set-up placeholder this file originally described.
-          role-to-assume: arn:aws:iam::167667034757:role/agentmux-docs-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.DOCS_AWS_ACCOUNT_ID }}:role/agentmux-docs-deploy
           aws-region: us-east-1
           # CloudFront is global; us-east-1 is fine for the SDK endpoint.
 
       - name: Sync non-HTML assets to S3
         run: |
-          aws s3 sync dist/ s3://agentmux-docs-prod-167667034757/ \
+          aws s3 sync dist/ s3://${{ env.DOCS_BUCKET }}/ \
             --delete \
             --exclude "*.html"
 
@@ -139,7 +139,7 @@ jobs:
         # bundles — see deploy.yml's identical step and the 2026-05-27
         # incident this pattern caused when it was a single sync step.
         run: |
-          aws s3 cp dist/ s3://agentmux-docs-prod-167667034757/ \
+          aws s3 cp dist/ s3://${{ env.DOCS_BUCKET }}/ \
             --recursive \
             --exclude "*" \
             --include "*.html"
@@ -147,5 +147,5 @@ jobs:
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id E4EAW1TLB65KC \
+            --distribution-id ${{ secrets.DOCS_DISTRIBUTION_ID }} \
             --paths "/*"
