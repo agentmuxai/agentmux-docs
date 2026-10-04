@@ -46,18 +46,18 @@ git submodule update --init --recursive   # one-time, makes src/agentmux availab
 npm run build:full                         # build:typedoc + build:rust-docs + build
 
 # 1. Sync non-HTML assets first (new CSS/JS available before old ones are removed)
-aws s3 sync dist/ s3://agentmux-docs-prod-167667034757/ --delete --exclude "*.html"
+aws s3 sync dist/ s3://<docs-bucket>/ --delete --exclude "*.html"
 # 2. Force-upload all HTML files (bypasses mtime comparison — normalize-mtimes sets
 #    a fixed epoch so s3 sync skips HTML when only the CSS hash inside it changes)
-aws s3 cp dist/ s3://agentmux-docs-prod-167667034757/ --recursive --exclude "*" --include "*.html"
+aws s3 cp dist/ s3://<docs-bucket>/ --recursive --exclude "*" --include "*.html"
 
 # 3. Invalidate CF and wait for full propagation before reporting success
-INVAL=$(aws cloudfront create-invalidation --distribution-id E4EAW1TLB65KC --paths "/*" --query 'Invalidation.Id' --output text)
-aws cloudfront wait invalidation-completed --distribution-id E4EAW1TLB65KC --id $INVAL
+INVAL=$(aws cloudfront create-invalidation --distribution-id <distribution-id> --paths "/*" --query 'Invalidation.Id' --output text)
+aws cloudfront wait invalidation-completed --distribution-id <distribution-id> --id $INVAL
 
 # 4. Verify — CSS hash in live HTML must match what's in S3/_astro/
 curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*common[^"]*\.css"'
-aws s3 ls s3://agentmux-docs-prod-167667034757/_astro/ | grep common
+aws s3 ls s3://<docs-bucket>/_astro/ | grep common
 ```
 
 **Why the two-step sync:** `normalize-mtimes.mjs` sets all dist file mtimes to a fixed
@@ -75,10 +75,10 @@ a missing CSS file → site unstyled. Always force-upload HTML separately.
 
 If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves differently by environment. Locally it warns and exits 0, and `/api/rust/` shows only the placeholder, whose crate links 404. In CI (`CI` set, as on GitHub Actions) it exits 1 and fails the deploy, so a broken Rust reference can't go live unseen again (#131). `RUST_DOCS_OPTIONAL=1` restores the lenient behaviour in CI for a deliberate one-off deploy.
 
-- **AWS account:** agentmux-prod `167667034757` since 2026-09-28 (stack `agentmux-docs-prod` in agentmuxai/agentmux-landing `cdk/lib/docs-stack.ts`). The shared account's `agentmux-docs-prod` bucket and `EF4XTPT79GHLS` are retired: don't deploy there.
-- **S3 Bucket:** `agentmux-docs-prod-167667034757`
-- **CloudFront:** `E4EAW1TLB65KC`
-- **Domain:** `docs.agentmux.ai` (Route53 alias to CloudFront in the agentmux-prod zone; certificate for `docs.agentmux.ai` issued by the stack)
+- **AWS account / S3 bucket / CloudFront distribution / deploy role:** shown as placeholders
+  (`<account-id>`, `<docs-bucket>`, `<distribution-id>`, `<deploy-role>`). The real values are
+  recorded in the private infrastructure repo, not in this doc.
+- **Domain:** `docs.agentmux.ai` (DNS alias to the CloudFront distribution)
 - **Deploy status:** `gh run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success
 
 ### Content Source
@@ -113,6 +113,6 @@ but the site still looks stale:
 ```bash
 # CSS hash in live page must match what's in S3
 curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*\.css"'
-aws s3 ls s3://agentmux-docs-prod-167667034757/_astro/ | grep css
+aws s3 ls s3://<docs-bucket>/_astro/ | grep css
 # Hashes must match. If not: HTML wasn't uploaded — run the force-upload step again.
 ```
