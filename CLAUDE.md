@@ -97,7 +97,7 @@ Use `build:full` before any production deploy. `build` is fine for iterating on 
 
 ## Review Checklist
 
-- Version bumped in package.json for code changes
+- Version bumped in package.json for code changes (still done in the PR here: this repo has no release step; the changeset is the changelog entry, not the version bump)
 - `npm run build` passes (check page count in output); for prod-bound PRs, `npm run build:full` passes and `dist/api/{typescript,rust}/` contain real reference content (not just the umbrella index)
 - Both dark AND light mode tested when changing `custom.css`
 - Logo/image assets go in `src/assets/` (Astro optimizes them), not `public/`
