@@ -116,3 +116,7 @@ curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*\.css"'
 aws s3 ls s3://<docs-bucket>/_astro/ | grep css
 # Hashes must match. If not: HTML wasn't uploaded — run the force-upload step again.
 ```
+
+## Changesets (required on every PR)
+
+Every PR adds a changeset: `scripts/changeset.sh <patch|minor|major> "<one-line summary>"`, then commit the file it writes to `.changesets/`. The `changeset` CI check fails without one; a PR that genuinely needs no entry gets the `no-changeset` label. See `.changesets/README.md`.
