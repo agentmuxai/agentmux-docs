@@ -51,7 +51,7 @@ Each `DocumentNode` kind declares its own size estimator in the renderer registr
 
 These replace the single `estimateSize: () => 80` from the first retrofit attempt, which produced visible gaps because short messages were given 80px slots.
 
-A dev-mode perf probe (`agent-pane-perf-section.tsx`, accessible via Ctrl+Shift+D in the diag panel) compares each row's measured size against its kind's estimate. When p50 measured size diverges from the estimate by more than 30%, the HUD flags the kind for recalibration. Per-kind p50/p95/max render times also surface here, plus layout-shift events scoped to the agent pane.
+A dev-mode perf probe (`agent-pane-perf-section.tsx`, accessible via Ctrl+Alt+Shift+F12, the diagnostics panel, in dev builds) compares each row's measured size against its kind's estimate. When p50 measured size diverges from the estimate by more than 30%, the HUD flags the kind for recalibration. Per-kind p50/p95/max render times also surface here, plus layout-shift events scoped to the agent pane.
 
 All probing is dev-only — `import.meta.env.DEV` is folded to a literal at build time, dead-code elimination drops the probe paths from production bundles.
 

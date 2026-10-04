@@ -54,7 +54,7 @@ Features:
 - Remote connections (SSH)
 - [Voice input](#voice-input) — dictate commands into the PTY via the mic button in the pane header
 
-Open a terminal: `Cmd+N` / `Alt+N` or click the **Terminal** icon in the top bar.
+Open a terminal: `⌘N` / `` Ctrl+Shift+` `` or click the **Terminal** icon in the top bar.
 
 The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#shell-helpers) for the full list.
 
@@ -175,7 +175,7 @@ With a `.md` file open, press `Ctrl+Shift+V` (`Cmd+Shift+V`) to toggle a rendere
 
 ### Find / Replace
 
-Press `Ctrl+F` (`Cmd+F`) to open the find bar. Press `Ctrl+H` (`Cmd+H`) to open find-and-replace. Both support:
+Press `Ctrl+F` (`⌘F`) to open the find bar, which also does find-and-replace. It supports:
 
 - **Regex** — toggle the `.*` button to switch between literal and regex search
 - **Case-sensitive** — toggle `Aa`
@@ -449,7 +449,7 @@ The mic button pulses while listening. Clicking the mic on a **different** pane 
 |---|---|
 | Toggle voice on the focused pane | `Ctrl+Shift+V` |
 
-The shortcut is a no-op on pane types that don't support voice (Browser, Editor, etc.).
+The shortcut does nothing on pane types without voice (Browser and so on). In an Editor it toggles the markdown preview instead, and in a Terminal it pastes.
 
 ### Settings
 
@@ -471,7 +471,7 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 
 - **Top bar widgets** — Click the icons on the right side of the top bar
 - **Right-click header** — Right-click a pane header for the widget menu
-- **Keyboard** — `Cmd+N` / `Alt+N` for terminal, `Cmd+Shift+A` / `Alt+Shift+A` for agent panel
+- **Keyboard** — `⌘N` / `` Ctrl+Shift+` `` for a new pane, `⇧⌘A` / `Ctrl+Shift+A` for an agent pane
 
 ### Pane tabs
 
@@ -501,8 +501,8 @@ for the full design rationale.
 
 | Action | macOS | Windows / Linux |
 |--------|-------|-----------------|
-| Split Right | `Cmd+D` | `Alt+D` |
-| Split Below | `Cmd+Shift+D` | `Alt+Shift+D` |
+| Split Right | `⌘D` | `Ctrl+Shift+D` |
+| Split Below | `⇧⌘D` | `Ctrl+Alt+Shift+D` |
 | Split in Direction | `Ctrl+Shift+S` + Arrow | Same |
 
 ### Navigation
@@ -511,8 +511,11 @@ for the full design rationale.
 |--------|----------|
 | Navigate between panes | `Ctrl+Shift+Arrow` |
 | Focus pane N | `Ctrl+Shift+1-9` |
-| Close pane | `Cmd+W` / `Alt+W` |
-| Magnify pane | `Cmd+M` / `Alt+M` |
+| Next / previous pane | `F6` / `Shift+F6` |
+| Swap with the pane in a direction | `Ctrl+Alt+Shift+Arrow` (`⌃⌥⇧Arrow`) |
+| Resize: move a border | `Alt+Shift+Arrow` (`⌃⌥⌘Arrow`) |
+| Close pane | `⌘W` / `Ctrl+Shift+W` |
+| Magnify pane | `⌘M` / `Ctrl+Shift+M` |
 
 ### Drag and Drop
 

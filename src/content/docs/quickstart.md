@@ -45,14 +45,14 @@ See [First Agent Setup](/first-agent/) for the details of every step.
 
 ## 4. Add more panes
 
-In the tables below, `Cmd` is ⌘ on macOS and Alt on Windows and Linux.
+macOS keys are in brackets.
 
 | Action | Keys |
 |---|---|
-| Split right (opens a terminal) | `Cmd + D` |
-| Split below | `Cmd + Shift + D` |
-| Move focus between panes | `Ctrl + Shift + Arrow` |
-| Open the command palette | `Ctrl + P` |
+| Split right (opens a terminal) | `Ctrl+Shift+D` (`⌘D`) |
+| Split below | `Ctrl+Alt+Shift+D` (`⇧⌘D`) |
+| Move focus between panes | `Ctrl+Shift+Arrow`, or `F6` |
+| Open the command palette | `Ctrl+Shift+P` (`⇧⌘P`) |
 
 To start a second agent, click **Agent** in the widget bar (or run **Open Agent** from the command palette). The new Agent pane shows the picker again: create another agent, or pick one from **My Agents**. Agent names must be unique, so give a second agent from the same template a new name.
 

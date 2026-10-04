@@ -41,7 +41,7 @@ Three axes of isolation, often confused:
 **Per-channel** (one set per channel, shared across every version of that channel, isolated between channels — these are the things you want to survive an upgrade):
 
 - **Agent working dirs** — `channels/<ch>/agents/`, the per-agent working directories, shared across versions of the channel
-- **Settings** — `settings.json` (and `keybindings.json`) under `channels/<ch>/config/`. Provider auth-config dirs (OAuth tokens, API keys) are *not* per-channel — they live account-wide under `~/.agentmux/shared/providers/<provider>/` so credentials persist across channel upgrades. See [Auth flows](/auth/).
+- **Settings** — `settings.json` (your own shortcuts are its `keybindings` entry) under `channels/<ch>/config/`. Provider auth-config dirs (OAuth tokens, API keys) are *not* per-channel — they live account-wide under `~/.agentmux/shared/providers/<provider>/` so credentials persist across channel upgrades. See [Auth flows](/auth/).
 
 **Account-wide** (one set per machine account, shared across *every* channel and version — broader than per-channel):
 
