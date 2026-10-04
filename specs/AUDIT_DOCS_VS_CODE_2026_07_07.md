@@ -59,7 +59,7 @@ wrong doc is worse than a missing one.
 | 19 | **Floating-pane placement/size persistence** (other half of #12's opacity spec) | Designed, not started | Don't document. |
 | 20 | **External App Driving / Blender connector** | Design doc only, no code | Don't document as available; optionally mention on a roadmap/vision page if one exists. |
 | 21 | **MCP hot-loading into a running session** | Feasibility-verified design only | Don't document. |
-| 22 | **MuxBus multi-tenant security gap** (any valid muxbus credential can address any `agent_id`) | Audited 2026-07-06, tracked upstream (`agentmux-cloud#2`), **not fixed** | `security/trust-model.md` should already be conservative about muxbus multi-tenant trust — verify it doesn't overstate isolation; if it's silent, add an explicit caveat rather than a "vulnerability disclosure." |
+| 22 | **MuxBus relay tenancy** | Tracked in the private cloud repo | `security/trust-model.md` should describe muxbus trust conservatively; don't overstate isolation. |
 
 ---
 
