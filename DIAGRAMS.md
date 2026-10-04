@@ -365,7 +365,7 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 
 ```
 ┌─ desk-mac.local ────────────────────────┐
-│ OS    Windows 11    IP  192.0.2.10    │
+│ OS    Windows 11    IP  192.0.2.10      │
 │ ─────────────────────────────────────── │
 │ LAN discovery       [ on  🟢 ]          │
 │ ◆ 2 peers                               │
