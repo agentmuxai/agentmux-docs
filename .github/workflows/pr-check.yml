@@ -39,3 +39,12 @@ jobs:
         # Rust toolchain here would slow down every PR to check something
         # deploy.yml already verifies before going live.
         run: npm run build
+
+      - name: Layout stability (no scrollbar shift, no hidden header or sidebar)
+        # Loads built pages in Chromium with real scrollbars, a cold cache and a
+        # throttled connection, and fails if the page width changes or the header
+        # or sidebar is invisible after first paint. Guards against "hide until
+        # JS runs" masks and scrollbar shifts, both of which shipped before.
+        run: |
+          npx playwright install --with-deps chromium-headless-shell
+          node scripts/check-layout-stability.mjs
