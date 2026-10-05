@@ -30,7 +30,7 @@
     },
     "suggestedFor": {
       "type": "object",
-      "description": "Who the bundle was made for. A hint only: a bundle can be bound to any agent, whatever harness it runs.",
+      "description": "Who the bundle was made for: the AgentMux provider and vendor its author had in mind. Optional, and omitted when unset.",
       "properties": {
         "provider": {
           "type": "string",
