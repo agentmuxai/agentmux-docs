@@ -6,121 +6,142 @@ title: "Keybindings"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux's shortcuts use two modifiers:
+The same list is in the app: press F1, or open the Help pane. A terminal keeps every key for the shell except the window, tab and pane shortcuts below, and on Windows and Linux no global shortcut uses Alt+letter, so in a terminal those always reach the shell.
 
-- **`Cmd`** is the ⌘ Command key on macOS and the **Alt** key on Windows and Linux.
-- **`Ctrl`** is the Control key on every platform, macOS included.
-
-The app-wide bindings are defined in `frontend/app/store/keymodel.ts` (`registerGlobalKeys`), and the modifier mapping in `frontend/util/keyutil.ts` (`parseKeyDescription`).
-
-On Windows and Linux, the Alt shortcuts below take priority over the same keys in a terminal pane. For example, Alt+D splits the pane instead of reaching your shell.
-
-## Command palette
-
-Press **`Ctrl + P`** on any platform to open the command palette, a searchable list of commands. While it's open, all other app shortcuts are paused.
-
-| Key | Action |
-|---|---|
-| `Ctrl + P` | Open the palette |
-| Type | Filter the list (fuzzy match) |
-| `↑` / `↓` | Move the highlight |
-| `Enter` | Run the highlighted command |
-| `Esc` | Close the palette |
-
-Its commands (`frontend/app/store/command-registry.ts`, `registerDefaultCommands`):
-
-| Category | Commands |
-|---|---|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Help, Open Swarm |
-| **Split** | Split Right, Split Left, Split Down, Split Up (each opens a terminal) |
-| **Window** | New Window, Close Window, Minimize Window, Toggle Maximize |
-| **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
-| **Pane** | Close Pane, Toggle Magnify, Focus Pane Right / Left / Up / Down |
-| **Dev** | Toggle DevTools, Restart Backend, Open Settings File |
-| **View** | Command Palette, Zoom In, Zoom Out, Actual Size |
-| **App** | Identity & Memory (opens the Armory) |
-| **Help** | Online Docs |
-
-## Tabs and windows
+## General
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
-| New tab | `Cmd + T` | `Alt + T` |
-| Close tab | `Cmd + Shift + W` | `Alt + Shift + W` |
-| Next tab | `Cmd + ]` | `Alt + ]` |
-| Previous tab | `Cmd + [` | `Alt + [` |
-| Go to tab 1–9 | `Cmd + 1` … `Cmd + 9` | `Alt + 1` … `Alt + 9` |
-| New window | `Ctrl + Shift + N` | `Ctrl + Shift + N` |
+| Command palette | ⇧⌘P, ⌘P | Ctrl+Shift+P, Ctrl+P |
+| Settings | ⌘, | Ctrl+, |
+| Keyboard shortcuts | ⌘/, F1 | Ctrl+/, F1 |
+| Voice input | ⌃⇧V | Ctrl+Shift+V |
+| Close dialog or find bar | Esc | Esc |
 
-New tabs and windows open with the starter layout: Agent, Sysinfo and Swarm. Closing a tab with `Cmd + Shift + W` asks for confirmation unless the `tab:skipcloseconfirm` setting is on, and the last tab in a window can't be closed.
+## Tabs & windows
 
-Double-click a tab to rename it. `Enter` saves the name and `Esc` cancels.
-
-While the window is still loading, `F5` or `Ctrl + R` (`Cmd + R` on macOS) reloads it. This only works during startup, for a window stuck on a startup error.
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| New window | ⇧⌘N | Ctrl+Shift+N |
+| New tab | ⌘T | Ctrl+Shift+T |
+| Close tab | ⇧⌘W | Ctrl+Alt+Shift+W, Ctrl+F4 |
+| Next tab | ⌘], ⇧⌘], ⌃Tab | Ctrl+Shift+], Ctrl+Tab |
+| Previous tab | ⌘[, ⇧⌘[, ⌃⇧Tab | Ctrl+Shift+[, Ctrl+Shift+Tab |
+| Go to tab 1–8 | ⌘1–8 | Ctrl+1–8 |
+| Go to last tab | ⌘9 | Ctrl+9 |
+| Move tab left | ⇧⌘PgUp | Ctrl+Alt+Shift+PgUp |
+| Move tab right | ⇧⌘PgDn | Ctrl+Alt+Shift+PgDn |
+| Rename tab | F2 | F2 |
 
 ## Panes
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
-| New pane | `Cmd + N` | `Alt + N` |
-| Split right | `Cmd + D` | `Alt + D` |
-| Split below | `Cmd + Shift + D` | `Alt + Shift + D` |
-| Split in a direction | `Ctrl + Shift + S`, then an arrow key | `Ctrl + Shift + S`, then an arrow key |
-| Close pane | `Cmd + W` | `Alt + W` |
-| Magnify or restore the focused pane | `Cmd + M` | `Alt + M` |
-| Move focus to the adjacent pane | `Ctrl + Shift + Arrow` | `Ctrl + Shift + Arrow` |
-| Cycle focus forward / backward | `Ctrl + ]` / `Ctrl + [` | `Ctrl + ]` / `Ctrl + [` |
-| Focus pane 1–9 (in layout order) | `Ctrl + Shift + 1` … `9` | `Ctrl + Shift + 1` … `9` |
-| Return keyboard focus to the focused pane | `Cmd + I` | `Alt + I` |
-| Replace the focused pane with the widget launcher | `Ctrl + Shift + K` | `Ctrl + Shift + K` |
-| Change the connection of a Terminal or Sysinfo pane | `Cmd + G` | `Alt + G` |
-| Search in a Terminal pane | `Cmd + F` | `Alt + F` |
-| Close the open dialog or search bar, or restore a magnified pane | `Esc` | `Esc` |
+| New pane | ⌘N | Ctrl+Shift+` |
+| New agent pane | ⇧⌘A | Ctrl+Shift+A |
+| Split right | ⌘D | Ctrl+Shift+D |
+| Split below | ⇧⌘D | Ctrl+Alt+Shift+D |
+| Split in a direction | ⌃⇧S then ↑/↓/←/→ | Ctrl+Shift+S then ↑/↓/←/→ |
+| Close pane | ⌘W | Ctrl+Shift+W |
+| Maximize pane | ⌘M | Ctrl+Shift+M |
+| Focus pane by direction | ⌃⇧↑/↓/←/→ | Ctrl+Shift+↑/↓/←/→ |
+| Next pane | F6 | F6 |
+| Previous pane | ⇧F6 | Shift+F6 |
+| Focus pane 1–9 | ⌃⇧1–9 | Ctrl+Shift+1–9 |
+| Swap pane with neighbour | ⌃⌥⇧↑/↓/←/→ | Ctrl+Alt+Shift+↑/↓/←/→ |
+| Resize pane | ⌃⌥⌘↑/↓/←/→ | Alt+Shift+↑/↓/←/→ |
+| Refocus pane | ⌘I | — |
+| Focus the message box | ⌘L | Ctrl+L |
+| Replace pane with launcher | ⌃⇧K | Ctrl+Shift+K |
+| Change connection | ⇧⌘G | Ctrl+Shift+G |
 
-New panes and splits open a terminal. A new terminal starts in the focused terminal's directory and connection. If the `app:defaultnewblock` setting is `launcher`, they open the widget launcher instead. After `Ctrl + Shift + S` you have 2 seconds to press the arrow key. The digit keys for focusing a pane work on the top row or the numpad. Cycling focus moves through the panes in a clockwise spiral, starting at the top left.
-
-Closing a pane whose agent is mid-turn or has processes running asks for confirmation first. A closing Agent pane stays on screen with a log of what it's stopping until the agent is down (see [Ending an agent](/first-agent/#ending-an-agent)).
-
-`Ctrl + Shift + M` toggles **multi-input**, which sends what you type in one terminal to every other terminal pane. It only turns on when there are at least two terminals.
-
-`Ctrl + Shift + V` starts or stops voice input in the focused Agent pane, when voice input is available. If dictation is already running in another pane, it moves to the focused one. In a Terminal pane, and in an Agent pane's Shell drawer, the same keys paste instead (see below).
-
-In the widget launcher, type to filter the widgets, use the arrow keys to move the selection, and press `Enter` to open one. `Esc` clears the search, and with an empty search it goes back out of a widget group.
-
-## Zoom
+## Find & zoom
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
-| Zoom the focused pane in | `Cmd + =` | `Ctrl + =` |
-| Zoom the focused pane out | `Cmd + -` | `Ctrl + -` |
-| Reset the focused pane's zoom | `Cmd + 0` | `Ctrl + 0` |
+| Find in pane | ⌘F | Ctrl+F, Ctrl+Shift+F (in a terminal) |
+| Zoom in | ⌘=, ⇧⌘= | Ctrl+=, Ctrl+Shift+= |
+| Zoom out | ⌘-, ⌘Num- | Ctrl+-, Ctrl+Num- |
+| Reset zoom | ⌘0, ⌘Num0 | Ctrl+0, Ctrl+Num0 |
+| Reset zoom on all panes | ⇧⌘0 | Ctrl+Shift+0 |
 
-Both variants are bound on every platform: `Ctrl + =` also works on macOS, and `Alt + =` on Windows and Linux. The keyboard steps by 10%, within 50–200%. Zoom applies to Terminal, Agent, Swarm, Editor, Armory and Warden panes (`frontend/app/store/zoom.ts`).
-
-With the mouse (`frontend/app/app.tsx`, `AppZoomHandler` and `AppAllPanesZoomHandler`):
-
-| Gesture | Effect |
-|---|---|
-| `Ctrl` + scroll over a pane | Zoom that pane (if it's one of the types above). Steps are 10% over a Terminal, Editor, Swarm, Armory or Warden pane and 5% over an Agent pane. |
-| `Ctrl` + scroll over the title bar, status bar or a pane header | Zoom the window chrome (title bar and status bar), in 5% steps within 50–200% |
-| `Ctrl + Shift` + scroll | Zoom every zoomable pane in the window together, each from its own current level, in 5% steps. Over the title bar, status bar or a pane header it zooms the chrome instead. |
-
-On macOS, `Cmd` also works in place of `Ctrl` for these scroll gestures, in 5% steps.
-
-An Agent pane's Shell drawer zooms on its own: `Ctrl` + scroll over it changes only the drawer, in 10% steps. The Help pane also has its own zoom: `Ctrl` + scroll over it (5% steps), or `Ctrl + =`, `Ctrl + -` and `Ctrl + 0` while it has focus (`Cmd` works too on macOS).
-
-## Terminal panes
+## Terminal
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
-| Copy the selection | `Ctrl + Shift + C` | `Ctrl + Shift + C` |
-| Paste | `Ctrl + Shift + V` | `Ctrl + Shift + V` |
-| Clear the terminal | `Cmd + K` | `Alt + K` |
-| Insert a newline without running | `Shift + Enter` | `Shift + Enter` |
-| Restart the shell after it exits | `Enter` | `Enter` |
-| In the search bar: next / previous match | `Enter` / `Shift + Enter` | `Enter` / `Shift + Enter` |
+| Type into all terminals | ⇧⌘M | Ctrl+Alt+Shift+M |
+| Clear | ⌘K | Ctrl+Shift+L |
+| Copy | — | Ctrl+Shift+C |
+| Paste | — | Ctrl+Shift+V |
 
-`Shift + Enter` only inserts a newline when the `term:shiftenternewline` setting is on. These keys are handled in `frontend/app/view/term/termViewModel.ts` (`handleTerminalKeydown`).
+## Documents
+
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| New document tab | ⌃T | Ctrl+T |
+| Close document tab | ⌃W | Ctrl+W |
+| Reopen closed document | ⌃⇧T | Ctrl+Shift+T |
+| Next document | ⌃Tab, ⌃PgDn | Ctrl+Tab, Ctrl+PgDn |
+| Previous document | ⌃⇧Tab, ⌃PgUp | Ctrl+Shift+Tab, Ctrl+PgUp |
+| Move document right | ⌃⇧PgDn | Ctrl+Shift+PgDn |
+| Move document left | ⌃⇧PgUp | Ctrl+Shift+PgUp |
+
+## Editor
+
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| Save | ⌘S | Ctrl+S |
+| Save as (scratch documents) | ⇧⌘S | Ctrl+Shift+S |
+| Find and replace | ⌘F | Ctrl+F |
+| Toggle markdown preview | ⇧⌘V | Ctrl+Shift+V |
+
+## Files
+
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| Back | ⌥← | Alt+← |
+| Forward | ⌥→ | Alt+→ |
+| Up a folder | ⌥↑ | Alt+↑ |
+| Open in new tab | ⌘Enter | Ctrl+Enter |
+| New tab here | ⌘T | Ctrl+T |
+| Close this tab | ⌘W | Ctrl+W |
+| Type a path | ⌘L | Ctrl+L |
+| Filter | ⌘F | Ctrl+F |
+| New folder | ⇧⌘N | Ctrl+Shift+N |
+| Rename | F2 | F2 |
+| Refresh | F5 | F5 |
+| Move to Trash | Delete | Delete |
+| Delete permanently | ⇧Delete | Shift+Delete |
+| Select all | ⌘A | Ctrl+A |
+| Copy | ⌘C | Ctrl+C |
+| Cut | ⌘X | Ctrl+X |
+| Paste | ⌘V | Ctrl+V |
+| Undo | ⌘Z | Ctrl+Z |
+| Mention in agent | ⌥K | Alt+K |
+
+## Your own shortcuts
+
+Add a `keybindings` list to your settings file (command palette → Open Settings File). Your entries come before the defaults, so they win, and they apply as soon as you save.
+
+```json
+"keybindings": [
+    { "key": "ctrl+shift+e", "command": "split:right" },
+    { "command": "-tab:new" },
+    { "key": "ctrl+Tab", "command": "-tab:next" },
+    { "key": "meta+k", "command": "term:clear", "platform": "mac", "when": "terminalFocus" }
+]
+```
+
+- `key`: modifiers `ctrl`, `shift`, `alt`, `meta` and `mod` (⌘ on macOS, Ctrl elsewhere), then a key: a letter, a digit, punctuation, or a name such as `Enter`, `Tab`, `ArrowLeft`, `F6`, `PageUp`. Two keys separated by a space make a chord.
+- `command`: the command to run. Prefix it with `-` to unbind it: every key, or just the `key` you give.
+- `when` (optional): `textInputFocus`, `terminalFocus`, `docTabsHost`, `viewType == <pane>` or `viewType != <pane>`, each optionally negated with `!`, joined with `&&`.
+- `platform` (optional): `mac` or `other` (Windows and Linux). Both when omitted.
+
+An entry that can't be used is skipped and the rest still apply.
+
+## Terminal settings
+
+`Shift+Enter` sends a newline instead of running the line when **Settings → Terminal → Shift+Enter → new line** is on.
 
 ## Agent panes
 
@@ -142,36 +163,24 @@ Typing `/quit` (or `/exit`) and sending it ends the agent gracefully, showing wh
 
 The Shell drawer at the bottom of an Agent pane is a terminal. There, `Ctrl + Shift + V` pastes and `Ctrl + Shift + C` copies the selected text, on every platform, as in a Terminal pane (`frontend/app/view/agent/components/shell-drawer-keys.ts`, `handleShellDrawerKeydown`).
 
-## Editor panes
-
-These keys are handled in `frontend/app/view/editor/editor-view.tsx`:
-
-| Action | macOS | Windows / Linux |
-|---|---|---|
-| Save the file | `Cmd + S` | `Ctrl + S` |
-| Find and replace (source view only) | `Cmd + F` | `Ctrl + F` |
-| Switch a Markdown file between preview and source | `Cmd + Shift + V` | `Ctrl + Shift + V` |
-
-In the file tree, `F2` renames the selected file.
-
-In the memory editors (Global Memory and an agent's native memory files), `Ctrl + S` or `Cmd + S` saves and `Esc` cancels. If there are unsaved changes, `Esc` asks first.
-
 ## Browser panes
 
-A Browser pane's web page receives your keystrokes directly, so while the page has focus, AgentMux's other shortcuts don't reach the app. Click another pane first. These keys still work in the page (`crates/cef/src/client/handlers.rs`, `browser_pane_shortcut_for`):
+A Browser pane's web page has the keyboard while it has focus. AgentMux still takes its window, tab and pane shortcuts from the page, as listed above: new tab, close pane, split, the command palette, F6 to move to the next pane and so on. Find and zoom stay with the page, and so does any shortcut that only applies outside text fields, since AgentMux can't tell whether the page has a text field focused (`crates/cef/src/client/handlers.rs`, `app_shortcut_for`).
+
+The pane also has these keys of its own (`browser_pane_shortcut_for`):
 
 | Action | macOS | Windows / Linux |
 |---|---|---|
-| Focus the address bar | `Cmd + L` | `Ctrl + L` |
-| Reload | `Cmd + R` | `Ctrl + R` |
-| Back | `Option + ←` | `Alt + ←` |
-| Forward | `Option + →` | `Alt + →` |
+| Focus the address bar | `⌘L` | `Ctrl+L` |
+| Reload | `⌘R` | `Ctrl+R` |
+| Back | `⌥←` | `Alt+←` |
+| Forward | `⌥→` | `Alt+→` |
 
 In the address bar, `Enter` opens the address. Text that isn't an address is searched on Google.
 
 ## macOS menu bar
 
-The native macOS menu bar adds the standard system shortcuts: `Cmd + Q` (quit), `Cmd + H` (hide), `Cmd + Option + H` (hide others), and in the Edit menu `Cmd + Z`, `Cmd + Shift + Z`, `Cmd + X`, `Cmd + C`, `Cmd + V` and `Cmd + A`. Its other items (New Tab, Zoom In and so on) have no shortcut of their own in the menu; the bindings above apply.
+The native macOS menu bar adds the standard system shortcuts: `⌘Q` (quit), `⌘H` (hide), `⌥⌘H` (hide others), and in the Edit menu `⌘Z`, `⇧⌘Z`, `⌘X`, `⌘C`, `⌘V` and `⌘A`. Its other items (New Tab, Zoom In and so on) show no shortcut in the menu, on purpose: a menu shortcut takes the key before the app sees it, which would override the rules above (for example ⌘W in the Files pane closes a folder tab, not the pane). The shortcuts in the tables above apply.
 
 ## Resizing panes
 
@@ -203,7 +212,3 @@ On Windows, AgentMux does its own window snapping (`crates/cef/src/client/window
 - **Drag a maximized window to restore it.** Dragging the title bar of a maximized window restores it to its normal size, under the cursor.
 - **Snap to full height.** Drag the window's top or bottom border to within 12 px of the screen edge and the window fills the screen's height; its width doesn't change. Drag back out of the zone to undo it.
 - **Cancel a drag.** Press `Esc` while dragging the title bar to put the window back where it started.
-
-## Customization
-
-Keybindings can't be customized. They're fixed in `frontend/app/store/keymodel.ts`, and AgentMux doesn't read a keybindings file. A `keybindings.json` in the config folder has no effect.

@@ -6,7 +6,7 @@ title: "Configuration"
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux stores its configuration in a JSON settings file. You can edit it directly or through the Settings UI (`Ctrl+,` / `Cmd+,`).
+AgentMux stores its configuration in a JSON settings file. You can edit it directly or through the Settings UI (`Ctrl+,` / `⌘,`).
 
 ## Settings File Location
 
@@ -86,6 +86,6 @@ See [Memory bundles](/memory/) for the full bundle schema (including the `mcp_se
 
 ## See Also
 
-- [Keybindings](/keybindings) — Customize keyboard shortcuts
+- [Keybindings](/keybindings) — Every shortcut, and the `keybindings` setting for your own
 - [Settings Reference](/settings) — Complete settings list
 - [Memory bundles](/memory/) — Per-agent configuration

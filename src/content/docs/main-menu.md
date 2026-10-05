@@ -1,12 +1,12 @@
 ---
 title: Main menu & command palette
-description: The hamburger menu (≡) in the top tab bar lists global actions and preferences; the command palette (Ctrl+P / ⌘P) gives keyboard-driven access to a wider set of commands.
+description: The hamburger menu (≡) in the top tab bar lists global actions and preferences; the command palette (Ctrl+Shift+P / ⇧⌘P) gives keyboard-driven access to a wider set of commands.
 ---
 
 AgentMux groups global actions into two surfaces:
 
 - The **hamburger menu** (≡) at the start of the top tab bar — mouse-friendly, organized by category.
-- The **command palette** (`Ctrl+P` / `⌘P`) — keyboard-driven, searchable list of every registered command.
+- The **command palette** (`Ctrl+Shift+P` / `⇧⌘P`) — keyboard-driven, searchable list of every registered command.
 
 ## Hamburger menu (≡)
 
@@ -14,12 +14,12 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 
 | Item | Shortcut | What it does |
 |------|---------|--------------|
-| **New Tab** | `Ctrl+T` / `⌘T` | Adds a new tab to the current window. |
-| **New Window** | `Ctrl+Shift+N` / `⌘⇧N` | Opens a second AgentMux window — fully isolated tabs/state from the first. See [Running multiple instances](/multi-instance/). |
+| **New Tab** | `Ctrl+Shift+T` / `⌘T` | Adds a new tab to the current window. |
+| **New Window** | `Ctrl+Shift+N` / `⇧⌘N` | Opens a second AgentMux window — fully isolated tabs/state from the first. See [Running multiple instances](/multi-instance/). |
 | **Theme** | — | Submenu listing the available color themes. Selection persists via `window:theme` in `settings.json`. |
 | **Opacity** | — | Submenu of preset levels (35% – 100%). Below 100%, the window becomes translucent. Per-window override is in the [InstancePanel](/window-appearance/). |
 | **Settings** | — | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
-| **Command Palette** | `Ctrl+P` / `⌘P` | Opens the command palette (see below). |
+| **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
 | **Armory** | — | Opens the Armory pane (formerly "Trust Center") — Accounts, Identities, Brain, Bundles, MCP Servers, Skills. See [Armory](/armory/). |
 | **Toolchain** | — | Opens the Toolchain Manager — effective PATH and the detected version, path, and status of every provider CLI and system dependency, with install links for anything missing. |
 | **DevTools** | — | Toggles Chromium DevTools. |
@@ -34,9 +34,9 @@ Quitting AgentMux and reopening it reopens the same windows, tabs, and split-pan
 
 This is on by default, and as of this writing there's no in-app toggle to turn it off — a Settings option is planned as a follow-up but hasn't shipped yet. It only applies to a genuine cold start (the first window of a fresh launch); opening an additional window from the hamburger menu or tearing off a tab is unaffected.
 
-## Command palette (Ctrl+P / ⌘P)
+## Command palette (Ctrl+Shift+P / ⇧⌘P)
 
-Press `Ctrl+P` (Windows/Linux) or `⌘P` (macOS) from anywhere to open the palette. Type to filter, arrow keys to navigate, Enter to run.
+Press `Ctrl+Shift+P` (Windows/Linux) or `⇧⌘P` (macOS) from anywhere to open the palette; `Ctrl+P` / `⌘P` also work outside a terminal, where `Ctrl+P` is the shell's history key. Each command shows its shortcut. Type to filter, arrow keys to navigate, Enter to run.
 
 Registered commands are grouped by category:
 

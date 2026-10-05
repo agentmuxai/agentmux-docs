@@ -84,7 +84,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | Path | Owns |
 |---|---|
 | `agents/` | Per-agent working dirs — channel-wide so they survive version upgrades. The cross-channel agent **definition** and **instance** registries are *not* here — they live account-wide under `shared/agents/` (see [Account-wide (shared) contents](#account-wide-shared-contents)). |
-| `config/` | Settings (`settings.json`, `keybindings.json`). Provider credentials are **not** here — they moved to the account-wide `~/.agentmux/shared/providers/<provider>/` in v0.45 (see [Auth flows](/auth/)). |
+| `config/` | Settings (`settings.json`, including the `keybindings` shortcut overrides). Provider credentials are **not** here — they moved to the account-wide `~/.agentmux/shared/providers/<provider>/` in v0.45 (see [Auth flows](/auth/)). |
 
 Older docs and shell-integration scripts use `<data-dir>` as a single placeholder; treat it as the version-scoped root `channels/<channel>/versions/<v>/` when the context is runtime state (DB, logs, cache, IPC), and the channel root `channels/<channel>/` when the context is agents or settings. The distinction is resolved automatically by `agentmux-common::DataPaths` and exported as `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR` — you don't need to manage it manually.
 

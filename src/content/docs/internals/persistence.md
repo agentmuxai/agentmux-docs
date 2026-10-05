@@ -17,7 +17,7 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 
 All five live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
 
-> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, keybindings) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
+> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, including shortcut overrides) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
@@ -172,7 +172,7 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 
 For completeness, things that are NOT stored in these five files:
 
-- **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json` (and `keybindings.json`); **not** under `versions/<version>/`, so settings survive version upgrades
+- **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json`; **not** under `versions/<version>/`, so settings survive version upgrades
 - **Agent working directories** — per-agent workspace dirs under the **channel-wide** `~/.agentmux/channels/<channel>/agents/`, again one level above the version dir (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see below)
 - **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version- and channel-independent)
 - **Global agent registry** — user-agent definitions + named instances live account-wide under `~/.agentmux/shared/agents/` (see [Cross-channel agent persistence](#cross-channel-agent-persistence))

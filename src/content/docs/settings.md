@@ -84,8 +84,8 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `app:globalhotkey` | string | `""` | Global activation hotkey |
 | `app:defaultnewblock` | string | `""` | Default pane type for new panes |
+| `keybindings` | array | `[]` | Your own keyboard shortcuts, applied over the defaults. See [Keybindings](/keybindings/#your-own-shortcuts). |
 | `app:defaultmodel` | string | `""` | Default model for new agent panes (e.g. `"claude-sonnet-4-6"`). When blank, the Launch Agent modal uses the model from the selected Memory bundle, or the provider's default if none is set. |
 | `app:showoverlayblocknums` | boolean | `false` | Show pane numbers as overlay |
 | `app:dismissarchitecturewarning` | boolean | `false` | Suppress the architecture-mismatch notice |
