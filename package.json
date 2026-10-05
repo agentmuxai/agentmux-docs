@@ -1,7 +1,7 @@
 {
   "name": "agentmux-docs",
   "type": "module",
-  "version": "0.2.9",
+  "version": "0.2.11",
   "engines": {
     "node": ">=24.11.0"
   },
@@ -14,11 +14,12 @@
     "build:typedoc": "typedoc && node scripts/post-typedoc.mjs",
     "build:rust-docs": "node scripts/build-rust-docs.mjs",
     "preview": "astro preview",
+    "check:layout": "node scripts/check-layout-stability.mjs",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.0",
-    "@astrojs/starlight": "^0.41.5",
+    "@astrojs/starlight": "^0.42.5",
     "astro": "^7.1.4",
     "sharp": "^0.35.1"
   },
@@ -30,6 +31,7 @@
   "devDependencies": {
     "hast-util-to-string": "^3.0.1",
     "medium-zoom": "^1.1.0",
+    "playwright": "^1.63.0",
     "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^6.0.3",

@@ -157,6 +157,6 @@ Docs: Starlight handles this via its own `<ThemeSelect>` component with `data-th
 ## 8. Motion
 
 Landing defines reveal animations (translateY 8px → 0, opacity 0 → 1) on scroll via Intersection Observer.  
-Docs: all motion hacks removed from `custom.css` except the sidebar scroll guard (opacity guard on `#starlight__sidebar`, lifted by `.sl-scroll-ready` at DOMContentLoaded). No additional motion needed.
+Docs: no motion and no reveal guards. The header and sidebar guards (and the header column pin) were removed on 2026-10-05: they masked the AgentMux browser pane's resize during load and made the header and sidebar flash in every browser. Starlight restores the sidebar's scroll position itself. Pane rendering issues are fixed in agentmuxai/agentmux, not here.
 
 Wrap any future motion in `@media (prefers-reduced-motion: no-preference)`.

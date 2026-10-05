@@ -87,40 +87,6 @@ export default defineConfig({
 				{ tag: 'style', content: ':root{background:#0a0a0f}@media(prefers-color-scheme:light){:root{background:#f1f5f9}}' },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
 				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
-				// Re-apply sidebar scroll after full parse. Starlight's inline script sets
-				// scrollTop mid-parse (before sidebar HTML is complete), so scrollHeight is
-				// too small and the assignment gets clamped. DOMContentLoaded fires after
-				// the full sidebar is in the DOM, giving the correct scrollHeight.
-				{
-					tag: 'script',
-					content: `document.addEventListener('DOMContentLoaded',function(){var s=document.getElementById('starlight__sidebar'),p=document.querySelector('sl-sidebar-state-persist');if(!s)return;if(matchMedia('(min-width: 50em)').matches){try{var d=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'null');if(d&&p&&d.hash===p.dataset.hash&&typeof d.scroll==='number')s.scrollTop=d.scroll;}catch(e){}}s.classList.add('sl-scroll-ready');});`,
-				},
-				// Header reveal — masks the first-load header reflow caused by the
-				// AgentMux browser pane briefly initializing at a narrower width
-				// (<50rem) before expanding to its final desktop width (confirmed
-				// live: search button jumps from left:623 at 686px to left:324 once
-				// the pane settles at ~1586px). CSS hides .header by default
-				// (:not(.sl-header-ready)); this script reveals it once resizing has
-				// been quiet for 60ms, so the reflow always finishes off-screen
-				// first. The resize listener attaches immediately (not gated on
-				// DOMContentLoaded) so an early resize — before the DOM is even
-				// parsed — is still tracked; a 500ms safety net guarantees the
-				// header is never left hidden if resize events don't fire as
-				// expected. Deliberately JS-driven rather than a fixed-duration CSS
-				// animation: a `prefers-reduced-motion`-gated animation (the
-				// original #81 fix, and this fix's first draft) never activates at
-				// all for a `reduce` preference, silently leaving the jerk
-				// unmasked — confirmed live in this exact environment
-				// (`matchMedia('(prefers-reduced-motion: reduce)').matches` is
-				// true here). Hiding/revealing via a class toggle isn't "motion",
-				// so it works regardless of that preference; the optional fade
-				// transition (custom.css) is separately gated on
-				// prefers-reduced-motion so only the cosmetic smoothing — not the
-				// masking itself — is skipped for reduced-motion users.
-				{
-					tag: 'script',
-					content: `(function(){var r=0,start=Date.now();window.addEventListener('resize',function(){r=Date.now();});document.addEventListener('DOMContentLoaded',function(){var hs=document.querySelectorAll('.header');if(!hs.length)return;function ready(){hs.forEach(function(h){h.classList.add('sl-header-ready');});}function check(){var now=Date.now(),sinceResize=r===0?1e9:now-r,sinceStart=now-start;if(sinceStart>=80&&sinceResize>=60){ready();}else{setTimeout(check,20);}}check();setTimeout(ready,500);});})();`,
-				},
 			],
 			customCss: ['./src/styles/custom.css'],
 			social: [
