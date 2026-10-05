@@ -29,6 +29,7 @@ Custom CSS overrides Starlight's CSS custom properties. Key details:
 - **Gray scale is INVERTED between dark and light mode.** In dark mode, `gray-1` is the lightest color (text) and `gray-6` is the darkest (background). In light mode, `gray-1` is the darkest (text) and `gray-6` is the lightest (background).
 - **`--sl-color-white` and `--sl-color-black` swap semantic meaning.** In dark mode, `white` = white text. In light mode, `white` = dark text color. `black` is the opposite.
 - **`--sl-color-gray-7` exists only in light mode.** It's used for `--sl-color-bg-nav` (the navigation background). It is a valid Starlight variable despite only appearing in light mode definitions.
+- **No workarounds for the AgentMux browser pane.** Don't hide, delay, fade or re-lay-out page chrome (header, sidebar, body) to mask how the AgentMux app's browser pane renders the site, for example its resize during load. Such masks become flashes in every other browser: the header and sidebar guards removed on 2026-10-05 did exactly that. A rendering problem that appears only in the pane is a bug in agentmuxai/agentmux; file it there. Don't hide page chrome until JavaScript runs at all, and test UI changes in a standard browser, cold and warm cache.
 - **Selectors matter.** Dark mode uses `:root`. Light mode MUST use `:root[data-theme='light']` to match Starlight's specificity. Using `[data-theme='light']` without `:root` will be overridden.
 
 ### Deployment
@@ -102,6 +103,7 @@ Use `build:full` before any production deploy. `build` is fine for iterating on 
 - Version bumped in package.json for code changes (still done in the PR here: this repo has no release step; the changeset is the changelog entry, not the version bump)
 - `npm run build` passes (check page count in output); for prod-bound PRs, `npm run build:full` passes and `dist/api/{typescript,rust}/` contain real reference content (not just the umbrella index)
 - Both dark AND light mode tested when changing `custom.css`
+- No CSS or head script that hides or delays page chrome until JS runs, or that works around the AgentMux browser pane (see Starlight Theming)
 - Logo/image assets go in `src/assets/` (Astro optimizes them), not `public/`
 - Favicons go in `public/` (served as-is)
 
