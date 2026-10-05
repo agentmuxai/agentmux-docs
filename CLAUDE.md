@@ -75,9 +75,12 @@ a missing CSS file → site unstyled. Always force-upload HTML separately.
 
 If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves differently by environment. Locally it warns and exits 0, and `/api/rust/` shows only the placeholder, whose crate links 404. In CI (`CI` set, as on GitHub Actions) it exits 1 and fails the deploy, so a broken Rust reference can't go live unseen again (#131). `RUST_DOCS_OPTIONAL=1` restores the lenient behaviour in CI for a deliberate one-off deploy.
 
-- **AWS account / S3 bucket / CloudFront distribution / deploy role:** shown as placeholders
-  (`<account-id>`, `<docs-bucket>`, `<distribution-id>`, `<deploy-role>`). The real values are
-  recorded in the private infrastructure repo, not in this doc.
+- **AWS account / S3 bucket / CloudFront distribution / deploy role:** shown above as
+  placeholders (`<docs-bucket>`, `<distribution-id>`), but the concrete values are hardcoded
+  directly in `.github/workflows/deploy.yml` (and `deploy-prod.yml`) in this repo — account
+  `167667034757`, bucket `agentmux-docs-prod-167667034757`, distribution `E4EAW1TLB65KC`,
+  role `arn:aws:iam::167667034757:role/agentmux-docs-deploy`. There is no private
+  infrastructure repo holding these; check the workflow files directly.
 - **Domain:** `docs.agentmux.ai` (DNS alias to the CloudFront distribution)
 - **Deploy status:** `gh run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success
 
