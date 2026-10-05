@@ -15,13 +15,13 @@ Bundles were called "Memory bundles", and before that "Presets". See [Agent App 
 
 ## What goes in a bundle
 
-The New/Edit Bundle form has Name, Description, Provider, Model vendor, Instructions and per-provider instruction overrides. After a bundle is saved, its detail view adds **MCP Servers** and **Skills** sections. See [First Agent Setup → Bundles](/first-agent/#bundles) for the form, field by field.
+The New/Edit Bundle form has Name, Description, an optional **Suggested for** (provider and vendor), Instructions and per-provider instruction overrides. After a bundle is saved, its detail view adds **MCP Servers** and **Skills** sections. See [First Agent Setup → Bundles](/first-agent/#bundles) for the form, field by field.
 
 | Field | Purpose | Editable in the UI today? |
 |---|---|---|
 | `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior, delivered through the provider's startup instructions file. | Yes |
 | `instructions_by_provider` | Per-provider overrides that replace `instructions` when the bundle runs on that provider. | Yes |
-| `provider` / `model` | The harness the bundle was made for, and the model vendor it talks to. Required, and fixed once the bundle is saved. | Set at creation only |
+| `provider` / `model` | **Suggested for**: the provider and vendor the bundle was made with in mind. A hint only; the agent's own provider decides which harness runs. Optional. | Yes |
 | `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. | Not yet — persisted as JSON |
 | `mcp_servers` | MCP servers for the bundle: servers from the [MCP servers](/connectors/#mcp-servers) catalog, or servers private to the bundle. | Yes, after saving |
 | `skills` | **Skill primitive IDs** — see [Knowledge → Skills](/knowledge/#skills). | Yes, after saving |

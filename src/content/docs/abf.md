@@ -123,7 +123,7 @@ The format takes its new name and stops describing a bundle by the harness it ru
 
 **Compatibility.** AgentMux exports v0.3 only, and imports v0.1, v0.2 and v0.3: it reads `bundle.json`, or `armory.json` when there's no `bundle.json`, and tells the version from `$schema`. An older AgentMux can't import a v0.3 file, since it looks only for `armory.json`; update it first.
 
-**Still to come.** v0.3 is a format change. AgentMux still runs an agent with the harness of the bundle bound to it; letting a bundle bind to any agent, whatever it runs, is the next step (Phase B of the [v0.3 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_AGENT_BUNDLE_FORMAT_V0_3_2026_10_05.md)).
+**Bundles bind to any agent.** Alongside v0.3, a bundle stopped carrying a harness: the agent's own provider decides which CLI runs, and is fixed once the agent is created (the lock that used to sit on the bundle). New bundles store no provider; the editor's optional **Suggested for** is the hint, and an export of an agent's bundle fills `suggestedFor` from that agent. On upgrade, every agent first takes the provider it was already running with, so none changes CLI. See Phase B of the [v0.3 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_AGENT_BUNDLE_FORMAT_V0_3_2026_10_05.md).
 
 ## ABF v0.2: provider-aware components and native memory
 
@@ -141,7 +141,7 @@ Shipped 2026-08-15 (v0.55.9). Binding a bundle to an agent is no longer optional
 
 - **Every agent definition auto-provisions its own dedicated `db_bundles` row** at creation time, across all six creation paths (new agent, template clone, fork, Claude import, bulk import, `agent.define`) — not just the launch modal that used to be the only place a real (non-blank) bundle was actually enforced.
 - **Existing agents were backfilled** by a one-time migration that gave each one a fresh, dedicated bundle derived from that agent's own already-known provider (not a hardcoded guess), so nothing already running lost its configuration.
-- **Harness and model vendor moved onto the bundle itself, readonly once set.** The fields freed up by v0.2's naming fix — top-level `provider` (the harness, e.g. `claude`) and `model` (the resolved vendor, e.g. `anthropic`, or `custom` for a non-default base URL) — are now populated on every bundle and locked after creation, enforced on the backend (not just the bundle editor's UI) so no RPC caller can drift a bundle's harness out from under an agent that depends on it. This is what makes an ABF the actual portable unit: exporting one now carries not just instructions/skills/MCP servers/memory but which harness and vendor it needs, so an importing instance can tell upfront whether it can run the bundle at all.
+- **Harness and model vendor moved onto the bundle itself, readonly once set** (reversed with [v0.3](#abf-v03-agent-bundle-format): the agent owns its harness again, and the bundle's values are a hint). The fields freed up by v0.2's naming fix — top-level `provider` (the harness, e.g. `claude`) and `model` (the resolved vendor, e.g. `anthropic`, or `custom` for a non-default base URL) — are now populated on every bundle and locked after creation, enforced on the backend (not just the bundle editor's UI) so no RPC caller can drift a bundle's harness out from under an agent that depends on it. This is what makes an ABF the actual portable unit: exporting one now carries not just instructions/skills/MCP servers/memory but which harness and vendor it needs, so an importing instance can tell upfront whether it can run the bundle at all.
 - **Full export/import support** carries the new `provider`/`model` fields through the existing `.abf` round trip.
 
 This is a default, not a hard restriction — you can still deliberately bind an existing bundle to more than one agent if you want shared instructions. Deleting an agent orphans its bundle rather than deleting it, so an exported or intentionally-reused bundle survives; the Knowledge → Bundles list shows an "owned by `<agent>`" indicator on agent-provisioned bundles instead of hiding them.
@@ -172,7 +172,7 @@ Ordered so every phase is independently shippable and none blocks the others.
 | **Phase 7** | Mandatory per-agent bundles — every agent auto-provisions and owns its own bundle; harness/model become readonly bundle fields; existing agents backfilled. | Shipped |
 | **Phase 8** | Bundle-as-container v2 — bundle-level MCP Server and Skill references, unioned with agent-level references at launch. | Shipped |
 | **Phase 9** | ABF v0.3 — Agent Bundle Format: `bundle.json`, the `agent-bundle/v0.3` schemas, `suggestedFor`; imports every earlier version. | Shipped |
-| **Phase 10** | Bind a bundle to any agent: the agent's own harness decides, the bundle's is a hint. | Planned |
+| **Phase 10** | Bind a bundle to any agent: the agent's own harness decides, fixed once created; the bundle's is a hint. | Shipped |
 
 ## See also
 
