@@ -68,7 +68,8 @@ export default defineConfig({
 		'/interpane-comms': '/internals/interagent-comms',
 		'/internals/interpane-comms': '/internals/interagent-comms',
 		'/the-forge': '/memory',
-		'/trust-center': '/armory',
+		'/trust-center': '/connectors',
+		'/armory': '/connectors',
 	},
 	integrations: [
 		starlight({
@@ -146,9 +147,10 @@ export default defineConfig({
 							items: [
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
-								{ label: 'Armory', slug: 'armory' },
+								{ label: 'Connectors', slug: 'connectors' },
+								{ label: 'Knowledge', slug: 'knowledge' },
+								{ label: 'Bundles', slug: 'memory' },
 								{ label: 'Bundle Format (ABF)', slug: 'abf' },
-								{ label: 'Memory bundles', slug: 'memory' },
 								{ label: 'Identity bundles', slug: 'identity' },
 								{ label: 'Subagent Watcher', slug: 'subagent-watcher' },
 								{ label: 'Running multiple instances', slug: 'multi-instance' },

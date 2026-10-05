@@ -55,28 +55,28 @@ Clicking a card first runs the install and prerequisite checks above. It then op
 2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
 3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
-5. **Identity**: an Armory account for this provider, or **(ambient credentials)** (no account). If you have an account for the provider, the first one is preselected. For the providers that need an account (see [Sign in](#sign-in)), an agent left on **(ambient credentials)** can't start until you sign in or bind an account.
+5. **Identity**: an account for this provider (from [Connectors → Accounts](/connectors/#accounts)), or **(ambient credentials)** (no account). If you have an account for the provider, the first one is preselected. For the providers that need an account (see [Sign in](#sign-in)), an agent left on **(ambient credentials)** can't start until you sign in or bind an account.
 6. **Memory**: a [bundle](#bundles), or **(vanilla CLI)** for none. If you have any bundles, the first one in the list is preselected, so pick **(vanilla CLI)** if you want none.
 
 Click **Create**. The agent is created and launched in the pane.
 
-The model lists are built into AgentMux. For Claude Code only, AgentMux also asks Anthropic's models API for the current models at startup and updates the list. It needs a token for that: a Claude Code login in the shared folder `~/.agentmux/shared/providers/claude/`, or the `CLAUDE_CODE_OAUTH_TOKEN` environment variable. A login saved as an Armory account isn't used for this. Without a token, the built-in list stays.
+The model lists are built into AgentMux. For Claude Code only, AgentMux also asks Anthropic's models API for the current models at startup and updates the list. It needs a token for that: a Claude Code login in the shared folder `~/.agentmux/shared/providers/claude/`, or the `CLAUDE_CODE_OAUTH_TOKEN` environment variable. A login saved as an account in Connectors → Accounts isn't used for this. Without a token, the built-in list stays.
 
 ## Sign in
 
-Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw need an Armory account bound to the agent. AgentMux refuses to start them without one; it doesn't fall back to a login in a shared folder. The other providers use AgentMux's shared login for that provider.
+Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw need an account bound to the agent (see [Connectors → Accounts](/connectors/#accounts)). AgentMux refuses to start them without one; it doesn't fall back to a login in a shared folder. The other providers use AgentMux's shared login for that provider.
 
 When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI isn't signed in, the pane shows **Not signed in**. If the provider needs an account and none is bound, it shows **No account linked**. Both rows have these actions:
 
 - **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and shows it in the pane, with a box to paste an authorization code into if the CLI asks for one. If the CLI prints no link, a terminal window opens for the login instead.
 - **Login via terminal**: runs the login in a terminal window straight away.
-- **Armory → Accounts**: opens the Armory. If you already have signed-in accounts for this provider, this action is replaced by **Bind: &lt;account&gt;** (one account) or **Bind account** (several), which links an existing account to this agent.
+- **Connectors → Accounts**: opens the Connectors pane on its Accounts section. If you already have signed-in accounts for this provider, this action is replaced by **Bind: &lt;account&gt;** (one account) or **Bind account** (several), which links an existing account to this agent.
 
-For the five providers above, a successful login is saved as an Armory account and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
+For the five providers above, a successful login is saved as an account in Connectors → Accounts and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
 
 ## Bundles
 
-A **bundle** is a reusable set of instructions and tools that you attach to agents. It's optional: **(vanilla CLI)** runs the harness with no bundle. Create bundles in the [Armory](/armory/): **≡ → Armory → Bundles → + New Bundle**.
+A **bundle** is a reusable set of instructions and tools that you attach to agents. It's optional: **(vanilla CLI)** runs the harness with no bundle. Create bundles in [Knowledge](/knowledge/#bundles): **Knowledge → Bundles → + New Bundle**.
 
 | Field | Description |
 |-------|-------------|
@@ -87,9 +87,9 @@ A **bundle** is a reusable set of instructions and tools that you attach to agen
 | **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
 | **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the Armory catalogs, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind in the Armory disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the catalogs in Connectors and Knowledge, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
-A bundle's provider decides which harness an agent launches with, so attach bundles that match the agent's harness. See [Memory bundles](/memory/) for the full configuration surface.
+A bundle's provider decides which harness an agent launches with, so attach bundles that match the agent's harness. See [Bundles](/memory/) for the full configuration surface.
 
 ## The agent pane
 
@@ -134,9 +134,9 @@ AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows 
 
 | Failure | Actions |
 |---|---|
-| Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Armory → Accounts** or **Bind** |
+| Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Connectors → Accounts** or **Bind** |
 | Rate limited, API overloaded, network error | Retries automatically after about 5, 15, 30, 60 and then 120 seconds, then waits for you. **Retry now** at any time. |
-| Usage limit reached | **Armory (switch / upgrade)**. Retrying won't help until the limit resets. |
+| Usage limit reached | **Accounts (switch / upgrade)**, which opens Connectors → Accounts. Retrying won't help until the limit resets. |
 | Context window exceeded | **New session** |
 | Hit the turn limit | **Continue** |
 | CLI couldn't start | **Provider setup** |
@@ -156,7 +156,7 @@ The Claude template suggests the container runtime, so when Docker is running, *
 
 ## Skills
 
-Skills are reusable instructions an agent can call. Manage them app-wide from the [Armory](/armory/#skills)'s **Skills** tab (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
+Skills are reusable instructions an agent can call. Manage them app-wide in [Knowledge → Skills](/knowledge/#skills) (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
 
 | Kind | Description |
 |------|-------------|
@@ -168,6 +168,6 @@ AgentMux writes skills into the agent's working directory as Claude Code slash c
 ## Next Steps
 
 - [Auth flows](/auth/): sign-in and credential storage per provider
-- [Memory bundles](/memory/): the full bundle reference
+- [Bundles](/memory/): the full bundle reference
 - [Pane Types](/pane-types/): all pane types, including agent panes
 - [Configuration](/config/): global and per-agent settings

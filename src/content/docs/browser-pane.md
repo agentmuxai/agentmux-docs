@@ -22,9 +22,7 @@ Some things differ from a normal browser tab:
 
 ## Opening a browser pane
 
-The Browser widget is **not pinned** to the widget bar by default (`crates/srv/src/config/widgets.json`, `defwidget@browser`).
-
-- Click **more** at the end of the widget bar and choose **Browser**. Right-click it there and choose **Pin to bar** to keep it in the bar.
+- Click **Browser** in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@browser`); if you've unpinned it, click **more** at the end of the widget bar and choose **Browser**.
 - Click **+** on any pane's tab strip and pick **Browser** to open it as a tab in that pane.
 - Right-click a pane header → **Replace With...** → **Browser** replaces that pane.
 - From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`crates/srv/src/backend/shellintegration/muxsh.mjs`).

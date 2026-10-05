@@ -61,7 +61,7 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
 | One-click Node.js, Git or Python install | winget, Homebrew, or your Linux package manager |
-| Validating a credential in the Armory | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `IdentityValidate` tool. |
+| Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `IdentityValidate` tool. |
 | Signing in to MuxBus Cloud | AgentMux's sign-in service (`auth.muxbus.agentmux.ai`) and `muxbus.agentmux.ai` |
 | OAuth sign-in for Google, Microsoft, GitHub or Slack accounts | That provider's OAuth endpoints. AgentMux ships no OAuth client ids, so this runs only with your own OAuth app's credentials. |
 | Voice input | Groq's transcription API by default, and only once you set a Groq API key. The local Whisper engine runs offline, but downloads its model from Hugging Face the first time unless you point it at a model file. |

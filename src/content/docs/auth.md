@@ -34,7 +34,7 @@ AgentMux checks whether a CLI is signed in by running its own status command (fo
 
 Six providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw, GitHub Copilot CLI and Antigravity. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
 
-Five of them (Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI) are account-backed: an agent using one of them must have an Armory account bound for that provider, or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`). Antigravity is marked `oauth` in the catalog but is not account-backed; it uses the ambient directory described below.
+Five of them (Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI) are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`). Antigravity is marked `oauth` in the catalog but is not account-backed; it uses the ambient directory described below.
 
 AgentMux does not pass an API-key environment variable to these CLIs as a fallback.
 
@@ -44,11 +44,11 @@ Four providers are configured with their own CLI's login or config command and a
 
 ## Signing in from an agent pane
 
-When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, the pane shows **Not signed in** with **Log in**, **Login via terminal**, and **Armory → Accounts**. When an existing account for the provider can be bound instead, the last action becomes **Bind: &lt;account&gt;** (one candidate) or **Bind account** (several). After a turn has been rejected for auth, **Log in** reads **Login Again**. See [First Agent Setup](/first-agent/#sign-in).
+When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, the pane shows **Not signed in** with **Log in**, **Login via terminal**, and **Connectors → Accounts**. When an existing account for the provider can be bound instead, the last action becomes **Bind: &lt;account&gt;** (one candidate) or **Bind account** (several). After a turn has been rejected for auth, **Log in** reads **Login Again**. See [First Agent Setup](/first-agent/#sign-in).
 
 **Log in** goes through `frontend/app/view/agent/flows/run-provider-login.ts` (`runProviderLogin`):
 
-1. For the five account-backed providers (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw), AgentMux first allocates an Armory account directory and points the login there. If the agent already has an account bound for the provider, that account's directory is reused.
+1. For the five account-backed providers (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw), AgentMux first allocates an account directory and points the login there. If the agent already has an account bound for the provider, that account's directory is reused.
 2. It runs the login command and waits about 15 seconds for a login link in the CLI's output. If it finds one, it opens it in your browser and shows the link in the pane with a box for pasting an authorization code, which is passed to the running login command. Claude Code and OpenClaw run the login in a pseudo-terminal. AgentMux then waits up to 5 minutes for the login to finish.
 3. If the CLI prints no link, AgentMux opens a terminal window for the login. For the account-backed providers it waits up to 5 minutes for the CLI's auth check to succeed in the account directory. For the other providers it can't detect completion: finish the login in the terminal, then log in again from the pane.
 4. On success, the account is saved and linked to the agent.
@@ -76,14 +76,14 @@ On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both
 
 Only Mux Code, Qwen Code, Kimi Code CLI, Pi and Antigravity actually run on the ambient directory. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
 
-**Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI or OpenClaw is saved as an Armory account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
+**Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI or OpenClaw is saved as an account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
 
 ### Isolated auth by channel
 
-Armory accounts are isolated per channel by default, except on `stable` (`crates/common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
+Accounts are isolated per channel by default, except on `stable` (`crates/common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
 
 - **`stable`** (every release build) shares one account list and one account-directory tree, `~/.agentmux/shared/identities/`.
-- **Any other channel**, such as a `dev-<branch>` build from `task dev` or a local `task package` build's `local-<branch>-<hash>-<build-id>` channel, gets its own account list and keeps account directories under that channel's own directory (`<channel dir>/identities/`). A fresh non-`stable` channel starts with no Armory accounts.
+- **Any other channel**, such as a `dev-<branch>` build from `task dev` or a local `task package` build's `local-<branch>-<hash>-<build-id>` channel, gets its own account list and keeps account directories under that channel's own directory (`<channel dir>/identities/`). A fresh non-`stable` channel starts with no accounts.
 - **The ambient directory is never isolated.** It stays account-wide on every channel.
 - **Override:** `AGENTMUX_ISOLATED_AUTH=1` forces isolation, even on `stable`. Setting the variable to any other value turns isolation off, even on a non-`stable` channel.
 
@@ -93,9 +93,9 @@ This exists so that dev and local builds exercise real login code paths instead 
 
 Earlier builds kept provider credentials per instance, so switching channels or versions meant signing in again. agentmux#1291 (June 2026) moved them to the account-wide `shared/providers/` directory.
 
-## Armory: Accounts tab
+## Connectors: Accounts
 
-The **Accounts** tab of the [Armory](/armory/) (**≡ → Armory → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. If that sign-in stops working (its refresh was refused, or the cloud moved to a new sign-in service), the panel and the host popover in the status bar show your email with a **Sign in again** button, and AgentMux stops reconnecting with the old sign-in until you do (`frontend/app/view/accounts/AgentMuxConnectPanel.tsx`, `frontend/app/statusbar/HostPopover.tsx`). Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
+The **Accounts** section of [Connectors](/connectors/) (**Connectors → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. If that sign-in stops working (its refresh was refused, or the cloud moved to a new sign-in service), the panel and the host popover in the status bar show your email with a **Sign in again** button, and AgentMux stops reconnecting with the old sign-in until you do (`frontend/app/view/accounts/AgentMuxConnectPanel.tsx`, `frontend/app/statusbar/HostPopover.tsx`). Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
 
 - **Anthropic → Connect with OAuth** runs the Claude Code login inside AgentMux.
 - **GitHub** OAuth uses GitHub's device flow; **Google** and **Slack** use a PKCE browser login. None of the three ships a built-in OAuth client: you create your own OAuth app and paste its client ID (and, for Slack, its client secret) (`frontend/app/view/accounts/oauth-catalog.ts`).
@@ -138,7 +138,7 @@ export KIMI_SHARE_DIR=~/.agentmux/shared/providers/kimi
 kimi login
 ```
 
-Agents using that provider without a bound account then pick up the login. This doesn't work for the five account-backed providers: a login in the ambient directory doesn't satisfy their account requirement, so use **Log in** in the agent pane or the Armory. This is rarely needed; **Log in** in the agent pane covers the usual case.
+Agents using that provider without a bound account then pick up the login. This doesn't work for the five account-backed providers: a login in the ambient directory doesn't satisfy their account requirement, so use **Log in** in the agent pane or Connectors → Accounts. This is rarely needed; **Log in** in the agent pane covers the usual case.
 
 ## See also
 

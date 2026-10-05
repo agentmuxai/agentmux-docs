@@ -86,7 +86,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 |---------|------|---------|-------------|
 | `app:defaultnewblock` | string | `""` | Default pane type for new panes |
 | `keybindings` | array | `[]` | Your own keyboard shortcuts, applied over the defaults. See [Keybindings](/keybindings/#your-own-shortcuts). |
-| `app:defaultmodel` | string | `""` | Default model for new agent panes (e.g. `"claude-sonnet-4-6"`). When blank, the Launch Agent modal uses the model from the selected Memory bundle, or the provider's default if none is set. |
+| `app:defaultmodel` | string | `""` | Default model for new agent panes (e.g. `"claude-sonnet-4-6"`). When blank, the Launch Agent modal uses the model from the selected bundle, or the provider's default if none is set. |
 | `app:showoverlayblocknums` | boolean | `false` | Show pane numbers as overlay |
 | `app:dismissarchitecturewarning` | boolean | `false` | Suppress the architecture-mismatch notice |
 | `app:showtray` | boolean | `true` | Show the AgentMux icon in the system tray (menu bar on macOS). Applies at the next launch. See [System tray](/installation/#system-tray). |
@@ -149,9 +149,9 @@ See [Dropping files onto panes](/pane-types/#dropping-files-onto-panes) and [Att
 
 ## MCP Servers
 
-MCP servers are configured **per-agent** in a [Memory bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent** in a [bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Memory bundles](/memory/) for the bundle schema (including the `mcp_servers` field).
+See [Bundles](/memory/) for the bundle schema (including the `mcp_servers` field).
 
 ## Environment Variables
 
@@ -198,5 +198,5 @@ See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/mult
 
 - [Configuration](/config) — Settings overview with examples
 - [Keybindings](/keybindings) — Keyboard shortcuts
-- [Memory bundles](/memory/) — Per-agent configuration
+- [Bundles](/memory/) — Per-agent configuration
 - [System Metrics](/system-metrics) — Telemetry settings explained

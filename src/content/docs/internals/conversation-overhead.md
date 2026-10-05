@@ -124,6 +124,6 @@ AgentMux makes zero direct HTTP calls to any AI provider API. All provider inter
 ## See also
 
 - [Provider CLI integration](/internals/provider-cli-integration/) — how the CLI subprocess is spawned, PTY mechanics, and per-provider launch arguments
-- [Memory bundles](/memory/) — how memory bundle content is assembled and ordered
+- [Bundles](/memory/) — how memory bundle content is assembled and ordered
 - [Agent App API](/internals/agent-app-api/) — the API surface available to running agents
 - [Environment variable contract](/internals/env-vars/) — env vars injected into the agent PTY at launch
