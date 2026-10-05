@@ -1,7 +1,7 @@
 {
   "name": "agentmux-docs",
   "type": "module",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "engines": {
     "node": ">=24.11.0"
   },
@@ -15,6 +15,7 @@
     "build:rust-docs": "node scripts/build-rust-docs.mjs",
     "preview": "astro preview",
     "check:layout": "node scripts/check-layout-stability.mjs",
+    "check:navigation": "node scripts/check-navigation-paint.mjs",
     "astro": "astro"
   },
   "dependencies": {
