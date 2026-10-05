@@ -15,14 +15,12 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    # The docs live in the agentmux-prod account (167667034757) since
-    # 2026-09-28: bucket, distribution and the deploy role below are its
-    # agentmux-docs-prod stack (agentmuxai/agentmux-landing cdk/lib/docs-stack.ts).
-    # The shared account's agentmux-docs-prod bucket and EF4XTPT79GHLS are
-    # retired; the CF_DISTRIBUTION_ID secret is no longer used.
+    # Deployment targets (bucket, distribution, deploy role) come from the
+    # repository's Actions secrets, so they aren't published in this public
+    # repo. The resources are defined in a private infrastructure repo.
     env:
-      DOCS_BUCKET: agentmux-docs-prod-167667034757
-      DOCS_DISTRIBUTION_ID: E4EAW1TLB65KC
+      DOCS_BUCKET: ${{ secrets.DOCS_BUCKET }}
+      DOCS_DISTRIBUTION_ID: ${{ secrets.DOCS_DISTRIBUTION_ID }}
 
     steps:
       - name: Checkout (with submodules)
@@ -68,7 +66,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::167667034757:role/agentmux-docs-deploy
+          role-to-assume: ${{ secrets.DOCS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Sync non-HTML assets to S3

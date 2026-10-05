@@ -71,13 +71,15 @@ a missing CSS file → site unstyled. Always force-upload HTML separately.
 `build:full` requires:
 - `cargo` on `PATH` (rustup minimal toolchain is enough).
 - The `src/agentmux` submodule initialized.
-- On Linux, the -sys crates' dev packages: `pkg-config libwayland-dev libxkbcommon-dev libdbus-1-dev libxcb1-dev` (the deploy workflows install them). No CEF download is needed: `agentmux-cef` is documented with `--features cef/dox`.
+- On Linux, the -sys crates' dev packages: `pkg-config libwayland-dev libxkbcommon-dev libdbus-1-dev libxcb1-dev` (the deploy workflow installs them). No CEF download is needed: `agentmux-cef` is documented with `--features cef/dox`.
 
 If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves differently by environment. Locally it warns and exits 0, and `/api/rust/` shows only the placeholder, whose crate links 404. In CI (`CI` set, as on GitHub Actions) it exits 1 and fails the deploy, so a broken Rust reference can't go live unseen again (#131). `RUST_DOCS_OPTIONAL=1` restores the lenient behaviour in CI for a deliberate one-off deploy.
 
 - **AWS account / S3 bucket / CloudFront distribution / deploy role:** shown as placeholders
-  (`<account-id>`, `<docs-bucket>`, `<distribution-id>`, `<deploy-role>`). The real values are
-  recorded in the private infrastructure repo, not in this doc.
+  (`<account-id>`, `<docs-bucket>`, `<distribution-id>`, `<deploy-role>`). `deploy.yml` reads the
+  real values from the repository's Actions secrets (`DOCS_BUCKET`, `DOCS_DISTRIBUTION_ID`,
+  `DOCS_DEPLOY_ROLE_ARN`); the resources are defined in a private infrastructure repo.
+  This repository is public: never write those values into a file, commit message or PR.
 - **Domain:** `docs.agentmux.ai` (DNS alias to the CloudFront distribution)
 - **Deploy status:** `gh run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success
 
