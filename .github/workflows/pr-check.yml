@@ -48,3 +48,6 @@ jobs:
         run: |
           npx playwright install --with-deps chromium-headless-shell
           node scripts/check-layout-stability.mjs
+
+      - name: Navigation paint (no empty-content frame on a first visit)
+        run: node scripts/check-navigation-paint.mjs

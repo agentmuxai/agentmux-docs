@@ -3,4 +3,6 @@ import Default from '@astrojs/starlight/components/Footer.astro';
 import DiagramZoom from './DiagramZoom.astro';
 ---
 <Default {...Astro.props}><slot /></Default>
+<!-- End of the page content: the head's `rel="expect"` link holds the first paint until this is parsed. -->
+<span id="sl-content-end" hidden></span>
 <DiagramZoom />
