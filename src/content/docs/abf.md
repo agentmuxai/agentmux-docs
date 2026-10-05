@@ -4,11 +4,11 @@ description: A portable, versioned unit for an agent's instructions, skills, MCP
 ---
 
 :::caution[Beta specification]
-ABF is now a **v0.2 beta spec** (up from v0.1) — the manifest and requirements schemas below may still change before 1.0. AgentMux's own exporter and importer have shipped ([Knowledge → Bundles](/knowledge/#bundles): export any bundle as a single `.abf` file, import one with a selective, collision-aware review step); OCI registry distribution (push and pull) has not been built yet. Since 2026-08-15, binding a bundle to an agent is no longer optional — see [every agent gets its own ABF](#every-agent-gets-its-own-abf) — and since 2026-08-18 a bundle can also carry its own MCP Server and Skill references — see [bundle-as-container v2](#bundle-as-container-v2-mcp-servers-and-skills-at-the-bundle-level). See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
+ABF is a **v0.3 beta spec** — the manifest and requirements schemas below may still change before 1.0. AgentMux's own exporter and importer have shipped ([Knowledge → Bundles](/knowledge/#bundles): export any bundle as a single `.abf` file, import one with a selective, collision-aware review step); OCI registry distribution (push and pull) has not been built yet. Since 2026-08-15, binding a bundle to an agent is no longer optional — see [every agent gets its own ABF](#every-agent-gets-its-own-abf) — and since 2026-08-18 a bundle can also carry its own MCP Server and Skill references — see [bundle-as-container v2](#bundle-as-container-v2-mcp-servers-and-skills-at-the-bundle-level). See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
 :::
 
 :::note[The name]
-ABF now stands for **Agent Bundle Format**. It was called the Armory Bundle Format after the pane that used to manage bundles. The letters, the `.abf` extension, the `armory.json` manifest name and the schema URLs below are unchanged.
+ABF stands for **Agent Bundle Format**. Up to v0.2 it was the Armory Bundle Format, after the pane that used to manage bundles. The letters and the `.abf` extension are unchanged; since [v0.3](#abf-v03-agent-bundle-format) the manifest is `bundle.json` (was `armory.json`) and the schemas live under `/schemas/agent-bundle/`. Older files still import.
 :::
 
 ABF is a portable, versioned unit for an agent's instructions, skills, MCP servers, native memory, and credential requirements — composing already-established standards (Agent Skills, MCP `server.json`, AGENTS.md) instead of inventing new ones, and standardizing only the two things nobody else has: the composition manifest and the credential-requirement declaration.
@@ -36,7 +36,7 @@ A bundle is a directory (or a zip of one). Every component sub-path is a verbati
 
 ```
 my-bundle/
-├── armory.json              # manifest -- the only invented schema
+├── bundle.json              # manifest -- the only invented schema (armory.json before v0.3)
 ├── instructions/
 │   ├── AGENTS.md            # default instruction file (AGENTS.md convention)
 │   ├── context/…            # context files, referenced from AGENTS.md
@@ -54,20 +54,19 @@ my-bundle/
 
 `memory/` is populated only by an agent-scoped export (`bundle.export_for_agent`) — a plain bundle export skips it entirely, since native memory belongs to one specific agent's accumulated session state, not to a bundle in the abstract. See [ABF v0.2](#abf-v02-provider-aware-components-and-native-memory) below.
 
-## `armory.json` manifest
+## `bundle.json` manifest
 
 The only invented schema. `components` is deliberately open-ended — unrecognized keys are ignored, matching the tolerance pattern Claude Code plugins use, which is exactly what let v0.2 add `memory` without a breaking version bump.
 
-**Raw JSON Schema (v0.1 shape, still importable):** [`/schemas/armory-bundle/v0.1/bundle.schema.json`](/schemas/armory-bundle/v0.1/bundle.schema.json) — a versioned v0.2 schema publication is tracked but not yet up at a stable URL; the importer already accepts both shapes (see below), this page describes the current v0.2 shape.
+**Raw JSON Schema:** [`/schemas/agent-bundle/v0.3/bundle.schema.json`](/schemas/agent-bundle/v0.3/bundle.schema.json). Earlier versions, all still importable: [v0.2](/schemas/armory-bundle/v0.2/bundle.schema.json), [v0.1](/schemas/armory-bundle/v0.1/bundle.schema.json).
 
 ```jsonc
 {
-  "$schema": "https://docs.agentmux.ai/schemas/armory-bundle/v0.2/bundle.schema.json",
+  "$schema": "https://docs.agentmux.ai/schemas/agent-bundle/v0.3/bundle.schema.json",
   "name": "acme-backend-dev",
   "version": "1.2.0",
   "description": "Backend dev bundle: repo conventions, GH tooling, deploy skills",
-  "provider": "claude",
-  "model": "anthropic",
+  "suggestedFor": { "provider": "claude", "vendor": "anthropic" },
   "components": {
     "instructions": {
       "default": ["instructions/AGENTS.md"],
@@ -83,13 +82,13 @@ The only invented schema. `components` is deliberately open-ended — unrecogniz
 }
 ```
 
-Top-level `provider`/`model` are the bundle's own **harness** fields — which AgentMux provider (`claude`, `codex`, `gemini`, …) and resolved model vendor (`anthropic`, or `custom` for a non-default base URL) the bundle needs to run, not a specific model checkpoint. They're `null` on an export from a bundle that predates this field. See [every agent gets its own ABF](#every-agent-gets-its-own-abf) for why they exist and why they're readonly.
+`version` is the bundle's own content version, which its author bumps; the format version is `$schema`. `suggestedFor` says which AgentMux provider (`claude`, `codex`, `gemini`, …) and vendor (`anthropic`, or `custom` for a non-default base URL) the bundle was made for. It's a hint, left out when the bundle has neither. Before v0.3 the same two values were top-level `provider` and `model`; see [ABF v0.3](#abf-v03-agent-bundle-format).
 
 ## Credential requirements
 
 The other invented piece — and the thing no other format in the landscape solves. Declares *what identities a bundle needs*, resolved locally against the importer's own accounts at import/launch time. Secret values never serialize, matching the universal reference-don't-bundle pattern every credential format in the research converged on independently.
 
-**Raw JSON Schema:** [`/schemas/armory-bundle/v0.1/requirements.schema.json`](/schemas/armory-bundle/v0.1/requirements.schema.json)
+**Raw JSON Schema:** [`/schemas/agent-bundle/v0.3/requirements.schema.json`](/schemas/agent-bundle/v0.3/requirements.schema.json) (earlier: [v0.2](/schemas/armory-bundle/v0.2/requirements.schema.json), [v0.1](/schemas/armory-bundle/v0.1/requirements.schema.json))
 
 ```jsonc
 {
@@ -107,6 +106,24 @@ The other invented piece — and the thing no other format in the landscape solv
 ```
 
 This field was renamed from `provider` to `credentialProvider` in v0.2 (see below) — the importer still accepts a v0.1 `armory.json`/`requirements.json` carrying the old key name unchanged.
+
+## ABF v0.3: Agent Bundle Format
+
+The format takes its new name and stops describing a bundle by the harness it runs on.
+
+| | v0.2 | v0.3 |
+|---|---|---|
+| Name | Armory Bundle Format | **Agent Bundle Format** (still ABF, still `.abf`) |
+| Manifest | `armory.json` | `bundle.json` |
+| `$schema` | `…/schemas/armory-bundle/v0.2/bundle.schema.json` | `…/schemas/agent-bundle/v0.3/bundle.schema.json` |
+| Harness | top-level `provider` / `model` | optional `suggestedFor: { provider, vendor }` hint |
+| Components, `requirements.json` | | unchanged |
+
+`model` becomes `vendor` inside the hint because a vendor (`anthropic`, `openai`, …) is what it always held.
+
+**Compatibility.** AgentMux exports v0.3 only, and imports v0.1, v0.2 and v0.3: it reads `bundle.json`, or `armory.json` when there's no `bundle.json`, and tells the version from `$schema`. An older AgentMux can't import a v0.3 file, since it looks only for `armory.json`; update it first.
+
+**Still to come.** v0.3 is a format change. AgentMux still runs an agent with the harness of the bundle bound to it; letting a bundle bind to any agent, whatever it runs, is the next step (Phase B of the [v0.3 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_AGENT_BUNDLE_FORMAT_V0_3_2026_10_05.md)).
 
 ## ABF v0.2: provider-aware components and native memory
 
@@ -147,13 +164,15 @@ Ordered so every phase is independently shippable and none blocks the others.
 |---|---|---|
 | **Phase 0** | Align skills with Agent Skills — add SKILL.md support to `db_skills`, materialize agent-skill-format entries as `.claude/skills/<name>/SKILL.md` at launch alongside the existing slash-command path. | Shipped |
 | **Phase 1** | Exporter — the `bundle.export` RPC, serializing a bundle + referenced skills/MCP servers into the on-disk ABF layout (`bundle_export.rs`). Pure read-side, zero schema risk. | Shipped |
-| **Phase 2** | Importer + validation — JSON Schema validation of `armory.json`, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Shipped |
+| **Phase 2** | Importer + validation — JSON Schema validation of the manifest, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Shipped |
 | **Phase 3** | Bundles UI — export/import buttons in the Bundles list (now [Knowledge → Bundles](/knowledge/#bundles)), with an import-review sheet showing exactly what will be created before anything is. | Shipped |
 | **Phase 4** | OCI distribution — push and pull against any OCI registry, following the Dev Container Features packaging blueprint. Private registries (Harbor, Artifactory, GHCR) work day one. | Planned |
-| **Phase 5** | Registry + spec publication — publish the `armory.json`/`requirements.json` schemas at stable, versioned URLs, open a metadata-only bundle index. This page and its schemas are that publication. | Shipped |
+| **Phase 5** | Registry + spec publication — publish the manifest and `requirements.json` schemas at stable, versioned URLs, open a metadata-only bundle index. This page and its schemas are that publication. | Shipped |
 | **Phase 6** | ABF v0.2 — `credentialProvider` rename, harness-scoped `components.instructions`, `components.memory` (agent-scoped export/import). Storage/authoring/export/import shipped; launch-time consumption of a non-default instructions variant is not yet wired. | Shipped (partial — see [ABF v0.2](#abf-v02-provider-aware-components-and-native-memory)) |
 | **Phase 7** | Mandatory per-agent bundles — every agent auto-provisions and owns its own bundle; harness/model become readonly bundle fields; existing agents backfilled. | Shipped |
 | **Phase 8** | Bundle-as-container v2 — bundle-level MCP Server and Skill references, unioned with agent-level references at launch. | Shipped |
+| **Phase 9** | ABF v0.3 — Agent Bundle Format: `bundle.json`, the `agent-bundle/v0.3` schemas, `suggestedFor`; imports every earlier version. | Shipped |
+| **Phase 10** | Bind a bundle to any agent: the agent's own harness decides, the bundle's is a hint. | Planned |
 
 ## See also
 
@@ -161,6 +180,7 @@ Ordered so every phase is independently shippable and none blocks the others.
 - [Connectors](/connectors/) — the accounts and MCP servers a bundle can use
 - [Bundles](/memory/) — the Bundle reference
 - [Full research report](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/REPORT_ARMORY_BUNDLE_STANDARD_RESEARCH_2026_07_16.md) — four research passes, landscape analysis, and the original proposal this page is based on
+- [ABF v0.3 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_AGENT_BUNDLE_FORMAT_V0_3_2026_10_05.md) — Agent Bundle Format v0.3, and binding bundles to any agent
 - [ABF v0.2 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_ABF_V0_2_PROVIDER_AWARE_COMPONENTS_AND_NATIVE_MEMORY_2026_08_10.md) — provider-aware components and native memory design
 - [Mandatory ABF architecture doc](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/ARCHITECTURE_MANDATORY_ABF_RETHINK_2026_08_14.md) — why every agent now owns a dedicated bundle, and the readonly harness/model design
 - [Bundle-as-container v2 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_BUNDLE_AS_CONTAINER_V2_2026_08_17.md) — bundle-level MCP Server and Skill references

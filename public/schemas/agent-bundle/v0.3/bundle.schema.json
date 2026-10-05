@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.agentmux.ai/schemas/agent-bundle/v0.3/bundle.schema.json",
+  "title": "Agent Bundle Format (ABF) v0.3 manifest",
+  "description": "Manifest schema for an Agent Bundle Format v0.3 bundle -- bundle.json. BETA: may change in a later v0.x before 1.0. See https://docs.agentmux.ai/abf.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "components"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "This schema's URI. Readers use it to tell the format version."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+      "description": "Bundle name."
+    },
+    "version": {
+      "type": "string",
+      "description": "The bundle's own content version (semver recommended). Not the format version; that is $schema."
+    },
+    "description": {
+      "type": "string"
+    },
+    "suggestedFor": {
+      "type": "object",
+      "description": "Who the bundle was made for. A hint only: a bundle can be bound to any agent, whatever harness it runs.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "e.g. 'claude', 'codex', 'gemini'"
+        },
+        "vendor": {
+          "type": "string",
+          "description": "e.g. 'anthropic', 'openai', 'google', 'custom'"
+        }
+      },
+      "additionalProperties": false
+    },
+    "components": {
+      "type": "object",
+      "description": "Paths (relative to the bundle root) to each component. Every key is optional. Readers MUST ignore keys they don't recognise.",
+      "properties": {
+        "instructions": {
+          "type": "object",
+          "description": "Instruction files (AGENTS.md convention), keyed by harness: 'default' for every harness, plus optional per-provider variants such as 'claude' or 'codex'. Each value is an ordered list of paths.",
+          "properties": {
+            "default": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Instruction files for every harness, in order."
+            }
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Instruction files for this provider, in order."
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to Agent Skills (SKILL.md) directories, verbatim."
+        },
+        "mcpServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to MCP server.json files, verbatim."
+        },
+        "accounts": {
+          "type": "string",
+          "description": "Path to the credential requirements file (requirements.schema.json). Never contains secret values."
+        },
+        "memory": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Native memory files (memory/*) the agent wrote about itself."
+        },
+        "projectInstructions": {
+          "type": "array",
+          "description": "Project-level instruction files the agent read, with where they came from."
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conversation transcript files, when the export included them."
+        }
+      },
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
