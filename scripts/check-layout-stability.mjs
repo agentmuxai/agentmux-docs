@@ -113,7 +113,19 @@ try {
       if (widths.length > 1) {
         failures.push(`${where}: page width changed during load (${widths.join(' -> ')} px): a scrollbar shift`);
       }
+      // Which parts this page has, from its built HTML (the splash homepage has
+      // no sidebar). A part the HTML has but the page never matched means the
+      // selector no longer fits (e.g. after a Starlight upgrade): fail rather
+      // than pass without checking anything.
+      const html = await readFile(`dist${path}index.html`, 'utf8');
+      const expected = { header: html.includes('class="header'), sidebar: html.includes('id="starlight__sidebar"') };
+      if (!expected.header) failures.push(`${where}: no header in the built page (layout changed?)`);
       for (const part of ['header', 'sidebar']) {
+        if (!expected[part]) continue;
+        if (!log.some((s) => s[part] !== null)) {
+          failures.push(`${where}: the ${part} was not found (selector changed?)`);
+          continue;
+        }
         const hidden = log.find((s) => s[part] === false);
         if (hidden) failures.push(`${where}: the ${part} was invisible at ${hidden.t} ms`);
       }
