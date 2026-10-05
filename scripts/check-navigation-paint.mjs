@@ -9,7 +9,8 @@
 //
 // Serves dist/ with a network-like delay on HTML only, opens page A, clicks a
 // link to page B, records every painted frame (CDP screencast), and fails if
-// any frame after the click has a blank content area.
+// any frame after the click has a blank content area, or if the new page was
+// never painted.
 // Usage: node scripts/check-navigation-paint.mjs [htmlDelayMs=150] [port]
 import { existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
@@ -86,15 +87,27 @@ for (const f of frames) {
       content: region(Math.round(img.width * 0.3), Math.round(img.height * 0.15), Math.round(img.width * 0.5), Math.round(img.height * 0.6)),
     };
   }, f.data);
-  results.push({ t: Math.round((f.t - t0) * 1000), ...stats });
+  results.push({ t: Math.round((f.t - t0) * 1000), data: f.data, ...stats });
 }
 await browser.close();
 server.close();
 
-const blank = results.filter((r) => r.t >= 0 && r.content.sd < 3);
-console.log(`${from} -> ${to}, HTML delay ${delay} ms: ${results.length} frames, ${blank.length} with a blank content area`);
-if (blank.length) {
-  for (const r of results) console.log(`  t=${r.t}ms content mean/sd=${r.content.mean}/${r.content.sd}${r.content.sd < 3 ? '   <-- blank' : ''}`);
-  console.error('Navigation paint check failed: a frame with an empty content area was painted (see astro.config.mjs `rel=expect`).');
+const before = results.filter((r) => r.t < 0);
+const after = results.filter((r) => r.t >= 0);
+const blank = after.filter((r) => r.content.sd < 3);
+console.log(`${from} -> ${to}, HTML delay ${delay} ms: ${after.length} frames after the click, ${blank.length} with a blank content area`);
+for (const r of results) console.log(`  t=${r.t}ms content mean/sd=${r.content.mean}/${r.content.sd}${r.content.sd < 3 ? '   <-- blank' : ''}`);
+
+// Fail rather than pass without checking: the target page must have been
+// painted, i.e. the last frame after the click has content and differs from the
+// last frame of the page we came from.
+const last = after.at(-1);
+const failures = [];
+if (!last) failures.push('no frame was painted after the click');
+else if (last.content.sd < 3) failures.push('the last frame after the click has an empty content area');
+else if (before.length && last.data === before.at(-1).data) failures.push('no frame after the click shows the new page');
+if (blank.length) failures.push('a frame with an empty content area was painted (see astro.config.mjs `rel=expect`)');
+if (failures.length) {
+  console.error(`Navigation paint check failed:\n- ${failures.join('\n- ')}`);
   process.exit(1);
 }
