@@ -1,3 +1,12 @@
+/* Reserve the page scrollbar's space from the first frame. During load the
+   page is briefly no taller than the window, so a classic (non-overlay)
+   scrollbar appears a few frames in and narrows the page, shifting the layout
+   sideways. A stable gutter keeps the width constant. Standard practice for any
+   site; checked in CI by scripts/check-layout-stability.mjs. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* AgentMux docs theme — synced with agentmux.ai landing page design tokens */
 
 /* Two-tone "AgentMux" wordmark — matches landing page Nav.tsx */
