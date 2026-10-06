@@ -50,7 +50,7 @@ A credential attached to an identity account is stored as a `SecretRef`, a point
 
 ### `Keychain`: OS secret store
 
-API keys and tokens you add in the Armory (a GitHub personal access token, an Anthropic or OpenAI API key, and so on) are stored in the OS secret store through the `keyring` crate: macOS Keychain, Windows Credential Manager, or Linux Secret Service. The entry uses service `agentmux` and account `acct:<account id>`; the database holds only this pointer and non-secret metadata (`crates/srv/src/identity/secret_store.rs`). The value is read at agent launch.
+API keys and tokens you add in Connectors → Accounts (a GitHub personal access token, an Anthropic or OpenAI API key, and so on) are stored in the OS secret store through the `keyring` crate: macOS Keychain, Windows Credential Manager, or Linux Secret Service. The entry uses service `agentmux` and account `acct:<account id>`; the database holds only this pointer and non-secret metadata (`crates/srv/src/identity/secret_store.rs`). The value is read at agent launch.
 
 On Linux you need a running Secret Service (GNOME Keyring, KWallet or similar). Without one, saving the key fails with an error; AgentMux has no plaintext fallback.
 

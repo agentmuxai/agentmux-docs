@@ -21,7 +21,7 @@ There is no keyboard shortcut or command-palette entry for the Warden itself.
 
 ## The five sections
 
-The Warden is a pane view with a left-hand icon rail, the same layout the [Armory](/armory/) uses (`frontend/app/view/warden/warden-view.tsx`). As the pane gets narrower the rail shrinks to icons only, and in a very narrow pane it becomes a tab bar across the top. The selected section is saved with the pane.
+The Warden is a pane view with a left-hand icon rail, the same layout the [Connectors](/connectors/) and [Knowledge](/knowledge/) panes use (`frontend/app/view/warden/warden-view.tsx`). As the pane gets narrower the rail shrinks to icons only, and in a very narrow pane it becomes a tab bar across the top. The selected section is saved with the pane.
 
 | Section | Icon | What it covers |
 |---|---|---|
@@ -140,7 +140,7 @@ There is no "spawn a Supervisor" button. You create and configure the supervisin
 ## See also
 
 - [Swarm](/subagent-watcher/) — live agent activity and the fleet toolbar
-- [Armory](/armory/) — the pane whose rail layout the Warden shares
+- [Connectors](/connectors/) and [Knowledge](/knowledge/) — the panes whose rail layout the Warden shares
 - [LAN discovery](/lan-discovery/) — the substrate the LAN section reads from
 - [Warden architecture (internals)](/internals/warden/) — design, layers, RPC contracts
 - [Interagent communication](/internals/interagent-comms/) — how jekts are delivered

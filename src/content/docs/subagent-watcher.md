@@ -21,16 +21,17 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 - Right-click a pane header → **Replace With...** → **Swarm** replaces that pane with Swarm.
 - In an agent pane, click a subagent or workflow dispatch card (it reads **View in Swarm →**; `Enter` or `Space` also work). Each click opens a new Swarm pane (`frontend/app/view/agent/components/tool-renderers/DispatchCard.tsx`).
 
-With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here." The fleet toolbar only appears once there is at least one agent.
+With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here." The fleet toolbar only appears once there is at least one agent, or once there are [stats](#stats) to show.
 
 ## Layout
 
 From top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 
 1. The [fleet toolbar](#fleet-toolbar).
-2. A result panel, shown only after a fleet action.
-3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
-4. The agent tree.
+2. The [Stats](#stats) panel, shown while the toolbar's **Stats** button is on.
+3. A result panel, shown only after a fleet action.
+4. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
+5. The agent tree.
 
 Swarm supports per-pane zoom like other panes, from 50% to 200%: `Ctrl`+scroll, or `Ctrl` `+` / `-` / `0`.
 
@@ -140,7 +141,7 @@ The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swa
 | **Select all** / **Select none** | Ticks or clears every agent. The toolbar shows **{N} selected**. |
 | **Broadcast** | Opens an inline box ("Message to send to {N} agents…") with **Send** and **Cancel**. `Enter` sends, `Esc` cancels. The Stop button is hidden while the box is open. |
 | **Stop {N}** | Stops the selected agents, after a confirmation dialog. |
-| **Groups ▾** | **Save selection as group…** (while agents are selected); click a saved group to select its agents again, or its **×** to delete it. Groups are stored in AgentMux's database. |
+| **Stats** | Opens or closes the [Stats](#stats) panel. Doesn't need a selection. |
 | **Clear** | Clears the selection. |
 
 **Broadcast** sends the same message to each selected agent with no confirmation step. Each agent receives it as a [jekt](/glossary/) from an unnamed sender (`TRUST=self-declared`), because a message you type in the UI is not signed by any agent. An agent that is not live and registered for messages fails with an error in the result panel.
@@ -158,6 +159,34 @@ Agents can do the same through the App API (`crates/mcp/src/tool_schemas.rs`; ba
 - **`FleetBulkStop`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 See [Agent App API](/internals/agent-app-api/) for the full tool reference.
+
+## Stats
+
+The toolbar's **Stats** button (`frontend/app/view/swarm/swarm-stats.tsx`) opens a panel under the toolbar headed "AgentMux's own model requests since its server started", with the total. These are the requests AgentMux makes on its own, not your agents' turns: session titles, subagent and workflow names, prompt suggestions, agent previews and narration. The counts start again when AgentMux's server restarts. The button appears once at least one such request has ended.
+
+The panel has one row per purpose:
+
+| Row | What the requests are for |
+|---|---|
+| **Session titles** | The title and activity line of an agent's session |
+| **Session titles (recovery)** | Titles from a periodic background pass that fills in missing ones |
+| **Prompt suggestions** | The ghost-text suggestion for your next message |
+| **Subagent names** | Names for subagent rows in the tree |
+| **Workflow names** | Names for workflow rows in the tree |
+| **Agent previews** | The conversation preview for an agent under **My Agents** in the agent picker |
+| **Narration** | Messages in an agent's pane describing something AgentMux did on its own |
+
+Each row counts how its requests ended, for example "12 accepted · 30 kept · 2 refused · 1 failed". Refused, skipped and failed appear only when they aren't zero.
+
+| Count | Meaning |
+|---|---|
+| **accepted** | The model's answer passed AgentMux's checks and was taken. The pane can still keep the old title if the new one only rewords it. |
+| **kept** | The model chose to leave things as they were. This is a normal answer, not a failure. |
+| **refused** | The answer was rejected: blank, the wrong shape (several lines, too long, no letters), a non-answer such as "none" or "untitled", or a refusal. |
+| **skipped** | No answer was needed: there was nothing to send, or a newer request replaced this one. |
+| **failed** | The model's CLI couldn't run, failed, timed out, or the request was dropped before it ran. |
+
+Hover a row for every outcome and its count. A row is shown as a warning when refused and failed requests together outnumber accepted and kept ones, and the **Stats** button then reads **N failing**, the number of such rows. An older AgentMux server without these counts leaves the panel empty.
 
 ## Tokens and cost per agent
 

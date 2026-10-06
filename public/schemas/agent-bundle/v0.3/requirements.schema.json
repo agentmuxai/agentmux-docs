@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.agentmux.ai/schemas/agent-bundle/v0.3/requirements.schema.json",
+  "title": "Agent Bundle Format (ABF) v0.3 credential requirements",
+  "description": "Which credentials an ABF v0.3 bundle needs, resolved against the importer's own accounts. Secret values are never in a bundle. BETA. See https://docs.agentmux.ai/abf.",
+  "type": "object",
+  "required": [
+    "requirements"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "credentialProvider",
+          "kind",
+          "env"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this requirement within the bundle."
+          },
+          "credentialProvider": {
+            "type": "string",
+            "description": "The service the credential is for, e.g. 'github', 'anthropic', 'aws'. Called 'provider' in v0.1."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "api-key",
+              "oauth"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Advisory only."
+          },
+          "env": {
+            "type": "string",
+            "description": "Environment variable the resolved credential is injected as at launch, e.g. 'GITHUB_TOKEN'."
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}

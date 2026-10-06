@@ -148,9 +148,9 @@ The first window opens a starter layout of three panes:
 
 New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Armory** and **Sysinfo** (`crates/srv/src/config/widgets.json`). Every other widget is under **more**: Drone, Warden, Terminal, Editor, Browser, Help, Messengers, Media, Toolchain and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Connectors**, **Knowledge**, **Swarm**, **Hangar**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Drone, Warden, Media, Toolchain and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
-The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (**Save layout…**), Settings, Command Palette, Armory, Toolchain, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`).
+The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (**Save layout…**), Settings, Command Palette, Connectors, Knowledge, Toolchain, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`).
 
 Agents need their CLI tools, and most of those need Node.js and npm. **≡ → Toolchain** shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 

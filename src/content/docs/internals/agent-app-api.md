@@ -125,7 +125,7 @@ The backend also registers a large set of management RPCs that the frontend (and
 | Identity accounts | `listidentityaccounts`, `getidentityaccount`, `upsertidentityaccount`, `deleteidentityaccount`, `account.key.verify`, `account.oauth.start`, `account.oauth.poll`, `account.oauth.cancel` |
 | Agent ↔ identity junction | `linkagentidentity`, `unlinkagentidentity`, `listagentidentities` |
 | Identity bundles | `listidentitybundles`, `getidentitybundle`, `upsertidentitybundle`, `deleteidentitybundle`, `bindidentityaccount`, `unbindidentityaccount`, `listidentitybindings` |
-| Memory bundles (presets) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
+| Bundles (formerly presets) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
 | Agent instances | `listagentinstances`, `getagentinstance`, `createagentinstance`, `updateagentinstance`, `deleteagentinstance`, `listnamedagents`, `hidenamedagent`, `listrecentsessions` |
 | Container runtime | `containerruntimeavailable` |
 | Drones | `listdrones`, `getdrone`, `upsertdrone`, `deletedrone`, `rundrone`, `listdroneruns` |
@@ -151,7 +151,7 @@ Five higher-level, agent-scoped namespaces wrap the low-level handlers above beh
 | `memory.read` | Read one file's content | `agent_id`, `filename` |
 | `memory.write` | Write/overwrite one file (atomic tmp+rename), 10 MB cap | `agent_id`, `filename`, `content` |
 
-This is the "Brain" primitive — see [Memory bundles → Native memory](/memory/#native-memory) and the [Armory → Personal](/armory/#personal). It's distinct from a Bundle (below).
+This is the "Brain" primitive — see [Bundles → Native memory](/memory/#native-memory) and [Knowledge → Personal](/knowledge/#personal). It's distinct from a Bundle (below).
 
 #### `mcp.*`
 
@@ -163,7 +163,7 @@ This is the "Brain" primitive — see [Memory bundles → Native memory](/memory
 | `mcp.delete` | Delete a server bound to the agent (forbidden if global) | `agent_id`, `id` |
 | `mcp.bind` | Bind an agent to an existing global (or already-bound) server | `agent_id`, `mcp_id` |
 | `mcp.unbind` | Unbind | `agent_id`, `mcp_id` |
-| `mcp.catalog.list` | List all global servers (Armory-level, no agent scoping) | — |
+| `mcp.catalog.list` | List all global servers (the Connectors → MCP servers catalog, no agent scoping) | — |
 | `mcp.catalog.upsert` | Create/edit a global server (cannot promote a private one) | `id?`, `name`, `transport?`, `config?` |
 | `mcp.catalog.delete` | Delete a global server (cannot delete a private one via the catalog) | `id` |
 
@@ -185,7 +185,7 @@ Same shape as `mcp.*`:
 
 #### `bundle.*`
 
-The reusable agent-definition primitive (see [Memory bundles](/memory/) — the page name predates this rename, the content is current):
+The reusable agent-definition primitive (see [Bundles](/memory/)):
 
 | Command | Purpose | Params |
 |---|---|---|
@@ -613,7 +613,7 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 
 - [Trust model](/security/trust-model/) — full trust boundary description
 - [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
-- [Armory](/armory/) — credential + primitive management UI (Accounts, Identities, Brain, Bundles, MCP Servers, Skills)
+- [Connectors](/connectors/) and [Knowledge](/knowledge/) — the app-wide UI for Accounts and MCP servers, and for Global and Personal memory, Skills and Bundles
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
 - [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — original implementation spec for the (now-shipped) `identity.*`/`memory.*` namespaces
 - [Preset→Bundle rename spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md) — `bundle.*`, `mcp.*`, `skill.*` primitive model
