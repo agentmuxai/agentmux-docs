@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Connectors**, **Knowledge**, **Swarm**, **Hangar**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain and Settings are under **more**. If you had customised the bar and pinned the Armory (the pane Connectors and Knowledge replaced), it shows Connectors and Knowledge in its place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Remotes and Settings are under **more**. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced) or Knowledge (Memory's earlier name), it shows the new panes in their place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
@@ -19,7 +19,7 @@ By default the widget bar pins **Agent**, **Connectors**, **Knowledge**, **Swarm
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services) and MCP servers — see [Connectors](/connectors/) |
-| **Knowledge** | book | `knowledge` | Global and Personal memory, Skills and Bundles — see [Knowledge](/knowledge/) |
+| **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). `knowledge`, its earlier name, still opens it |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
 | **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
@@ -34,10 +34,10 @@ These views exist in the codebase but are **not** opened directly from the widge
 | Surface | How it's reached |
 |---|---|
 | **Identity** | Per-agent: **Stash** icon (`backpack`) → **Accounts** tab (read-only). App-wide: **Connectors** → **Accounts**. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Memory (native/"Brain")** | Per-agent: **Stash** icon → **Personal Memory** tab (this is native per-agent notes, not the Bundle editor — see below). App-wide: **Knowledge** → **Global** and **Personal**. |
-| **Bundles** | App-wide: **Knowledge** → **Bundles**. Per-agent, the **Stash** icon → **Startup** tab selects an existing Bundle as the agent's startup instructions; no per-agent tab edits bundles. |
+| **Global and Personal Memory** | Per-agent: **Stash** icon → **Personal Memory** tab (the agent's own notes, not the Bundle editor — see below). App-wide: **Memory** → **Global** and **Personal**. |
+| **Bundles** | App-wide: **Memory** → **Bundles**. Per-agent, the **Stash** icon → **Bundles** tab picks which bundles the agent starts with, in order; no per-agent tab edits bundles. |
 | **MCP Servers** | Per-agent: **Stash** icon → **MCP Servers** tab. App-wide: **Connectors** → **MCP servers**. |
-| **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Knowledge** → **Skills**. |
+| **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Memory** → **Skills**. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with its own sections (Appearance/Terminal/Agent/Sounds/Network/Files/Advanced) — no longer just opens `settings.json` in an external editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
@@ -58,7 +58,7 @@ Features:
 
 Open a terminal: `⌘N` / `` Ctrl+Shift+` `` or click the **Terminal** icon in the top bar.
 
-The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#shell-helpers) for the full list.
+The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#whats-shared) for the `muxlog` helper.
 
 ### Predictive echo
 
@@ -267,7 +267,7 @@ The agent pane is the first-class resident unit of AgentMux. Each agent gets a s
 - **Enter animation** — New messages animate into view as they stream in; set `window:reducedmotion = true` to disable.
 - **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
-Agent panes are configured through [Bundles](/memory/), chosen when the agent is created; the Stash's **Startup** tab picks one for an existing agent (see Subsections below).
+Agent panes are configured through [Bundles](/bundles/), picked when the agent is created; the Stash's **Bundles** tab changes them for an existing agent (see Subsections below).
 
 ### Activity indicator
 
@@ -364,16 +364,16 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 ### Subsections
 
-The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Knowledge](/knowledge/) panes:
+The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
 
 - **Accounts** — a read-only view of the accounts linked to this agent. Renders `AgentIdentityLinksPanel`. New links are made from the agent's launch flow or Connectors → Accounts; see [Identity](/identity/).
-- **Personal Memory** — this agent's **native memory** notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Knowledge → Personal. See [Bundles → Native memory](/memory/#native-memory).
+- **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
 - **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
-- **Startup** — select an existing Bundle as this agent's startup instructions. Renders `AgentStartupModal`.
+- **Bundles** — the bundles this agent starts with, in order, its own bundle first; saved on each change. Renders `AgentBundlesTab`. See [An agent's bundles](/bundles/#an-agents-bundles).
 - **Registration** — this agent's live message-delivery status: its local registration, any other instance or channel on this host claiming the same identity, and recent deliveries rejected by the identity-mismatch guard.
 
-Bundles themselves are edited only in [Knowledge → Bundles](/knowledge/#bundles). The `view: "identity"` and `view: "memory"` registrations exist so `pane.open` RPC and right-click menus can still reach the underlying views, but the primary path is the Stash.
+Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). The `view: "identity"` registration exists so `pane.open` RPC and right-click menus can still reach that view, but the primary path is the Stash.
 
 ## Swarm
 

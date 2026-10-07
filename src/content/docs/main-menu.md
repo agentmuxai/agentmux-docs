@@ -21,7 +21,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Settings** | — | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
 | **Connectors** | — | Opens the Connectors pane — Accounts and MCP servers — or focuses the one already open in the tab. See [Connectors](/connectors/). |
-| **Knowledge** | — | Opens the Knowledge pane — Global, Personal, Skills and Bundles — or focuses the one already open in the tab. See [Knowledge](/knowledge/). |
+| **Memory** | — | Opens the Memory pane — Global, Personal, Skills and Bundles — or focuses the one already open in the tab. See [Memory](/memory/). |
 | **Toolchain** | — | Opens the Toolchain Manager — effective PATH and the detected version, path, and status of every provider CLI and system dependency, with install links for anything missing. |
 | **DevTools** | — | Toggles Chromium DevTools. |
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
@@ -49,9 +49,9 @@ Registered commands are grouped by category:
 | **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
 | **Pane** | Close Pane, Toggle Magnify, Focus Pane Right / Left / Up / Down |
 | **Dev** | Toggle DevTools, Restart Backend, Open Settings File |
-| **App** | Connectors, Knowledge |
+| **App** | Connectors, Memory |
 
-Searching for "accounts" or "mcp" also finds **Connectors**, and "memory", "skills" or "bundles" finds **Knowledge**. The older **Identity & Memory** command is gone; Connectors replaces it.
+Searching for "accounts" or "mcp" also finds **Connectors**, and "knowledge", "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
 
 The palette is **not exhaustive** — most navigation shortcuts (Connect Remote, Settings UI, Focus Block N, raw tab-switching, etc.) are reachable only via [keybindings](/keybindings/), not from the palette.
 

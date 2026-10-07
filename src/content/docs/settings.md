@@ -149,9 +149,9 @@ See [Dropping files onto panes](/pane-types/#dropping-files-onto-panes) and [Att
 
 ## MCP Servers
 
-MCP servers are configured **per-agent** in a [bundle](/memory/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent** in a [bundle](/bundles/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Bundles](/memory/) for the bundle schema (including the `mcp_servers` field).
+See [Bundles](/bundles/) for the bundle schema (including the `mcp_servers` field).
 
 ## Environment Variables
 
@@ -198,5 +198,5 @@ See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/mult
 
 - [Configuration](/config) — Settings overview with examples
 - [Keybindings](/keybindings) — Keyboard shortcuts
-- [Bundles](/memory/) — Per-agent configuration
+- [Bundles](/bundles/) — Per-agent configuration
 - [System Metrics](/system-metrics) — Telemetry settings explained

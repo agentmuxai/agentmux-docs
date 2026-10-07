@@ -80,12 +80,12 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-MCP servers are configured **per-agent**, not in `settings.json` — either baked into a [Bundle](/memory/)'s `mcp_servers` field, or managed live via the [MCP Server primitive](/connectors/#mcp-servers) (the agent pane's Stash icon → MCP Servers tab, or app-wide in Connectors → MCP servers). The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent**, not in `settings.json` — either baked into a [Bundle](/bundles/)'s `mcp_servers` field, or managed live via the [MCP Server primitive](/connectors/#mcp-servers) (the agent pane's Stash icon → MCP Servers tab, or app-wide in Connectors → MCP servers). The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Bundles](/memory/) for the full bundle schema (including the `mcp_servers` field).
+See [Bundles](/bundles/) for the full bundle schema (including the `mcp_servers` field).
 
 ## See Also
 
 - [Keybindings](/keybindings) — Every shortcut, and the `keybindings` setting for your own
 - [Settings Reference](/settings) — Complete settings list
-- [Bundles](/memory/) — Per-agent configuration
+- [Bundles](/bundles/) — Per-agent configuration

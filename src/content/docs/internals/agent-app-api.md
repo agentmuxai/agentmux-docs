@@ -151,7 +151,7 @@ Five higher-level, agent-scoped namespaces wrap the low-level handlers above beh
 | `memory.read` | Read one file's content | `agent_id`, `filename` |
 | `memory.write` | Write/overwrite one file (atomic tmp+rename), 10 MB cap | `agent_id`, `filename`, `content` |
 
-This is the "Brain" primitive — see [Bundles → Native memory](/memory/#native-memory) and [Knowledge → Personal](/knowledge/#personal). It's distinct from a Bundle (below).
+This is Personal Memory (stored as "native memory", once labelled "Brain") — see [Memory → Personal](/memory/#personal). It's distinct from a Bundle (below).
 
 #### `mcp.*`
 
@@ -185,7 +185,7 @@ Same shape as `mcp.*`:
 
 #### `bundle.*`
 
-The reusable agent-definition primitive (see [Bundles](/memory/)):
+The reusable agent-definition primitive (see [Bundles](/bundles/)):
 
 | Command | Purpose | Params |
 |---|---|---|
@@ -613,7 +613,7 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 
 - [Trust model](/security/trust-model/) — full trust boundary description
 - [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
-- [Connectors](/connectors/) and [Knowledge](/knowledge/) — the app-wide UI for Accounts and MCP servers, and for Global and Personal memory, Skills and Bundles
+- [Connectors](/connectors/) and [Memory](/memory/) — the app-wide UI for Accounts and MCP servers, and for Global and Personal memory, Skills and Bundles
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
 - [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — original implementation spec for the (now-shipped) `identity.*`/`memory.*` namespaces
 - [Preset→Bundle rename spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md) — `bundle.*`, `mcp.*`, `skill.*` primitive model

@@ -3,7 +3,7 @@ title: "Identity & credential storage"
 description: "Where AgentMux keeps credentials and keys at rest, how they reach agent processes, and what the file permissions actually are."
 ---
 
-The [Identity bundles](/identity/) page covers the *feature*: accounts, bundles, and assigning them at launch. This page covers the *security model*: where every credential and key lives at rest, how credentials reach agent processes, and what protects them.
+The [Identity & Accounts](/identity/) page covers the *feature*: accounts and how they're linked to agents. This page covers the *security model*: where every credential and key lives at rest, how credentials reach agent processes, and what protects them.
 
 ## Where AgentMux keeps data
 
@@ -141,4 +141,4 @@ These follow from running agents as you. If you need stronger isolation, use OS-
 - `crates/srv/src/backend/reactive/registry.rs`, `crates/cef/src/dev_authfile.rs`, `crates/launcher/src/ipc/mod.rs` — the explicitly restricted files
 - `crates/cef/src/app/mod.rs` — Chromium password-store switches
 
-**Related**: [Identity bundles](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).
+**Related**: [Identity & Accounts](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).

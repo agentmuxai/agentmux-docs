@@ -7,7 +7,7 @@ description: Accounts are per-provider credential pointers; an agent binds at mo
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-**As of `SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` Phase 3, there is no Identity-bundle grouping object.** Earlier releases modeled Identity as a named, swappable *collection* of credentials (`instance → identity_bundle → binding → account`). That layer was collapsed: an agent instance now binds **directly** to Accounts, one per provider (`instance/agent → account`, enforced at resolve time). "Identity" today means *this agent's set of directly-bound accounts* — a derived view, not a stored object. This decouples *what an agent does* (configured by the agent's [Bundle](/memory/) and provider) from *who it acts as* (its bound Accounts).
+**As of `SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` Phase 3, there is no Identity-bundle grouping object.** Earlier releases modeled Identity as a named, swappable *collection* of credentials (`instance → identity_bundle → binding → account`). That layer was collapsed: an agent instance now binds **directly** to Accounts, one per provider (`instance/agent → account`, enforced at resolve time). "Identity" today means *this agent's set of directly-bound accounts* — a derived view, not a stored object. This decouples *what an agent does* (configured by the agent's [bundles](/bundles/) and provider) from *who it acts as* (its bound Accounts).
 
 ## What an Account is
 
@@ -82,7 +82,7 @@ Accounts and their agent bindings live in two SQLite tables (not the per-channel
 
 ## See also
 
-- [Bundles](/memory/) — the other half of agent composition (instructions + context files)
+- [Bundles](/bundles/) — the other half of agent composition (instructions + context files)
 - [First Agent Setup](/first-agent/) — provider login flows
 - [Auth flows](/auth/) — per-provider auth-dir isolation, and the conditional isolated-auth-by-channel default
 - [Connectors](/connectors/#binding-an-account-to-an-agent) — the "Bind to Agent" context menu, the second path to creating an account↔agent link

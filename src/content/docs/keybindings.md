@@ -139,7 +139,7 @@ Add a `keybindings` list to your settings file (command palette → Open Setting
 
 An entry that can't be used is skipped and the rest still apply.
 
-To open the [Connectors](/connectors/) or [Knowledge](/knowledge/) pane from a shortcut, bind `app:connectors` or `app:knowledge`. A binding to `app:identity`, the command palette's former "Identity & Memory" command, still works for now and opens Connectors.
+To open the [Connectors](/connectors/) or [Memory](/memory/) pane from a shortcut, bind `app:connectors` or `app:memory`. A binding to `app:knowledge`, Memory's earlier name, still opens it. A binding to `app:identity`, the command palette's former "Identity & Memory" command, still works for now and opens Connectors.
 
 ## Terminal settings
 
