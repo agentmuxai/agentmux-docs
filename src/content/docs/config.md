@@ -1,6 +1,5 @@
 ---
-title: "Configuration
-"
+title: "Configuration"
 ---
 
 :::caution[Alpha Software]
