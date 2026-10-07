@@ -101,7 +101,7 @@ Reply: bus:inject to <sender>
 | `HELD_FOR` | Seconds the message waited in the durable hold. With it, `TS` is the original send time, not the delivery time. |
 | `TRUST` | See the next table. |
 | `INSTANCE`, `INSTANCE_STATUS` | Only with `TRUST=wan-verified`. `INSTANCE` is `<hostname>~<first 8 characters of the instance id>`: the hostname is the one the sending install claims (shown as `?` unless it is 1–48 characters of `a-z`, `0-9`, `.` and `-`); the id is the one its certificate proved. `INSTANCE_STATUS` is `approved`, `new` or `revoked`; see [WAN signing](#wan-signing). |
-| `SIG` | Only on messages carrying a ReAgent signature: `verified` or `invalid`. |
+| `SIG` | Only on messages carrying a muxreview signature: `verified` or `invalid`. |
 | `ESCALATE` | Only when `TIER=sensitive`: `required` or `none`. |
 | `MSGID` | The request id: the sender's own message id for a `SendMessage` jekt, a new UUID when none was given, or the cloud's injection id for a WAN message. |
 | `PRIORITY` | The request's priority, `normal` by default. |
@@ -119,7 +119,7 @@ Reply: bus:inject to <sender>
 | `wan-verified` | `DELIVERY=wan`; a sender on the same MuxBus Cloud account signed with its WAN key, and the signature verified against a key certified by the sending install | That the message came from that agent on that install; see [WAN signing](#wan-signing) |
 | `network-claimed` | `DELIVERY=lan` or `wan` otherwise | No |
 
-A `SIG=verified` ReAgent message still shows `TRUST=network-claimed`: `TRUST` describes the delivery, and `SIG` describes the ReAgent signature.
+A `SIG=verified` muxreview message still shows `TRUST=network-claimed`: `TRUST` describes the delivery, and `SIG` describes the muxreview signature.
 
 ### Escaping
 
@@ -135,7 +135,7 @@ Sender-controlled text cannot forge marker fields or blocks:
 `TIER=sensitive` is set by `Handler::inject_message_inner` in `crates/srv/src/backend/reactive/handler.rs`, regardless of the declared tier, when **any** of these holds:
 
 - **A host-key check failed.** This instance holds an HMAC key for the claimed sender, and the signature was missing, stale or wrong. The check runs on every request to the inject route, whatever its tier, so a LAN message that claims the name of one of this instance's agents is forced sensitive too (its `TRUST` still reads `network-claimed`). It doesn't run on messages MuxBus Cloud delivers.
-- **A ReAgent signature failed** (`SIG=invalid`) on a WAN message. That includes a signature that is valid under any key other than the production key `reagent-v1`: the retired `reagent-v1-dev` key now yields `SIG=invalid`.
+- **A muxreview signature failed** (`SIG=invalid`) on a WAN message. That includes a signature that is valid under any key other than the production key `reagent-v1`: the retired `reagent-v1-dev` key now yields `SIG=invalid`.
 - **A LAN signature failed.** A `lan_sig` was present, a public key for the claimed sender was found, and it didn't verify; or that key differs from the one pinned for that sender; or the key lookup was rate-limited.
 - **A WAN signature failed, or came from a revoked install.** A same-account WAN signature was carried and a check actively failed: the signed envelope doesn't match the message, the certificate chain or key record is wrong, the signature doesn't verify, or the message id was already delivered (a replay). Or it verified, but the sending install is revoked.
 - **The sender declared `sensitive`.**
@@ -150,7 +150,7 @@ A failed cross-channel signature (`DELIVERY=channel`, a published key exists, si
 
 `ESCALATE` appears only on `TIER=sensitive` and is computed on the server:
 
-- **`ESCALATE=none`** when at least one signature on the message verified: host HMAC, channel, LAN, ReAgent under the production key, or WAN from an install with `INSTANCE_STATUS=approved` or `new`. The message carries the lighter "verified sender" warning line.
+- **`ESCALATE=none`** when at least one signature on the message verified: host HMAC, channel, LAN, muxreview under the production key, or WAN from an install with `INSTANCE_STATUS=approved` or `new`. The message carries the lighter "verified sender" warning line.
 - **`ESCALATE=required`** in every other case, including a verified WAN signature from a `revoked` install. The receiving agent is told to pause and ask the human operator, and that a confirming reply from another agent is not enough. AgentMux also raises a desktop notification, subject to your notification settings, with the fixed text "Open AgentMux to see the sender and trust level before it acts." It never shows the message, sender or trust label.
 - **Exception for `transcript_request`:** even a verified sender gets `ESCALATE=required` when the receiving agent's `conversation_visibility` is `ask`, or is `trusted_peers` and the requester has no grant for that tier. Grants for the `wan` tier are stored but never honored, so on WAN `trusted_peers` behaves like `ask`. Under `private` (the default) the ordinary rule applies. See `resolve_transcript_request_tier_fields` in `crates/srv/src/server/reactive.rs`.
 
@@ -165,9 +165,9 @@ The marker is instruction text for the receiving agent. `ESCALATE=required` does
 | `AGENTMUX_JEKT_KEY` | HMAC-SHA256 | At each launch of the agent, if missing or older than 24 h | On every request to the inject route, whatever its tier, whenever this instance holds a key for the claimed sender | Replaced at the next launch once 24 h old (`agent_jekt_key_ensure`); a running agent keeps using its old key until relaunched |
 | `AGENTMUX_LAN_KEY` | Ed25519 private key | At the agent's first launch | `DELIVERY=lan` (against the sender's public key) and `DELIVERY=channel` (against the published copy) | Never rotated |
 | `AGENTMUX_WAN_KEY` | Ed25519 private key, certified by the install's instance key | At the agent's first launch, in the channel's `wan.db` (an older key from `objects.db` is carried over once) | `DELIVERY=wan`, for a sender on the same MuxBus Cloud account, once the key is published | Never rotated; kept across upgrades |
-| ReAgent `reagent-v1` | Ed25519, public key built into AgentMux | Held only by AgentMux's GitHub review-notification service | `DELIVERY=wan` | — |
+| muxreview `reagent-v1` | Ed25519, public key built into AgentMux | Held only by AgentMux's GitHub review-notification service | `DELIVERY=wan` | — |
 
-Signatures cover the message id, sender, target, timestamp and body. Channel and WAN signatures also bind the sending channel (and, for WAN, the sending install's instance id), under their own domain prefix, so a signature from one tier can't be replayed on another. Freshness windows are 5 minutes for host and channel signatures, 10 minutes for LAN and ReAgent signatures, and 35 minutes for WAN signatures (the relay's 30-minute delivery window plus 5 minutes; up to 5 minutes in the future).
+Signatures cover the message id, sender, target, timestamp and body. Channel and WAN signatures also bind the sending channel (and, for WAN, the sending install's instance id), under their own domain prefix, so a signature from one tier can't be replayed on another. Freshness windows are 5 minutes for host and channel signatures, 10 minutes for LAN and muxreview signatures, and 35 minutes for WAN signatures (the relay's 30-minute delivery window plus 5 minutes; up to 5 minutes in the future).
 
 The three agent keys are keyed by agent name, not UID, so two agents with the same name on one instance share them. They are deleted with the agent unless another agent still uses the name.
 
@@ -227,7 +227,7 @@ The WAN tier is AgentMux's hosted MuxBus service. It is off until you sign in wi
 
 The relay also keeps one lease per agent name, so only one instance pulls an agent's messages at a time: a pull or acknowledgement from an instance that doesn't hold the lease gets HTTP 409 (see [one live instance per agent](/security/trust-model/#one-live-instance-per-agent)).
 
-Two kinds of WAN message carry a signature the receiver verifies: ReAgent's (`SIG=`), and those from agents on another install signed in to the same MuxBus Cloud account (`TRUST=wan-verified`, see [WAN signing](#wan-signing)). Any other `FROM=` on a WAN message is unverified.
+Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`SIG=`), and those from agents on another install signed in to the same MuxBus Cloud account (`TRUST=wan-verified`, see [WAN signing](#wan-signing)). Any other `FROM=` on a WAN message is unverified.
 
 ## What it takes to drive your agents
 
@@ -246,7 +246,7 @@ Two kinds of WAN message carry a signature the receiver verifies: ReAgent's (`SI
 - `crates/srv/src/backend/reactive/handler.rs` — target resolution, recipient verification, the forced-sensitive and `ESCALATE` rules
 - `crates/srv/src/backend/reactive/sanitize.rs` — `wrap_jekt_message`, `marker_field`, `neutralize_markers`, keyword lists
 - `crates/srv/src/server/mod.rs` — `lan_forward_routes`, `auth_middleware`, `lan_or_full_auth_middleware`
-- `crates/common/src/jekt_sign.rs` — signature schemes and the ReAgent key allow-list (`is_reagent_trusted_signing_key`)
+- `crates/common/src/jekt_sign.rs` — signature schemes and the muxreview key allow-list (`is_reagent_trusted_signing_key`)
 - `crates/srv/src/backend/storage/agent_jekt_keys.rs` — 24 h HMAC key rotation
 - `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
 - `crates/srv/src/backend/storage/jekt_held.rs`, `crates/srv/src/server/jekt_held.rs` — durable hold and replay
