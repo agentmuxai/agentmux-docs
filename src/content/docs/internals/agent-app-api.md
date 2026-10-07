@@ -124,7 +124,6 @@ The backend also registers a large set of management RPCs that the frontend (and
 | Import / export / seed | `importagentfromclaw`, `importagents`, `exportagents`, `reseedagents` |
 | Identity accounts | `listidentityaccounts`, `getidentityaccount`, `upsertidentityaccount`, `deleteidentityaccount`, `account.key.verify`, `account.oauth.start`, `account.oauth.poll`, `account.oauth.cancel` |
 | Agent ↔ identity junction | `linkagentidentity`, `unlinkagentidentity`, `listagentidentities` |
-| Identity bundles | `listidentitybundles`, `getidentitybundle`, `upsertidentitybundle`, `deleteidentitybundle`, `bindidentityaccount`, `unbindidentityaccount`, `listidentitybindings` |
 | Bundles (formerly presets) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
 | Agent instances | `listagentinstances`, `getagentinstance`, `createagentinstance`, `updateagentinstance`, `deleteagentinstance`, `listnamedagents`, `hidenamedagent`, `listrecentsessions` |
 | Container runtime | `containerruntimeavailable` |

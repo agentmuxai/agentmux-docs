@@ -36,7 +36,7 @@ Stores every:
 - **Controller** — block controller registration (shell, command runner, web view)
 
 It also holds the agent domain: **agent definitions** (the launchable agent
-catalog — formerly "Forge"), **identity** and **memory bundles**, per-launch
+catalog — formerly "Forge"), **accounts** and **bundles**, per-launch
 **agent instances**, and **drone** definitions/runs.
 
 The schema is a single flat table set built by `run_object_schema`

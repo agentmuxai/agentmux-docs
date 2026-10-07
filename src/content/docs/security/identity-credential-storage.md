@@ -16,7 +16,7 @@ Everything lives under one root, `~/.agentmux` (`%USERPROFILE%\.agentmux` on Win
 | `channels/<channel>/versions/<version>/data/authkey.dev`, `ipc-port-<hash>` | The current launch's auth key and host IPC token (see below) |
 | `channels/<channel>/versions/<version>/cef-cache/` | Chromium profile for browser panes: cookies, site storage, cache |
 | `channels/<channel>/wan-identity/wan.db` | The install's WAN instance keypair, agents' WAN signing keys, and WAN verification state. Shared by every version of the channel, so upgrades keep them |
-| `shared/store.db` | Identity accounts, memory bundles, drone definitions, MuxBus credential metadata, per-agent MuxBus machine credentials |
+| `shared/store.db` | Accounts, bundles, drone definitions, MuxBus credential metadata, per-agent MuxBus machine credentials |
 | `shared/identity-store.db` | Agent-to-account links, skills, MCP servers, the work queue |
 | `shared/agents/transcripts/filestore.db` | Agent conversation transcripts, continuity summaries, and AgentMux's record of agents' memory and of Global Memory |
 | `shared/providers/<provider>/`, `shared/identities/<account>/<provider>/` | Agent CLIs' own login directories (see [provider CLI logins](#oauthconfigdir-provider-cli-logins)) |
@@ -63,7 +63,7 @@ AgentMux stores only the variable name and reads the value at launch from **the 
 For Claude Code, Codex, Gemini, Copilot and OpenClaw logins, AgentMux stores only a directory path, and points the CLI at it with the CLI's config-directory variable (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `GEMINI_CLI_HOME`, `COPILOT_HOME`, `OPENCLAW_HOME`). The CLI writes and refreshes its own tokens there, in its own format; AgentMux does not encrypt them. The directories are:
 
 - `shared/providers/<provider>/`, the default login shared by every agent of that provider, on every channel;
-- `shared/identities/<account>/<provider>/`, one per account in an identity bundle;
+- `shared/identities/<account>/<provider>/`, one per account;
 - the CLI's usual location in your home directory (for example `~/.claude`), for an agent set to use the ambient login.
 
 AgentMux reads one of these tokens itself: at each launch it uses the Claude login from `shared/providers/claude/` to fetch the current model list from Anthropic. See [Data sovereignty](/security/data-sovereignty/).

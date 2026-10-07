@@ -7,7 +7,7 @@ description: Accounts are per-provider credential pointers; an agent binds at mo
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-**As of `SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` Phase 3, there is no Identity-bundle grouping object.** Earlier releases modeled Identity as a named, swappable *collection* of credentials (`instance → identity_bundle → binding → account`). That layer was collapsed: an agent instance now binds **directly** to Accounts, one per provider (`instance/agent → account`, enforced at resolve time). "Identity" today means *this agent's set of directly-bound accounts* — a derived view, not a stored object. This decouples *what an agent does* (configured by the agent's [bundles](/bundles/) and provider) from *who it acts as* (its bound Accounts).
+An agent binds **directly** to Accounts, at most one per provider (`agent → account`, enforced at resolve time). An agent's **Identity** is *its set of directly-bound accounts* — a derived view, not a stored object. This decouples *what an agent does* (configured by the agent's [bundles](/bundles/) and provider) from *who it acts as* (its bound Accounts).
 
 ## What an Account is
 
@@ -28,8 +28,6 @@ An **Account** is a single credential pointer — one provider, one kind, one se
 OAuth logins are Accounts, not a separate concept. Each Claude / Codex / Copilot OAuth login lives in its own auth-config directory, referenced by the Account's `SecretRef` (`oauth_config_dir` backend — see [Identity & credential storage](/security/identity-credential-storage/)). Two Accounts for the same provider hold genuinely distinct OAuth sessions (work vs. personal, etc.), each with a **status** field (`valid` / `expired` / `invalid` / `unknown` / `checking`) surfaced in [Connectors → Accounts](/connectors/#accounts) so credential health is visible without launching an agent.
 
 The OAuth invariant: a successful OAuth flow **always** lands bound to an Account — the CLI's own `OAuthConfigDir` belongs to that Account directly, so there's no intermediate grouping object to provision (log in → Account → bind to an agent).
-
-For the (now-superseded) original design, see [`SPEC_OAUTH_IDENTITY_BUNDLES_2026_05_22.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/archive/SPEC_OAUTH_IDENTITY_BUNDLES_2026_05_22.md) in the main repo.
 
 ## How Identity is reached
 
@@ -72,7 +70,7 @@ Accounts and their agent bindings live in two SQLite tables (not the per-channel
 
 **Why this split matters:** a link an agent already has to an Account survives a channel or version switch even though the underlying account *list* in Connectors → Accounts may reset to empty on a fresh non-`stable` channel (see [Auth flows](/auth/#isolated-auth-by-channel)) — don't conflate the two. To keep an existing link resolvable even when its target account row isn't present in the current channel's (possibly-isolated) account store, the account row is also mirrored into the always-global identity store at the moment a link is created; resolving a binding at agent-spawn time falls back to that mirror copy if the channel-local account store doesn't have it. This is what makes "my agent still launches with the right account after I switch channels" hold even though "the account list itself" doesn't.
 
-`db_agent_identity_links` is a direct junction between an agent definition and `db_accounts` — there is no intermediate bundle/grouping table. The earlier `db_identity_bundles`/`db_identity_bindings` tables it replaced were dropped once Phase 3's backfill migrated every row to a direct link; see `docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md` and `docs/specs/SPEC_IDENTITY_DIRECT_LINKS_PHASE3_PRC_2026_07_10.md` in the main repo for that migration, and `docs/specs/SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md` for the store split described above.
+`db_agent_identity_links` is a direct junction between an agent definition and `db_accounts` — there is no intermediate grouping table. See `docs/specs/SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md` in the main repo for the store split described above.
 
 ## What Identity is not
 

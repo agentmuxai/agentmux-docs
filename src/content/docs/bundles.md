@@ -10,7 +10,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from its Stash. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
 
 :::note[Earlier names]
-Bundles were called "Memory bundles", and before that "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
+Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
 :::
 
 ## What goes in a bundle
@@ -100,7 +100,7 @@ It has no account field: the agent takes the provider's first account, which you
 
 ## Persistence
 
-Bundles live in the `db_bundles` table (named `db_memory_bundles` before a storage rename):
+Bundles live in the `db_bundles` table:
 
 ```
 id                        TEXT PRIMARY KEY
