@@ -257,7 +257,7 @@ Agents have a dedicated `OpenMedia` MCP tool — the Media-pane equivalent of `O
 
 ## Agent
 
-The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own identity bundle and agent bundle, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
+The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own accounts and bundles, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
 
 - **Streaming text** — Agent output in real time
 - **Tool calls** — Name, arguments, and result of each tool invocation

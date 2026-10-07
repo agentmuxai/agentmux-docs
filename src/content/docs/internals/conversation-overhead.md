@@ -69,7 +69,7 @@ Gemini supports context caching via a separate explicit API call (not an in-requ
 
 ## What makes AgentMux's system prompt larger than a bare CLI session
 
-A standard `claude` CLI session uses whatever CLAUDE.md files it finds in the project directory hierarchy. AgentMux replaces that with its assembled file, which bundles soul + memory bundles + skills index on top of the agent's own instructions. The assembled file is typically larger than a bare project's CLAUDE.md.
+A standard `claude` CLI session uses whatever CLAUDE.md files it finds in the project directory hierarchy. AgentMux replaces that with its assembled file, which combines soul + Global Memory + the agent's bundles + skills index on top of the agent's own instructions. The assembled file is typically larger than a bare project's CLAUDE.md.
 
 Practical implications:
 
@@ -81,8 +81,8 @@ Practical implications:
 
 The provider's cached system prompt entry is invalidated whenever the system prompt content changes. For AgentMux agents, this happens when:
 
-- The agent's soul, agentmd, or memory bundle content is edited
-- A memory bundle is added to or removed from the agent
+- The agent's soul or agentmd is edited, or a bundle's instructions or Global Memory change
+- A bundle is added to or removed from the agent's Bundles list
 - The skills index changes (skill installed/removed)
 - A new session is started without `--resume` (the session ID changes, and the CLI opens a fresh context)
 
