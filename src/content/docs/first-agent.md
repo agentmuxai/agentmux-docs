@@ -55,8 +55,9 @@ Clicking a card first runs the install and prerequisite checks above. It then op
 2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
 3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
-5. **Identity**: an account for this provider (from [Connectors → Accounts](/connectors/#accounts)), or **(ambient credentials)** (no account). If you have an account for the provider, the first one is preselected. For the providers that need an account (see [Sign in](#sign-in)), an agent left on **(ambient credentials)** can't start until you sign in or bind an account.
-6. **Memory**: a [bundle](#bundles), or **(vanilla CLI)** for none. If you have any bundles, the first one in the list is preselected, so pick **(vanilla CLI)** if you want none.
+5. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
+
+There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the agent's **Stash → Accounts**. If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
 
 Click **Create**. The agent is created and launched in the pane.
 
@@ -76,7 +77,7 @@ For the five providers above, a successful login is saved as an account in Conne
 
 ## Bundles
 
-A **bundle** is a reusable set of instructions and tools that you attach to agents. It's optional: **(vanilla CLI)** runs the harness with no bundle. Create bundles in [Knowledge](/knowledge/#bundles): **Knowledge → Bundles → + New Bundle**.
+A **bundle** is a reusable set of instructions and tools that you give to agents. Bundles are optional: an agent with none runs the harness as it comes. Create bundles in [Memory](/memory/#bundles): **Memory → Bundles → + New Bundle**.
 
 | Field | Description |
 |-------|-------------|
@@ -87,9 +88,9 @@ A **bundle** is a reusable set of instructions and tools that you attach to agen
 | **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
 | **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the catalogs in Connectors and Knowledge, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the catalogs in Connectors and Memory, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
-A bundle works with any agent: the agent's own provider decides which harness it launches with, and an agent's provider is fixed once it's created (fork the agent to run it on another). See [Bundles](/memory/) for the full configuration surface.
+A bundle works with any agent: the agent's own provider decides which harness it launches with, and an agent's provider is fixed once it's created (fork the agent to run it on another). A bundle's instructions go into the agent's startup file after Global Memory; its MCP servers are added when the agent is opened through the Agent App API, but the Launch button doesn't add them yet. See [Bundles](/bundles/) for the full configuration surface.
 
 ## The agent pane
 
@@ -156,7 +157,7 @@ The Claude template suggests the container runtime, so when Docker is running, *
 
 ## Skills
 
-Skills are reusable instructions an agent can call. Manage them app-wide in [Knowledge → Skills](/knowledge/#skills) (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
+Skills are reusable instructions an agent can call. Manage them app-wide in [Memory → Skills](/memory/#skills) (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
 
 | Kind | Description |
 |------|-------------|
@@ -168,6 +169,6 @@ AgentMux writes skills into the agent's working directory as Claude Code slash c
 ## Next Steps
 
 - [Auth flows](/auth/): sign-in and credential storage per provider
-- [Bundles](/memory/): the full bundle reference
+- [Bundles](/bundles/): the full bundle reference
 - [Pane Types](/pane-types/): all pane types, including agent panes
 - [Configuration](/config/): global and per-agent settings

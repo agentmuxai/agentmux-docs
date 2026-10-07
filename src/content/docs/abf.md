@@ -4,7 +4,7 @@ description: A portable, versioned unit for an agent's instructions, skills, MCP
 ---
 
 :::caution[Beta specification]
-ABF is a **v0.3 beta spec** — the manifest and requirements schemas below may still change before 1.0. AgentMux's own exporter and importer have shipped ([Knowledge → Bundles](/knowledge/#bundles): export any bundle as a single `.abf` file, import one with a selective, collision-aware review step); OCI registry distribution (push and pull) has not been built yet. Since 2026-08-15, binding a bundle to an agent is no longer optional — see [every agent gets its own ABF](#every-agent-gets-its-own-abf) — and since 2026-08-18 a bundle can also carry its own MCP Server and Skill references — see [bundle-as-container v2](#bundle-as-container-v2-mcp-servers-and-skills-at-the-bundle-level). See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
+ABF is a **v0.3 beta spec** — the manifest and requirements schemas below may still change before 1.0. AgentMux's own exporter and importer have shipped ([Memory → Bundles](/memory/#bundles): export any bundle as a single `.abf` file, import one with a selective, collision-aware review step); OCI registry distribution (push and pull) has not been built yet. Since 2026-08-15, binding a bundle to an agent is no longer optional — see [every agent gets its own ABF](#every-agent-gets-its-own-abf) — and since 2026-08-18 a bundle can also carry its own MCP Server and Skill references — see [bundle-as-container v2](#bundle-as-container-v2-mcp-servers-and-skills-at-the-bundle-level). See the [rollout plan](#rollout-plan) for what's built vs. planned, and [report feedback](https://github.com/agentmuxai/agentmux/issues).
 :::
 
 :::note[The name]
@@ -144,7 +144,7 @@ Shipped 2026-08-15 (v0.55.9). Binding a bundle to an agent is no longer optional
 - **Harness and model vendor moved onto the bundle itself, readonly once set** (reversed with [v0.3](#abf-v03-agent-bundle-format): the agent owns its harness again, and the bundle's values are a hint). The fields freed up by v0.2's naming fix — top-level `provider` (the harness, e.g. `claude`) and `model` (the resolved vendor, e.g. `anthropic`, or `custom` for a non-default base URL) — are now populated on every bundle and locked after creation, enforced on the backend (not just the bundle editor's UI) so no RPC caller can drift a bundle's harness out from under an agent that depends on it. This is what makes an ABF the actual portable unit: exporting one now carries not just instructions/skills/MCP servers/memory but which harness and vendor it needs, so an importing instance can tell upfront whether it can run the bundle at all.
 - **Full export/import support** carries the new `provider`/`model` fields through the existing `.abf` round trip.
 
-This is a default, not a hard restriction — you can still deliberately bind an existing bundle to more than one agent if you want shared instructions. Deleting an agent orphans its bundle rather than deleting it, so an exported or intentionally-reused bundle survives; the Knowledge → Bundles list shows an "owned by `<agent>`" indicator on agent-provisioned bundles instead of hiding them.
+This is a default, not a hard restriction — you can still deliberately bind an existing bundle to more than one agent if you want shared instructions. Deleting an agent orphans its bundle rather than deleting it, so an exported or intentionally-reused bundle survives; the Memory → Bundles list shows an "owned by `<agent>`" indicator on agent-provisioned bundles instead of hiding them.
 
 ## Bundle-as-container v2: MCP Servers and Skills at the bundle level
 
@@ -165,7 +165,7 @@ Ordered so every phase is independently shippable and none blocks the others.
 | **Phase 0** | Align skills with Agent Skills — add SKILL.md support to `db_skills`, materialize agent-skill-format entries as `.claude/skills/<name>/SKILL.md` at launch alongside the existing slash-command path. | Shipped |
 | **Phase 1** | Exporter — the `bundle.export` RPC, serializing a bundle + referenced skills/MCP servers into the on-disk ABF layout (`bundle_export.rs`). Pure read-side, zero schema risk. | Shipped |
 | **Phase 2** | Importer + validation — JSON Schema validation of the manifest, Agent Skills/`server.json` reference validation, account-requirement resolution against the local account store. | Shipped |
-| **Phase 3** | Bundles UI — export/import buttons in the Bundles list (now [Knowledge → Bundles](/knowledge/#bundles)), with an import-review sheet showing exactly what will be created before anything is. | Shipped |
+| **Phase 3** | Bundles UI — export/import buttons in the Bundles list (now [Memory → Bundles](/memory/#bundles)), with an import-review sheet showing exactly what will be created before anything is. | Shipped |
 | **Phase 4** | OCI distribution — push and pull against any OCI registry, following the Dev Container Features packaging blueprint. Private registries (Harbor, Artifactory, GHCR) work day one. | Planned |
 | **Phase 5** | Registry + spec publication — publish the manifest and `requirements.json` schemas at stable, versioned URLs, open a metadata-only bundle index. This page and its schemas are that publication. | Shipped |
 | **Phase 6** | ABF v0.2 — `credentialProvider` rename, harness-scoped `components.instructions`, `components.memory` (agent-scoped export/import). Storage/authoring/export/import shipped; launch-time consumption of a non-default instructions variant is not yet wired. | Shipped (partial — see [ABF v0.2](#abf-v02-provider-aware-components-and-native-memory)) |
@@ -176,9 +176,9 @@ Ordered so every phase is independently shippable and none blocks the others.
 
 ## See also
 
-- [Knowledge](/knowledge/) — where bundles, skills and memory are managed
+- [Memory](/memory/) — where bundles, skills and memory are managed
 - [Connectors](/connectors/) — the accounts and MCP servers a bundle can use
-- [Bundles](/memory/) — the Bundle reference
+- [Bundles](/bundles/) — the Bundle reference
 - [Full research report](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/REPORT_ARMORY_BUNDLE_STANDARD_RESEARCH_2026_07_16.md) — four research passes, landscape analysis, and the original proposal this page is based on
 - [ABF v0.3 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_AGENT_BUNDLE_FORMAT_V0_3_2026_10_05.md) — Agent Bundle Format v0.3, and binding bundles to any agent
 - [ABF v0.2 spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_ABF_V0_2_PROVIDER_AWARE_COMPONENTS_AND_NATIVE_MEMORY_2026_08_10.md) — provider-aware components and native memory design

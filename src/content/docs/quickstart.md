@@ -28,7 +28,7 @@ AgentMux opens a starter layout of three panes:
 
 Around the panes:
 
-- **Title bar**: tabs, the widget bar (pinned **Agent**, **Connectors**, **Knowledge**, **Swarm**, **Hangar**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, with the rest under **more**), and the hamburger menu (**≡**).
+- **Title bar**: tabs, the widget bar (pinned **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, with the rest under **more**), and the hamburger menu (**≡**).
 - **Status bar** (bottom): backend status, CPU, GPU, memory, disk and network stats, token usage, and the AgentMux version. Click the version for instance details.
 
 ## 3. Create your first agent
@@ -36,7 +36,7 @@ Around the panes:
 In the Agent pane, under **New Agent**, click a harness card, for example **Claude**. Each card is a harness, the CLI that runs the agent.
 
 1. **Install the CLI.** If the harness's CLI isn't installed yet, an install dialog opens. Click **Install now**, then **Continue to Launch**. It needs an internet connection, and Node.js and npm (Claude Code also needs Git). If they're missing, AgentMux lists them with an install option; click **Refresh** once they're installed.
-2. **Fill in Create new agent.** Keep the suggested **Name**. For **Runtime**, choose **On this computer (host)**; the Claude template preselects the container runtime when Docker is running. If you have no account yet, leave **Identity** on **(ambient credentials)**. Set **Memory** to **(vanilla CLI)**; if you have any bundles, the first one is preselected. Click **Create**.
+2. **Fill in Create new agent.** Keep the suggested **Name**. For **Runtime**, choose **On this computer (host)**; the Claude template preselects the container runtime when Docker is running. Leave **Bundles** empty for now. There's no account field: the agent takes your first Claude account, or signs in when it starts if you have none. Click **Create**.
 3. **Sign in.** Claude Code only starts with an account bound to the agent. Without one, the pane shows **Not signed in** or **No account linked**. Click **Log in** and finish the login in your browser. For Claude Code, paste the authorization code back into the pane if it asks for one. AgentMux saves the login as an account in [Connectors → Accounts](/connectors/#accounts) and binds it to the agent. See [Auth flows](/auth/).
 
 The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead. Type `/quit` (or `/exit`) to end the agent and close its tab; the conversation is kept.
@@ -60,7 +60,7 @@ Each agent is independent. Agents don't share context unless they message each o
 
 ## 5. Add instructions with a bundle (optional)
 
-A bundle is a reusable set of instructions, MCP servers, memory and skills. Create one from **Knowledge → Bundles → + New Bundle** (click **Knowledge** in the widget bar). Enter a **Name**, add **Instructions**, then click **Save**. A bundle works with any agent, whatever harness it runs. Choose the bundle as **Memory** when you create an agent. See [Bundles](/memory/).
+A bundle is a reusable set of instructions, MCP servers, memory and skills. Create one from **Memory → Bundles → + New Bundle** (click **Memory** in the widget bar). Enter a **Name**, add **Instructions**, then click **Save**. A bundle works with any agent, whatever harness it runs. Add it under **Bundles** when you create an agent, or later from the agent's **Stash → Bundles**. See [Bundles](/bundles/).
 
 ## Next Steps
 
