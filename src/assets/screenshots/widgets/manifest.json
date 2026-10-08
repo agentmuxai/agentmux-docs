@@ -360,7 +360,7 @@
     {
       "id": "widget-sysinfo",
       "title": "Sysinfo",
-      "description": "Live CPU and memory graphs for this computer.",
+      "description": "Live CPU, memory and network graphs for this computer.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -376,7 +376,7 @@
     {
       "id": "widget-sysinfo",
       "title": "Sysinfo",
-      "description": "Live CPU and memory graphs for this computer.",
+      "description": "Live CPU, memory and network graphs for this computer.",
       "size": "small",
       "viewport": {
         "width": 800,
