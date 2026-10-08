@@ -169,7 +169,7 @@ single source of truth; downstream binaries must not recompute paths.
 |-----------|-------|
 | **Who sets it** | Launcher, via `DataPaths::to_env_vars()` (`data_paths.rs:270`) |
 | **Who reads it** | srv, host via `DataPaths::from_env()` |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable` |
 | **Purpose** | Channel root; config and agents directories hang directly off this |
 
 ---
@@ -180,7 +180,7 @@ single source of truth; downstream binaries must not recompute paths.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:271`) |
 | **Who reads it** | srv for SQLite database location (`objects.db`, `sagas.db`); `DataPaths::from_env()` |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable\versions\0.44.1\data` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\data` |
 
 **Legacy alias:** srv also publishes `AGENTMUX_DATA_HOME` for any
 code path that pre-dates the unification (`srv/main.rs:292`). New code
@@ -194,7 +194,7 @@ should read `AGENTMUX_DATA_DIR`.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:272`) |
 | **Who reads it** | `config_watcher_fs.rs:32` for `settings.json` and related config files; `app_api.rs:276` for agent working dirs |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable\config` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\config` |
 
 **Legacy alias:** `AGENTMUX_CONFIG_HOME` (`base.rs:16`). Same caveats as
 DATA_DIR/DATA_HOME above.
@@ -207,7 +207,7 @@ DATA_DIR/DATA_HOME above.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:273`); also injected into PTY child environment by srv shell controller (`shell.rs`) with a hardcoded `~/.agentmux/logs` path |
 | **Who reads it** | Shell integration `muxlog` helper (`bash.sh:90-118`, `pwsh.ps1:63-79`); `memory_heartbeat.rs:81`; any process in a pane that wants to locate logs |
-| **Example** | `/home/alice/.agentmux/logs` or `C:\Users\asafe\.agentmux\logs` |
+| **Example** | `/home/alice/.agentmux/logs` or `C:\Users\<name>\.agentmux\logs` |
 
 **Note on dual injection:** The launcher sets the canonical per-channel
 log dir; the shell controller re-injects the value into PTY children using
@@ -229,7 +229,7 @@ processes cannot see virtualised MSIX writes at their literal path.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:274`) |
 | **Who reads it** | CEF host for Chromium profile / cache directory |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable\versions\0.44.1\cef-cache` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\cef-cache` |
 
 Regenerable; can be deleted without data loss.
 
@@ -241,7 +241,7 @@ Regenerable; can be deleted without data loss.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:275`) |
 | **Who reads it** | srv agent definition storage; channel-wide (does not include the version segment) |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable\agents` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\agents` |
 
 ---
 
@@ -251,7 +251,7 @@ Regenerable; can be deleted without data loss.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:276-279`) |
 | **Who reads it** | srv and launcher for single-instance lock files, IPC port file, named-pipe path |
-| **Example** | `C:\Users\asafe\.agentmux\channels\stable\versions\0.44.1\runtime` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\runtime` |
 
 ---
 
@@ -261,7 +261,7 @@ Regenerable; can be deleted without data loss.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:280`) |
 | **Who reads it** | Identity/OAuth code; provider auth dirs live here so credentials persist across channel/version upgrades |
-| **Example** | `C:\Users\asafe\.agentmux\shared` |
+| **Example** | `C:\Users\<name>\.agentmux\shared` |
 
 Channel-independent and version-independent. The fix for the
 per-channel OAuth re-authentication regression (each channel had an
@@ -277,7 +277,7 @@ channel). Provider credential directories now always live under
 |-----------|-------|
 | **Who sets it** | Launcher (Windows only, `launcher/main.rs:332`) to the `runtime/` directory containing the host binary |
 | **Who reads it** | CEF host for asset resolution (`commands/window/creation.rs:139`): `index.html`, frontend bundle |
-| **Example** | `C:\Users\asafe\Desktop\agentmux-portable\runtime` |
+| **Example** | `C:\Users\<name>\Desktop\agentmux-portable\runtime` |
 
 **Purpose:** Shields against a Windows bug where `GetModuleFileName`
 returns the load-time path even after the directory is renamed or unlinked.
@@ -585,7 +585,7 @@ Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's ow
 |-----------|-------|
 | **Who sets it** | Launcher (`srv_spawner.rs:141`), host `sidecar.rs:217`; re-set in srv process env at startup (`srv/main.rs:298`) |
 | **Who reads it** | srv `base.rs:18` (`WAVE_APP_PATH_ENV`); used to locate bundled tool binaries (`jq.exe`, `rg.exe`, etc.) alongside the launcher |
-| **Example** | `C:\Users\asafe\Desktop\agentmux-portable` |
+| **Example** | `C:\Users\<name>\Desktop\agentmux-portable` |
 
 ---
 
