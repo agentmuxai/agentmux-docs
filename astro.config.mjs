@@ -119,6 +119,7 @@ export default defineConfig({
 							label: 'Features',
 							items: [
 								{ label: 'Pane Types', slug: 'pane-types' },
+								{ label: 'Widget gallery', slug: 'widget-gallery' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
 								{ label: 'Connectors', slug: 'connectors' },
 								{ label: 'Memory', slug: 'memory' },

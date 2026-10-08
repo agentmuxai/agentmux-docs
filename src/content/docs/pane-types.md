@@ -12,6 +12,8 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Remotes and Settings are under **more**. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced) or Knowledge (Memory's earlier name), it shows the new panes in their place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
+To see what each one looks like, see the [widget gallery](/widget-gallery/).
+
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
 | **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. |
