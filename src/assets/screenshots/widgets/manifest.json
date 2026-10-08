@@ -9,22 +9,6 @@
       "id": "widget-agent",
       "title": "Agent",
       "description": "The agent picker: your agents, and the harnesses you can start a new one with.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-agent-large.png",
-      "capturedAt": "2026-10-08T03:57:28.553Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-agent",
-      "title": "Agent",
-      "description": "The agent picker: your agents, and the harnesses you can start a new one with.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -52,22 +36,6 @@
       "capturedAt": "2026-10-08T03:57:25.893Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-connectors",
-      "title": "Connectors",
-      "description": "The Connectors widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-connectors-large.png",
-      "capturedAt": "2026-10-08T04:00:59.069Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-connectors",
@@ -105,22 +73,6 @@
       "id": "widget-drone",
       "title": "Drone",
       "description": "The Drone widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-drone-large.png",
-      "capturedAt": "2026-10-08T03:58:29.112Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-drone",
-      "title": "Drone",
-      "description": "The Drone widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -148,22 +100,6 @@
       "capturedAt": "2026-10-08T03:58:26.357Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-editor",
-      "title": "Editor",
-      "description": "The Editor widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-editor-large.png",
-      "capturedAt": "2026-10-08T04:00:38.594Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-editor",
@@ -201,22 +137,6 @@
       "id": "widget-files",
       "title": "Hangar",
       "description": "The Hangar widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-files-large.png",
-      "capturedAt": "2026-10-08T03:57:53.045Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-files",
-      "title": "Hangar",
-      "description": "The Hangar widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -244,22 +164,6 @@
       "capturedAt": "2026-10-08T03:57:50.328Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-help",
-      "title": "Help",
-      "description": "The Help widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-help-large.png",
-      "capturedAt": "2026-10-08T03:58:41.007Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-help",
@@ -297,22 +201,6 @@
       "id": "widget-media",
       "title": "Media",
       "description": "The Media widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-media-large.png",
-      "capturedAt": "2026-10-08T03:59:01.322Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-media",
-      "title": "Media",
-      "description": "The Media widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -340,22 +228,6 @@
       "capturedAt": "2026-10-08T03:58:58.697Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-memory",
-      "title": "Memory",
-      "description": "The Memory widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-memory-large.png",
-      "capturedAt": "2026-10-08T04:01:09.221Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-memory",
@@ -393,22 +265,6 @@
       "id": "widget-remotes",
       "title": "Remotes",
       "description": "The Remotes widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-remotes-large.png",
-      "capturedAt": "2026-10-08T03:58:03.183Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-remotes",
-      "title": "Remotes",
-      "description": "The Remotes widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -436,22 +292,6 @@
       "capturedAt": "2026-10-08T03:58:00.540Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-settings",
-      "title": "Settings",
-      "description": "The Settings widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-settings-large.png",
-      "capturedAt": "2026-10-08T03:59:31.054Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-settings",
@@ -489,22 +329,6 @@
       "id": "widget-swarm",
       "title": "Swarm",
       "description": "The Swarm widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-swarm-large.png",
-      "capturedAt": "2026-10-08T03:57:38.555Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-swarm",
-      "title": "Swarm",
-      "description": "The Swarm widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -532,22 +356,6 @@
       "capturedAt": "2026-10-08T03:57:35.845Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-sysinfo",
-      "title": "Sysinfo",
-      "description": "Live CPU and memory graphs for this computer.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-sysinfo-large.png",
-      "capturedAt": "2026-10-08T03:58:18.847Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-sysinfo",
@@ -585,22 +393,6 @@
       "id": "widget-terminal",
       "title": "Terminal",
       "description": "The Terminal widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-terminal-large.png",
-      "capturedAt": "2026-10-08T04:00:48.872Z",
-      "width": 1920,
-      "height": 1024
-    },
-    {
-      "id": "widget-terminal",
-      "title": "Terminal",
-      "description": "The Terminal widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -628,22 +420,6 @@
       "capturedAt": "2026-10-08T04:00:46.182Z",
       "width": 800,
       "height": 522
-    },
-    {
-      "id": "widget-warden",
-      "title": "Warden",
-      "description": "The Warden widget, in a pane of its own.",
-      "size": "large",
-      "viewport": {
-        "width": 1920,
-        "height": 1080,
-        "scale": 1
-      },
-      "containsWorkspaceData": false,
-      "file": "widget-warden-large.png",
-      "capturedAt": "2026-10-08T03:58:51.191Z",
-      "width": 1920,
-      "height": 1024
     },
     {
       "id": "widget-warden",
@@ -677,5 +453,6 @@
       "width": 800,
       "height": 522
     }
-  ]
+  ],
+  "state": "fresh: each widget as it first opens in a new install, with no agents, accounts or history"
 }
