@@ -47,7 +47,7 @@ No parameters. Returns what is reachable from here, as JSON (`handle_discovery` 
     ]
   },
   "lan": [
-    { "instance_id": "v0.57.6", "hostname": "lab-pc", "version": "0.57.6", "address": "192.168.1.20",
+    { "instance_id": "v0.57.6", "hostname": "lab-pc", "version": "0.57.6", "address": "192.0.2.10",
       "port": 51873, "auth_key": "…", "agents": ["reviewer"],
       "first_seen": 1758690000, "last_seen": 1758700000, "other_ttl_secs": 4500 }
   ],
