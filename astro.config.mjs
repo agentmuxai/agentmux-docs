@@ -120,9 +120,9 @@ export default defineConfig({
 							items: [
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Widget gallery', slug: 'widget-gallery' },
-{ label: 'Your own widgets', slug: 'widgets' },
-{ label: 'Build a widget', slug: 'build-a-widget' },
-{ label: 'Widget API reference', slug: 'widget-api' },
+								{ label: 'Your own widgets', slug: 'widgets' },
+								{ label: 'Build a widget', slug: 'build-a-widget' },
+								{ label: 'Widget API reference', slug: 'widget-api' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
 								{ label: 'Connectors', slug: 'connectors' },
 								{ label: 'Memory', slug: 'memory' },
