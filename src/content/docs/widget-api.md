@@ -124,7 +124,7 @@ Uninstalling a widget deletes its storage. A change from any pane sends every pa
 
 `am.net.fetch(url, { method, headers, body, timeoutMs })` needs a `net:` permission for the URL's origin. AgentMux makes the request, not the widget's page. That means no cookies, no browser session, and no proxy.
 
-- Every redirect must also be to a granted origin (at most 5 redirects).
+- Every redirect must also be to a granted origin (at most 5 redirects). `Authorization` and `Cookie` headers aren't sent on to another origin.
 - The connection's own headers (`Host`, `Content-Length`, `Connection`, `Transfer-Encoding`, `Proxy-*` and the like) can't be set.
 - `body` is a string, a `Uint8Array` or an `ArrayBuffer`.
 - Request and response bodies are limited to 10 MB each. The timeout defaults to 30 seconds, at most 120.
