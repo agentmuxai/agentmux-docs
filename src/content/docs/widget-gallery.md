@@ -7,7 +7,7 @@ description: "What each AgentMux widget looks like when it first opens."
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-Each widget as it looks the first time it opens in a new install: a pane of its own in an 800×600 window, with no agents, accounts, history or content yet. They show what each widget is and where things are; widgets in daily use are fuller. For what each one does, see [Pane Types](/pane-types/).
+Each widget as it looks the first time it opens in a new install: a pane of its own in an 800×600 window, with no agents, accounts, history or content yet. They show what each widget is and where things are; widgets in daily use are fuller. For what each one does, see [Pane Types](/pane-types/). To add widgets of your own, see [Your own widgets](/widgets/).
 
 ## Agent
 
