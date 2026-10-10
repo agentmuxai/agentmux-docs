@@ -138,7 +138,7 @@ The widget's page itself can't make network requests: `fetch` and the like are b
 | Method | Permission | |
 |---|---|---|
 | `am.files.pick({ accept?, multiple? })` | `files` | Opens the file dialog. Resolves to the chosen files' `{ name, type, size, dataBase64, bytes() }`, never their paths, up to 25 MB in all. Rejects `cancelled` if the user cancels. Call it from a click (in the widget or on one of its header actions): a dialog doesn't open otherwise |
-| `am.files.save(name, data, type?)` | `files` | Opens the save dialog with `data` (a string or bytes, up to 25 MB). Resolves `false` if the user cancels |
+| `am.files.save(name, data, type?)` | `files` | Opens the save dialog with `data` (a string or bytes, up to 25 MB). Resolves `false` if the user cancels. Like `pick`, call it from a click |
 | `am.clipboard.writeText(text)` | `clipboard:write` | Up to 1 MB of text |
 
 ### Agents
