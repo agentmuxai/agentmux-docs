@@ -135,7 +135,7 @@ The [widget samples](https://github.com/agentmuxai/agentmux/tree/main/docs/examp
 | `hello-sandboxed` | The smallest widget: the title, the pane's state, a header action, the theme |
 | `react-vite` | The same, built with React and Vite |
 | `notes` | `storage`, plus export and import with `files`, and copy with `clipboard:write` |
-| `pr-dashboard` | `net.fetch` to GitHub's API, polling only while the pane is shown |
+| `pr-dashboard` | `net.fetch` to GitHub's API, polling only while the pane is shown, a palette command and a status bar item |
 | `ask-agent` | Your agents and whether they're working, and a message to one |
 
 ## Let an agent build it
