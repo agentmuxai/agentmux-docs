@@ -73,6 +73,10 @@ Settings → Widgets lists every widget and its state:
 
 From the same list you can **Turn off** a widget or **Turn on** again, **Show folder** to see its files, and **Uninstall** it. **Open widgets folder** shows where they all are. Uninstalling deletes its folder, its approval, and any data it kept (AgentMux asks first).
 
+## Commands and status bar items
+
+A widget can add entries to the command palette (under **Widgets**) and small items to the status bar. They come with the widget and leave when you turn it off or uninstall it. A widget's status bar item always names the widget in its tooltip; running one of its commands, or clicking its item, opens or focuses the widget's pane.
+
 ## Widgets from widgets.json
 
 A widget added with a `module` entry in `widgets.json`, the way it was done before widget packages, is listed as a trusted widget and asks for approval like any other. It keeps working as it did once you approve it.

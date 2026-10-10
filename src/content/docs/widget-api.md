@@ -30,7 +30,9 @@ A widget is a folder named for its id, holding `widget.json` and the widget's fi
   "entry": "index.html",
   "permissions": ["storage", "net:https://api.github.com"],
   "contributes": {
-    "panes": [{ "name": "main", "label": "PRs", "icon": "code-pull-request", "entry": "index.html" }]
+    "panes": [{ "name": "main", "label": "PRs", "icon": "code-pull-request", "entry": "index.html" }],
+    "commands": [{ "id": "refresh", "title": "Refresh pull requests", "icon": "rotate-right" }],
+    "statusItems": [{ "id": "count", "text": "PRs", "icon": "code-pull-request", "command": "refresh" }]
   }
 }
 ```
@@ -49,6 +51,8 @@ A widget is a folder named for its id, holding `widget.json` and the widget's fi
 | `entry` | no | The page a pane loads when it names none: `index.html` by default. |
 | `permissions` | no | What it asks for (below). An unknown permission makes the package invalid. |
 | `contributes.panes` | yes | At least one. Each: `name` (lowercase letters, digits and `-`), `label`, and optionally `icon`, `entry`, and `defaultMeta` (a new pane's initial state, keys written `widget:<id>:<key>`). |
+| `contributes.commands` | no | Up to 20 entries in the command palette (see Commands and status bar items). Each: `id` (lowercase letters, digits and `-`), `title` (at most 60 characters), and optionally `icon`, `pane` (the pane it runs in, by `name`; the first one by default) and `keywords` (more words the palette's search matches). |
+| `contributes.statusItems` | no | Up to 4 items in the status bar. Each: `id`, `text` (at most 40 characters), and optionally `icon`, `tooltip` (at most 120 characters), `command` (one of the widget's command ids, run on a click; without one, a click shows the widget's first pane) and `alignment` (`right`, the default, or `left`). |
 
 Each pane is a view named `ext:<id>/<name>`, for example `ext:acme.pr-dashboard/main`, and an entry in the widget bar's **more** menu.
 
@@ -104,6 +108,7 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 | `am.ui.setContextMenu(items)` | | Up to 20 items in the pane's menu, `{ id, label, disabled? }` or `{ separator: true }`; a click is the `action` event |
 | `am.ui.toast(text, kind?)` | | A notification under the widget's name; `kind` is `info`, `success`, `warning` or `error` |
 | `am.ui.openUrl(url)` | | Opens an `http`/`https` link in a browser pane next to the widget |
+| `am.ui.setStatusItem(id, look?)` | | Changes how one of the widget's status bar items looks while this pane is open: `{ text, icon, tooltip, tone, hidden }`, where `tone` is `info`, `success`, `warning` or `error`. Fields left out show the `widget.json` look; no `look` puts it back. An id `widget.json` doesn't declare is `not_found` |
 | `am.theme.get()` | | The current theme |
 | `am.panes.open(view, meta?, split?)` | `panes`, except for the widget's own views | Opens a pane; `split` is `right` (default), `down` or `tab` |
 
@@ -159,6 +164,7 @@ The widget's page itself can't make network requests: `fetch` and the like are b
 | `theme` | the theme | The user changes the theme or the pane's color |
 | `meta` | `{ meta }` | The pane's state changed from outside the widget (another window, an undo) |
 | `action` | `{ id, source }`: `header` or `menu` | The user clicked one of its header actions or menu items |
+| `command` | `{ id, source }`: `palette` or `status` | The user ran one of its commands from the palette, or clicked a status item that runs one |
 | `storage` | `{ keys }` | The widget's storage changed, from any of its panes in any window |
 | `dispose` | `{}` | The pane is closing or the widget reloading; the connection closes a second later |
 
@@ -168,6 +174,28 @@ A hidden pane keeps running, so pause timers and polling while it's dormant:
 import { useVisibility } from "/agentmux/widget-sdk/v1.js";
 useVisibility(am, { onActive: startPolling, onDormant: stopPolling });
 ```
+
+## Commands and status bar items
+
+A widget can add entries to the command palette and items to the status bar, declared in `widget.json` (above). They need no permission, and they're there only while the widget is installed and turned on. An older AgentMux ignores them.
+
+A command shows in the palette under **Widgets** as "PR Dashboard: Refresh pull requests". Running it focuses the widget's pane in the current tab, or opens one, and sends that pane the `command` event:
+
+```js
+am.on("command", ({ id }) => {
+  if (id === "refresh") refresh();
+});
+```
+
+A pane opened for the command gets it right after it connects, even if the widget subscribes a moment later. Commands run only when you click them: they can't be bound to keys, and agents can't run them.
+
+A status bar item shows its `widget.json` text and icon until one of the widget's panes changes it, and again once that pane closes. Its tooltip always starts with the widget's name, so it can't pass for one of AgentMux's own items:
+
+```js
+await am.ui.setStatusItem("count", { text: `${prs.length} PRs`, tone: prs.length > 20 ? "warning" : undefined });
+```
+
+A widget runs only while one of its panes is open, so an item it updates shows live values only then.
 
 ## The theme
 

@@ -57,6 +57,10 @@ A widget with `agents:send` can message your agents. Each message is marked as s
 
 Even so, an agent acts on what it's told. Approve `agents:send` only for a widget you trust; the prompt says so.
 
+## Commands and status bar items
+
+A widget's palette commands and status bar items are declared in its `widget.json`, so you approve them with the widget. A running widget can change how its own items look, never add one or touch AgentMux's. Its items always show the widget's name in their tooltip, and only Font Awesome icons. Its commands run only when you click them: they can't be bound to keys, so an agent can't run one through AgentMux's shortcut commands.
+
 ## What this doesn't protect against
 
 - **A trusted widget.** It runs as part of AgentMux, with everything AgentMux can do. The sandbox doesn't apply to it.
