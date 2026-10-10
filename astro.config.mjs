@@ -120,6 +120,9 @@ export default defineConfig({
 							items: [
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Widget gallery', slug: 'widget-gallery' },
+{ label: 'Your own widgets', slug: 'widgets' },
+{ label: 'Build a widget', slug: 'build-a-widget' },
+{ label: 'Widget API reference', slug: 'widget-api' },
 								{ label: 'Browser pane', slug: 'browser-pane' },
 								{ label: 'Connectors', slug: 'connectors' },
 								{ label: 'Memory', slug: 'memory' },
@@ -160,6 +163,7 @@ export default defineConfig({
 						{ label: 'Data sovereignty', slug: 'security/data-sovereignty' },
 						{ label: 'Identity & credential storage', slug: 'security/identity-credential-storage' },
 						{ label: 'Network exposure', slug: 'security/network-exposure' },
+						{ label: 'Widget security', slug: 'security/widgets' },
 						{ label: 'Reactive event bus', slug: 'security/reactive-event-bus' },
 						{ label: 'Update model', slug: 'security/update-model' },
 					],
