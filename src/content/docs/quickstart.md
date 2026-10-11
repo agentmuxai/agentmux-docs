@@ -22,6 +22,8 @@ See [Installation](/installation/) for the steps on each platform.
 
 AgentMux opens a starter layout of three panes:
 
+![AgentMux on first launch: the Agent picker on the left, CPU and Swarm on the right](../../assets/screenshots/chrome/chrome-window.png)
+
 - **Agent** (left): the agent picker.
 - **Sysinfo** (top right): live system metrics. Right-click it to choose what it plots.
 - **Swarm** (bottom right): a live tree of your agent panes, with their subagents, todos and running tools.
@@ -30,6 +32,8 @@ Around the panes:
 
 - **Title bar**: tabs, the widget bar (pinned **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, with the rest under **more**), and the hamburger menu (**≡**).
 - **Status bar** (bottom): backend status, CPU, GPU, memory, disk and network stats, token usage, and the AgentMux version. Click the version for instance details.
+
+See [The window](/window/) for each part of the window and the panels the status bar opens.
 
 ## 3. Create your first agent
 

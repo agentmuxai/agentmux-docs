@@ -12,6 +12,8 @@ AgentMux groups global actions into two surfaces:
 
 Click the three-line icon at the start of the tab bar. Items, top to bottom:
 
+![The hamburger menu open: New Tab, New Window, Theme, Opacity, Layouts, Settings, Command Palette, Connectors, Memory, Toolchain, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
+
 | Item | Shortcut | What it does |
 |------|---------|--------------|
 | **New Tab** | `Ctrl+Shift+T` / `⌘T` | Adds a new tab to the current window. |
@@ -19,7 +21,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Theme** | — | Submenu listing the available color themes. Selection persists via `window:theme` in `settings.json`. |
 | **Opacity** | — | Submenu of preset levels (35% – 100%). Below 100%, the window becomes translucent. Per-window override is in the [InstancePanel](/window-appearance/). |
 | **Layouts** | — | Submenu. **Save layout…** saves this window's tabs and pane layout to a `.agentmux-layout.json` file (the Save dialog starts in `~/.agentmux/shared/layouts/`); if anything in it is worth checking before you share the file, a notice lists it. **Open layout…** picks a layout file and shows a preview first: its tabs and panes, anything that can't be reproduced exactly here, and any terminal commands it would run, with **Run these commands** (ticked only for a file this AgentMux saved in its layouts folder). Choose **In a new window** (the default) or **Add to this window**; adding never replaces what's open. |
-| **Settings** | — | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
+| **Settings** | `Ctrl+,` / `⌘,` | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
 | **Connectors** | — | Opens the Connectors pane — Accounts, MCP servers and Remotes — or focuses the one already open in the tab. See [Connectors](/connectors/). |
 | **Memory** | — | Opens the Memory pane — Global, Personal, Skills and Bundles — or focuses the one already open in the tab. See [Memory](/memory/). |
@@ -28,7 +30,11 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window (not the whole app — other windows stay open). |
 
-The Theme and Opacity submenus check-mark the currently active value, so you can see at a glance what you're on.
+The Theme and Opacity submenus check-mark the currently active value, so you can see at a glance what you're on. A submenu opens when you hover its row.
+
+![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-hamburger-theme.png)
+
+![The Layouts submenu: Save layout… and Open layout…](../../assets/screenshots/chrome/chrome-hamburger-layouts.png)
 
 ## Restoring your workspace on relaunch
 
@@ -38,19 +44,25 @@ This is on by default, and as of this writing there's no in-app toggle to turn i
 
 ## Command palette (Ctrl+Shift+P / ⇧⌘P)
 
-Press `Ctrl+Shift+P` (Windows/Linux) or `⇧⌘P` (macOS) from anywhere to open the palette; `Ctrl+P` / `⌘P` also work outside a terminal, where `Ctrl+P` is the shell's history key. Each command shows its shortcut. Type to filter, arrow keys to navigate, Enter to run.
+Press `Ctrl+Shift+P` (Windows/Linux) or `⇧⌘P` (macOS) from anywhere to open the palette; `Ctrl+P` / `⌘P` also work outside a terminal, where `Ctrl+P` is the shell's history key. Each command shows its category and shortcut. Type to filter, arrow keys to navigate, Enter to run.
+
+![The command palette before typing: a search box and the list of commands, each with its category and shortcut](../../assets/screenshots/chrome/chrome-command-palette.png)
+
+![The command palette filtered by "split": Split Down, Split Left, Split Right and Split Up](../../assets/screenshots/chrome/chrome-command-palette-filtered.png)
 
 Registered commands are grouped by category:
 
 | Category | Commands |
 |----------|----------|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Help, Open Swarm |
+| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Hangar (Files), Open Remotes |
 | **Split** | Split Right, Split Left, Split Down, Split Up |
 | **Window** | New Window, Close Window, Minimize Window, Toggle Maximize |
 | **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
 | **Pane** | Close Pane, Toggle Magnify, Focus Pane Right / Left / Up / Down |
 | **Dev** | Toggle DevTools, Restart Backend, Open Settings File |
+| **View** | Command Palette, Zoom In, Zoom Out, Actual Size |
 | **App** | Connectors, Memory |
+| **Help** | Online Docs |
 
 Searching for "accounts" or "mcp" also finds **Connectors**, and "knowledge", "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
 

@@ -29,10 +29,12 @@ To find the version, click the version number (for example `v0.59.0`) at the rig
 | **Channel** | The release channel (`stable` for release builds) |
 | **Commit** | The short git commit the build was made from |
 | **CEF** | The version of the Chromium Embedded Framework (CEF) the build uses |
-| **Build Time** | When the build was made |
 | **Runtime** | Platform and architecture |
+| **Build Time** | When the build was made |
 
 **Version**, **Channel**, **Commit** and **CEF** each have a copy button. Include them in your report.
+
+![The instance panel: Version, Channel, Commit, CEF, Runtime and Build Time at the top, each of the first four with a copy button](../../assets/screenshots/chrome/chrome-status-instance.png)
 
 Logs are in `~/.agentmux/channels/<channel>/versions/<version>/logs/` (on Windows, under `%USERPROFILE%\.agentmux\`). Release builds use the `stable` channel. To open the folder, click the host name just left of the version in the status bar: the **Data** row of the panel shows this version's data folder (`…/versions/<version>/data`), and clicking the path opens it in your file manager. The `logs` folder is next to it. On Linux and macOS the `~/.agentmux` folder is readable only by your user account (mode 0700). Logs can include file paths and other details about your machine, so review them before attaching.
 
