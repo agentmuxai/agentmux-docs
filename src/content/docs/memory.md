@@ -100,13 +100,11 @@ The older `db_agent_native_memory` mirror is still written through on list, read
 
 ## Skills
 
-The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content.
+The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
 
 ![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
 
 ![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
-
- An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
 
 ## Bundles
 
