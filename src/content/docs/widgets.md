@@ -64,6 +64,12 @@ Installed widgets live in `~/.agentmux/widgets/`, one folder each. Every AgentMu
 
 Once approved, the widget appears in the widget bar's **more** menu and in any pane's **+** menu. Pin it to the bar from there.
 
+## From the catalog
+
+**Settings → Widgets → Browse the catalog** lists the widgets in the [AgentMux widget catalog](https://github.com/agentmuxai/widgets): sandboxed widgets, each signed by its publisher and reviewed before it's listed. Each shows its version, author, the key it was signed with, and what it may do, with **Install**, or **Update** when you have an older version.
+
+Installing one copies it in, and its approval prompt opens at once, with a line saying it's exactly what the catalog lists. It runs only once you approve it, like any widget: the catalog is a second check, never an approval. AgentMux checks the catalog's own signature, downloads only from the catalog's site, and checks each widget's files and its author's signature against the catalog before it asks you.
+
 ## From a bundle
 
 An [agent bundle](/abf/#widgets-in-a-bundle) can carry the sandboxed widgets its agents use. Importing it lists them with who signed each and what it may do; each one you keep asks for your approval, as "The bundle "…" wants to install …". A bundle never approves a widget for you.

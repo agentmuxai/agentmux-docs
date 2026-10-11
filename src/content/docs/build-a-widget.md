@@ -133,6 +133,16 @@ npx -p @agentmuxai/widget-sdk agentmux-widget verify ./acme.notes
 - `sign` writes `widget.sig` next to `widget.json`. It covers every other file, so sign last: AgentMux refuses a widget edited after it was signed.
 - Publish your fingerprint (in your README, on your site) so users can check it.
 
+## Put it in the catalog
+
+To list a sandboxed widget in the [AgentMux widget catalog](https://github.com/agentmuxai/widgets), where anyone can install it from Settings, open a pull request there:
+
+1. Sign it (above).
+2. Add its folder as `widgets/<id>/`, named as its id, with `widget.sig` in it.
+3. The first time, add your publisher name and public key (`publicKey` from your key file) to `publishers.json`.
+
+The catalog's CI checks the manifest, that the widget is sandboxed and signed by the key `publishers.json` lists for you, the size limits, and that it loads no script or stylesheet from another site. A maintainer reads it before it's merged. To update it later, bump its `version`, sign it again, and open another pull request.
+
 ## The rules
 
 - A widget loads code only from its own folder. Bundle or copy any library into it; scripts and styles from a CDN are blocked.

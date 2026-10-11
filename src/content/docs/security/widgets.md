@@ -27,6 +27,12 @@ A widget is code someone else may have written, running in your AgentMux. This p
 - Forgetting a publisher's key goes through AgentMux's own window, like an approval: the server's auth key can't do it.
 - A signature names a key, not a person, and says nothing about what the code does. It doesn't widen a sandboxed widget's permissions or narrow a trusted widget's access.
 
+## The catalog
+
+- The catalog's list is signed with a key whose public half is built into AgentMux. A list from anywhere else, or changed after signing, isn't read.
+- AgentMux downloads a widget only from the catalog's own site, follows no redirects, and stops a download at the size limit.
+- Before copying a widget in, it checks the download's hash, the widget's files, that it's sandboxed, and that the author's signature is from the key the catalog lists. Then the widget asks for your approval, like any other: the catalog can't approve one.
+
 ## The sandbox
 
 A sandboxed widget's page runs in a frame with an opaque origin, isolated from the AgentMux window around it:
