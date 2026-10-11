@@ -8,6 +8,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 Complete reference for all AgentMux settings. Settings are stored in `settings.json` and edited directly in your default editor.
 
+![The Settings widget when it first opens, on Appearance](../../assets/screenshots/widgets/widget-settings-small.png)
+
 ## Opening Settings
 
 Settings is now a real **pane view** with its own UI sections (Appearance / Terminal / Agent / Sounds / Network / Files / Advanced) — it's registered as `defwidget@settings` in the widget bar (unpinned by default, reachable from the widget bar's overflow) and also reachable from the **hamburger menu**:
@@ -20,7 +22,7 @@ Editing `settings.json` directly still works and is reflected in the pane — us
 
 The hamburger menu also includes inline submenus for the most-changed preferences so you don't have to touch the file directly:
 
-- **Theme** ▸ Pick from `Default`, `Midnight`, `High Contrast`, `Monokai`, `Nord`, `Dracula`, `Tokyo Night`, `Catppuccin`, or `Gruvbox`. Selection persists across restart (writes `window:theme`).
+- **Theme** ▸ Pick a dark theme (`Default`, `Midnight`, `High Contrast`, `Monokai`, `Nord`, `Dracula`, `Catppuccin`, `Tokyo Night`, `Gruvbox`) or a light one (`Light`, `Catppuccin Latte`, `Solarized Light`, `Gruvbox Light`). Selection persists across restart (writes `window:theme`).
 - **Opacity** ▸ Global window translucency from 100% down to 35% in 5% steps (writes `window:opacity` + `window:transparent`). For per-window control, use the InstancePanel slider — click the version chip in the status bar. See [Window appearance](/window-appearance/).
 
 Under `Midnight` specifically, the agent pane background is pure black; other panes use the theme's deep-navy `--main-bg-color`.
@@ -60,7 +62,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `window:theme` | string | `"default"` | UI color theme. One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `tokyo-night`, `catppuccin`, `gruvbox`. Easier to switch from the hamburger menu's `Theme` submenu. |
+| `window:theme` | string | `"default"` | UI color theme. One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `catppuccin`, `tokyo-night`, `gruvbox`, or the light themes `light`, `catppuccin-latte`, `solarized-light`, `gruvbox-light`. Easier to switch from the hamburger menu's `Theme` submenu. |
 | `window:transparent` | boolean | `false` | Enable window transparency |
 | `window:blur` | boolean | `false` | Blur background (macOS only) |
 | `window:opacity` | number | `1.0` | Window opacity (0.0–1.0). The hamburger menu's `Opacity` submenu (global) and the InstancePanel per-window slider both clamp to 0.35–1.0; direct edits to `settings.json` accept any number. Windows only — see [Window appearance](/window-appearance/). |

@@ -49,6 +49,8 @@ The **Stash** icon (`backpack`) replaced the older two-icon pane-header design (
 
 The terminal pane provides authentic terminal emulation powered by xterm.js and portable-pty on the backend.
 
+![The Terminal widget when it first opens](../../assets/screenshots/widgets/widget-terminal-small.png)
+
 Features:
 
 - Real PTY with full ANSI support
@@ -127,6 +129,8 @@ When these two axes disagree, you get the classic "click X, type, characters lan
 ## Editor
 
 The editor pane is a [CodeMirror 6](https://codemirror.net/) workspace with a file-tree explorer down the left side. It covers quick edits, file viewing, and diffing inside a pane — it is not a standalone IDE; deep editing happens in your agent's terminal or via agent tool calls.
+
+![The Editor widget when it first opens](../../assets/screenshots/widgets/widget-editor-small.png)
 
 Languages currently get syntax highlighting via lazy-loaded extensions: TypeScript / JavaScript, Python, Rust, HTML, CSS, JSON, Markdown. Other extensions fall back to plain text.
 
@@ -244,6 +248,8 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 
 The Media pane is a live-updating image/video viewer for files an agent (or you) produce on disk — the typical case is watching the output of a local generation pipeline (e.g. a ComfyUI-style image/video workflow) land without leaving AgentMux to open a file explorer.
 
+![The Media widget when it first opens](../../assets/screenshots/widgets/widget-media-small.png)
+
 Point it at either:
 
 - **A single file** — renders that image or video and stays on it.
@@ -260,6 +266,8 @@ Agents have a dedicated `OpenMedia` MCP tool — the Media-pane equivalent of `O
 ## Agent
 
 The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own accounts and bundles, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
+
+![The Agent widget when it first opens: the agent picker](../../assets/screenshots/widgets/widget-agent-small.png)
 
 - **Streaming text** — Agent output in real time
 - **Tool calls** — Name, arguments, and result of each tool invocation
@@ -368,12 +376,13 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
 
-- **Accounts** — a read-only view of the accounts linked to this agent. Renders `AgentIdentityLinksPanel`. New links are made from the agent's launch flow or Connectors → Accounts; see [Identity](/identity/).
+- **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
 - **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
 - **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
 - **Bundles** — the bundles this agent starts with, in order, its own bundle first; saved on each change. Renders `AgentBundlesTab`. See [An agent's bundles](/bundles/#an-agents-bundles).
 - **Registration** — this agent's live message-delivery status: its local registration, any other instance or channel on this host claiming the same identity, and recent deliveries rejected by the identity-mismatch guard.
+- **Devices** — **Hide from paired devices**: a hidden agent is left out of what a paired device (the mobile app) lists and can't be watched from one. Saved as soon as it changes. Renders `AgentDevicesPanel`.
 
 Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). The `view: "identity"` registration exists so `pane.open` RPC and right-click menus can still reach that view, but the primary path is the Stash.
 
@@ -381,9 +390,13 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. The toolbar's **Stats** button opens a panel counting the model requests AgentMux has made on its own (session titles, names, prompt suggestions, narration) since its server started, and how each ended. See [Swarm](/subagent-watcher/).
 
+![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
+
 ## Drone
 
 The Drone pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the widget bar.
+
+![The Drone widget when it first opens](../../assets/screenshots/widgets/widget-drone-small.png)
 
 The name signals the pane's autonomous nature: a drone runs unattended on triggers, distinct from the interactive Agent pane.
 
@@ -421,6 +434,8 @@ The Drone pane is on a Phase 2 roadmap that adds the following — they are **no
 - Run cancellation / abort
 
 ## Sysinfo
+
+![The Sysinfo widget showing CPU, memory and network](../../assets/screenshots/widgets/widget-sysinfo-small.png)
 
 Live system metrics displayed as time-series line plots. Supports multiple plot types:
 

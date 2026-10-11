@@ -83,7 +83,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="skill"></a>**skill** — A reusable instruction an agent can call, as a `/trigger` or a Claude Code skill file. Global skills are in [Memory → Skills](/memory/#skills); an agent can also have private ones, and its bundles add theirs at launch.
 
-<a id="stash"></a>**Stash** — The per-agent drawer behind the `backpack` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles** and **Registration**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
+<a id="stash"></a>**Stash** — The per-agent drawer behind the `backpack` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
 
 **streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 

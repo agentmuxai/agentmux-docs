@@ -49,6 +49,8 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 - **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History** and **Delete**.
 - **New Agent**: one card per harness. Each card is a template.
 
+![The agent picker in a new install: New Agent cards, no agents yet](../../assets/screenshots/widgets/widget-agent-small.png)
+
 Clicking a card first runs the install and prerequisite checks above. It then opens **Create new agent from &lt;template&gt;**, which makes a new, independent agent and leaves the template unchanged. Fields, top to bottom:
 
 1. **Name**: defaults to the template's name. Names must be unique among your agents (ignoring case), so give a second agent from the same template a different name.

@@ -9,6 +9,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 **Memory** is the app-wide pane for what agents know and carry: the instructions every agent starts with, what each agent writes in its own memory, skills, and the bundles that package them. Its companion pane, [Connectors](/connectors/), holds what agents connect to outside AgentMux: accounts and MCP servers.
 
+![The Memory widget when it first opens](../../assets/screenshots/widgets/widget-memory-small.png)
+
 Memory is a regular pane (icon: `brain`), opened from the widget bar like any other. It has four sections, as tabs along the top of the pane (`frontend/app/view/memory/memory.tsx`):
 
 | Section | What it manages |
@@ -101,7 +103,7 @@ Bundles are created and edited here only. An agent's **Stash → Bundles** tab p
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
 1. Open any Agent pane → click the **Stash** icon (`backpack`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
+2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
 **Personal Memory**, **Skills** and **Bundles** are the per-agent side of Memory; **Accounts** and **MCP Servers** are the per-agent side of [Connectors](/connectors/#per-agent-the-stash).
 
