@@ -20,6 +20,8 @@ Installing a widget copies it in; it doesn't run yet. AgentMux first shows you w
 - each **permission** it asks for, in plain words (the table below);
 - for a **trusted** widget, instead of permissions, a warning that it runs as part of AgentMux with full access.
 
+![Settings → Widgets: the Notes widget waiting for approval, with its prompt: who made it (not signed), and what it can do](../../assets/screenshots/memory/settings-widget-approval.png)
+
 It runs once you approve it, and only the version you approved. If any of its files change later (an update, an edit), it stops running and asks you again, showing the new version.
 
 Only you can approve a widget, in AgentMux's own window. An agent can install one, but can't approve it; neither can any program that only talks to AgentMux's server.

@@ -69,6 +69,10 @@ Bundles are managed **app-wide only**:
 1. Click **Memory** in the widget bar, or choose **Memory** from the hamburger menu (≡).
 2. Switch to the **Bundles** section.
 
+![A bundle opened: its description, instructions, Edit and Delete, and its skills](../../assets/screenshots/memory/memory-bundle-detail.png)
+
+![Editing a bundle: name, description, the provider it's suggested for, instructions, and instructions for Codex that replace the bundle's own](../../assets/screenshots/memory/memory-bundle-edit.png)
+
 In an agent pane, **Stash** → **Bundles** picks which bundles that agent starts with; it links to **Memory → Bundles** but doesn't edit bundles itself.
 
 :::caution[Bundles are not Personal Memory]

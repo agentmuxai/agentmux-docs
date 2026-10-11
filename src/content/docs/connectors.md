@@ -41,12 +41,18 @@ A pane or layout saved while it was the Armory (the earlier pane that held both 
 
 The Accounts section shows every service AgentMux can connect to. Each entry displays the service logo, connection status, and the active credential type.
 
+![Connectors → Accounts: a tile per service with how many accounts are connected, and the connected accounts grouped by service](../../assets/screenshots/memory/connectors-accounts.png)
+
 ### Connecting a service
 
 Click any service tile to connect or manage credentials:
 
 - **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in a per-account credential dir under `~/.agentmux/shared/identities/<account_id>/<provider>/` (never plaintext via AgentMux). Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
 - **API key providers** — clicking **Connect** opens an inline key entry field. The key is validated against the service before it's saved and stored in the provider's auth-config dir with restricted permissions.
+
+**+ Add** opens the Add Account form instead: a name, the provider and kind, a display name, where the secret is kept (the OS keychain is recommended), and **Validate & Save** or **Save without validating**.
+
+![Add Account: Name, Provider, Kind, Display name, Secret backend and the key, with Validate & Save](../../assets/screenshots/memory/connectors-account-add.png)
 
 See [Auth flows](/auth/) for the full per-provider table and credential storage model.
 
@@ -76,6 +82,10 @@ The catalog of MCP Server primitives available to agents:
 - **Private servers** — created by a specific agent (`mcp.upsert`), visible only to that agent until bound elsewhere.
 
 An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. A [bundle](/bundles/) can also include MCP servers. See [Agent App API](/internals/agent-app-api/#mcp) for the full RPC reference.
+
+![Connectors → MCP servers: the servers AgentMux comes with, how many agents use each, + Browse catalog and + New MCP server](../../assets/screenshots/memory/connectors-mcp.png)
+
+![A new MCP server: its name, transport and JSON config](../../assets/screenshots/memory/connectors-mcp-new.png)
 
 ## Remotes
 
