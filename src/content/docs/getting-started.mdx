@@ -2,6 +2,8 @@
 title: "Getting Started with AgentMux"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
@@ -11,6 +13,8 @@ AgentMux is an **agent operating environment**: a desktop app where AI agents ar
 ## What is AgentMux?
 
 In AgentMux, an agent is not a terminal wrapper. Each one runs in a structured pane with its own identity, optional bundle, streaming parser and lifecycle. AgentMux supports ten harnesses (the CLI tools that run agents): Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). The agent picker has a template for eight of them; Mux Code and Qwen Code don't have one yet. You see each tool call and file edit as it happens.
+
+![An agent at work: the message, the agent's thinking, a file read, its todo list, and two edits shown as diffs](../../assets/screenshots/agent/agent-conversation-start.png)
 
 Agents can also operate the environment itself through AgentMux's own tools: opening panes, renaming tabs, messaging other agents and moving around the workspace.
 
@@ -29,14 +33,22 @@ Agents can also operate the environment itself through AgentMux's own tools: ope
 
 ## Quick Install
 
-- **Windows (x64):** install from the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), or download the installer (`.exe`) or portable build (`.zip`) from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
-- **macOS (Apple Silicon):** download the `.dmg` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
-- **Linux (x86_64):** download the AppImage, `.deb`, `.rpm` or `.tar.gz` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). For the AppImage:
+<Tabs syncKey="os">
+  <TabItem label="Windows">
+    **Windows (x64):** install from the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), or download the installer (`.exe`) or portable build (`.zip`) from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
+  </TabItem>
+  <TabItem label="macOS">
+    **macOS (Apple Silicon):** download the `.dmg` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases).
+  </TabItem>
+  <TabItem label="Linux">
+    **Linux (x86_64):** download the AppImage, `.deb`, `.rpm` or `.tar.gz` from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). For the AppImage:
 
-  ```bash
-  chmod +x AgentMux_*_amd64.AppImage
-  ./AgentMux_*_amd64.AppImage
-  ```
+    ```bash
+    chmod +x AgentMux_*_amd64.AppImage
+    ./AgentMux_*_amd64.AppImage
+    ```
+  </TabItem>
+</Tabs>
 
 ## Next Steps
 

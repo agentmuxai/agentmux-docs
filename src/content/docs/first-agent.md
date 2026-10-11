@@ -178,6 +178,10 @@ Skills are reusable instructions an agent can call. Manage them app-wide in [Mem
 | **Slash command (/trigger)** | A prompt the agent runs when you type its trigger |
 | **Agent Skill (SKILL.md)** | A skill in the SKILL.md format (beta) |
 
+**Memory → Skills** lists the app-wide skills, including the ones AgentMux comes with:
+
+![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
+
 AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
 
 ## Next Steps

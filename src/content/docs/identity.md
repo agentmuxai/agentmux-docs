@@ -23,6 +23,10 @@ An **Account** is a single credential pointer — one provider, one kind, one se
 
 `AccountProvider` is `"github" | "openai" | "aws" | "anthropic" | "google" | "slack" | "custom" | "agentmux"` today, with `custom` covering anything that doesn't fit a named slot. An agent can bind **at most one Account per provider** — a conflict (e.g. trying to bind a second `github` account) is a surfaced validation error at resolve time, not a silent pick.
 
+**Connectors → Accounts** lists them, grouped by service:
+
+![Connectors → Accounts: a tile per service with how many accounts are connected, and the connected accounts grouped by service](../../assets/screenshots/memory/connectors-accounts.png)
+
 ## OAuth credentials as Accounts
 
 OAuth logins are Accounts, not a separate concept. Each Claude / Codex / Copilot OAuth login lives in its own auth-config directory, referenced by the Account's `SecretRef` (`oauth_config_dir` backend — see [Identity & credential storage](/security/identity-credential-storage/)). Two Accounts for the same provider hold genuinely distinct OAuth sessions (work vs. personal, etc.), each with a **status** field (`valid` / `expired` / `invalid` / `unknown` / `checking`) surfaced in [Connectors → Accounts](/connectors/#accounts) so credential health is visible without launching an agent.

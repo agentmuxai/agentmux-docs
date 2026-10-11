@@ -3,6 +3,8 @@ title: "Build a widget"
 description: "Write your first AgentMux widget in five minutes: a folder, a widget.json and a web page, using the widget SDK."
 ---
 
+import { FileTree } from '@astrojs/starlight/components';
+
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
@@ -12,6 +14,13 @@ A widget is a folder with a `widget.json` and a web page. It runs sandboxed in i
 ## Your first widget
 
 Make a folder named for your widget's id, say `acme.counter`, with three files.
+
+<FileTree>
+- acme.counter/
+  - widget.json the manifest
+  - index.html the page
+  - app.js the code
+</FileTree>
 
 **`widget.json`**, the manifest:
 
@@ -82,6 +91,10 @@ render();
 1. In AgentMux, open **Settings → Widgets → Install…** and pick your `widget.json`.
 2. Approve it. It asks for no permissions, so the prompt says so.
 3. Open **Counter** from the widget bar's **more** menu, or from a pane's **+** menu.
+
+The approval prompt in step 2, in **Settings → Widgets**, says who made the widget and what it can do:
+
+![Settings → Widgets: a widget waiting for approval, with its prompt: who made it (not signed), and what it can do](../../assets/screenshots/memory/settings-widget-approval.png)
 
 AgentMux copies your folder into `~/.agentmux/widgets/acme.counter/`. To change the widget, edit that copy, or edit yours and install it again with **Replace**. AgentMux notices the change and asks you to approve the new version; open panes reload when you do.
 
