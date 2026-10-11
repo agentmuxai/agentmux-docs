@@ -14,6 +14,10 @@ The Internals section is for two audiences:
 - **Contributors** — anyone working on the AgentMux codebase. The architecture, reducer model, and persistence layer are documented here.
 - **Integrators** — anyone building external tools that drive AgentMux through its RPC surface. The Agent App API and generated TypeScript / Rust references are here.
 
+AgentMux runs as four processes. [Architecture overview](/internals/architecture/) explains each one:
+
+<img src="/architecture.svg" alt="The four processes: agentmux-launcher (one per channel) starts agentmux-cef, the host that embeds Chromium, and agentmux-srv, the backend. The SolidJS frontend runs in the main renderer and talks to srv over a WebSocket." />
+
 <CardGrid stagger>
   <Card title="Architecture overview" icon="setting">
     The four-process topology — launcher / host / sidecar / renderer — and how they communicate.

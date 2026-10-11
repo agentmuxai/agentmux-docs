@@ -61,7 +61,7 @@ These keep the graphics graceful: they support the text and never interrupt it.
 2. **One opening image on an introductory page.** It goes after the first paragraph and shows the whole subject ("this is the window", "this is how the parts fit"). That gives the reader a picture to hang the following text on.
 3. **At most one graphic per `##` section** on a feature page, unless the section walks through a sequence (a form, then its result). Never two images in a row with no text between them, except a deliberate before/after pair, which gets one sentence introducing both.
 4. **No graphics inside tables, asides or list items.** Put the image after the list or table it belongs to.
-5. **No image repeated on consecutive pages of the Get Started path.** The full window (`chrome-window.png`) belongs to Quickstart's "Launch and orient" step, where the text walks through it, and to the splash hero, which is two pages away. Installation's "First launch" covers the same layout, so it shows the parts its text adds instead: the widget bar and the hamburger menu.
+5. **No image repeated on consecutive pages of the Get Started path.** The full window (`chrome-window.png`) belongs to Quickstart's "Launch and orient" step, where the text walks through it, and to the splash page, which is two pages away. Installation's "First launch" covers the same layout, so it shows the parts its text adds instead: the widget bar and the hamburger menu.
 6. **Alt text says what the image shows.** Write it as a full description, as the existing shots do ("The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below"). For a diagram, the alt text carries the diagram's content in words, so the page reads completely without it.
 7. **Crop to the subject.** A full-window shot only for orientation; everything else is cropped to the pane, form or menu in question, so its text renders at a readable size in the content column. The capture tooling's `clip` selectors do this.
 8. **Clips are rare.** At most one per page, only for motion, and never on a page's opening. They load as animated WebP; keep each under 400 KB.
@@ -77,7 +77,7 @@ These keep the graphics graceful: they support the text and never interrupt it.
 
 - Screenshots are taken in the app's dark theme. On the site's light theme a dark screenshot floats on a pale page, so add a 1px border to content images in `custom.css` (`.sl-markdown-content img` with `--sl-color-gray-5`), and check it in both themes per the Review Checklist in `CLAUDE.md`.
 - Existing diagrams switch colours with `@media (prefers-color-scheme: dark)`. An SVG loaded through `<img>` can't see the theme the reader picked in Starlight's selector, so a reader on a dark OS who picks light gets a dark diagram. New diagrams ship as a light and a dark file, shown with Starlight's `light:sl-hidden` and `dark:sl-hidden` classes, which follow the selector. The 8 existing diagrams move to the same scheme in Phase 2.
-- The splash hero takes `hero.image.dark` and `hero.image.light`, so it follows the selector too.
+- Not the splash hero: Starlight renders `hero.image` through Astro's image service at a fixed 400×400, which crops a wide window screenshot to its middle. The window goes under the hero as an ordinary content image instead, at full content width (found in Phase 1).
 
 ## 5. Page by page
 
@@ -87,7 +87,7 @@ Priorities: **P0** is the Get Started path, **P1** is high-traffic feature pages
 
 | Page | Graphic | Placement | Source |
 |---|---|---|---|
-| `index.mdx` | Hero image: the AgentMux window | `hero.image` (dark and light; light can reuse the dark shot until a light capture exists) | `chrome-window.png`, exists |
+| `index.mdx` | The AgentMux window | Under the hero and the Alpha notice, before the cards, at full content width (not `hero.image`, §4.2) | `chrome-window.png`, exists |
 | `getting-started.md` | **Concept diagram "How AgentMux fits together"**: a window holds tabs, a tab holds panes; an agent pane runs a harness (the CLI) that talks to a model vendor; an account and bundles feed the agent; agents message each other over the MuxBus; the Agent App API lets agents operate the workspace | Opening image, after the first paragraph, before "What is AgentMux?" | New: `public/diagrams/concepts-overview{,-dark}.svg` |
 | `getting-started.md` | The agent pane mid-turn | After "You see each tool call and file edit as it happens" | `agent-conversation-start.png`, exists |
 | `getting-started.md` | Quick Install as `<Tabs>`: Windows, macOS, Linux | Replaces the three bullets | Structural |
@@ -155,16 +155,16 @@ Reference pages are read by lookup, and an image there only pushes the table dow
 
 ### 6.3 Weight
 
-- Astro converts raster images to WebP at build time. Keep each introductory page's images under 1.5 MB in total in `dist/`. The splash page's hero must be under 300 KB.
+- Astro converts raster images to WebP at build time. Keep each introductory page's images under 1.5 MB in total in `dist/`. The splash page's window image must be under 300 KB.
 - Images below the fold load lazily, which Astro's default `<img>` output does.
 
 ## 7. Phases
 
 | Phase | What | Needs | PRs |
 |---|---|---|---|
-| **1** | Every row marked "exists" or "Structural" in §5; the image border in `custom.css`; `hero.image` on the splash page | Nothing new: images already in the repo, components already in Starlight | One agentmux-docs PR |
+| **1** | Every row marked "exists" or "Structural" in §5; the image border in `custom.css`; the window image on the splash page | Nothing new: images already in the repo, components already in Starlight | One agentmux-docs PR |
 | **2** | The new concept diagrams, P0 first (`concepts-overview`, `harness-vendor`, `delivery-tiers`), then P1 (`instances-channels`, `accounts-credentials`), then P2 (`trust-boundaries`, `data-egress`, `widget-call`); the 8 existing diagrams move to light and dark files | Drawing; checking each against its page and the code | Two or three agentmux-docs PRs, one per priority |
-| **3** | New screenshots: Toolchain, the browser navigation bar, the sample widget's pane; a light-theme hero | The UI settling (#4676), then new shots in the capture suites | One agentmux PR for the shots, then one agentmux-docs PR |
+| **3** | New screenshots: Toolchain, the browser navigation bar, the sample widget's pane; a light-theme window for the splash page | The UI settling (#4676), then new shots in the capture suites | One agentmux PR for the shots, then one agentmux-docs PR |
 
 Phase 1 can start now. Phase 2 can start now too, since it depends on concepts, not on pixels. Phase 3 waits, like the rest of the screenshot work.
 
@@ -173,12 +173,12 @@ Phase 1 can start now. Phase 2 can start now too, since it depends on concepts, 
 - `npm run build` passes, with the same page count as before.
 - Every page in §5.1–5.3 has the graphics listed, at the places listed, and each image has alt text per rule 6.
 - No page breaks a §4 rule: no image ahead of its introducing sentence, no two images back to back without text, no image in a table, aside or list item.
-- Checked in a standard browser in light and dark themes, each with the selector set both ways: borders show on light, diagrams follow the selector, and the hero switches.
+- Checked in a standard browser in light and dark themes, each with the selector set both ways: borders show on light, diagrams follow the selector, and the splash page's window image reads well on both.
 - Total images per introductory page within §6.3.
 - Phase 3 shots appear in a `refresh.mjs` run and pass their `verify` checks.
 
 ## 9. Open questions
 
-1. **A light-theme screenshot set.** The app has a light theme. Capturing every shot in both themes doubles the set and the review work. This spec only proposes a light hero (Phase 3), and leaves a full light set to #4676.
+1. **A light-theme screenshot set.** The app has a light theme. Capturing every shot in both themes doubles the set and the review work. This spec only proposes a light window image for the splash page (Phase 3), and leaves a full light set to #4676.
 2. **Inline SVG instead of two files.** A small Astro component that inlines the SVG would let one file follow the selector through CSS variables. It would mean `.mdx` pages for every diagram, so two files are proposed for now.
 3. **Measuring traffic.** With no analytics, §1's priorities are judgement. If the site gets privacy-respecting page counts later, revisit P1 and P2.

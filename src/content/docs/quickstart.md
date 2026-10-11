@@ -60,6 +60,10 @@ macOS keys are in brackets.
 | Move focus between panes | `Ctrl+Shift+Arrow`, or `F6` |
 | Open the command palette | `Ctrl+Shift+P` (`⇧⌘P`) |
 
+A split opens the new pane beside the one that has focus:
+
+![The Swarm pane (bottom right) split in two with Split Right: the new pane opens beside it](../../assets/screenshots/chrome/chrome-split-layout.png)
+
 To start a second agent, click **Agent** in the widget bar (or run **Open Agent** from the command palette). The new Agent pane shows the picker again: create another agent, or pick one from **My Agents**. Agent names must be unique, so give a second agent from the same template a new name.
 
 Each agent is independent. Agents don't share context unless they message each other (see [Interagent Comms](/internals/interagent-comms/)).
@@ -67,6 +71,8 @@ Each agent is independent. Agents don't share context unless they message each o
 ## 5. Add instructions with a bundle (optional)
 
 A bundle is a reusable set of instructions, MCP servers, memory and skills. Create one from **Memory → Bundles → + New Bundle** (click **Memory** in the widget bar). Enter a **Name**, add **Instructions**, then click **Save**. A bundle works with any agent, whatever harness it runs. Add it under **Bundles** when you create an agent, or later from the agent's **Stash → Bundles**. See [Bundles](/bundles/).
+
+![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
 ## Next Steps
 

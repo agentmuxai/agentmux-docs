@@ -19,6 +19,10 @@ A widget is code someone else may have written, running in your AgentMux. This p
 - **An approval names exactly what you saw.** AgentMux hashes every file in the widget, and the approval is for that hash. Every file is hashed again each time it's served. An edited file is never served, whether or not AgentMux has noticed the change yet, and the widget asks for approval again.
 - **Each AgentMux installation on your computer asks for itself.** They share the widgets folder, but not approvals.
 
+The prompt in **Settings → Widgets**:
+
+![Settings → Widgets: a widget waiting for approval, with its prompt: who made it (not signed), and what it can do](../../../assets/screenshots/memory/settings-widget-approval.png)
+
 ## Signatures
 
 - A signed widget carries `widget.sig`: an Ed25519 signature over its id, its version and the hash of all its other files. A signature that doesn't match the files makes the widget invalid; it can't be installed.

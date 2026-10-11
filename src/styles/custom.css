@@ -59,6 +59,14 @@ a.src-line {
   white-space: nowrap;
 }
 
+/* Screenshots are taken in the app's dark theme. A 1px edge keeps them from
+   floating on the light theme's pale page; on the dark theme it all but
+   disappears. Not on SVG diagrams, which draw their own boxes.
+   specs/SPEC_INFORMATIONAL_GRAPHICS_2026_10_11.md §4.2. */
+.sl-markdown-content img:not([src$=".svg"]) {
+  border: 1px solid var(--sl-color-gray-5);
+}
+
 /* Diagram zoom (medium-zoom) */
 .sl-markdown-content img[src] { cursor: zoom-in; }
 /* Overlay must sit above Starlight's sidebar (which uses z-index in the ~100 range). */

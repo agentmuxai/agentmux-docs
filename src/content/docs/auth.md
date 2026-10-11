@@ -46,6 +46,8 @@ Four providers are configured with their own CLI's login or config command and a
 
 When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, the pane shows **Not signed in** with **Log in**, **Login via terminal**, and **Connectors → Accounts**. When an existing account for the provider can be bound instead, the last action becomes **Bind: &lt;account&gt;** (one candidate) or **Bind account** (several). After a turn has been rejected for auth, **Log in** reads **Login Again**. See [First Agent Setup](/first-agent/#sign-in).
 
+![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
+
 **Log in** goes through `frontend/app/view/agent/flows/run-provider-login.ts` (`runProviderLogin`):
 
 1. For the five account-backed providers (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw), AgentMux first allocates an account directory and points the login there. If the agent already has an account bound for the provider, that account's directory is reused.
@@ -101,6 +103,10 @@ The **Accounts** section of [Connectors](/connectors/) (**Connectors → Account
 - **GitHub** OAuth uses GitHub's device flow; **Google** and **Slack** use a PKCE browser login. None of the three ships a built-in OAuth client: you create your own OAuth app and paste its client ID (and, for Slack, its client secret) (`frontend/app/view/accounts/oauth-catalog.ts`).
 - **AWS**, **OpenAI** and **Custom** offer only **Add API key / token**.
 - **Add API key / token** opens the Add Account form. Keys are stored in your OS keychain by default. **Validate & Save** checks the key against the service first; this is available for GitHub, OpenAI and Anthropic keys. **Save without validating** skips the check.
+
+The Add Account form:
+
+![Add Account: Name, Provider, Kind, Display name, Secret backend and the key, with Validate & Save](../../assets/screenshots/memory/connectors-account-add.png)
 
 Each account shows a status dot: green (valid), red (expired or invalid), amber (checking) or grey (unknown). For Claude Code, Codex CLI and OpenClaw accounts, the status is refreshed from the account's credential file each time AgentMux starts a bound agent's CLI.
 
