@@ -108,4 +108,5 @@ The same collector also measures the CPU and memory used by each pane's processe
 ## See Also
 
 - [Pane Types](/pane-types/) — every pane type
+- [The window](/window/#status-bar) — the status bar's CPU, memory and disk figures, and the panels they open
 - [Settings reference](/settings/) — where settings live

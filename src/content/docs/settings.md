@@ -12,13 +12,17 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is now a real **pane view** with its own UI sections (Appearance / Terminal / Agent / Sounds / Network / Files / Advanced) — it's registered as `defwidget@settings` in the widget bar (unpinned by default, reachable from the widget bar's overflow) and also reachable from the **hamburger menu**:
+Settings is a **pane view** with ten tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar (unpinned by default, reachable from the widget bar's overflow) and also reachable from the **hamburger menu**:
 
 1. Click the hamburger icon (≡) at the start of the tab bar.
 2. Select **Settings**.
 3. AgentMux opens (or focuses) the Settings pane.
 
-Editing `settings.json` directly still works and is reflected in the pane — use the command palette ("Open Settings File") if you want the raw file instead of the UI.
+Editing `settings.json` directly still works and is reflected in the pane — use the command palette ("Open Settings File"), or **Open raw settings.json** at the bottom of the pane, if you want the raw file instead of the UI.
+
+Type in **Search settings…** at the top of the pane to find a setting on any tab:
+
+![Searching Settings for "font": Font size and Font family, from the Terminal tab](../../assets/screenshots/settings/settings-search.png)
 
 The hamburger menu also includes inline submenus for the most-changed preferences so you don't have to touch the file directly:
 
@@ -26,6 +30,68 @@ The hamburger menu also includes inline submenus for the most-changed preference
 - **Opacity** ▸ Global window translucency from 100% down to 35% in 5% steps (writes `window:opacity` + `window:transparent`). For per-window control, use the InstancePanel slider — click the version chip in the status bar. See [Window appearance](/window-appearance/).
 
 Under `Midnight` specifically, the agent pane background is pure black; other panes use the theme's deep-navy `--main-bg-color`.
+
+## The Settings tabs
+
+### Appearance
+
+The theme, the startup splash screen, window transparency, the gap between panes, reduced motion, a custom background colour, and how a pane looks while it's hover-magnified.
+
+![Settings, Appearance tab](../../assets/screenshots/settings/settings-appearance.png)
+
+### Window & Panes
+
+Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, and whether closing a tab asks first.
+
+![Settings, Window & Panes tab](../../assets/screenshots/settings/settings-window-panes.png)
+
+### Browser
+
+Browser profiles: each keeps its own sign-ins, cookies and site data, so one site can be open as two accounts side by side. **Personal** is the profile every tab starts with and can't be removed; add others by name. An agent can browse as a profile only if you allow it for that profile. See [Browser pane](/browser-pane/).
+
+![Settings, Browser tab: the browser profiles](../../assets/screenshots/settings/settings-browser.png)
+
+### Terminal
+
+Font size and family, scrollback, copy on select, Shift+Enter, keeping SSH sessions alive and installing AgentMux's helper on new SSH hosts, bracketed paste, transparency and scroll speed. See [Terminal Settings](#terminal-settings) for the matching `settings.json` keys.
+
+![Settings, Terminal tab](../../assets/screenshots/settings/settings-terminal.png)
+
+### Sounds
+
+Notification sounds and their volume, whether to stay quiet for a pane you're already looking at, flashing the tab and pane a sound came from, a switch for each event (turn complete, error or interrupted; a queued message accepted or rejected), and tool-call tones.
+
+![Settings, Sounds tab](../../assets/screenshots/settings/settings-sounds.png)
+
+### Notifications & Tray
+
+Desktop notifications: when to notify, and for which events (an agent has a question, finished, stopped with an error or unexpectedly, a message needs your review, signed out of MuxBus); and the system tray: the tray icon, staying in the tray after the last window closes, and starting at login. See [App Settings](#app-settings).
+
+![Settings, Notifications & Tray tab](../../assets/screenshots/settings/settings-notifications-tray.png)
+
+### Recording
+
+Voice input: the microphone button on agent and terminal panes, the transcription engine (whisper.cpp runs offline; Groq sends audio to Groq's API, with your own API key), the input device, and a microphone test. See [Voice input](/pane-types/#voice-input).
+
+![Settings, Recording tab](../../assets/screenshots/settings/settings-recording.png)
+
+### Paired devices
+
+Devices paired with this computer over your local network, each of which you can revoke; MuxBus sign-in; cloud presence; and whether the status bar shows MuxBus Cloud. See [LAN discovery](/lan-discovery/).
+
+![Settings, Paired devices tab](../../assets/screenshots/settings/settings-paired-devices.png)
+
+### Widgets
+
+Your own widgets: install one from a `widget.json` or a `.zip`, rescan, or open the widgets folder. A widget runs only after you approve it here. See [Your own widgets](/widgets/).
+
+![Settings, Widgets tab](../../assets/screenshots/settings/settings-widgets.png)
+
+### Advanced
+
+Power-user settings: WebGL terminal rendering, the agent pane's auto-answer timeout, icon-only widget labels, the Sysinfo sample interval and history, and drag and drop.
+
+![Settings, Advanced tab](../../assets/screenshots/settings/settings-advanced.png)
 
 ## Settings File Location
 

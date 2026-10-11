@@ -390,7 +390,9 @@ Click **Shell** in the composer strip to open a resizable **details drawer** ben
 
 Every agent has its own **automatically assigned display color** — a deterministic color derived from the agent's id, set the moment the agent is created (and backfilled for agents that existed before this shipped) and shown as the agent pane's border. It requires no action on your part; it's just how you can tell agents apart at a glance across panes.
 
-This is separate from **manual** pane/tab coloring: right-click a **pane header** for an inline 12-swatch color picker (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes, and overrides an agent's automatic color when set. Right-click a **tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself. These are two independent color systems (different storage, different swatch sets) by design.
+This is separate from **manual** pane/tab coloring: right-click a **pane header** and open **Pane Color** for **Default** and 12 named colors (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes, and overrides an agent's automatic color when set. Right-click a **window tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself, with **Clear color** and **Rename**. These are two independent color systems (different storage, different swatch sets) by design.
+
+![A pane's right-click menu with Pane Color open: Default, then Crimson, Coral, Amber, Chartreuse, Green, Emerald, Teal, Sky, Blue, Violet, Fuchsia and Pink](../../assets/screenshots/chrome/chrome-pane-color-submenu.png)
 
 ### Subsections
 
@@ -513,7 +515,8 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 ### Creating Panes
 
 - **Top bar widgets** — Click the icons on the right side of the top bar
-- **Right-click header** — Right-click a pane header for the widget menu
+- **A pane's +** — Adds a tab to that pane (see [Pane tabs](#pane-tabs))
+- **Split** — Split a pane from its right-click menu or with the keys below (see [Splitting](#splitting))
 - **Keyboard** — `⌘N` / `` Ctrl+Shift+` `` for a new pane, `⇧⌘A` / `Ctrl+Shift+A` for an agent pane
 
 ### Pane tabs
@@ -524,6 +527,8 @@ and pick a widget type; it's added as a new tab *in that same pane*, no new
 split. This works for every widget type, not just more of the pane's own
 kind — an agent pane can pick up a terminal tab and a browser tab right next
 to it, all inside one pane.
+
+![A pane's + menu: one entry per widget type, from Agent to Settings](../../assets/screenshots/chrome/chrome-pane-add-menu.png)
 
 This is a different axis from the top-bar/`Cmd+N` actions above and from
 [Splitting](#splitting) below: those create a **new pane**. A pane's own
@@ -547,6 +552,20 @@ for the full design rationale.
 | Split Right | `⌘D` | `Ctrl+Shift+D` |
 | Split Below | `⇧⌘D` | `Ctrl+Alt+Shift+D` |
 | Split in Direction | `Ctrl+Shift+S` + Arrow | Same |
+
+A pane's right-click menu has the same four splits. A new split opens beside the pane it came from:
+
+![The Swarm pane (bottom right) split in two with Split Right: the new pane opens beside it](../../assets/screenshots/chrome/chrome-split-layout.png)
+
+### The pane menu
+
+Right-click a pane's header for its menu: **Copy**, the four splits, **Magnify Pane**, **Close Pane**, **Inspect Element** (opens DevTools on the pane), and **Pane Color**.
+
+![A pane's right-click menu: Copy, Split Up, Split Down, Split Left, Split Right, Magnify Pane, Close Pane, Inspect Element and Pane Color](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
+
+**Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
+
+![The Agent pane maximized to fill its tab](../../assets/screenshots/chrome/chrome-pane-maximized.png)
 
 ### Navigation
 

@@ -13,6 +13,8 @@ AgentMux lets you control window translucency at two levels: **global opacity** 
 
 Global opacity is set from the hamburger menu (≡) → **Opacity** and applies to the entire AgentMux instance. Choosing any value below 100% makes all windows translucent at the same level.
 
+![The hamburger menu's Opacity submenu: 100% down to 35% in 5% steps, the current value checked](../../assets/screenshots/chrome/chrome-hamburger-opacity.png)
+
 This writes two settings into `settings.json`:
 
 | Key | Value (via slider) |
@@ -34,8 +36,10 @@ Per-window opacity lets each window have a different translucency level. Use thi
 
 1. Click the **version chip** in the bottom status bar (shows the version number, e.g. `v0.33.893`).
 2. The **Instance Panel** popover opens, listing all open windows.
-3. Under each window name, drag the **Opacity** slider — the window dims in real time.
+3. Drag the **Opacity** slider next to a window's name — the window dims in real time.
 4. Release to confirm. The value persists across restarts.
+
+![The Instance Panel, with Window 1 and its opacity slider at 100% under This process](../../assets/screenshots/chrome/chrome-status-instance.png)
 
 ### Slider range
 

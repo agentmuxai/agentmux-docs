@@ -41,6 +41,8 @@ It can't reach anything else in the API. The `lan_key` is regenerated each time 
 
 Click the hostname in the status bar to open the host popover, and flip the **LAN discovery** toggle. The popover then shows the number of peers found and each peer's hostname and version, or `Searching for peers…`.
 
+![The host popover with LAN discovery switched off, and Pair a device](../../assets/screenshots/chrome/chrome-status-host.png)
+
 The toggle writes `"network:lan_discovery": true` to `settings.json` and starts discovery and the LAN listeners **immediately**, with no restart. Turning it off stops advertising, closes the LAN listeners and clears the peer list.
 
 You can also set `"network:lan_discovery": true` in `settings.json` by hand (`~/.agentmux/channels/settings.json` on the stable channel). A hand edit takes effect at the next start of AgentMux; only the toggle applies immediately.
