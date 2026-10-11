@@ -29,7 +29,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `local-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
 
-<a id="connectors"></a>**Connectors** — The app-wide pane for what agents connect to outside AgentMux, in two sections: **Accounts** (sign-ins to providers and services such as Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack and AgentMux Cloud, bound to agents) and **MCP servers**. Opened from the widget bar, the hamburger menu (≡) or the command palette. Together with [Memory](#memory) it replaced the Armory. See [Connectors](/connectors/).
+<a id="connectors"></a>**Connectors** — The app-wide pane for what agents connect to outside AgentMux, in three sections: **Accounts** (sign-ins to providers and services such as Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack and AgentMux Cloud, bound to agents), **MCP servers** and **Remotes** (SSH hosts and WSL distributions). Opened from the widget bar, the hamburger menu (≡) or the command palette. Together with [Memory](#memory) it replaced the Armory. See [Connectors](/connectors/).
 
 <a id="context-delivery"></a>**context delivery** — Content an agent is given without you typing it, such as Claude Code's conversation summary after a compaction. The agent pane shows each one as a collapsed card with a title, a size and a one-line excerpt; click it to read the full text. See [Conversation overhead](/internals/conversation-overhead/).
 
@@ -83,7 +83,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="skill"></a>**skill** — A reusable instruction an agent can call, as a `/trigger` or a Claude Code skill file. Global skills are in [Memory → Skills](/memory/#skills); an agent can also have private ones, and its bundles add theirs at launch.
 
-<a id="stash"></a>**Stash** — The per-agent drawer behind the `backpack` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles** and **Registration**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
+<a id="stash"></a>**Stash** — The per-agent drawer behind the `backpack` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
 
 **streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 

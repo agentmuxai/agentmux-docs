@@ -9,6 +9,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The **Swarm** pane is the overview of what your agents are doing right now. It lists every running agent pane on this AgentMux instance as a tree: under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
 
+![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
+
 :::note[This page used to be "Subagent Watcher"]
 Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane has no tabs, and subagent activity now expands inline in the tree instead of opening its own pane.
 :::

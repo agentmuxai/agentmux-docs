@@ -7,14 +7,17 @@ description: The Connectors pane — Accounts (sign-ins to providers and service
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-**Connectors** is the app-wide pane for what agents connect to outside AgentMux: the accounts they sign in with and the MCP servers they use. Its companion pane, [Memory](/memory/), holds what agents know and carry: Global and Personal Memory, Skills and Bundles.
+**Connectors** is the app-wide pane for what agents connect to outside AgentMux: the accounts they sign in with, the MCP servers they use, and the remote hosts they run on. Its companion pane, [Memory](/memory/), holds what agents know and carry: Global and Personal Memory, Skills and Bundles.
 
-Connectors is a regular pane (icon: `plug`), opened from the widget bar like any other. It has two sections, as tabs along the top of the pane (`frontend/app/view/connectors/connectors.tsx`):
+![The Connectors widget when it first opens, on Accounts](../../assets/screenshots/widgets/widget-connectors-small.png)
+
+Connectors is a regular pane (icon: `plug`), opened from the widget bar like any other. It has three sections, as tabs along the top of the pane (`frontend/app/view/connectors/connectors.tsx`):
 
 | Section | What it manages |
 |---|---|
 | **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account can be bound to agents. |
 | **MCP servers** | The MCP server catalog: global servers plus any agent-private ones |
+| **Remotes** | The SSH hosts and WSL distributions AgentMux can open terminals, files and agents on. See [Remotes](#remotes). |
 
 Connectors opens on **Accounts**. The pane title names the section, for example "Connectors · Accounts". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
 
@@ -74,14 +77,25 @@ The catalog of MCP Server primitives available to agents:
 
 An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. A [bundle](/bundles/) can also include MCP servers. See [Agent App API](/internals/agent-app-api/#mcp) for the full RPC reference.
 
+## Remotes
+
+The hosts AgentMux can open terminals, file browsers and agents on: the SSH hosts in your `~/.ssh/config`, hosts you've connected to, and on Windows your WSL distributions (`frontend/app/view/remotes/remotes-view.tsx`). Besides the Connectors tab, it's reached from **Manage remotes…** in a pane's connection picker and in Hangar's Places sidebar, and from **Remote settings…** in the header menu of a pane running on a remote, which opens it with that host's row expanded.
+
+![Connectors → Remotes when it first opens](../../assets/screenshots/widgets/widget-remotes-small.png)
+
+- **Toolbar:** **Filter remotes**, **Refresh** and **+ Add remote**. Add remote takes the destination as you'd type it after `ssh` (`user@host:port`, the port optional); **Advanced** sets a **Name**, an **Identity file** and a host to **Connect through**. Writing a new host into your ssh config waits for you to confirm it in a separate AgentMux window.
+- **Sections:** **Pinned**, **SSH hosts**, **Recent**, **WSL** and **Hidden**, each collapsible. With none yet, it reads "No remotes yet. Hosts in `~/.ssh/config` appear here…".
+- **A row** shows the host's colour and connection status, its nickname, platform and helper state, how many sessions and agents use it, and buttons for **New terminal** and **Browse files**. Right-click a row for the same actions as a menu.
+- **Click a row** to expand it: **Connect** / **Disconnect**, **Sessions…** (the host's durable terminal sessions), **Pin**, **Hide**, **Forget**, **Remove helper**, **Test connection** and **Edit in ssh config**; settings for **Nickname**, **Colour**, **Keep sessions alive** and **Install the helper**; and the agents **always allowed here (as you, with your SSH keys)**, each with **Revoke**.
+
 ## Per-agent: the Stash
 
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
 1. Open any Agent pane → click the **Stash** icon (`backpack`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
+2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
-**Accounts** and **MCP Servers** are the per-agent side of Connectors; **Personal Memory**, **Skills** and **Bundles** are the per-agent side of [Memory](/memory/#per-agent-the-stash). The Registration tab shows the agent's message-delivery registration.
+**Accounts** and **MCP Servers** are the per-agent side of Connectors; **Personal Memory**, **Skills** and **Bundles** are the per-agent side of [Memory](/memory/#per-agent-the-stash). The Registration tab shows the agent's message-delivery registration, and Devices has **Hide from paired devices**, which leaves the agent out of what a paired device (the mobile app) lists and can watch.
 
 ## See also
 

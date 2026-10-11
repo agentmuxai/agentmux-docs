@@ -36,28 +36,36 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 **Per-agent (read-only):**
 1. Open an Agent pane (pinned in the widget bar).
 2. Click the **Stash** icon (`backpack`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
-3. Switch to the **Accounts** tab — a read-only Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). No create/edit/delete/bind/unbind *here*; this tab is display-only.
+3. Switch to the **Accounts** tab — a Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). It's read-only, with one exception: for a Claude agent, its Claude row (or the empty table, if it has no Claude link) offers **Connect** / **Re-login**, the in-pane way to fix a missing or broken Claude binding.
 
 **App-wide manager (Connectors pane):**
 1. Click **Connectors** in the widget bar (pinned by default), or choose **Connectors** from the hamburger menu (≡).
 2. The pane opens on its **Accounts** section — create, edit, and delete Accounts. There is no standalone "Identities" section: Connectors is scoped to shared, reusable resources, and per-agent bindings live on the agent pane instead.
 
-New account↔agent links are created from **two** places, not one: the agent's own launch flow (selecting an Account per provider dropdown, as below), and the **"Bind to Agent"** right-click context menu on an account row in the Accounts section itself. Right-clicking an account row opens a submenu listing the channel's compatible agents, annotated with which agent is already bound to this account (checkmark) and which is bound to a *different* account for the same provider ("bound: work-claude"); clicking an agent creates or rebinds the link. See [Connectors → Binding an account to an agent](/connectors/#binding-an-account-to-an-agent) for the full mechanics (candidate filtering, live-apply on a running agent, etc.). So the Accounts section is not create/edit/delete-only — bind is a fourth action available there.
+New account↔agent links are created in several places:
+
+- **When the agent is created or first signs in.** A new agent takes its provider's first account; signing in from the agent pane (**Log in**) saves the login as an account and binds it. See [At launch](#at-launch).
+- **The agent pane's failure row**, when the agent can't sign in: **Bind: &lt;account&gt;** or **Bind account**.
+- **The account chip in the composer strip**, which switches a working agent to another of your accounts for its provider (this restarts the agent).
+- **The "Bind to Agent" right-click menu** on an account row in Connectors → Accounts. It lists the channel's compatible agents, marked with which one is already bound to this account (checkmark) and which is bound to a *different* account for the same provider ("bound: work-claude"); clicking an agent creates or rebinds the link. See [Connectors → Binding an account to an agent](/connectors/#binding-an-account-to-an-agent) for the full mechanics (candidate filtering, live-apply on a running agent, etc.).
+- **Stash → Accounts → Connect / Re-login**, for Claude only (above).
 
 The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but the primary paths are the two above.
 
-## Launch flow
+## At launch
 
-The Launch Agent modal binds Accounts directly, one dropdown per provider the agent needs. Selecting an Account at launch:
+**Create new agent** has no account field. A new agent takes its provider's first account from [Connectors → Accounts](/connectors/#accounts). If the provider needs an account and none is bound, the pane shows **Not signed in** or **No account linked** when the agent starts, with **Log in** and **Bind** actions (see [First Agent Setup → Sign in](/first-agent/#sign-in)).
 
-1. Resolves the Account's `SecretRef`.
-2. Computes the per-provider env vars (`GH_TOKEN`, `AWS_PROFILE`, …) the agent's CLI needs.
-3. Spawns the agent process with those env vars set.
-4. Writes the `(agent_id, provider) → account_id` row to `db_agent_identity_links`.
+Each time the agent's process is spawned, AgentMux:
 
-You can rebind an agent's Account for a provider by reopening its launch dialog and picking a different one — the spawn-time env injection re-applies on next turn.
+1. Reads the agent's `(agent_id, provider) → account_id` links from `db_agent_identity_links`.
+2. Resolves each Account's `SecretRef`.
+3. Computes the per-provider env vars (`GH_TOKEN`, `AWS_PROFILE`, …) the agent's CLI needs.
+4. Spawns the agent process with those env vars set.
 
-If the selected provider requires OAuth (or an API key) and isn't authenticated yet, the modal's [Pre-Launch Auth panel](/auth/#pre-launch-oauth-panel) appears inline and gates the Launch button.
+To change an agent's account later, click the account chip in its composer strip and pick another, or use **Bind to Agent** in Connectors → Accounts.
+
+Earlier versions had a Launch Agent dialog with one account dropdown per provider and an inline [Pre-Launch Auth panel](/auth/#pre-launch-oauth-panel). Nothing in the current agent picker opens it.
 
 ## Persistence
 

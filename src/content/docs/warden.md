@@ -9,6 +9,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The **Warden** is a pane for supervising agents. It shows which agents are registered to receive messages on this AgentMux instance, which AgentMux instances are on your local network, and a feed of recent message deliveries and Supervisor decisions. It has two control actions: soft-deregistering an agent on this instance, and choosing which agents a supervising agent may nudge to continue when they stall.
 
+![The Warden widget when it first opens](../../assets/screenshots/widgets/widget-warden-small.png)
+
 ## Where to find it
 
 The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by default (`crates/srv/src/config/widgets.json`, `defwidget@warden`). Open it in any of these ways:

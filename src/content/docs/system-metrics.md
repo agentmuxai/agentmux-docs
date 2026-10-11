@@ -9,6 +9,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The Sysinfo pane displays live system metrics for the machine AgentMux runs on, as time-series line plots.
 
+![The Sysinfo widget showing CPU, memory and network](../../assets/screenshots/widgets/widget-sysinfo-small.png)
+
 ## Opening Sysinfo
 
 - Click **Sysinfo** (chart icon) in the widget bar. It is pinned by default.
