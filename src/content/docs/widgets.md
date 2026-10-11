@@ -16,12 +16,26 @@ You can write one yourself (see [Build a widget](/build-a-widget/)), install one
 Installing a widget copies it in; it doesn't run yet. AgentMux first shows you what it is and what it asks for:
 
 - its name, version, author and kind;
+- **who signed it**, if anyone (below);
 - each **permission** it asks for, in plain words (the table below);
 - for a **trusted** widget, instead of permissions, a warning that it runs as part of AgentMux with full access.
 
 It runs once you approve it, and only the version you approved. If any of its files change later (an update, an edit), it stops running and asks you again, showing the new version.
 
 Only you can approve a widget, in AgentMux's own window. An agent can install one, but can't approve it; neither can any program that only talks to AgentMux's server.
+
+## Who made it: signed widgets
+
+A widget's author can sign it. The prompt then shows the key it was signed with as a short fingerprint, like `K7Q2-MZ4D-PX3A-9TWE`. Authors who want their widgets recognised publish their fingerprint, so you can compare.
+
+AgentMux remembers, for each publisher (the part of the widget's id before the dot, `acme` in `acme.pr-dashboard`), the key of the first signed widget of theirs you approve. After that:
+
+- another widget of theirs signed with the same key says so;
+- one signed with **another key**, or not signed at all, gets a warning: "Not signed by the key that signed your other acme widgets. It may not be from the same author." Its button reads **Install anyway**, and **Don't install** is the default.
+
+Approving a widget like that doesn't change the key AgentMux remembers. If an author tells you they really changed keys, forget the old one in **Settings → Widgets → Publisher keys**, and the next signed widget of theirs is remembered instead.
+
+A signature tells you who published a widget, not what it does: its permissions are still all a sandboxed widget can do. An unsigned widget isn't unsafe; AgentMux just can't tell who made it.
 
 ## Sandboxed and trusted widgets
 
