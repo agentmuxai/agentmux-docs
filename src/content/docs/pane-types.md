@@ -297,6 +297,8 @@ The agent pane is the first-class resident unit of AgentMux. Each agent gets a s
 - **Enter animation** — New messages animate into view as they stream in; set `window:reducedmotion = true` to disable.
 - **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
+![An agent pane mid-turn: a subagent's result, a file read, the reply streaming in, and the working timer](../../assets/screenshots/agent/agent-working.png)
+
 Agent panes are configured through [Bundles](/bundles/), picked when the agent is created; the Stash's **Bundles** tab changes them for an existing agent (see Subsections below).
 
 ### Activity indicator
@@ -397,6 +399,8 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 ### Subsections
 
 The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
+
+![The Stash open on Accounts: the agent's linked Anthropic account, its status and Re-login, and the other tabs](../../assets/screenshots/agent/agent-stash.png)
 
 - **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
 - **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).

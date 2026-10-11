@@ -45,6 +45,8 @@ In the Agent pane, under **New Agent**, click a harness card, for example **Clau
 
 The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead. Type `/quit` (or `/exit`) to end the agent and close its tab; the conversation is kept.
 
+![A finished turn: the test run, the agent's summary, and the turn's time, tokens and cost](../../assets/screenshots/agent/agent-conversation.png)
+
 See [First Agent Setup](/first-agent/) for the details of every step.
 
 ## 4. Add more panes
