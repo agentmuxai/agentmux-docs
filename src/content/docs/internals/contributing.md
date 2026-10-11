@@ -32,9 +32,9 @@ Use `yourname/feature-description`:
 git checkout -b yourname/fix-terminal-scroll
 ```
 
-### Contributor License Agreement
+### Licensing of contributions
 
-On your first pull request you'll be prompted to sign a CLA. You retain copyright — this gives us permission to distribute your contribution.
+There is no contributor agreement to sign. Contributions are licensed under the project's licence, Apache 2.0 (see [License](#license) below), and you keep the copyright to your work.
 
 ## Development workflow
 
