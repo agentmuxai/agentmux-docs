@@ -64,6 +64,10 @@ Installed widgets live in `~/.agentmux/widgets/`, one folder each. Every AgentMu
 
 Once approved, the widget appears in the widget bar's **more** menu and in any pane's **+** menu. Pin it to the bar from there.
 
+## From a bundle
+
+An [agent bundle](/abf/#widgets-in-a-bundle) can carry the sandboxed widgets its agents use. Importing it lists them with who signed each and what it may do; each one you keep asks for your approval, as "The bundle "…" wants to install …". A bundle never approves a widget for you.
+
 ## When an agent builds one for you
 
 Ask an agent for a widget ("make me a pane that shows my open pull requests") and it can build one in its workspace and install it with its `WidgetInstall` tool. You then see a prompt naming the agent and showing exactly what the widget asks for:
