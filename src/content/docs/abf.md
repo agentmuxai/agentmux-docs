@@ -48,6 +48,9 @@ my-bundle/
 │   └── <server-name>.server.json   # MCP server.json schema, verbatim
 ├── memory/                  # native memory files (v0.2+, agent-scoped export only)
 │   └── <filename>
+├── widgets/                 # sandboxed widget packages the bundle carries
+│   └── <publisher.name>/    # a whole package, as installed: widget.json, its files, widget.sig
+│       └── …
 └── accounts/
     └── requirements.json    # credential REQUIREMENTS -- never secrets
 ```
@@ -106,6 +109,24 @@ The other invented piece — and the thing no other format in the landscape solv
 ```
 
 This field was renamed from `provider` to `credentialProvider` in v0.2 (see below) — the importer still accepts a v0.1 `armory.json`/`requirements.json` carrying the old key name unchanged.
+
+## Widgets in a bundle
+
+A bundle can carry the [widgets](/widgets/) its agents use. `bundle.json` lists them under `components.widgets`, each with its package's content hash, and the archive holds each package whole under `widgets/<id>/`, binary files included:
+
+```json
+"components": {
+  "instructions": ["instructions/AGENTS.md"],
+  "widgets": [{ "id": "acme.board", "version": "1.2.0", "hash": "<content hash>" }]
+}
+```
+
+- Only **sandboxed** widgets travel in a bundle; a trusted one is shown as not importable.
+- Importing offers each widget with its version, who signed it and what it may do. Each one you keep is copied in and **asks for your approval** like any widget. A bundle never approves a widget; declining one leaves the rest of the bundle imported.
+- A widget whose files don't match the hash `bundle.json` lists isn't offered.
+- At most 20 widgets and 100 MB of widget files per bundle. Only a zip carries widgets.
+- `bundle.export` takes `widgets: [id]` (with `format: "zip"`) and writes those widgets' approved files. There's no export button in the app yet; agents export through the App API.
+- The `$schema` is still v0.3: `widgets` is an optional component, and an older AgentMux imports the rest of the bundle without it.
 
 ## ABF v0.3: Agent Bundle Format
 
