@@ -9,6 +9,8 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 **Tower** is a read-only task manager pane (`frontend/app/view/tower/`). It answers two questions: what is each agent running, and what is it costing in CPU and memory; and what is using this machine, and whose is it. It never ends or changes a process, never shows command lines, and needs no administrator rights.
 
+![Tower on Agents: AgentMux's own processes as a tree (launcher, main process, renderers, GPU, the backend) with each one's CPU, memory and process id, and everything else grouped as one row](../../assets/screenshots/widgets/widget-tower-small.png)
+
 ## Opening Tower
 
 - **Widget bar:** **more** → **Tower**. It isn't pinned by default; right-click it to pin it.

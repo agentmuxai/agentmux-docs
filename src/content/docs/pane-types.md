@@ -416,7 +416,7 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. The toolbar's **Stats** button opens a panel counting the model requests AgentMux has made on its own (session titles, names, prompt suggestions, narration) since its server started, and how each ended. See [Swarm](/subagent-watcher/).
 
-![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
+![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 
 ## Drone
 

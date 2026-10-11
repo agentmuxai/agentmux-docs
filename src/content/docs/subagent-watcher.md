@@ -11,6 +11,8 @@ The **Swarm** pane is the overview of what your agents are doing right now. It l
 
 ![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
 
+![Sending an agent a message: Swarm turns it from idle to working, then shows its subagent task and the file it reads, while the reply streams in](../../assets/recordings/swarm-follows-agent.gif)
+
 :::note[This page used to be "Subagent Watcher"]
 Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane has no tabs, and subagent activity now expands inline in the tree instead of opening its own pane.
 :::
