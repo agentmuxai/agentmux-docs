@@ -16,7 +16,7 @@ Agents can also operate the environment itself through AgentMux's own tools: ope
 
 ## Key Concepts
 
-- **Panes**: the units of the workspace. The widget bar opens them: Agent, Swarm, Memory, Hangar, Connectors, Terminal, Editor, Browser, Messengers, Sysinfo and Help, and under **more**, Drone, Warden, Media, Toolchain, Remotes and Settings. See [Pane Types](/pane-types/).
+- **Panes**: the units of the workspace. The widget bar opens them: Agent, Swarm, Memory, Hangar, Connectors, Terminal, Editor, Browser, Messengers, Sysinfo and Help, and under **more**, Drone, Warden, Media, Toolchain, Tower and Settings. See [Pane Types](/pane-types/).
 - **Self-contained CLIs**: AgentMux installs each npm-based agent CLI itself, into a folder per AgentMux version, the first time you pick it. You don't run `npm install -g` first, but you do need Node.js and npm, which AgentMux can install for you. Kimi Code CLI is the exception: install it with `pip install kimi-cli`.
 - **Accounts**: provider logins and API keys, managed in [Connectors → Accounts](/connectors/#accounts). A new agent takes the provider's first account; you change it later with **Bind**. Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI agents need a bound account; the other providers can run on AgentMux's shared login folder for the provider instead. See [Auth flows](/auth/).
 - **Bundles**: reusable sets of instructions, MCP servers, memory and skills, tied to one provider. Manage them in [Memory → Bundles](/memory/#bundles). An agent takes several, in order, picked in its **Bundles** field.

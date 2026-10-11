@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Remotes and Settings are under **more**. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced) or Knowledge (Memory's earlier name), it shows the new panes in their place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced) or Knowledge (Memory's earlier name), it shows the new panes in their place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 To see what each one looks like, see the [widget gallery](/widget-gallery/).
 
@@ -20,7 +20,8 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Browser** | globe | `browser` | Embedded native `CefBrowserView` |
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
-| **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services) and MCP servers — see [Connectors](/connectors/) |
+| **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
+| **Hangar** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Hangar](#hangar) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). `knowledge`, its earlier name, still opens it |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
@@ -28,6 +29,9 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
 | **Warden** | shield-halved | `warden` | Monitor and control agents across Host / LAN / Internet layers — see [Warden widget](/warden/) |
+| **Tower** | tower-observation | `tower` | Read-only task manager: the CPU and memory each agent and everything it started uses, and every process on the machine — see [Tower](/tower/) |
+| **Toolchain** | wrench | `toolchain` | The CLIs and system tools AgentMux uses, with their versions, where they're installed and how to install what's missing — see [First Agent Setup](/first-agent/#system-prerequisites) |
+| **Settings** | cog | `settings` | The settings UI — see [Settings reference](/settings/) |
 
 ### Not pane types
 
@@ -243,6 +247,22 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 - Tree-wide search / filter (the tree is read-only browse for now)
 
 10 MB file-size cap on read and write — over that, the editor refuses to load.
+
+## Hangar
+
+Hangar is a file browser (`frontend/app/view/files/files-view.tsx`). It opens on your home folder, or on the folder in its `files:path` setting, and on a remote host's files when you choose **Browse files** in [Connectors → Remotes](/connectors/#remotes). The pane title is the folder's name.
+
+![The Hangar widget when it first opens, showing a demo project](../../assets/screenshots/widgets/widget-files-small.png)
+
+- **Toolbar:** Back, Forward and Up; a breadcrumb you can click, or double-click (or press `Ctrl+L`) to type a path; **Filter** (`Ctrl+F` or `/`); new folder; show or hide hidden files; refresh; and toggles for the Places sidebar, a list or thumbnail view, and the preview panel.
+- **Places** (left): your home and common folders, drives, WSL distributions, remote hosts (with **Manage remotes…**), and your agents' folders, each in the agent's colour.
+- **The list:** sortable Name, Modified, Size and Kind columns, or a thumbnail grid. In a git repository each row shows its status letter, and a dot marks a file an agent changed (its tooltip names the agent).
+- **Preview** (`Space`, or the eye button): images, highlighted code, rendered Markdown, and cards for folders, audio, video and other files.
+- **Right-click a row** to open it (here, in a new tab, in the Editor, or with the default app), open a terminal there, reveal it in your file manager, **Mention in agent** or **Attach to** an agent, cut, copy or copy its path, rename (`F2`), move it to the Trash or delete it permanently. Right-click empty space for a new folder or file, paste, and the folder's own actions.
+- **Copying and moving:** cut, copy and paste, or drag files. When a name already exists, Hangar asks: **Keep both**, **Skip**, **Replace** or stop, with **Do this for every conflict**.
+- **Status line:** the item count and selection size, the repository's branch and changes, and messages such as an undo for the last change.
+
+Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
 
 ## Media
 

@@ -133,6 +133,7 @@ export default defineConfig({
 								{ label: 'Running multiple instances', slug: 'multi-instance' },
 								{ label: 'LAN discovery', slug: 'lan-discovery' },
 								{ label: 'Warden widget', slug: 'warden' },
+								{ label: 'Tower', slug: 'tower' },
 								{ label: 'Window appearance', slug: 'window-appearance' },
 							],
 						},
