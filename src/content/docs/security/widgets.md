@@ -19,6 +19,14 @@ A widget is code someone else may have written, running in your AgentMux. This p
 - **An approval names exactly what you saw.** AgentMux hashes every file in the widget, and the approval is for that hash. Every file is hashed again each time it's served. An edited file is never served, whether or not AgentMux has noticed the change yet, and the widget asks for approval again.
 - **Each AgentMux installation on your computer asks for itself.** They share the widgets folder, but not approvals.
 
+## Signatures
+
+- A signed widget carries `widget.sig`: an Ed25519 signature over its id, its version and the hash of all its other files. A signature that doesn't match the files makes the widget invalid; it can't be installed.
+- AgentMux remembers each publisher's key from the first signed widget of theirs you approve, the way SSH remembers a server. A later widget of that publisher signed with another key, or unsigned, is flagged in the prompt, and approving it doesn't replace the remembered key.
+- **An approval names the key you saw.** The signature isn't part of the files' hash, so the prompt's answer carries the fingerprint it showed, and the server refuses the approval if a different key signs the widget by then.
+- Forgetting a publisher's key goes through AgentMux's own window, like an approval: the server's auth key can't do it.
+- A signature names a key, not a person, and says nothing about what the code does. It doesn't widen a sandboxed widget's permissions or narrow a trusted widget's access.
+
 ## The sandbox
 
 A sandboxed widget's page runs in a frame with an opaque origin, isolated from the AgentMux window around it:

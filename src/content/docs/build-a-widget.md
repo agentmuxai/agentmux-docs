@@ -117,7 +117,21 @@ export default {
 };
 ```
 
-Put `widget.json` in `public/` so it lands in `dist/`, then install `dist/widget.json`. For types and editor completion, copy the SDK's [`v1.d.ts`](https://github.com/agentmuxai/agentmux/blob/main/sdk/widget-sdk/v1.d.ts) next to your code; it describes the whole API. (The SDK isn't on npm yet.)
+Put `widget.json` in `public/` so it lands in `dist/`, then install `dist/widget.json`. For types and editor completion, copy the SDK's [`v1.d.ts`](https://github.com/agentmuxai/agentmux/blob/main/sdk/widget-sdk/v1.d.ts) next to your code; it describes the whole API. Or install [`@agentmuxai/widget-sdk`](https://www.npmjs.com/package/@agentmuxai/widget-sdk) from npm, which has the types.
+
+## Sign it
+
+Signing lets the install prompt say who published your widget, and warns your users if a later widget with your publisher name is signed by someone else. The SDK's `agentmux-widget` command does it (SDK 1.2.0 and later):
+
+```bash
+npx -p @agentmuxai/widget-sdk agentmux-widget keygen ~/.agentmux-widget-key.json   # once
+npx -p @agentmuxai/widget-sdk agentmux-widget sign ./acme.notes --key ~/.agentmux-widget-key.json
+npx -p @agentmuxai/widget-sdk agentmux-widget verify ./acme.notes
+```
+
+- `keygen` writes a new key and prints its fingerprint. Keep the key file private, and keep a copy: a widget signed with a new key gets the "another key" warning for everyone who installed your earlier ones.
+- `sign` writes `widget.sig` next to `widget.json`. It covers every other file, so sign last: AgentMux refuses a widget edited after it was signed.
+- Publish your fingerprint (in your README, on your site) so users can check it.
 
 ## The rules
 
