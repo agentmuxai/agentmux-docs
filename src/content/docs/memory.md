@@ -45,6 +45,12 @@ A pane or layout saved while it was the Armory (the earlier pane that held both 
 
 **Global Memory** is a set of entries that every agent inherits at launch (`frontend/app/view/global-bundle/global-bundle-manager.tsx`). The section reads "Every agent inherits this at launch — takes effect after a restart. Drag entries to change their order." It shows a tile per entry, a read-only `CLAUDE.md` tile, a **Combined preview** of what agents receive, and **+ Add memory**. Click a tile to open the entry with its history, a diff view and revert.
 
+![Memory → Global: AgentMux's system entries, three of your own entries, the read-only CLAUDE.md, Combined preview and + Add memory](../../assets/screenshots/memory/memory-global.png)
+
+![A Global Memory entry opened: Edit, move up and down, Remove, its versions, and its text](../../assets/screenshots/memory/memory-global-entry.png)
+
+![A new Global Memory entry: a name, and the Markdown every agent gets under a Workspace heading](../../assets/screenshots/memory/memory-global-new.png)
+
 Claude Code agents also get their memory again whenever Claude Code starts a new session, including after `/clear` and after a compaction, but not when a session is resumed. AgentMux delivers it through Claude Code's `SessionStart` hook: Global Memory, AgentMux's Operator Config entries and the agent's Personal Memory, split into parts of about 10,000 characters (`crates/bashwrap/src/sessionstart.rs`). Once it has been delivered, the agent pane shows a notice such as "🧠 Memory reinjected — 3 global, 2 personal (~4.1k tok, est.)"; hover it for each entry's size.
 
 Every change to Global Memory is also written to a Global Memory record that keeps each entry's versions and the order of entries (`crates/srv/src/backend/global_memory_record.rs`). Channels that share your main accounts share one Global Memory; an isolated channel (for example a development build) keeps its own.
@@ -58,6 +64,10 @@ Agents can read and change Global Memory with the `GlobalMemoryList`, `GlobalMem
 <a id="native-memory"></a>**Personal Memory** is the set of free-form `.md` files an agent reads and writes about itself: notes, running context, anything it wants to keep between turns. It is a different thing from a [bundle](/bundles/): a bundle is a reusable *definition* you give an agent; Personal Memory is a scratchpad an already-running agent keeps for itself. ("Native memory" is the name of its storage in the code; earlier releases labelled it "Brain".)
 
 This section is the app-wide view of every agent's Personal Memory. Pick an agent, then a file, to see its content, history and diffs, and to revert to an earlier version. Per agent, the same memory is reached from the agent pane's **Stash → Personal Memory** tab.
+
+![Memory → Personal: a card per agent with how many memory files it has, a filter and Has memories](../../assets/screenshots/memory/memory-personal.png)
+
+![One agent's Personal memory: its claimed memory folders and its two files](../../assets/screenshots/memory/memory-personal-files.png)
 
 Above an agent's files, two collapsible panels (`frontend/app/view/native-memory/`):
 
@@ -90,11 +100,17 @@ The older `db_agent_native_memory` mirror is still written through on list, read
 
 ## Skills
 
-The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
+The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
+
+![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
+
+![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
 
 ## Bundles
 
 The app-wide view of all bundles. A bundle packages instructions, MCP servers, memory and skills; an agent takes several, in order. **+ New Bundle** creates one; **Import Bundle** brings in an `.abf` file, and any bundle can be exported as one. See [Bundles](/bundles/) for the full reference, including how an agent's bundles are picked, and [Agent Bundle Format (ABF)](/abf/) for the file format.
+
+![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
 Bundles are created and edited here only. An agent's **Stash → Bundles** tab picks which bundles that agent starts with; it doesn't create or edit them.
 
