@@ -49,17 +49,19 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 - **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History** and **Delete**.
 - **New Agent**: one card per harness. Each card is a template.
 
-![The agent picker in a new install: New Agent cards, no agents yet](../../assets/screenshots/widgets/widget-agent-small.png)
+![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
 
 Clicking a card first runs the install and prerequisite checks above. It then opens **Create new agent from &lt;template&gt;**, which makes a new, independent agent and leaves the template unchanged. Fields, top to bottom:
 
-1. **Name**: defaults to the template's name. Names must be unique among your agents (ignoring case), so give a second agent from the same template a different name.
+1. **Name**: required, and empty to start with. Name it for its job, like Reviewer or Docs writer. Names must be unique among your agents (ignoring case).
 2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
 3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
 5. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
 
 There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the agent's **Stash → Accounts**. If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
+
+![Create new agent from Claude: Name, Runtime, Model, Model Vendor / Custom Endpoint and Bundles](../../assets/screenshots/agent/agent-create.png)
 
 Click **Create**. The agent is created and launched in the pane.
 
@@ -74,6 +76,8 @@ When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI 
 - **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and shows it in the pane, with a box to paste an authorization code into if the CLI asks for one. If the CLI prints no link, a terminal window opens for the login instead.
 - **Login via terminal**: runs the login in a terminal window straight away.
 - **Connectors → Accounts**: opens the Connectors pane on its Accounts section. If you already have signed-in accounts for this provider, this action is replaced by **Bind: &lt;account&gt;** (one account) or **Bind account** (several), which links an existing account to this agent.
+
+![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
 
 For the five providers above, a successful login is saved as an account in Connectors → Accounts and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
 
@@ -101,8 +105,14 @@ The agent pane shows:
 - **Streaming output**, as the agent generates it.
 - **Tool calls**, each with a status icon and a one-line summary of its arguments.
 - **File edits** as unified diffs.
-- **Working status**: "Working…" with a timer while a turn runs.
+- **Working status**: a row above the message box while a turn runs, with a timer and what the agent is doing ("Working…", or the current step, such as a subagent's task).
 - A **Disconnected from stream** banner with a **Reconnect** button, if the pane loses its stream while a turn is running.
+
+![The start of a turn: the message, the agent's thinking, a file read, its todo list, and two edits shown as diffs](../../assets/screenshots/agent/agent-conversation-start.png)
+
+![The end of the same turn: the test run's output, the agent's summary, and the turn's time, tokens and cost](../../assets/screenshots/agent/agent-conversation.png)
+
+![A turn in progress: a subagent's result, a file read, the reply streaming in, and the working row with the subagent's task and a timer](../../assets/screenshots/agent/agent-working.png)
 
 To give the agent files (screenshots, PDFs, Office documents, code), drop them anywhere on the pane or paste them into the message box; they're attached to your next message. See [Attaching files](/pane-types/#attaching-files).
 
@@ -130,6 +140,8 @@ The pane's Shell drawer opens below the message box, and the command's output ap
 ### When the agent asks you a question
 
 Some agents can stop and ask you a question. The panel ("The agent is asking") appears above the message box, with **Cancel**, **Accept Recommended** and **Submit answer**. If you don't answer, it picks the recommended answers after 30 seconds (the `agent:askquestiontimeoutms` setting). Hovering over the panel or pressing a key in it pauses the countdown for 15 seconds, after which it starts again from the full timeout. For Claude Code, if the agent produces no output within 4 seconds of your answer, AgentMux re-sends the answer as a follow-up message.
+
+![The agent is asking: a question with three options, the recommended one first, an Other box, and Cancel, Accept Recommended and Submit answer](../../assets/screenshots/agent/agent-question.png)
 
 ## When an agent fails
 
