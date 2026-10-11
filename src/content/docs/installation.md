@@ -148,7 +148,7 @@ The first window opens a starter layout of three panes:
 
 New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Drone, Warden, Media, Toolchain, Remotes and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Drone, Warden, Media, Toolchain, Tower and Settings. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
 The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Layouts (**Save layout…**, **Open layout…**), Settings, Command Palette, Connectors, Memory, Toolchain, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`).
 
