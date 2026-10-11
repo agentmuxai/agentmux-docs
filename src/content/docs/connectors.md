@@ -7,7 +7,7 @@ description: The Connectors pane — Accounts (sign-ins to providers and service
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-**Connectors** is the app-wide pane for what agents connect to outside AgentMux: the accounts they sign in with and the MCP servers they use. Its companion pane, [Memory](/memory/), holds what agents know and carry: Global and Personal Memory, Skills and Bundles.
+**Connectors** is the app-wide pane for what agents connect to outside AgentMux: the accounts they sign in with, the MCP servers they use, and the remote hosts they run on. Its companion pane, [Memory](/memory/), holds what agents know and carry: Global and Personal Memory, Skills and Bundles.
 
 ![The Connectors widget when it first opens, on Accounts](../../assets/screenshots/widgets/widget-connectors-small.png)
 
