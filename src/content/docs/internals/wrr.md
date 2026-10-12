@@ -48,7 +48,7 @@ WRR commands assume the IPC is **out-of-order tolerant**. The host's actual emit
 
 So `handle_report_pool_window_promoted` checks: if the open already created the mirror (out-of-order), mark it foregrounded directly and don't bother with the bridge set. Otherwise, insert into `just_promoted_labels` and let the open-time path drain it.
 
-A proptest in `reducer/tests.rs` (`just_promoted_labels_drained_by_open_or_close`) asserts the set is always drained — either by the next open for the same label, or by a close. Bug found on PR #709 round 2.
+Proptests in `crates/launcher/src/reducer/tests.rs` (`both_drain_paths_remove_just_promoted_entry`, `just_promoted_labels_bounded_by_distinct_labels_ever_promoted`) assert the set is always drained — either by the next open for the same label, or by a close. Bug found on PR #709 round 2.
 
 ## Where WRR lives
 

@@ -159,4 +159,3 @@ the guard was unnecessary and has been removed.
 - [Debugging](/internals/debugging) — log access, CEF DevTools, perf HUD
 - [Agent App API](/internals/agent-app-api) — full WS protocol reference
 - [`tools/tests/authfile.ps1`](https://github.com/agentmuxai/agentmux/blob/main/tools/tests/authfile.ps1) — PowerShell helper for the same auth file
-- [`scripts/bench-cdp.mjs`](https://github.com/agentmuxai/agentmux/blob/main/scripts/bench-cdp.mjs) — CDP-based scroll FPS + heap benchmark

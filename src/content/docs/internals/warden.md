@@ -16,7 +16,7 @@ The Warden is unusually compact for a widget — most of its surface area is wir
 | File | What |
 |---|---|
 | `frontend/app/view/warden/warden.tsx` | `WardenViewModel` + `WardenView` (single file, ~400 lines) |
-| `frontend/app/view/warden/warden.scss` | All Warden styling |
+| `frontend/app/view/warden/warden-view.scss` | All Warden styling |
 | `frontend/app/block/block.tsx` | `BlockRegistry.set("warden", WardenViewModel)` |
 | `crates/srv/src/config/widgets.json` | `defwidget@warden` declaration |
 
@@ -24,7 +24,7 @@ There's no `warden-model.ts` or `warden-view.tsx` split — the widget is small 
 
 ## The three layers
 
-The Warden renders three sections — Host, LAN, Internet — that map **1:1 onto the existing jekt-delivery cascade** documented in [`specs/lan-awareness-and-embedded-jekt-api.md`](https://github.com/agentmuxai/agentmux/blob/main/specs/lan-awareness-and-embedded-jekt-api.md):
+The Warden renders three sections — Host, LAN, Internet — that map **1:1 onto the existing jekt-delivery cascade** documented in [`specs/lan-awareness-and-embedded-jekt-api.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/lan-awareness-and-embedded-jekt-api.md):
 
 | Warden section | Jekt tier | Substrate | Status today |
 |---|---|---|---|
@@ -129,7 +129,7 @@ This is the same reason `defwidget@warden` carries a single `description` field 
 ## Source
 
 - `frontend/app/view/warden/warden.tsx` — model + view + section data sources
-- `frontend/app/view/warden/warden.scss` — section styling, audit feed, toggle switches
+- `frontend/app/view/warden/warden-view.scss` — section styling, audit feed, toggle switches
 - `frontend/app/block/block.tsx` — view registration in `BlockRegistry`
 - `crates/srv/src/config/widgets.json` — `defwidget@warden`
 - `crates/srv/src/server/reactive.rs` — `/agentmux/reactive/agents`, `/audit`, `/unregister` handlers

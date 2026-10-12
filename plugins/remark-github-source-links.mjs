@@ -1,20 +1,24 @@
 /**
  * remark-github-source-links
  *
- * Converts backticked file-path references in prose into GitHub blob links.
- * Handles three forms:
+ * Converts backticked file-path references in prose into links to the
+ * agentmux source, at the commit `src/agentmux` is pinned to
+ * (source-links.mjs). Handles three forms:
  *   `path/to/file.rs`          → blob link (no anchor)
  *   `path/to/file.rs:42`       → blob link + #L42
  *   `path/to/file.rs:42-78`    → blob link + #L42-L78
  *
- * Short-name aliases (e.g. shell.rs → crates/srv/src/.../shell.rs) and
- * path prefix remapping (e.g. specs/ → docs/specs/) are configurable.
+ * Short-name aliases (e.g. shell.rs → crates/srv/src/.../shell.rs), path
+ * prefix remapping (e.g. specs/ → docs/specs/) and paths that aren't repo
+ * files are configured in source-links.mjs. Whether each target exists is
+ * checked after rendering, by rehype-check-source-links.mjs.
  *
  * Nodes already inside a <link> are skipped. Fenced code blocks are never
  * visited (remark only exposes `inlineCode`, not `code` nodes, to visitors).
  */
 
 import { visit } from 'unist-util-visit';
+import { aliases, notSourcePaths, resolveName, sourceUrl } from './source-links.mjs';
 
 const EXTENSIONS = /\.(rs|ts|tsx|js|mjs|cjs|toml|json|md|sh|ps1|scss|css)$/i;
 
@@ -22,13 +26,7 @@ const EXTENSIONS = /\.(rs|ts|tsx|js|mjs|cjs|toml|json|md|sh|ps1|scss|css)$/i;
 // Supports both ASCII hyphen and en-dash / em-dash in ranges.
 const LINE_SUFFIX = /^([\w./-]+?)(?::([\d]+)(?:[–—-]([\d]+))?)?$/;
 
-export default function remarkGithubSourceLinks(opts = {}) {
-  const {
-    baseUrl = 'https://github.com/agentmuxai/agentmux/blob/main/',
-    aliases = {},
-    pathMap = {},
-  } = opts;
-
+export default function remarkGithubSourceLinks() {
   return (tree) => {
     visit(tree, 'inlineCode', (node, index, parent) => {
       // Skip nodes that are already inside a link
@@ -55,28 +53,12 @@ export default function remarkGithubSourceLinks(opts = {}) {
       // likely to be symbol names like `reducer.ts` without a path prefix)
       if (!path.includes('/') && !(path in aliases)) return;
 
-      // Resolve alias
-      let resolved = aliases[path] ?? path;
-
-      // Apply path prefix remapping (e.g. specs/ → docs/specs/)
-      for (const [prefix, replacement] of Object.entries(pathMap)) {
-        if (resolved.startsWith(prefix)) {
-          resolved = replacement + resolved.slice(prefix.length);
-          break;
-        }
-      }
-
-      // Build URL
-      let url = baseUrl + resolved;
-      if (lineStart) {
-        url += `#L${lineStart}`;
-        if (lineEnd) url += `-L${lineEnd}`;
-      }
+      if (notSourcePaths.has(path)) return;
 
       // Replace inlineCode node with link > inlineCode, preserving the display text
       parent.children[index] = {
         type: 'link',
-        url,
+        url: sourceUrl(resolveName(path), lineStart, lineEnd),
         title: null,
         children: [{ type: 'inlineCode', value: raw }],
         data: { hProperties: { className: ['src-ref'] } },

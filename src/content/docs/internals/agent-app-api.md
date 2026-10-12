@@ -21,7 +21,7 @@ When AgentMux launches an agent, the sidecar injects three environment variables
 | `AGENTMUX_BLOCKID` | `<pane UUID>` | The pane this agent lives in — used as self-context default |
 | `AGENTMUX_AGENT_ID` | `<agent name>` | Agent's registered name — used by `SendMessage` routing |
 
-`AGENTMUX_AUTH_KEY` is **not classified as a PTY env var** (see `internals/env-vars.md` — "Available In Pane? No"). The sidecar strips it from its own process environment at startup (security PR #801) and re-injects it per spawn only for internal tooling that requires it (`agentmux-bashwrap`, the streaming bash runner). `agentmux-mcp` receives it through its own spawn configuration, not from the agent's PTY environment.
+`AGENTMUX_AUTH_KEY` is **not classified as a PTY env var** (see [Environment variables](/internals/env-vars/) — "Available In Pane? No"). The sidecar strips it from its own process environment at startup (security PR #801) and re-injects it per spawn only for internal tooling that requires it (`agentmux-bashwrap`, the streaming bash runner). `agentmux-mcp` receives it through its own spawn configuration, not from the agent's PTY environment.
 
 ```
 Agent CLI (claude / codex / gemini / …)
@@ -614,5 +614,5 @@ What it does not expose: delete arbitrary panes belonging to other agents, acces
 - [Reactive event bus](/security/reactive-event-bus/) — auth model and endpoint reference for the messaging layer
 - [Connectors](/connectors/) and [Memory](/memory/) — the app-wide UI for Accounts and MCP servers, and for Global and Personal memory, Skills and Bundles
 - [Pane Types](/pane-types/) — pane types OpenEditor can create
-- [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/specs/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — original implementation spec for the (now-shipped) `identity.*`/`memory.*` namespaces
+- [Identity/Presets/Memory spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/archive/SPEC_AGENT_APP_API_IDENTITY_PRESETS_BRAIN_2026_06_27.md) — original implementation spec for the (now-shipped) `identity.*`/`memory.*` namespaces
 - [Preset→Bundle rename spec](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PRESET_TO_BUNDLE_REFACTOR_2026_07_02.md) — `bundle.*`, `mcp.*`, `skill.*` primitive model

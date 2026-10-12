@@ -3,6 +3,8 @@ name: PR Check
 on:
   pull_request:
     branches: [main]
+    # labeled/unlabeled: the `line-links-reviewed` label decides a step below.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: pr-check-${{ github.event.pull_request.number }}
@@ -19,6 +21,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # check-line-links.mjs diffs the PR against its merge base.
+          fetch-depth: 0
 
       - name: Install Node 24
         uses: actions/setup-node@v4
@@ -30,15 +34,27 @@ jobs:
         run: npm ci
 
       - name: Build
-        # Plain build, not build:full — this only needs to catch broken
-        # frontmatter/markdown/links/structure in content PRs, the same
-        # bar the repo's own review checklist sets for non-prod-bound
-        # changes. build:full (typedoc + rustdoc, needs cargo) stays a
-        # deploy.yml-only, post-merge concern — it's about the generated
-        # API reference content, not doc-page correctness, and adding a
-        # Rust toolchain here would slow down every PR to check something
-        # deploy.yml already verifies before going live.
-        run: npm run build
+        # The TypeScript reference (typedoc) plus the site, not build:full:
+        # the Rust reference needs a Rust toolchain and stays a deploy.yml
+        # concern, verified there before going live. typedoc is cheap and its
+        # pages carry links of their own, which shipped broken unseen while
+        # PRs built without it (specs/AUDIT_DEAD_LINKS_2026_10_12.md §3.1).
+        # The build itself fails on a link into the agentmux source that
+        # doesn't resolve at the pinned commit (plugins/rehype-check-source-links.mjs).
+        run: |
+          npm run build:typedoc
+          npm run build
+
+      - name: Links (every page link and #anchor in the built site)
+        # External URLs are fetched too, as warnings only.
+        run: node scripts/check-links.mjs --skip-target /api/rust/ --external
+
+      - name: Line links after a src/agentmux bump
+        # Lists each link to a source line whose code changed with the new pin.
+        # Once a person has checked them, the `line-links-reviewed` label skips
+        # this step.
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'line-links-reviewed') }}
+        run: node scripts/check-line-links.mjs --base origin/${{ github.base_ref }}
 
       - name: Layout stability (no scrollbar shift, no hidden header or sidebar)
         # Loads built pages in Chromium with real scrollbars, a cold cache and a
