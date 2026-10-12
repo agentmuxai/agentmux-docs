@@ -128,7 +128,7 @@ pub trait Translator: Send {
 }
 ```
 
-**Only Claude Code has a concrete implementation today** (`ClaudeTranslator`, `agents/translator/claude.rs`) — it's what the drone Agent-block's headless runner (`agents/runner.rs`) uses. The interactive subprocess-controller path (what actually drives an agent pane) doesn't route non-Claude providers' frames through this trait yet; see the Codex-specific note below for how Codex is parsed today.
+**Only Claude Code has a concrete implementation today** (`ClaudeTranslator`, `crates/srv/src/agents/translator/claude.rs`) — it's what the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`) uses. The interactive subprocess-controller path (what actually drives an agent pane) doesn't route non-Claude providers' frames through this trait yet; see the Codex-specific note below for how Codex is parsed today.
 
 ### Line buffering and fast-reject
 
@@ -161,7 +161,7 @@ OpenClaw uses JSON-RPC 2.0 over stdio rather than NDJSON. Its controller is in `
 
 Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `crates/srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
 
-Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
+Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `crates/srv/src/agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
 
 ## Step 5 — Subprocess lifecycle and signal handling
 

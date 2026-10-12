@@ -9,13 +9,13 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="abf"></a>**ABF (Agent Bundle Format)** — The file format for exporting and importing a [bundle](#bundle) as a single `.abf` file: instructions, skills, MCP servers, native memory and credential requirements, composing existing standards (Agent Skills, MCP `server.json`, AGENTS.md). It was called the Armory Bundle Format; the letters and the `.abf` extension are unchanged. See [Agent Bundle Format (ABF)](/abf/).
 
-**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [Agent App API](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
+<a id="agent-operating-environment"></a>**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [Agent App API](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
-**Agent App API** — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/agent-app-api/).
+<a id="agent-app-api"></a>**Agent App API** — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/agent-app-api/).
 
-**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
+<a id="appimage"></a>**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
 
-**agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
+<a id="agent-pane"></a>**agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
 <a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
 
@@ -25,7 +25,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="browser-pane"></a>**browser pane** — A [pane](#pane) of type `browser` — an embedded `CefBrowserView` (a child Chromium browser, not an iframe). Each browser pane runs in its own [renderer](#renderer) process; opening more browser panes adds more renderer processes. See [Browser pane](/browser-pane/) and [Pane types](/pane-types/).
 
-**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
+<a id="cef"></a>**CEF** — Chromium Embedded Framework. The host process embeds Chromium via CEF to render the SolidJS frontend; this replaces the platform WebView and gives AgentMux a consistent Chromium runtime on Windows, macOS, and Linux. See [Architecture overview](/internals/architecture/).
 
 <a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `local-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
 
@@ -59,11 +59,11 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agentbus"></a>**MuxBus** — The cross-process, cross-machine interagent messaging substrate, in three tiers: **Host** (in-process reactive handler, same AgentMux instance), **LAN** (mDNS peer-to-peer forwarding, same network, v0.46+), and **WAN** (opt-in cloud relay you operate). Two delivery models: [jekt](#jekt) and [message](#message). Powers the `DiscoverAgents` and `SendMessage` Agent App API tools. See [Interagent Communication](/internals/interagent-comms/) and [Reactive event bus](/security/reactive-event-bus/). (Formerly called *agentbus*.)
 
-**MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
+<a id="mcp"></a>**MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 
 <a id="muxqueue"></a>**Muxqueue** — The shared work queue: durable items any agent can enqueue and claim later. The **pull** counterpart to [MuxBus](#agentbus)'s **push** — `SendMessage` names a recipient and delivers now; a Muxqueue item waits to be claimed instead (usually by anyone, optionally restricted to one agent or group). Claiming grants a time-limited *lease*, not ownership, so a crashed claimant's item can be re-offered — though only while it has attempts left, and only once some agent's next claim triggers the lazy reaper. Lives in the always-global store, so items cross channels and survive restarts. Exposed as the `Work*` Agent App API tools and `muxspect work`. See [Agent App API](/internals/agent-app-api/#muxqueue--the-shared-work-queue).
 
-**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
+<a id="oac"></a>**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
 <a id="pane"></a>**pane** — A UI slot in the workspace layout. A pane holds one or more [pane tabs](#pane-tab). Panes have types: terminal, agent, code editor, browser, media, swarm, system metrics and more (see [Pane Types](/pane-types/)). The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
 
@@ -75,7 +75,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="process-group"></a>**process group** — The Linux + macOS equivalent of a Windows Job Object for AgentMux's process-isolation needs. The launcher places the host and sidecar in a process group. On Linux, `PR_SET_PDEATHSIG` ensures child processes terminate when the launcher exits — this prevents orphaned `agentmux-cef` or `agentmux-srv` processes if the launcher crashes. On macOS, crashed-parent children are reparented to launchd rather than killed; the process group provides isolation but not automatic orphan cleanup.
 
-**reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
+<a id="reducer-stack"></a>**reducer stack** — AgentMux's layered state model. Each layer (launcher / host / sidecar / frontend slice) owns a slice of state, with dispatch ordered top-to-bottom. The single canonical place to look for "why did X change?" See [The reducer stack](/internals/reducer-stack/).
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
@@ -85,13 +85,13 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="stash"></a>**Stash** — The per-agent drawer behind the `backpack` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
 
-**streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
+<a id="streaming-buffer"></a>**streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 
 <a id="subagent"></a>**subagent** — An agent spawned by another agent. Claude Code's sub-agent feature is the canonical example. For Claude Code agents, the [Swarm](/subagent-watcher/) pane tracks these and expands each one's activity inline under its parent agent.
 
-**swarm** — The multi-agent overview pane. Lists every running agent pane on this instance as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
+<a id="swarm"></a>**swarm** — The multi-agent overview pane. Lists every running agent pane on this instance as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
 
-**Unix domain socket** — The IPC mechanism the launcher uses on Linux and macOS to communicate with the host. The socket lives at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (primary) or `/tmp/agentmux-<uid>/<hash>.sock` (fallback when `$XDG_RUNTIME_DIR` is unset), where `<hash>` is derived from `(data_dir + version)` — the same isolation key as the Windows named pipe. The counterpart Windows primitive is a **named pipe** (`\\.\pipe\agentmux-<hash>`). Both carry the same wire protocol (the reducer command set defined in `crates/common/src/ipc`). See [Platform support → Linux](/internals/platform-support/#linux).
+<a id="unix-domain-socket"></a>**Unix domain socket** — The IPC mechanism the launcher uses on Linux and macOS to communicate with the host. The socket lives at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (primary) or `/tmp/agentmux-<uid>/<hash>.sock` (fallback when `$XDG_RUNTIME_DIR` is unset), where `<hash>` is derived from `(data_dir + version)` — the same isolation key as the Windows named pipe. The counterpart Windows primitive is a **named pipe** (`\\.\pipe\agentmux-<hash>`). Both carry the same wire protocol (the reducer command set defined in `crates/common/src/ipc`). See [Platform support → Linux](/internals/platform-support/#linux).
 
 <a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
 
@@ -99,7 +99,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="window-tab"></a>**window tab** — A whole layout of [panes](#pane), shown in the tab bar along the top of the window (Tab 1, Tab 2, …). The outermost of the three kinds of tab, before [pane tabs](#pane-tab) and [document tabs](#document-tab).
 
-**WRR (Window Reality Reconciliation)** — The launcher's loop that reconciles desired window state (what AgentMux *wants*) against actual OS state (what the OS *says*). Defends against state drift when external tools or the user move/resize/close windows. See [Window Reality Reconciliation](/internals/wrr/).
+<a id="wrr"></a>**WRR (Window Reality Reconciliation)** — The launcher's loop that reconciles desired window state (what AgentMux *wants*) against actual OS state (what the OS *says*). Defends against state drift when external tools or the user move/resize/close windows. See [Window Reality Reconciliation](/internals/wrr/).
 
 ---
 

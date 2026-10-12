@@ -1,6 +1,6 @@
 ---
 title: Zoom system
-description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.platform.ts`, how it persists (live block meta plus a durable per-agent layer), and how new view types opt in.
+description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.ts`, how it persists (live block meta plus a durable per-agent layer), and how new view types opt in.
 ---
 
 AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it. Per-pane zoom lives on block meta (`term:zoom`); for **agent** panes it is additionally mirrored into a durable per-agent store so the zoom survives the block (see [Persistence](#persistence)). Chrome zoom is in-memory only (see the table below).
@@ -18,7 +18,7 @@ Per-pane is what users hit by default (zoom in/out adjusts the focused pane). Ch
 
 Three files own the input plumbing:
 
-- [`frontend/app/store/zoom.platform.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.platform.ts) — the store. Exports `zoomIn`, `zoomOut`, `zoomReset`, `zoomBlockIn`, `zoomBlockOut`, `chromeZoomIn/Out/Reset`, plus the `zoomIndicatorVisibleAtom` / `zoomIndicatorTextAtom` signals the indicator overlay reads. Per-platform variants (`zoom.win32.ts`, `zoom.darwin.ts`, `zoom.linux.ts`) only diverge on platform-specific compensation; the API is identical.
+- [`frontend/app/store/zoom.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.ts) — the store. Exports `zoomIn`, `zoomOut`, `zoomReset`, `zoomBlockIn`, `zoomBlockOut`, `chromeZoomIn/Out/Reset`, plus the `zoomIndicatorVisibleAtom` / `zoomIndicatorTextAtom` signals the indicator overlay reads. One file serves every platform.
 - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) — `Ctrl+/-/0` and `Cmd+/-/0` bindings call `zoomIn() / zoomOut() / zoomReset()`. Those resolve the focused block via `getFocusedBlockId()` and route to `zoomBlockIn/Out` for that block.
 - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) — `Ctrl+Wheel` listener at window scope. If the cursor is over chrome (`.window-header` / `.status-bar` / `.block-frame-default-header`), routes to `chromeZoomIn/Out`; otherwise probes `target.closest("[data-blockid]")` and routes to `zoomBlockIn/Out`.
 
@@ -28,13 +28,15 @@ The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the 
 
 ## How to make a view type zoomable
 
-1. Set `viewType` on the block so `getBlockZoom` recognises it. The allow-list is per-platform — `zoom.platform.ts` resolves to `zoom.win32.ts`, `zoom.darwin.ts`, or `zoom.linux.ts` at build time, and each file has its own `getBlockZoom`. The Windows one looks like:
+1. Declare the `paneZoom` capability in the view's pane manifest, as the agent pane does (`frontend/app/view/agent/agent-manifest.tsx`):
 
    ```ts
-   if (vt !== "term" && vt !== "agent" && vt !== "swarm") return null;
+   capabilities: {
+       paneZoom: {}, // or { baseFontSize: 13 } to scale from another base size (default 15)
+   },
    ```
 
-   **Update every platform variant** (or extract a shared helper) so the new view zooms on all three OSes — a Windows-only change silently no-ops on macOS / Linux builds. Codex P2 on docs PR #32 caught this. Returning `null` for unsupported types is the "this pane doesn't zoom" signal — `zoomBlockIn/Out` early-returns and the universal indicator doesn't show.
+   `getBlockZoom` (`frontend/app/store/zoom.ts`) asks for this capability (`frontend/app/block/pane-tab-registry.ts`) rather than keeping its own list of view types. Without it, `getBlockZoom` returns `null`, the "this pane doesn't zoom" signal: `zoomBlockIn/Out` early-returns and the universal indicator doesn't show.
 
 2. **Read** the persisted value in your view component:
 
@@ -102,7 +104,7 @@ Agent panes apply CSS `zoom` to the whole view root, which would also scale the 
 
 ## Limits
 
-- **Range**: 0.5x to 2.0x. Constants in `zoom.win32.ts` (`MIN_ZOOM`, `MAX_ZOOM`).
+- **Range**: 0.5x to 2.0x. Constants in `frontend/app/store/zoom-factor.ts` (`MIN_ZOOM`, `MAX_ZOOM`).
 - **Steps**: 0.1 (keyboard, `KEYBOARD_STEP`) or 0.05 (wheel, `WHEEL_STEP`). The skip-to-next-pixel logic in `stepZoom` ensures a keyboard step always changes the rendered terminal font by at least 1px (avoids "I pressed Ctrl++ but nothing changed").
 - **Font bounds**: terminal fonts clamp to `[4, 64]` px regardless of zoom factor — the store enforces this in `computeEffectiveFontSize`.
 
@@ -111,10 +113,10 @@ Agent panes apply CSS `zoom` to the whole view root, which would also scale the 
 - Spec: [`docs/specs/zoom-architecture.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/zoom-architecture.md) — the original design that established the universal framework, plus follow-ups for chrome zoom + pane-header zoom routing.
 - Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (debounced mirror, reset-deletes, cross-channel restore).
 - Source:
-  - [`frontend/app/store/zoom.win32.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.win32.ts) (canonical implementation; macOS and Linux variants only override platform-specific compensation)
+  - [`frontend/app/store/zoom.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.ts) (one implementation for every platform)
   - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) (Ctrl+/-/0 bindings)
   - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) (Ctrl+Wheel routing)
   - [`crates/srv/src/server/service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) (`schedule_agent_zoom_mirror` — debounced `term:zoom` → `ui:zoom` mirror)
-  - [`crates/srv/src/server/app_api/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/app_api/mod.rs) (`parse_seed_zoom`; `agent.open` itself, which seeds `term:zoom` from saved `ui:zoom`, is in `app_api/agent_open.rs`)
+  - [`crates/srv/src/server/app_api/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/app_api/mod.rs) (`parse_seed_zoom`; `agent.open` itself, which seeds `term:zoom` from saved `ui:zoom`, is in `crates/srv/src/server/app_api/agent_open.rs`)
   - [`crates/srv/src/backend/storage/content.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/content.rs) (per-agent content store + global def-registry mirror)
   - [`frontend/app/view/agent/styles/_control-bar.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/styles/_control-bar.scss) (zoom-invariant busy bar via `--agent-pane-zoom`)

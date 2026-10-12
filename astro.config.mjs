@@ -3,56 +3,20 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import remarkGithubSourceLinks from './plugins/remark-github-source-links.mjs';
 import rehypeGithubSourceTable from './plugins/rehype-github-source-table.mjs';
+import rehypeCheckSourceLinks, { sourceLinksIntegration } from './plugins/rehype-check-source-links.mjs';
 
 export default defineConfig({
 	markdown: {
 		remarkPlugins: [
-			[remarkGithubSourceLinks, {
-				baseUrl: 'https://github.com/agentmuxai/agentmux/blob/main/',
-				// Short-name aliases used across docs (defined in internals/env-vars.md preamble)
-				aliases: {
-					// Rust / shell (env-vars page)
-					'shell.rs':                    'crates/srv/src/backend/blockcontroller/shell/lifecycle.rs',
-					'data_paths.rs':               'crates/common/src/data_paths.rs',
-					'runtime_mode.rs':             'crates/common/src/runtime_mode.rs',
-					'srv_spawner.rs':              'crates/launcher/src/srv_spawner.rs',
-					'launcher/main.rs':            'crates/launcher/src/main.rs',
-					'shellintegration.rs':         'crates/srv/src/backend/shellintegration.rs',
-					'bash.sh':                     'crates/srv/src/backend/shellintegration/bash.sh',
-					'pwsh.ps1':                    'crates/srv/src/backend/shellintegration/pwsh.ps1',
-					'websocket.rs':                'crates/srv/src/server/websocket.rs',
-					// Layout model (state-model page)
-					'layoutModel.ts':              'frontend/layout/lib/layoutModel.ts',
-					'layoutTree.ts':               'frontend/layout/lib/layoutTree.ts',
-					'layoutFocus.ts':              'frontend/layout/lib/layoutFocus.ts',
-					'layoutPersistence.ts':        'frontend/layout/lib/layoutPersistence.ts',
-					'layoutAtom.ts':               'frontend/layout/lib/layoutAtom.ts',
-					'layoutNodeModels.ts':         'frontend/layout/lib/layoutNodeModels.ts',
-					// Agent-pane-state store (state-model page §3)
-					'types.ts':                    'frontend/app/store/agent-pane-state/types.ts',
-					'reducer.ts':                  'frontend/app/store/agent-pane-state/reducer.ts',
-					'browser-pane-state-store.ts': 'frontend/app/store/browser-pane-state-store.ts',
-					'editor-pane-state-store.ts':  'frontend/app/store/editor-pane-state-store.ts',
-					// Block rendering (state-model page §4–5)
-					'autotitle.ts':                'frontend/app/block/autotitle.ts',
-					'blockframe.tsx':              'frontend/app/block/blockframe.tsx',
-					'blocktypes.ts':               'frontend/app/block/blocktypes.ts',
-					'block.scss':                  'frontend/app/block/block.scss',
-					'tabbar.tsx':                  'frontend/app/tab/tabbar.tsx',
-					// Global store / type defs
-					'global.ts':                   'frontend/app/store/global.ts',
-					'wos.ts':                      'frontend/app/store/wos.ts',
-					'gotypes.d.ts':                'frontend/types/gotypes.d.ts',
-				},
-				// Remap path prefixes: specs/ in docs → docs/specs/ in repo
-				pathMap: {
-					'specs/': 'docs/specs/',
-				},
-			}],
+			// Links backticked source paths to the agentmux commit src/agentmux is
+			// pinned to. Aliases and path rules: plugins/source-links.mjs.
+			remarkGithubSourceLinks,
 		],
 		rehypePlugins: [
 			// Must run after remarkGithubSourceLinks so it can detect the <a> tags
 			rehypeGithubSourceTable,
+			// Last: pins and checks every source link, however it was written.
+			rehypeCheckSourceLinks,
 		],
 	},
 	redirects: {
@@ -73,6 +37,8 @@ export default defineConfig({
 		'/armory': '/connectors',
 	},
 	integrations: [
+		// Fails the build on a link into the agentmux source that doesn't resolve.
+		sourceLinksIntegration(),
 		starlight({
 			title: 'AgentMux Docs',
 			logo: {

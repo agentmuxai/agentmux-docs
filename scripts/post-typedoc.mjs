@@ -20,12 +20,34 @@ function* walk(dir) {
     }
 }
 
+// typedoc links its pages to each other by file (`../type-aliases/Foo.md`,
+// `../../README.md`), but Starlight serves each file at a lowercased route
+// without `.md`, one folder deeper than the file. Left as written, every such
+// link 404s (specs/AUDIT_DEAD_LINKS_2026_10_12.md §3.1), so each is rewritten
+// to the absolute route of the file it names.
+const MD_LINK = /\]\((?![a-z][a-z0-9+.-]*:|\/|#)([^)\s]+?\.md)(#[^)\s]*)?\)/gi;
+
+function routeOf(relFile) {
+    return "/api/typescript/" + relFile.replace(/\\/g, "/").replace(/\.md$/i, "").toLowerCase() + "/";
+}
+
+function rewriteLinks(text, file) {
+    const from = dirname(relative(root, file));
+    return text.replace(MD_LINK, (_, target, hash = "") => `](${routeOf(join(from, target))}${hash.toLowerCase()})`);
+}
+
 let count = 0;
+let relinked = 0;
 for (const file of walk(root)) {
-    const original = readFileSync(file, "utf8");
+    const read = readFileSync(file, "utf8");
+    const original = rewriteLinks(read, file);
+    if (original !== read) relinked++;
 
     // Skip files that already have frontmatter — idempotent.
-    if (original.startsWith("---\n")) continue;
+    if (original.startsWith("---\n")) {
+        if (original !== read) writeFileSync(file, original, "utf8");
+        continue;
+    }
 
     // Pull the first H1 as the title; fall back to the filename slug.
     const m = original.match(/^# +(.+?)\s*$/m);
@@ -40,7 +62,7 @@ for (const file of walk(root)) {
     count++;
 }
 
-console.log(`[post-typedoc] frontmatter applied to ${count} file(s)`);
+console.log(`[post-typedoc] frontmatter applied to ${count} file(s); links rewritten to routes in ${relinked}`);
 
 // Write the umbrella index.md so /api/typescript/ renders as a Starlight
 // page with linked cards into each typedoc module. typedoc clears its

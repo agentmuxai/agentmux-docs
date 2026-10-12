@@ -16,7 +16,7 @@ Consequences: nothing can push code to your machine through AgentMux, and nothin
 
 ## How releases are published
 
-Releases are built by the `release.yml` workflow in the AgentMux repository and published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). [agentmux.ai/download](https://agentmux.ai/download) serves the same files.
+Releases are built by the `release.yml` workflow in the AgentMux repository and published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases). [agentmux.ai](https://agentmux.ai/#download) serves the same files.
 
 | Platform | Files | Architecture |
 |---|---|---|
