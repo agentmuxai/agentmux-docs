@@ -400,7 +400,10 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
 
-![Opening the Stash from the backpack in an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices](../../assets/recordings/stash-tour.gif)
+<figure class="docs-clip">
+<video controls loop muted playsinline preload="metadata" width="800" height="586" poster="/recordings/stash-tour-poster.webp" aria-describedby="clip-stash-tour"><source src="/recordings/stash-tour.mp4" type="video/mp4" /></video>
+<figcaption id="clip-stash-tour">A 20-second clip with no sound: opening the Stash from the backpack in an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices.</figcaption>
+</figure>
 
 - **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
 - **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
