@@ -28,7 +28,8 @@ export default defineConfig({
 		'/building': '/internals/building',
 		'/debugging': '/internals/debugging',
 		'/contributing': '/internals/contributing',
-		'/agent-app-api': '/internals/agent-app-api',
+		'/agent-app-api': '/internals/muxapi',
+                '/internals/agent-app-api': '/internals/muxapi',
 		'/interpane-comms': '/internals/interagent-comms',
 		'/internals/interpane-comms': '/internals/interagent-comms',
 		'/the-forge': '/bundles',
@@ -177,7 +178,7 @@ export default defineConfig({
 						{
 							label: 'API reference',
 							items: [
-								{ label: 'Agent App API', slug: 'internals/agent-app-api' },
+								{ label: 'MuxAPI', slug: 'internals/muxapi' },
 								// Generated reference indexes — produced by
 								// `npm run build:typedoc` (writes into
 								// src/content/docs/api/typescript/) and

@@ -156,4 +156,4 @@ AgentMux is licensed under Apache-2.0. By contributing, you agree that your cont
 - [Reducer stack](/internals/reducer-stack/) — the state model new contributors hit first
 - [Debugging](/internals/debugging/) — log discovery + drift diagnostics
 - [Building from Source](/internals/building/) — environment setup
-- [Agent App API](/internals/agent-app-api/) — RPC surface
+- [MuxAPI](/internals/muxapi/) — RPC surface

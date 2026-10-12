@@ -82,10 +82,10 @@ The Stash tab, this section, and an agent acting on itself all go through the sa
 
 | Surface | Commands |
 |---|---|
-| App API | `memory.list`, `memory.read`, `memory.write` |
+| MuxAPI | `memory.list`, `memory.read`, `memory.write` |
 | MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite`, `MemoryHistory`, `MemoryDiff`, `MemoryRevert` |
 
-See [Agent App API](/internals/agent-app-api/#memory-native-memory--brain) for the full parameter reference.
+See [MuxAPI](/internals/muxapi/#memory-native-memory--brain) for the full parameter reference.
 
 ### The memory record: memory follows the agent
 
@@ -100,7 +100,7 @@ The older `db_agent_native_memory` mirror is still written through on list, read
 
 ## Skills
 
-The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [Agent App API](/internals/agent-app-api/#skill) for the full RPC reference.
+The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [MuxAPI](/internals/muxapi/#skill) for the full RPC reference.
 
 ![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
 
@@ -132,5 +132,5 @@ Some sections have a per-agent equivalent reached from inside an agent pane:
 - [Connectors](/connectors/) — Accounts, MCP servers and Remotes
 - [Bundles](/bundles/) — full bundle reference, and how an agent's bundles are picked
 - [Agent Bundle Format (ABF)](/abf/) — beta spec for portable, exportable bundles
-- [Agent App API](/internals/agent-app-api/) — `skill.*`, `bundle.*` and `memory.*` RPC catalogs
+- [MuxAPI](/internals/muxapi/) — `skill.*`, `bundle.*` and `memory.*` RPC catalogs
 - `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo — the memory record, adoption and folder claims

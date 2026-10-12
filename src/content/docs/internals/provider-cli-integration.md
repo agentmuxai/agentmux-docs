@@ -212,6 +212,6 @@ The abstraction is **hybrid** — not a single unified interface throughout:
 ## See also
 
 - [Conversation overhead & provider mechanics](/internals/conversation-overhead/) — what gets injected into the system prompt per turn and how prompt caching affects token cost
-- [Agent App API](/internals/agent-app-api/) — the MCP tools and REST endpoints available to running agents
+- [MuxAPI](/internals/muxapi/) — the MCP tools and REST endpoints available to running agents
 - [Environment variable contract](/internals/env-vars/) — full list of env vars injected at agent launch
 - [Architecture overview](/internals/architecture/) — the four-process model and how the blockcontroller fits into the sidecar

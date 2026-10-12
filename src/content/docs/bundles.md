@@ -10,7 +10,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from its Stash. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
 
 :::note[Earlier names]
-Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [Agent App API](/internals/agent-app-api/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
+Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [MuxAPI](/internals/muxapi/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
 :::
 
 ## What goes in a bundle
@@ -47,7 +47,7 @@ You pick them in three places, all with the same control: each picked bundle has
 
 - **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv/src/backend/storage/agent_bundles.rs`). The instructions are no longer sent as the agent's first message. A bundle deleted since it was picked is skipped.
 - **Skills** from every bundle in the list are added to the agent's own. When two bundles name the same skill, the first one wins.
-- **MCP servers** from the bundles are added when the agent is opened through the Agent App API (`agent.open`). The Launch button in the agent pane doesn't add a bundle's MCP servers yet.
+- **MCP servers** from the bundles are added when the agent is opened through MuxAPI (`agent.open`). The Launch button in the agent pane doesn't add a bundle's MCP servers yet.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
 
 The Stash's **Startup** tab, which picked one bundle to send as the agent's first message, became the **Bundles** tab. A bundle picked there is moved into the list the first time the list is read.

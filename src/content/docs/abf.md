@@ -125,7 +125,7 @@ A bundle can carry the [widgets](/widgets/) its agents use. `bundle.json` lists 
 - Importing offers each widget with its version, who signed it and what it may do. Each one you keep is copied in and **asks for your approval** like any widget. A bundle never approves a widget; declining one leaves the rest of the bundle imported.
 - A widget whose files don't match the hash `bundle.json` lists isn't offered.
 - At most 20 widgets and 100 MB of widget files per bundle. Only a zip carries widgets.
-- `bundle.export` takes `widgets: [id]` (with `format: "zip"`) and writes those widgets' approved files. There's no export button in the app yet; agents export through the App API.
+- `bundle.export` takes `widgets: [id]` (with `format: "zip"`) and writes those widgets' approved files. There's no export button in the app yet; agents export through MuxAPI.
 - The `$schema` is still v0.3: `widgets` is an optional component, and an older AgentMux imports the rest of the bundle without it.
 
 ## ABF v0.3: Agent Bundle Format

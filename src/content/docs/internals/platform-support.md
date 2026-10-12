@@ -48,7 +48,7 @@ The architecture is designed cross-platform from the start:
 - Path resolution ([multi-instance](/multi-instance/)) uses `~/.agentmux/` everywhere; the channel + version sub-dir layout (`channels/<ch>/versions/<v>/`) is identical across OSes.
 - Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
-- App API ([agent-app-api](/internals/agent-app-api/)) — every command in the catalog is OS-independent at the wire level.
+- [MuxAPI](/internals/muxapi/) — every command in the catalog is OS-independent at the wire level.
 - **Version isolation** (v0.41.1+ Windows; v0.42.x+ macOS + Linux) — each release version has its own single-instance domain (the launcher's IPC socket/pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Agent definitions and settings are channel-wide under `channels/<channel>/`, so upgrading doesn't reset your agents or settings.
 
 ## Per-OS notes
