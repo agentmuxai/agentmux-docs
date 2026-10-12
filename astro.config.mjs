@@ -29,7 +29,7 @@ export default defineConfig({
 		'/debugging': '/internals/debugging',
 		'/contributing': '/internals/contributing',
 		'/agent-app-api': '/internals/muxapi',
-                '/internals/agent-app-api': '/internals/muxapi',
+		'/internals/agent-app-api': '/internals/muxapi',
 		'/interpane-comms': '/internals/interagent-comms',
 		'/internals/interpane-comms': '/internals/interagent-comms',
 		'/the-forge': '/bundles',

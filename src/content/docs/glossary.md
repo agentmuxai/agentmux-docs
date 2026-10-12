@@ -11,7 +11,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agent-operating-environment"></a>**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [MuxAPI](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
-<a id="muxapi"></a><a id="agent-app-api"></a>**MuxAPI** (formerly the Agent App API) — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/agent-app-api](/internals/muxapi/).
+<a id="muxapi"></a><a id="agent-app-api"></a>**MuxAPI** (formerly the Agent App API) — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/muxapi](/internals/muxapi/).
 
 <a id="appimage"></a>**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
 
