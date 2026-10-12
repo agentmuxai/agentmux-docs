@@ -67,3 +67,9 @@ jobs:
 
       - name: Navigation paint (no empty-content frame on a first visit)
         run: node scripts/check-navigation-paint.mjs
+
+      - name: Accessibility (WCAG 2.2 A/AA, dark and light themes)
+        # axe-core on every built page except the generated /api/ reference, in the Chromium
+        # installed above. Fails on serious or critical violations, apart from the two known
+        # Starlight/Expressive Code ones listed (and still printed) in the script.
+        run: node scripts/check-a11y.mjs
