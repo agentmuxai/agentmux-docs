@@ -62,6 +62,8 @@ export default function remarkGithubSourceLinks() {
         title: null,
         children: [{ type: 'inlineCode', value: raw }],
         data: { hProperties: { className: ['src-ref'] } },
+        // Where it is written: rehype-check-source-links.mjs records it.
+        position: node.position,
       };
     });
   };

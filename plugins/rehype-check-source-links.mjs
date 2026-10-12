@@ -26,10 +26,26 @@ import { fileURLToPath } from 'node:url';
 import { visit } from 'unist-util-visit';
 import { CONTENT_DIR, isDir, isFile, lineCount, parseSourceUrl, pinnedCommit, sourceUrl } from './source-links.mjs';
 
+/**
+ * Lines of the page file before the Markdown the parser saw: Astro strips the
+ * frontmatter first, so node positions count from the body, not the file.
+ */
+function bodyLineOffset(file) {
+  try {
+    const full = readFileSync(file.path, 'utf8').replace(/\r\n/g, '\n');
+    const body = String(file.value ?? '').replace(/\r\n/g, '\n');
+    const at = body ? full.indexOf(body) : -1;
+    return at > 0 ? full.slice(0, at).split('\n').length - 1 : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default function rehypeCheckSourceLinks() {
   return (tree, file) => {
     const problems = [];
     const page = file.path ? relative(CONTENT_DIR, file.path).replace(/\\/g, '/') : '';
+    let offset;
     const flag = (node, href, why) => {
       node.properties.dataSourceLinkError = why;
       problems.push(`${href}\n      ${why}`);
@@ -62,7 +78,10 @@ export default function rehypeCheckSourceLinks() {
       // Where a line link is written, so scripts/check-line-links.mjs can tell a
       // link this PR edited (its author re-checked it) from one it didn't.
       const line = (node.position ?? parent?.position)?.start?.line;
-      if (lineStart !== undefined && page && line) node.properties.dataSrcLine = `${page}:${line}`;
+      if (lineStart !== undefined && page && line) {
+        offset ??= bodyLineOffset(file);
+        node.properties.dataSrcLine = `${page}:${line + offset}`;
+      }
     });
 
     if (problems.length > 0) {
