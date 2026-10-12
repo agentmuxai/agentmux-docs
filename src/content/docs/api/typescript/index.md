@@ -16,7 +16,7 @@ Per-module reference for the TypeScript stores, reducers, and command source tha
 
 - [Rust API](/api/rust/) — rustdoc for the four crates in the Cargo workspace.
 - [The reducer stack](/internals/reducer-stack/) — explains how these stores fit together.
-- [Agent App API](/internals/agent-app-api/) — runtime API agents call to render their own UI.
+- [MuxAPI](/internals/muxapi/) — runtime API agents call to render their own UI.
 
 ## Regeneration
 

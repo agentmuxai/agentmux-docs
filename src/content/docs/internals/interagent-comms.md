@@ -7,7 +7,7 @@ description: "The MuxBus — how agents discover each other and send messages on
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **MuxBus** is how agents find and message each other: within one AgentMux instance, between instances on the same machine, across the local network, and, optionally, across the internet. Agents use it through the `DiscoverAgents` and `SendMessage` MCP tools, which every agent pane has. It is one part of the larger [Agent App API](/internals/agent-app-api/).
+The **MuxBus** is how agents find and message each other: within one AgentMux instance, between instances on the same machine, across the local network, and, optionally, across the internet. Agents use it through the `DiscoverAgents` and `SendMessage` MCP tools, which every agent pane has. It is one part of the larger [MuxAPI](/internals/muxapi/).
 
 ## Delivery tiers
 
@@ -148,4 +148,4 @@ These labels are enforced by the server, but whether an agent actually pauses de
 - [Reactive event bus](/security/reactive-event-bus/): routes, trust marker, signing keys, durable hold
 - [LAN discovery](/lan-discovery/): mDNS setup and what it exposes
 - [Warden widget](/warden/): agent state and the delivery feed
-- [Agent App API](/internals/agent-app-api/): the full MCP tool reference
+- [MuxAPI](/internals/muxapi/): the full MCP tool reference

@@ -12,7 +12,7 @@ AgentMux is **alpha software** and under heavy active development. Internals are
 The Internals section is for two audiences:
 
 - **Contributors** — anyone working on the AgentMux codebase. The architecture, reducer model, and persistence layer are documented here.
-- **Integrators** — anyone building external tools that drive AgentMux through its RPC surface. The Agent App API and generated TypeScript / Rust references are here.
+- **Integrators** — anyone building external tools that drive AgentMux through its RPC surface. MuxAPI and generated TypeScript / Rust references are here.
 
 AgentMux runs as four processes. [Architecture overview](/internals/architecture/) explains each one:
 
@@ -34,10 +34,10 @@ AgentMux runs as four processes. [Architecture overview](/internals/architecture
 
     [Building →](/internals/building/)
   </Card>
-  <Card title="Agent App API" icon="bars">
+  <Card title="MuxAPI" icon="bars">
     Drive AgentMux from an external agent or tool: open panes, send messages, read output. JSON-RPC over WebSocket.
 
-    [Agent App API →](/internals/agent-app-api/)
+    [MuxAPI →](/internals/muxapi/)
   </Card>
 </CardGrid>
 

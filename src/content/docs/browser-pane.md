@@ -26,7 +26,7 @@ Some things differ from a normal browser tab:
 - Click **+** on any pane's tab strip and pick **Browser** to open it as a tab in that pane.
 - Right-click a pane header → **Replace With...** → **Browser** replaces that pane.
 - From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`crates/srv/src/backend/shellintegration/muxsh.mjs`).
-- From the App API: `pane.open` with `view: "browser"` and a `url`, which is required for this view.
+- From MuxAPI: `pane.open` with `view: "browser"` and a `url`, which is required for this view.
 
 The **Messengers** widget (Discord, Slack, Telegram, WhatsApp, Teams) opens browser panes too, with the navigation bar hidden.
 
@@ -144,7 +144,7 @@ Only the current URL is saved with the pane. Switching to another window tab and
 
 ## Driving the browser from an agent
 
-Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [Agent App API](/internals/agent-app-api/) for the tool reference.
+Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
 
 ## Internals
 

@@ -285,7 +285,7 @@ Agents have a dedicated `OpenMedia` MCP tool — the Media-pane equivalent of `O
 
 ## Agent
 
-The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own accounts and bundles, streaming parser, lifecycle management, and direct access to the Agent App API. It displays:
+The agent pane is the first-class resident unit of AgentMux. Each agent gets a structured pane — not a terminal wrapper — with its own accounts and bundles, streaming parser, lifecycle management, and direct access to MuxAPI. It displays:
 
 ![The Agent widget when it first opens: the agent picker](../../assets/screenshots/widgets/widget-agent-small.png)
 
@@ -347,7 +347,7 @@ When an agent calls `AskUserQuestion` (part of the Agent SDK control protocol), 
 
 ### Persistent shell
 
-Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes. The agent can also write to it (`ShellInput`) and poll its state (`ShellStatus`) — see [Agent App API](/internals/agent-app-api/#shell-management).
+Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes. The agent can also write to it (`ShellInput`) and poll its state (`ShellStatus`) — see [MuxAPI](/internals/muxapi/#shell-management).
 
 ### Next-prompt suggestion (ghost text)
 

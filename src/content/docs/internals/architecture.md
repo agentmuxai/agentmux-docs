@@ -97,4 +97,4 @@ If you're new, read in this order:
 2. [Multi-instance & dev mode](/multi-instance/) — gets you to a running AgentMux you can poke at.
 3. [Reducer stack](/internals/reducer-stack/) — explains how state actually flows through the four processes.
 4. [Pane Types](/pane-types/) — the user-visible building blocks.
-5. The [Agent App API reference](/internals/agent-app-api/) when you're ready to drive AgentMux from an agent.
+5. The [MuxAPI reference](/internals/muxapi/) when you're ready to drive AgentMux from an agent.

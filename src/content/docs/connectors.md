@@ -81,7 +81,7 @@ The catalog of MCP Server primitives available to agents:
 - **Global servers** — visible to and bindable by any agent. Created/edited here via the catalog (`mcp.catalog.upsert`/`mcp.catalog.delete`).
 - **Private servers** — created by a specific agent (`mcp.upsert`), visible only to that agent until bound elsewhere.
 
-An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. A [bundle](/bundles/) can also include MCP servers. See [Agent App API](/internals/agent-app-api/#mcp) for the full RPC reference.
+An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. A [bundle](/bundles/) can also include MCP servers. See [MuxAPI](/internals/muxapi/#mcp) for the full RPC reference.
 
 ![Connectors → MCP servers: the servers AgentMux comes with, how many agents use each, + Browse catalog and + New MCP server](../../assets/screenshots/memory/connectors-mcp.png)
 
@@ -112,5 +112,5 @@ Some sections have a per-agent equivalent reached from inside an agent pane:
 - [Memory](/memory/) — Global and Personal Memory, Skills and Bundles
 - [Auth flows](/auth/) — per-provider OAuth flows, API key storage, and credential storage model
 - [Identity & Accounts](/identity/) — how agents and accounts are linked
-- [Agent App API](/internals/agent-app-api/) — `mcp.*` and `identity.*` RPC catalogs
+- [MuxAPI](/internals/muxapi/) — `mcp.*` and `identity.*` RPC catalogs
 - [First Agent Setup](/first-agent/) — connecting your first provider

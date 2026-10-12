@@ -1,6 +1,6 @@
 ---
 title: Terminal echo-latency benchmark
-description: How to measure terminal keystroke echo latency programmatically using the AgentMux App API, and how to interpret before/after results.
+description: How to measure terminal keystroke echo latency programmatically using MuxAPI, and how to interpret before/after results.
 ---
 
 `tools/tests/bench-term-echo.mjs` is a Node.js benchmark that drives a
@@ -157,5 +157,5 @@ the guard was unnecessary and has been removed.
 ## Related
 
 - [Debugging](/internals/debugging) — log access, CEF DevTools, perf HUD
-- [Agent App API](/internals/agent-app-api) — full WS protocol reference
+- [MuxAPI](/internals/muxapi/) — full WS protocol reference
 - [`tools/tests/authfile.ps1`](https://github.com/agentmuxai/agentmux/blob/main/tools/tests/authfile.ps1) — PowerShell helper for the same auth file
