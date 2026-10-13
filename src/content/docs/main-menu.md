@@ -64,7 +64,7 @@ Registered commands are grouped by category:
 | **App** | Connectors, Memory |
 | **Help** | Online Docs |
 
-Searching for "accounts" or "mcp" also finds **Connectors**, and "knowledge", "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
+Searching for "accounts", "mcp" or "remotes" also finds **Connectors**, and "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
 
 The palette is **not exhaustive** — most navigation shortcuts (Connect Remote, Settings UI, Focus Block N, raw tab-switching, etc.) are reachable only via [keybindings](/keybindings/), not from the palette.
 

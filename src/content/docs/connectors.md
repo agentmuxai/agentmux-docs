@@ -27,7 +27,7 @@ An agent's own linked accounts and MCP servers are shown in its [Stash](#per-age
 
 - **Widget bar:** click **Connectors**. It is pinned by default. If a Connectors pane is already open in the tab, the click focuses it instead of opening another.
 - **Hamburger menu:** click ≡ in the top tab bar and choose **Connectors**.
-- **Command palette:** run **Connectors**. Searching for "accounts" or "mcp" also finds it.
+- **Command palette:** run **Connectors**. Searching for "accounts", "mcp" or "remotes" also finds it.
 - **macOS app menu:** **Connectors…**.
 
 Links elsewhere in the app open Connectors on the right section:
@@ -35,7 +35,7 @@ Links elsewhere in the app open Connectors on the right section:
 - An agent pane that can't sign in shows **Connectors → Accounts** in its error row, and **Accounts (switch / upgrade)** when a usage limit is reached. See [First Agent Setup → Sign in](/first-agent/#sign-in).
 - In an agent's Stash, the **MCP Servers** tab's **Browse all in Connectors →** button and its **edit it there** link open **MCP servers**.
 
-A pane or layout saved while it was the Armory (the earlier pane that held both Connectors and Memory) opens as the matching new pane: Accounts and MCP servers as Connectors, the rest as Memory.
+AgentMux moves panes saved under an earlier name, once, the first time it starts after updating: an Armory pane (the earlier pane that held both Connectors and Memory) becomes Connectors for Accounts and MCP servers and Memory for the rest, and a Remotes pane becomes **Connectors → Remotes**. A layout file that uses the old names opens the same way.
 
 ## Accounts
 

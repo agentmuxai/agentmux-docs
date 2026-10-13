@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced) or Knowledge (Memory's earlier name), it shows the new panes in their place. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 To see what each one looks like, see the [widget gallery](/widget-gallery/).
 
@@ -22,7 +22,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
 | **Hangar** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Hangar](#hangar) |
-| **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). `knowledge`, its earlier name, still opens it |
+| **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). Formerly Knowledge |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
 | **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
 | **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |

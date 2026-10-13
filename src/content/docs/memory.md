@@ -23,23 +23,23 @@ Memory is a regular pane (icon: `brain`), opened from the widget bar like any ot
 Memory opens on **Global**. The pane title names the section, for example "Memory · Skills". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
 
 :::note[Earlier names]
-This pane was called **Knowledge**, and before that its sections were tabs of the **Armory**. Panes and layouts saved under either name open here, and so do links to `/knowledge/`.
+This pane was called **Knowledge**, and before that its sections were tabs of the **Armory**. AgentMux moves panes, widget-bar pins and keybindings saved under either name here, once, the first time it starts after updating. Layout files that use them still open here, and links to `/knowledge/` redirect.
 :::
 
 ## Opening Memory
 
 - **Widget bar:** click **Memory**. It is pinned by default. If a Memory pane is already open in the tab, the click focuses it instead of opening another.
 - **Hamburger menu:** click ≡ in the top tab bar and choose **Memory**.
-- **Command palette:** run **Memory**. Searching for "knowledge", "skills" or "bundles" also finds it.
+- **Command palette:** run **Memory**. Searching for "skills" or "bundles" also finds it.
 - **macOS app menu:** **Memory…**.
-- **Keybinding:** bind `app:memory`. A binding to the old `app:knowledge` still works.
+- **Keybinding:** bind `app:memory`. A binding to the old `app:knowledge` is changed to `app:memory` the first time it starts after updating.
 
 Links elsewhere in the app open Memory on the right section:
 
 - In an agent's Stash, the **Skills** tab's **Browse all in Memory →** button and its **edit it there** link open **Skills**.
 - The Stash's **Bundles** tab links to **Memory → Bundles**.
 
-A pane or layout saved while it was the Armory (the earlier pane that held both Connectors and Memory) opens as the matching new pane: Memory, Skills and Bundles as Memory, the rest as Connectors.
+An Armory pane (the earlier pane that held both Connectors and Memory) is moved to the matching new pane: Memory, Skills and Bundles to Memory, the rest to Connectors.
 
 ## Global
 

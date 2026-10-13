@@ -49,7 +49,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="jekt"></a>**jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). Use the `SendMessage` MCP tool (MuxAPI) or `POST /agentmux/reactive/inject` to jekt an agent.
 
-<a id="knowledge"></a>**Knowledge** — The former name of the [Memory](#memory) pane. Panes, layouts, keybindings (`app:knowledge`) and links (`/knowledge/`) that use it still reach Memory.
+<a id="knowledge"></a>**Knowledge** — The former name of the [Memory](#memory) pane. Panes, widget-bar pins and keybindings (`app:knowledge`) saved under it are moved to Memory the first time it starts after updating; layout files that use it still open Memory, and `/knowledge/` links redirect.
 
 <a id="launcher"></a>**launcher** — The 325 KB shim process (`agentmux-launcher`) that boots AgentMux. Spawns the host and sidecar, holds the IPC auth-key, tracks window reality. See [Architecture overview](/internals/architecture/).
 
