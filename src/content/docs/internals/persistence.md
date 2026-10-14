@@ -1,9 +1,9 @@
 ---
 title: Persistence
-description: The four SQLite stores and one JSONL log AgentMux writes — what each owns, who writes them, and how to back them up.
+description: The three SQLite stores and one JSONL log AgentMux writes — what each owns, who writes them, and how to back them up.
 ---
 
-AgentMux persists state across five files, owned by two processes (sidecar + launcher). This page enumerates them and explains the boundary.
+AgentMux persists state across four files, owned by two processes (sidecar + launcher). This page enumerates them and explains the boundary.
 
 ## At a glance
 
@@ -11,11 +11,10 @@ AgentMux persists state across five files, owned by two processes (sidecar + lau
 |---|---|---|---|
 | `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, controllers + the agent-definition / identity / memory / drone catalog — the app-domain reducer state of record |
 | `filestore.db` | SQLite | sidecar | Per-block content blobs (agent configs, snapshots, file-pane content) |
-| `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv saga coordinator (crash-resume) |
-| `launcher-sagas.db` | SQLite | launcher | Launcher-side saga state (LSD-1 batch onward) |
+| `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv sagas (compensated after a crash) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
-All five live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
+All four live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
 
 > **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, including shortcut overrides) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
 
@@ -137,13 +136,13 @@ You can rebuild `filestore.db` from scratch (you'll lose snapshots) without losi
 
 ## `sagas.db` — sidecar saga coordinator
 
-Per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5), sagas coordinate cross-block side effects (e.g. "open an agent in a new pane and wait for the controller to come up"). `sagas.db` records each step's start, completion, retry, and final status.
+Per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5), srv's sagas run multi-step workspace, tab and block commands such as tear-off, redock and delete (see [How sagas fit](/internals/reducer-stack/#how-sagas-fit)). `sagas.db` records each saga's lifecycle and each step's command and outcome ([`crates/srv/src/sagas/log.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/sagas/log.rs)).
 
-On crash the saga coordinator reads back from `sagas.db` and resumes pending sagas from their last durable step — that's the point of having a durable log instead of in-memory state.
+After a crash, srv doesn't resume an interrupted saga, it undoes it. At startup, before the API server accepts requests, `compensate_unresolved` ([`crates/srv/src/sagas/recovery.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/sagas/recovery.rs)) walks each unresolved saga's succeeded steps in reverse and dispatches their inverse commands. A step with no inverse it can derive is logged for review, and the saga is marked `failed_compensation`.
 
-## `launcher-sagas.db` — launcher saga state
+## Launcher sagas aren't persisted
 
-Added by the LSD-1 batch (2026-05-01). Same role as `sagas.db` but for sagas the launcher coordinates (window-pool warmup, window-detach, monitor-change reconciliation). Owned by `agentmux-launcher`.
+The launcher's two sagas, `pool_respawn` and `window_cleanup` (`crates/launcher/src/saga/`), keep their state in an in-memory registry. Both narrate cleanup the host does on its own, and srv rebuilds windows from its own state after a crash, so an interrupted launcher saga leaves nothing to recover. Their transitions are in the launcher log, prefixed `[saga]`. Older versions kept a `launcher-sagas.db`; the launcher deletes it at startup.
 
 ## `launcher-events.log` — Layer 1 event log
 
@@ -170,7 +169,7 @@ Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>
 
 ## What's NOT here
 
-For completeness, things that are NOT stored in these five files:
+For completeness, things that are NOT stored in these four files:
 
 - **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json`; **not** under `versions/<version>/`, so settings survive version upgrades
 - **Agent working directories** — per-agent workspace dirs under the **channel-wide** `~/.agentmux/channels/<channel>/agents/`, again one level above the version dir (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see below)

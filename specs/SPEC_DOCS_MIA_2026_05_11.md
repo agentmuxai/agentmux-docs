@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-11
 **Author:** agent1
-**Status:** draft (pending review)
+**Status:** implemented — Wave 1 (trust model, data sovereignty, update model, glossary, the API permission-boundary section) shipped in ebbe145, and Waves 2 and 3 (reactive event bus, identity and credential storage, network exposure) in f57b27a, all under `src/content/docs/security/`. The marketing-site deep links (below) weren't tracked in this repo.
 **Companion:** `/workspace/SECURITY_AUDIT_2026_05_11.md` (the audit this gap analysis is drawn from)
 
 ---
@@ -273,7 +273,7 @@ We intentionally separate the docs work so it can run in parallel with security 
 - Don't claim "secure update mechanism" — the mechanism is **deliberately manual**. Frame this as the security posture, not a missing feature.
 
 **Source-of-truth pointers:**
-- `agentmux-landing/public/release.json` — release manifest
+- The release manifest published on agentmux.ai
 - `agentmux-srv/src/backend/tool_store.rs:380-395` — SHA-pinning
 - Absence of any update endpoint in the launcher/sidecar (negative finding from audit)
 
@@ -410,13 +410,13 @@ Last verified against agentmux@<sha> — <date>
 
 ### Marketing → docs linkage
 
-After Wave 1 lands, file an `agentmux-landing` follow-up to add deep links from marketing claims:
+After Wave 1 lands, add deep links from the marketing site's claims:
 - `agentmux.ai` "zero telemetry" → `/security/data-sovereignty`
 - `agentmux.ai` "data sovereignty" → `/security/data-sovereignty`
 - `agentmux.ai` "shadow AI prevention" → `/security/trust-model#agent-processes`
 - `agentmux.ai` "immutable audit trail" → `/internals/reducer-stack` (extend with audit-trail subsection if not already there)
 
-This is a separate PR in the landing repo; tracked here for visibility.
+That change belongs to the marketing site, not this repo; tracked here for visibility.
 
 ---
 
@@ -446,6 +446,6 @@ If approved:
 1. Open a tracking issue listing all 6 pages + glossary + Agent App API enhancement.
 2. Wave 1 PR: Trust model + Data sovereignty + Update model + Glossary + Agent App API permission-boundary section. One PR, four-and-a-half new pages.
 3. Wave 2 + Wave 3 PRs filed when the gating security fixes merge (audit Criticals C1/C2/C3 + High H2).
-4. Marketing-linkage follow-up PR in `agentmux-landing` after Wave 1.
+4. Marketing-linkage follow-up on the marketing site after Wave 1.
 
 Estimated effort: Wave 1 ~ 1-2 days of focused writing for one person. Waves 2/3 ~ half a day each.

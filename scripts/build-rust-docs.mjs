@@ -42,7 +42,21 @@ const root = resolve(__dirname, "..");
 const submodule = resolve(root, "src", "agentmux");
 const target = resolve(root, "public", "api", "rust");
 
-const CRATES = ["agentmux-cef", "agentmux-srv", "agentmux-launcher", "agentmux-common"];
+// Every member of the agentmux Cargo workspace (its Cargo.toml `[workspace]
+// members`). `cargo doc --workspace` documents all of them; this list is what
+// the placeholder index (public/api/rust/index.html) links to and what the
+// check at the end of this script requires. Add a new workspace crate here
+// and to the placeholder, or its pages ship with nothing linking to them.
+const CRATES = [
+    "agentmux-cef",
+    "agentmux-srv",
+    "agentmux-launcher",
+    "agentmux-common",
+    "agentmux-mcp",
+    "agentmux-bashwrap",
+    "agentmux-remote",
+    "agentmux-procstats",
+];
 
 // See "Failure mode" above. Any non-empty CI value other than "false"
 // counts, matching how GitHub Actions and most CI systems set it.
@@ -91,8 +105,9 @@ console.log(`[build-rust-docs] cargo doc @ ${submodule}`);
 const cargoDocArgs = [
     "doc",
     "--no-deps",
+    // `--workspace` documents every member; cargo ignores `-p` alongside it,
+    // so the crate list isn't passed here.
     "--workspace",
-    ...CRATES.flatMap((c) => ["-p", c]),
     // `cef/dox` is the docs-only mode of the `cef` crate (docs.rs builds it
     // the same way): it turns `cef-dll-sys`'s build script into a no-op, so
     // documenting agentmux-cef no longer downloads the ~hundreds-of-MB CEF

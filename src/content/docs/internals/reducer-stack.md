@@ -5,7 +5,7 @@ description: How state flows through AgentMux — the 4-layer launcher / host / 
 
 AgentMux is built on a strict reducer model. Every cross-process state mutation goes through a single layer's reducer, emits events that other layers project, and is persisted by the layer that owns the truth. This page is the entry point into that model.
 
-The canonical living document for current status is [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) in the source repo. The rolling tracking thread is [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707). Both are appended to as work ships.
+The migration was tracked in [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) in the source repo, with [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) as the rolling thread. Where either disagrees with the code, the code is current.
 
 ## Why a reducer stack?
 
@@ -21,15 +21,27 @@ Three pressures drove it:
 
 ### Layer 1 — Launcher
 
-Single-writer reducer over OS-level facts. Lives in `agentmux-launcher`. On Windows: reconciles AgentMux's own model against Win32 reality via WRR hooks. On Linux (v0.42.x+): driven over Unix-domain-socket IPC from the host; same reducer, same 60+ command handlers, same saga coordinator — WRR drift detection not yet implemented. Durable JSONL event log at `<data-dir>/data/launcher-events.log`. **Status:** done.
+There are three reducers in Rust, one per process, each a pure `update` function over its own `State`:
+
+| | Launcher | Host (cef) | Sidecar (srv) |
+|---|---|---|---|
+| Source | `crates/launcher/src/reducer/` | `crates/cef/src/reducer/` | `crates/srv/src/reducer.rs` + `crates/srv/src/reducer/` |
+| Commands | the shared `agentmux_common::ipc::Command` | its own `HostCommand` (30 variants), host-internal, never on a pipe | the shared `agentmux_common::ipc::Command` |
+| Output | `Vec<Event>`, which the saga coordinator subscribes to | a `DispatchOutput` whose Win32/CEF effects the caller applies | `Vec<Event>`, which the persist subscriber writes to SQLite |
+
+The launcher and srv reducers share the wire types and the same discipline (total, deterministic, the state lock held only for the dispatch), but not their `State` or the commands each handles. A command one of them doesn't handle gets a non-fatal error event back rather than a silent success.
+
+### Layer 1 — Launcher
+
+Single-writer reducer over OS-level facts: processes, the mirror of every window, the warm pool, monitors and the instance registry. Lives in `crates/launcher/src/reducer/`. On Windows it also reconciles AgentMux's own model against Win32 reality via WRR hooks. On Linux and macOS it is the same reducer behind a Unix-domain-socket IPC server; WRR is Windows-only by design (see [WRR](/internals/wrr/)). Durable JSONL event log at `<data-dir>/data/launcher-events.log`. **Status:** done.
 
 ### Layer 2 — Host
 
-CEF-side coordination: pending window creations, active drag operations, tear-off hooks, lifecycle. Lives in `agentmux-cef`. **Status:** partial — Phase B.5 shadow mirrors shipped; the host's own reducer migration is in flight. Instance lifecycle has landed: quit-on-last-window (#1676) routes through the `count_live_user_windows` gate in [`crates/cef/src/reducer/quit.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/reducer/quit.rs), and the window-count consolidation (#1701) makes the status-bar count accurate after CEF Views closes via an explicit `WindowClosed` event plus snapshot reconciliation in the frontend. Folding the remaining duplicated lifecycle/window-count state into a single reducer authority is the ongoing SSOT-consolidation work tracked in [`SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22.md).
+CEF-side coordination, in `crates/cef/src/reducer/`: pending window creations, browser panes and the browser map, drag sessions, the window pool and the floating-pane pool, quit, per-window opacity, and floating-pane window state. Callers go through `AppState::host_dispatch`, which holds the state lock briefly and never across a CEF callback; the CEF calls the result asks for happen after it is released. Quit-on-last-window (#1676) routes through the `count_live_user_windows` gate in [`crates/cef/src/reducer/quit.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/reducer/quit.rs), and the window-count consolidation (#1701) keeps the status-bar count accurate after CEF Views closes, via an explicit `WindowClosed` event plus snapshot reconciliation in the frontend. **Status:** done. The window-to-HWND map and redock's window classification still live outside it; that remaining work is tracked in [`SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_REDUCER_SSOT_CONSOLIDATION_2026_06_22.md).
 
 ### Layer 3 — Sidecar (srv)
 
-Owns the app domain — every workspace, tab, block, layout, agent identity, agent definition. Lives in `crates/srv/src/reducer.rs` plus the per-domain modules (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Saga coordinator handles cross-block lifecycle. Idempotent persist subscriber writes back to SQLite. **Status:** mostly done.
+Owns the app domain: workspaces, tabs, block ids, which workspace each window shows, and each tab's layout tree with its focus and magnify. Lives in `crates/srv/src/reducer.rs` plus the per-domain modules in `crates/srv/src/reducer/` (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Multi-step commands (tear-off, restore, move, delete) run as srv sagas. An idempotent persist subscriber writes the events back to SQLite. **Status:** done.
 
 ### Layer 4 — Frontend slices
 
@@ -65,9 +77,12 @@ Every slice routes through `command-source.ts`'s `recordDispatch(...)` helper, w
 
 ## How sagas fit
 
-Sagas are the "what should happen as a side effect of this state change" layer. They live srv-side per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5). Frontend slices subscribe to terminal saga events; orchestration is upstream.
+Sagas are the "what should happen as a side effect of this state change" layer: a multi-step flow that dispatches several reducer commands and reports its progress as `SagaStarted`, then `SagaCompleted` or `SagaFailed`. There are two saga frameworks, one in the launcher and one in srv. They share the module name and the event names, and nothing else. That split is deliberate, recorded in [`DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/architecture/DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md).
 
-This is intentional: the frontend can't be the source of truth for "did this CLI command actually finish?" — the answer lives in the sidecar's saga state, and the frontend projects it.
+- **Launcher** (`crates/launcher/src/saga/`): a `Saga` trait plus a `SagaCoordinator` that subscribes to the launcher's event bus. A trigger event starts a saga, later bus events are routed into it through `on_event`, and it answers with `SagaAction`s (for example, a command for the host). It was built for flows that cross processes, and has two sagas: `pool_respawn`, which brackets refilling the window pool after a pool window is promoted, and `window_cleanup`, which brackets the cleanup after a user window closes. Their state lives in memory; there is no launcher saga database (the old `launcher-sagas.db` is deleted at startup). Every transition is logged to the launcher log with a `[saga]` prefix.
+- **srv** (`crates/srv/src/sagas/`): plain async functions. Each one allocates a saga id, emits `SagaStarted`, drives its steps through `SagaCtx::dispatch` (an in-process dispatch into the srv reducer, no IPC round trip), compensates with `SagaCtx::compensate` if a step fails, and emits the terminal event; `run_saga` wraps it with a timeout. Every srv saga changes only srv state, which is why it doesn't use the launcher's coordinator. The sagas tear off a tab or a block, restore a torn-off tab, promote a block to a tab, redock a floating pane, close a pane, and delete a block, a tab or a workspace. (The same module also holds agent teardown, the orphan reaper and the shutdown paths, which run outside `run_saga`.) Their steps are logged to `sagas.db`; see [Persistence](/internals/persistence/#sagasdb--sidecar-saga-coordinator).
+
+Frontend slices subscribe to the terminal saga events; orchestration is upstream. This is intentional: the frontend can't be the source of truth for "did this flow actually finish?" — the answer lives in the saga's own events, and the frontend projects it.
 
 ## Persistence boundary
 
@@ -77,19 +92,21 @@ Each layer's persistence is independent:
 |---|---|---|
 | `objects.db` (SQLite) | sidecar | block / tab / window / workspace meta, layouts |
 | `filestore.db` (SQLite) | sidecar | per-block content blobs (agent configs, snapshots) |
-| `sagas.db` (SQLite) | sidecar | saga state for crash-resume |
-| `launcher-sagas.db` (SQLite) | launcher | launcher-side saga state |
+| `sagas.db` (SQLite) | sidecar | srv saga steps, compensated after a crash |
 | `launcher-events.log` (JSONL) | launcher | append-only event log; in-memory ring with disk overflow |
+
+Launcher sagas aren't persisted: their registry is in memory, and a fresh launcher starts with an empty one.
 
 Each can be backed up independently. None of them depend on a single point of failure.
 
 ## Reading the source
 
-The TypeScript slice surface is documented in the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the upstream Rust source — `crates/launcher/src/reducer/`, `crates/cef/src/`, and `crates/srv/src/reducer/` in the [agentmux repo](https://github.com/agentmuxai/agentmux).
+The TypeScript slice surface is documented in the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the upstream Rust source in the [agentmux repo](https://github.com/agentmuxai/agentmux): the reducers in `crates/launcher/src/reducer/`, `crates/cef/src/reducer/`, and `crates/srv/src/reducer.rs` with `crates/srv/src/reducer/`; the sagas in `crates/launcher/src/saga/` and `crates/srv/src/sagas/`.
 
 For deep design docs:
 
-- [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) — current status across all layers
+- [`docs/architecture/DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/architecture/DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md) — why the launcher and srv saga and reducer frameworks stay separate
+- [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) — the migration's status tracker, layer by layer
 - [`docs/specs/frontend-reducer-architecture-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-architecture-2026-05-03.md) — frontend slice model
 - [`docs/specs/frontend-reducer-conventions-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-conventions-2026-05-03.md) — Command/event types, slot lifecycle, audit, echo-loop guard
 - [`docs/specs/frontend-reducer-implementation-plan-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-implementation-plan-2026-05-03.md) — slice ordering and PR boundaries

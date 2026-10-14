@@ -527,7 +527,7 @@ All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-proce
 
 ## 10. Channel H: OSC 16162 — Terminal Shell Integration Escape Sequences
 
-**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:181-330`, `frontend/app/view/term/termwrap.ts:227-228`
+**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:147-239`, `frontend/app/view/term/termwrap.ts:231-232`
 
 ### Transport
 

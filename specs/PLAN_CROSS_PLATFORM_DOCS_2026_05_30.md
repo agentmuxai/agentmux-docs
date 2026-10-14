@@ -1,6 +1,7 @@
 # Plan: Cross-Platform Documentation (add macOS & Linux)
 
 **Date:** 2026-05-30
+**Status:** largely implemented — the Linux half shipped in #68, which closed the tracking issue #61 (2026-06-06). #68 left the macOS cells to their owner; macOS coverage came with #63 and #76. Not re-audited page by page since; `AUDIT_DOCS_VS_CODE_2026_10_13.md` is the current audit.
 **Repo:** `agentmuxai/agentmux-docs` (Astro + Starlight, static MPA, docs.agentmux.ai)
 **Goal:** The docs are Windows-centric. Make every user-facing and internals page cover **macOS** and **Linux** to the same standard as Windows — without regressing the Windows content.
 **Collaboration:** Two authors work in parallel — **asaf (macOS owner)** and a **Linux agent (Linux owner)** — plus shared cross-cutting work. This plan partitions the work so the two can run concurrently with minimal merge conflict.

@@ -3,7 +3,7 @@ title: Debugging
 description: How to find logs, trace renderer crashes, follow the reducer dispatch ring, inspect WRR drift, and open DevTools (including remote CDP access) in a running AgentMux.
 ---
 
-This page is the practical "something's off, where do I look first" reference. AgentMux's three-process design means logs, state, and crash artifacts each live in a specific place — the trick is knowing which.
+This page is the practical "something's off, where do I look first" reference. AgentMux's four-process design means logs, state, and crash artifacts each live in a specific place — the trick is knowing which.
 
 ## Logs at a glance
 
@@ -114,7 +114,7 @@ node ~/.agentmux/shell/muxspect.mjs help
 ```
 
 :::caution[Known gap — call the core directly for now]
-The bare `muxspect` shell function only loads in an *interactive* terminal pane (sourced from the shell rcfile). Tool-spawned shells — the primary intended use, an agent's own tool calls — don't source the rcfile, so `muxspect` is undefined there even though the env vars it needs (`$AGENTMUX_LOCAL_URL`, `$AGENTMUX_AUTH_KEY`) are present. **Until this is fixed** (reagent P1 on PR #2380), call the deployed core directly instead of the shell function: `node ~/.agentmux/shell/muxspect.mjs <command>`. The wire protocol and commands are identical either way.
+The bare `muxspect` shell function only loads in an *interactive* terminal pane (sourced from the shell rcfile). Tool-spawned shells — the primary intended use, an agent's own tool calls — don't source the rcfile, so `muxspect` is undefined there even though the env vars it needs (`$AGENTMUX_LOCAL_URL`, `$AGENTMUX_AUTH_KEY`) are present. **Until this is fixed**, call the deployed core directly instead of the shell function: `node ~/.agentmux/shell/muxspect.mjs <command>`. The wire protocol and commands are identical either way.
 :::
 
 ### Diagnosing a stuck Activity Dock entry
@@ -235,13 +235,19 @@ grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pendin
 
 ## Sidecar crash dumps
 
-The sidecar runs as a separate process auto-spawned by the launcher (which owns its lifecycle). If it crashes (e.g. a `0xC0000409` STACK_BUFFER_OVERRUN), the OS writes a minidump.
+The sidecar runs as a separate process auto-spawned by the launcher (which owns its lifecycle). On Windows it starts a second copy of itself with `--crash-monitor`, an out-of-process crash monitor ([`crates/srv/src/crash_monitor.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/crash_monitor.rs)). When the sidecar crashes (an access violation, heap corruption, a panic that aborts), the monitor writes a minidump to:
+
+```
+C:\CrashDumps\agentmuxsrv\agentmuxsrv-<unix-ts>-<pid>.dmp
+```
+
+A `__fastfail` crash (exit code `0xC0000409`, STACK_BUFFER_OVERRUN) bypasses the monitor. Only Windows Error Reporting's LocalDumps catches that, and AgentMux doesn't register it for you: run `scripts/register-crash-dumps.ps1` from the agentmux repo (it asks for elevation) to have WER write dumps of the current `agentmux-srv` binary to `C:\CrashDumps`. WER matches the exact executable name, which includes the version, so run it again after an upgrade.
 
 :::note[Windows-only path]
-On Windows, dumps land at `%LOCALAPPDATA%\CrashDumps\agentmux-srv*.dmp` via Windows Error Reporting (WER). On macOS, the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux, the path depends on whether `systemd-coredump` or `apport` is installed. See [Platform support](/internals/platform-support/) for the full per-OS table.
+The crash monitor is Windows-only. On macOS, the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux, the path depends on whether `systemd-coredump` or `apport` is installed. See [Platform support](/internals/platform-support/) for the full per-OS table.
 :::
 
-WER configuration is part of AgentMux's installer; on a dev build, ensure the dump dir exists before reproducing. Open dumps in WinDbg (Windows) or `lldb` (macOS) / `gdb` (Linux) to inspect the crashing thread's stack.
+Open dumps in WinDbg (Windows) or `lldb` (macOS) / `gdb` (Linux) to inspect the crashing thread's stack.
 
 ## Chromium / renderer crashes
 

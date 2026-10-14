@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11
 **Author:** Lazo (Lazo@Area54), at the operator's request
-**Status:** proposed
+**Status:** active — Phase 1 shipped in #180. Phase 2 (the new concept diagrams, and light and dark files for the 8 existing ones) has not started. Phase 3 waits for the UI to settle (#4676).
 **Related:** agentmuxai/agentmux#4676 (the screenshot system: what exists, how to rerun it), agentmuxai/agentmux `docs/reports/REPORT_DOCS_SCREENSHOT_COVERAGE_PLAN_2026_10_10.md` (#4644, the coverage plan this follows), `DIAGRAMS.md` §1 (diagram design tokens), `README.md` "Diagrams" (how diagrams are made).
 
 ## 1. The problem

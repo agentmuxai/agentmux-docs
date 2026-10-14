@@ -20,11 +20,11 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
 | Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so, v0.42.x+) |
 | Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Phase A, v0.41+, Wayland desktop) |
-| Window transparency | ✅ ships | 🟡 in progress (CEF Views layer) | 🟡 in progress (root cause identified: views::SolidBackground) |
-| Native splash screen | ✅ ships | ✅ ships | 🟡 not yet implemented |
+| Per-window opacity | ✅ ships (`WS_EX_LAYERED` alpha) | ✅ ships (`NSWindow` alpha) | ✅ ships (`_NET_WM_WINDOW_OPACITY` on X11/XWayland; the page fades itself on native Wayland) |
+| Native splash screen | ✅ ships | ✅ ships | ✅ ships (X11 window, centered under XWayland too; Wayland fallback when there is no X display) |
 | Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
-| Sidecar minidumps | ✅ WER → `%LOCALAPPDATA%\CrashDumps\` | ❌ uses macOS crash reporter (`~/Library/Logs/DiagnosticReports/`) | ❌ uses systemd-coredump or apport |
-| Portable distribution | ✅ ZIP (`task package`) | ✅ DMG, notarized (v0.42.x+) | ✅ AppImage (`task package:linux`, v0.42.x+) |
+| Sidecar minidumps | ✅ crash monitor → `C:\CrashDumps\agentmuxsrv\` | ❌ uses macOS crash reporter (`~/Library/Logs/DiagnosticReports/`) | ❌ uses systemd-coredump or apport |
+| Portable distribution | ✅ `.7z` (`task package`) | ✅ DMG, notarized (v0.42.x+) | ✅ AppImage (`task package:linux`, v0.42.x+); also `.deb`, `.rpm` and `.tar.gz` |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |
 | Version isolation (per-version single-instance domain + version-scoped runtime dirs) | ✅ v0.41.1+ | ✅ v0.42.x+ | ✅ v0.42.x+ |
 
@@ -35,8 +35,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 A handful of features are Windows-coupled because they hook directly into Win32:
 
 - **WRR (Window Reality Reconciliation)** — hooks `WM_PAINT`, `SetWindowPos`, `GetForegroundWindow` to reconcile against AgentMux's reducer model. Windows-only **by design**: a full macOS/Linux observation layer is not planned — its drift classes are largely Windows-specific defenses, and Wayland exposes no portable per-window event API. The cross-platform safety net is the host's orphan reconciler; the one real gap (crash-orphan detection) is tracked in [#1569](https://github.com/agentmuxai/agentmux/issues/1569), not as a WRR port. `task dev` on macOS/Linux runs without WRR drift detection. See [WRR](/internals/wrr/).
-- **Sidecar crash minidumps** — Windows Error Reporting writes to `%LOCALAPPDATA%\CrashDumps\`. On macOS the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux it depends on whether `systemd-coredump` or `apport` is installed.
-- **Window transparency** — `SetBackgroundOpaque(false)` IPC is Windows-only today; the root cause on Linux (views::SolidBackground / kColorPrimaryBackground) is identified and a fix is in progress.
+- **Sidecar crash minidumps** — the sidecar's own crash monitor writes to `C:\CrashDumps\agentmuxsrv\` ([Debugging → Sidecar crash dumps](/internals/debugging/#sidecar-crash-dumps)). On macOS the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux it depends on whether `systemd-coredump` or `apport` is installed.
 
 Pages and admonitions in these docs that are Windows-specific are flagged with a `:::note[Windows-only]` block at the top of the relevant section. If you don't see a flag, assume it works cross-platform.
 

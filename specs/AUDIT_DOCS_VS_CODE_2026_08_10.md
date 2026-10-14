@@ -1,6 +1,6 @@
 # Docs vs. Code Audit — 2026-08-10
 
-**Status:** Draft — findings only, no doc edits made in this pass.
+**Status:** done — re-checked 2026-10-14 against the pages: P0 #1–2 and P1 #3–11 are all covered on the site, and the submodule pin (P2) has moved past `6ca8f8a3f` since. Followed by `AUDIT_DOCS_VS_CODE_2026_10_13.md`.
 **Correction (2026-08-10, post-codex-review):** the original version of this
 doc computed drift from `f0ce9f85a`, read off a stale local checkout instead
 of `origin/main`'s actual gitlink. The real pin, verified via
@@ -16,19 +16,15 @@ window, but the same shape: real user-facing features shipped with zero doc
 follow-up.
 
 **Relationship to other recent doc work:**
-- The **2026-07-29 documentation analyst** run (13 findings, tracked in
-  `a5af/shared-infrastructure`'s `specs/IMPL_SPEC_DOCUMENTATION_FINDINGS_2026_07_29.md`)
-  is **fully resolved** as of this audit. Every finding that touched this repo
+- The **2026-07-29 documentation analyst** run (13 findings) is **fully resolved** as of this audit. Every finding that touched this repo
   shipped: trust-model route count (DOC-002, #108), dead source-of-truth paths
   (DOC-003, #108), ABF rollout table (DOC-006, #108 + #110), deploy-prod.yml
   (DOC-007, #108), identity.md db location (DOC-010, #108). The two findings
   scoped to `agentmuxai/agentmux` itself (DOC-008 double-click-magnify,
   DOC-009 tab-context-menu) are archived under that repo's `docs/specs/archive/`.
-  The weekly documentation-analyst schedule was disabled during an unrelated
-  hardening pass on the runner infra and was **just re-enabled today**
-  (`weekly-documentation-analyst`, next run: Wednesday 06:00 PST) — its next
-  run will re-scan against a codebase ~12 days newer than its last pass, so
-  expect a fresh finding set that will likely overlap with P1 below.
+  The next documentation-analyst run will scan a codebase ~12 days newer
+  than its last pass, so expect a fresh finding set that will likely overlap
+  with P1 below.
 - This audit is **not** a re-verification of the 2026-07-07 audit's 22 items —
   spot checks below (Armory rename, Bundle model) suggest most of its P0 items
   shipped, but a full re-check of all 22 is out of scope here. Flagged as a
@@ -104,7 +100,7 @@ against the bumped tree, not the other way around.
   floating-pane persistence, the 8 doc-vs-doc inconsistencies, internals
   citation staleness) were not re-checked here — confirm which shipped since
   before assuming any of them are still open.
-- **Weekly documentation analyst's next run** (Wednesday, re-enabled today)
+- **The documentation analyst's next run**
   will scan a ~12-day-newer codebase than its last pass — expect overlap
   with P1 above; don't duplicate fixes if its report lands before this spec
   is acted on.
