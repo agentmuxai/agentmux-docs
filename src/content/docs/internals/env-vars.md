@@ -58,12 +58,12 @@ focused-border colour, pane title, and jekt auto-registration.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:664` on `agent.open`; `agent_config.rs:231` for MCP env injection |
+| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:656` on `agent.open`; `agent_config.rs:231` for MCP env injection |
 | **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs` reads it to decide jekt auto-registration |
 | **Example value** | `AgentX`, `Aria`, `Terminal` |
 | **Lifetime** | Set once at pane spawn; persists for the lifetime of the PTY session |
 
-**Priority chain** (`shell.rs:281-286`):
+**Priority chain** (`shell.rs:280-285`):
 1. Block metadata `cmd:env["AGENTMUX_AGENT_ID"]`
 2. Legacy compat: `WAVEMUX_AGENT_ID` in the same block `cmd:env` (read-only fallback for jekt registration)
 
@@ -421,7 +421,7 @@ Child processes inside panes also see some of them (LOCAL_URL, BLOCKID).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv after binding its HTTP listener (`crates/srv/src/bootstrap/network.rs:102`): `std::env::set_var("AGENTMUX_LOCAL_URL", &local_web_url)` |
-| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:80`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
+| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:81`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
 | **Example** | `http://127.0.0.1:49312` |
 | **Lifetime** | Set once per srv startup; changes only when srv restarts |
 
@@ -439,8 +439,8 @@ and Claude's bash output does not stream to the drone/log pane.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:418`); sets it on both srv and host |
-| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:602`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:81` for WPS publish |
+| **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:422`); sets it on both srv and host |
+| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:603`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv actively removes this from its own process environment
@@ -483,8 +483,8 @@ host to the parent's srv.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`srv_spawner.rs:452`) passes it to srv; launcher also advertises it to itself via env for re-use |
-| **Who reads it** | srv (`crates/srv/src/bootstrap/plumbing.rs:269`): if set, opens a named-pipe IPC server for launcher ↔ srv control channel; CEF host `srv_ipc.rs:62` to connect its IPC bridge |
+| **Who sets it** | Launcher (`srv_spawner.rs:456`) passes it to srv; launcher also advertises it to itself via env for re-use |
+| **Who reads it** | srv (`crates/srv/src/bootstrap/plumbing.rs:271`): if set, opens a named-pipe IPC server for launcher ↔ srv control channel; CEF host `srv_ipc.rs:62` to connect its IPC bridge |
 | **Example** | `\\.\pipe\agentmux-srv-3f9a8c1d` (Windows) / `/tmp/agentmux-srv-3f9a8c1d.sock` (Unix) |
 
 Absent in `task dev` mode (no launcher in the loop). The presence of this
@@ -523,7 +523,7 @@ pane). The host compares its real parent process id to this value (`getppid()` o
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher on both srv and host (`crates/launcher/src/host_spawn.rs:86`, `srv_spawner.rs:423`) |
+| **Who sets it** | Launcher on both srv and host (`crates/launcher/src/host_spawn.rs:86`, `srv_spawner.rs:427`) |
 | **Who reads it** | CEF host `sidecar.rs:116`; identifies the srv instance for multi-instance coordination |
 | **Example** | `v0.44.1` |
 
@@ -549,7 +549,7 @@ effect on Unix builds.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:606`); `shellexec.rs:352` |
+| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:607`); `shellexec.rs:352` |
 | **Who reads it** | `agentmux-bashwrap` (`bash_wrap.rs:494,499`) to scope WPS publishes to the correct pane; shell integration scripts have access to it in the PTY environment |
 | **Example** | `550e8400-e29b-41d4-a716-446655440001` (block UUID) |
 
@@ -584,7 +584,7 @@ Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's ow
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`srv_spawner.rs:451`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:84`) |
+| **Who sets it** | Launcher (`srv_spawner.rs:455`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:84`) |
 | **Who reads it** | srv `base.rs:19` (`MUX_APP_PATH_ENV`); used to locate bundled tool binaries (`jq.exe`, `rg.exe`, etc.) alongside the launcher |
 | **Example** | `C:\Users\<name>\Desktop\agentmux-portable` |
 
@@ -741,12 +741,12 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | RuntimeMode detection | `crates/common/src/runtime_mode.rs` | 73–121 |
 | AGENTMUX_LOCAL_URL set point | `crates/srv/src/bootstrap/network.rs` | 99–102 |
 | AUTH_KEY strip | `crates/srv/src/config.rs` | 136–144 |
-| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 583–602 |
+| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 584–603 |
 | Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` | 166–246 |
 | Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` | whole file |
 | PowerShell integration script | `crates/srv/src/backend/shellintegration/pwsh.ps1` | whole file |
 | Zsh integration script | `crates/srv/src/backend/shellintegration/zsh.sh` | whole file |
-| Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` | 435–452 |
+| Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` | 439–456 |
 | Launcher → host env vars (Windows) | `crates/launcher/src/host_spawn.rs` | 77–133 |
 | Launcher → host env vars (Unix) | `crates/launcher/src/host_spawn.rs` | 194–221 |
 | WSH retirement (AGENTMUX sentinel history) | `docs/specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` | — |
