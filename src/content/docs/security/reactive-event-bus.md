@@ -170,7 +170,7 @@ The marker is instruction text for the receiving agent. `ESCALATE=required` does
 
 Signatures cover the message id, sender, target, timestamp and body. Channel and WAN signatures also bind the sending channel (and, for WAN, the sending install's instance id), under their own domain prefix, so a signature from one tier can't be replayed on another. Freshness windows are 5 minutes for host and channel signatures, 10 minutes for LAN and muxreview signatures, and 35 minutes for WAN signatures (the relay's 30-minute delivery window plus 5 minutes; up to 5 minutes in the future).
 
-The three agent keys are keyed by agent name, not UID, so two agents with the same name on one instance share them. They are deleted with the agent unless another agent still uses the name.
+The HMAC, LAN and WAN keys are keyed by agent name, not UID, and the name is compared ignoring case. A new agent whose name would differ from an existing one only in case gets a numbered name instead, and two older agents whose names differ only in case get no signing keys at all. The keys are deleted with the agent unless another agent still uses the name.
 
 ### Where the keys live
 
@@ -258,7 +258,7 @@ Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`
 - `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
 - `crates/srv/src/backend/storage/jekt_held.rs`, `crates/srv/src/server/jekt_held.rs` — durable hold and replay
 - `crates/srv/src/backend/lan_discovery.rs` — LAN key advertisement and public-key lookup
-- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_carry_gate`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
+- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_sign_at_origin`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/wan_publish.rs`, `crates/srv/src/backend/storage/wan_identity.rs` — WAN signing
 - `crates/srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`
 - `crates/mcp/src/main.rs` — `sign_outgoing_jekt`, `SendMessage`
