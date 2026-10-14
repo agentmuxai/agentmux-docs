@@ -134,7 +134,8 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | `registry.npmjs.org` (or your configured npm registry) | Installing an agent CLI; checking CLI versions in the Toolchain pane |
 | `github.com` release downloads | Installing jq or ripgrep from the tool catalog |
 | `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
-| `agentmux.ai` | Opening a browser pane with no URL (its default start page) |
+| `agentmux.ai` | Opening a browser pane with no URL (its default Home page) |
+| Your default search engine (Google) | Typing in a browser pane's address bar: each edit is sent for suggestions before Enter, unless **Search suggestions while typing** (`browser:searchsuggestions`) is off; text that isn't a URL is searched on Enter |
 | winget, Homebrew or your Linux package manager | One-click installs of Node.js, Git or Python |
 | Groq, Hugging Face, Discord, Telegram, Slack, WhatsApp, OAuth providers, key-validation endpoints | Only when you configure or use those features |
 | LAN peers | Only with LAN discovery on |
