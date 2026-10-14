@@ -30,6 +30,29 @@ AgentMux doesn't upload any of this. But your prompts and your agents' work do l
 
 Each agent CLI (Claude Code, Codex, Gemini, and the rest) talks directly to its provider over HTTPS. **AgentMux is not a proxy for this traffic.** The provider's own terms govern the data. To inspect or block it, use OS-level tools (proxy, firewall, packet capture); the CLIs use whatever you configure.
 
+### Harness defaults AgentMux changes
+
+Some harnesses send telemetry, update themselves, or read other tools' configuration by default. For the nine newest harnesses, AgentMux sets each documented opt-out it can when it launches the agent:
+
+| Harness | What AgentMux turns off |
+|---|---|
+| Kilo Code CLI | Self-update (`KILO_DISABLE_AUTOUPDATE=1`), and reading your Claude Code instructions in `~/.claude/` (`KILO_DISABLE_CLAUDE_CODE_PROMPT=1`) |
+| Cline CLI | Self-update (`CLINE_NO_AUTO_UPDATE=1`) |
+| OpenCode | Self-update (`OPENCODE_DISABLE_AUTOUPDATE=1`), and reading your Claude Code instructions in `~/.claude/` (`OPENCODE_DISABLE_CLAUDE_CODE_PROMPT=1`) |
+| goose | Telemetry (`GOOSE_TELEMETRY_OFF=1`), and the OS keyring (`GOOSE_DISABLE_KEYRING=1`): goose keeps its keys in a file in its config folder instead |
+| Grok Build | Telemetry (`GROK_TELEMETRY_ENABLED=false`), self-update (`GROK_DISABLE_AUTOUPDATER=1`), and importing Claude Code's and Cursor's rules, skills, agents, MCP servers, hooks and sessions (the `GROK_CLAUDE_…_ENABLED` and `GROK_CURSOR_…_ENABLED` variables, set to `0`) |
+| DeepSeek Harness | Telemetry (`DSH_TELEMETRY_DISABLED=1`), and the upload of session logs to DeepSeek with each request. No variable controls that upload, so AgentMux writes a profile patch into DeepSeek Harness's config folder that turns it off. It does this only when you have no patch there; delete or edit the file to change it. |
+| Aider | Analytics (`--analytics-disable`), update checks (`--no-check-update`), release notes, and edits to your repository's `.gitignore` (`--no-gitignore`) |
+| Crush | Usage metrics (`CRUSH_DISABLE_METRICS=1`, `DO_NOT_TRACK=1`), and downloading a newer model-provider list (`CRUSH_DISABLE_PROVIDER_AUTO_UPDATE=1`) |
+| Muse Code | Telemetry (`TBH_DISABLE_TELEMETRY=1`) and self-update (`MUSE_NO_AUTO_UPDATE=1`) |
+
+What AgentMux doesn't change:
+
+- **Cline CLI** and **Kilo Code CLI** have telemetry on by default, and AgentMux sets no opt-out for it. Turn it off in their own settings if you want it off.
+- **Muse Code** subscriptions run in contributor mode by default, which lets Meta train on your content. That is an account setting; change it in Muse Code's settings.
+- **Crush** adds an `Assisted-by` line to the commits it makes. AgentMux leaves that to your Crush configuration.
+- **Grok Build** and **Muse Code** read project rules only in a trusted folder. AgentMux trusts the agent's own folder for them, not the repositories the agent works in.
+
 ### Automatic, without a click
 
 | Call | Destination | What is sent | When |
@@ -61,6 +84,8 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 | Installing an agent CLI | Your npm registry (`registry.npmjs.org` by default) |
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
+| Installing Crush | npm, then Crush's install script downloads its binary from GitHub release downloads |
+| Installing a harness that isn't on npm | Not AgentMux: you run the vendor's installer, which downloads from the vendor. goose: `github.com` release downloads. Grok Build: `x.ai`. Aider: `aider.chat`, then uv, which fetches Python and the `aider-chat` package from `pypi.org`. Muse Code: `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com`. Antigravity: `antigravity.google`. Kimi Code CLI: `pypi.org`. |
 | One-click Node.js, Git or Python install | winget, Homebrew, or your Linux package manager |
 | Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `IdentityValidate` tool. |
 | Signing in to MuxBus Cloud | AgentMux's sign-in service (`auth.muxbus.agentmux.ai`) and `muxbus.agentmux.ai` |
@@ -94,7 +119,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 - For every other provider, AgentMux has no base-URL setting and rejects one. An agent definition's environment block can set extra variables, but not ones AgentMux already sets.
 - AgentMux has no setting of its own for a local model with Mux Code or any other provider. Whether a CLI can use a local model is up to that CLI.
 
-**Agent CLIs must be installed first.** AgentMux installs them from npm. On an isolated network, point npm at an internal mirror, which AgentMux's installs honor. Alternatively, install on a connected machine running the same AgentMux version: CLIs live in `~/.agentmux/instances/v<agentmux-version>/cli/<provider>/`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
+**Agent CLIs must be installed first.** AgentMux installs them from npm. On an isolated network, point npm at an internal mirror, which AgentMux's installs honor. Alternatively, install on a connected machine running the same AgentMux version: CLIs live in `~/.agentmux/shared/cli/<provider>/<pinned version>/`. The harnesses that aren't on npm come from their vendors' installers, which need those vendors' sites, or a copy of the installed CLI on your `PATH`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
 
 ## Verifying the claims
 

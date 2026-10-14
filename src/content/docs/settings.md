@@ -361,12 +361,21 @@ AgentMux respects these environment variables:
 | `OPENCLAW_HOME` | Per-instance OpenClaw auth dir |
 | `KIMI_SHARE_DIR` | Per-instance Kimi Code CLI auth dir |
 | `COPILOT_HOME` | Per-instance GitHub Copilot CLI auth dir |
-| `PI_HOME` | Per-instance Pi auth dir |
+| `QWEN_HOME` | Qwen Code auth dir |
+| `MUXCODE_CONFIG_DIR` | Mux Code config dir |
+| `PI_CODING_AGENT_DIR` | Pi auth and config dir |
+| `XDG_DATA_HOME` | Kilo Code CLI and OpenCode: their data dir, which holds their sign-in |
+| `CLINE_DIR` | Cline CLI config and data dir |
+| `GOOSE_PATH_ROOT` | goose config, data and state dir |
+| `GROK_HOME` | Grok Build config, sign-in and sessions dir |
+| `DSH_HOME` | DeepSeek Harness profiles, sessions and credentials dir |
+| `CRUSH_GLOBAL_DATA` | Crush data dir, which holds its sign-ins and keys |
+| `XDG_CONFIG_HOME` | Muse Code: its config dir, which holds its sign-in |
 | `CLAUDE_API_KEY` | Optional fallback for Claude agent panes (OAuth is the primary path) |
 | `OPENAI_API_KEY` | Optional fallback for Codex agent panes (OAuth is the primary path) |
 | `GEMINI_API_KEY` | Optional fallback for Gemini agent panes (OAuth is the primary path) |
 
-The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by AgentMux at launch (sourced from each provider's `authConfigDirEnvVar` field in `PROVIDERS`). Setting them manually is only useful when scripting an out-of-AgentMux workflow against the same auth dirs.
+The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by AgentMux at launch (sourced from each provider's `authConfigDirEnvVar` field in `PROVIDERS`). Setting them manually is only useful when scripting an out-of-AgentMux workflow against the same auth dirs. `XDG_DATA_HOME` and `XDG_CONFIG_HOME` are set only for the agents of the providers named above, not for AgentMux itself. Antigravity and Aider have no such variable: `agy` signs in once per machine, and Aider keeps its state in `~/.aider`.
 
 ## Data Directories
 

@@ -12,7 +12,9 @@ This guide walks through creating and running an agent. In AgentMux an agent is 
 
 A **harness** is the CLI tool that runs an agent, such as Claude Code or Codex CLI. The UI and the code mostly call it a "provider". A harness is distinct from the **model vendor**, the LLM backend that actually serves its responses.
 
-AgentMux knows ten providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI and Antigravity (AGY). They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `crates/srv/src/backend/providers.rs`. The agent picker has a template for eight of them. Mux Code and Qwen Code don't have one yet.
+AgentMux knows nineteen providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI, Antigravity (AGY), Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build, DeepSeek Harness, Aider, Crush and Muse Code. They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `crates/srv/src/backend/providers.rs`. The agent picker has a template for seventeen of them. Mux Code and Qwen Code don't have one yet.
+
+Most harnesses run in the agent pane: AgentMux reads the CLI's structured output and shows the conversation, tool calls and edits itself. Aider, Crush and Muse Code have no interface AgentMux can read that way yet. They run in the **terminal tier**: the card opens a terminal pane running the CLI's own UI in the agent's folder. AgentMux still writes the agent's startup file and points the CLI at its config folder, but it shows no transcript, token count or resume for them. The CLI's own UI does that.
 
 | Provider | How AgentMux runs it | Installed from | Sign-in |
 |---|---|---|---|
@@ -20,26 +22,50 @@ AgentMux knows ten providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen
 | **Codex CLI** | `codex exec --json --dangerously-bypass-approvals-and-sandbox -`, once per turn | npm `@openai/codex` | OAuth |
 | **Mux Code** | `muxcode run -p`, once per turn | npm `@agentmuxai/muxcode` | API key or local model |
 | **Gemini CLI** | `gemini --output-format stream-json --yolo -p ""`, once per turn | npm `@google/gemini-cli` | OAuth |
-| **Qwen Code** | `qwen --output-format stream-json --yolo -p ""`, once per turn | npm `@qwen-code/qwen-code` | API key |
-| **Kimi Code CLI** | `kimi --print --output-format stream-json --yolo -p ""`, once per turn | You install it: `pip install kimi-cli` | API key |
+| **Qwen Code** | `qwen --output-format stream-json --include-partial-messages --yolo -p ""`, once per turn | npm `@qwen-code/qwen-code` | API key |
+| **Kimi Code CLI** | `kimi --print --output-format stream-json --yolo`, once per turn, with the prompt on stdin | You install it: `pip install kimi-cli` | API key |
 | **OpenClaw** | `openclaw acp`, the Agent Client Protocol (ACP) over stdio. It needs OpenClaw's own Gateway daemon running. | npm `openclaw` | OAuth |
 | **GitHub Copilot CLI** | `copilot --acp` (ACP) | npm `@github/copilot` | OAuth |
-| **Pi** | `pi --json` (ACP) | npm `@mariozechner/pi-coding-agent` | API key |
-| **Antigravity (AGY)** | `agy --output-format stream-json --yolo -p ""`, once per turn | npm `@google/antigravity-cli` | OAuth |
+| **Pi** | `pi-acp` (ACP), an adapter that runs the `pi` CLI installed beside it | npm `pi-acp` and `@earendil-works/pi-coding-agent` | The CLI's own sign-in |
+| **Antigravity (AGY)** | `agy --output-format stream-json --dangerously-skip-permissions -p <prompt>`, once per turn | You install it: Google's installer | The CLI's own sign-in (Google, once per machine) |
+| **Kilo Code CLI** | `kilo acp` (ACP) | npm `@kilocode/cli` | The CLI's own sign-in (`kilo auth login`). It runs signed out on Kilo's free models. |
+| **Cline CLI** | `cline --acp` (ACP) | npm `cline` | The CLI's own sign-in (`cline auth`) |
+| **OpenCode** | `opencode acp` (ACP) | npm `opencode-ai` | The CLI's own sign-in (`opencode auth login`). It runs signed out on OpenCode's free models. |
+| **goose** | `goose acp` (ACP) | You install it: goose's installer (a GitHub release) | A model provider and key, set once with `goose configure` |
+| **Grok Build** | `grok agent stdio` (ACP) | You install it: xAI's installer | The CLI's own sign-in (`grok login`), or `XAI_API_KEY` |
+| **DeepSeek Harness** (preview) | `dsh --profile acp` (ACP) | npm `@deepseek-ai/dsh` (a prerelease) | A DeepSeek API key, set in its web UI (`dsh web`) or as `DEEPSEEK_API_KEY` |
+| **Aider** | `aider --read AGENTS.md --analytics-disable …` in a terminal pane | You install it: Aider's installer (Python, through uv) | Your model provider's key in the environment, such as `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` |
+| **Crush** | `crush` in a terminal pane | npm `@charmland/crush` | The CLI's own sign-in (`crush login`), or a key set in its UI |
+| **Muse Code** | `muse --trust-workspace` in a terminal pane | You install it: Meta's installer | The CLI's own sign-in (`muse login`, a Meta account), or `META_API_KEY` |
+
+DeepSeek Harness is marked **preview**: upstream ships only prereleases and says to expect breaking changes. Its ACP mode can't replay an earlier session, so resuming one reopens it without its history.
+
+For the nine newest harnesses, AgentMux turns off telemetry, self-update and other data defaults where the CLI lets it. See [Data sovereignty](/security/data-sovereignty/#harness-defaults-agentmux-changes) for the list.
 
 See [Auth flows](/auth/) for each provider's login command and credential location.
 
 ## You don't need to preinstall the agent CLIs
 
-AgentMux installs every npm-based CLI itself. It runs `npm install <package>@<version>`, at the version it was tested with, into a folder per AgentMux version: `~/.agentmux/instances/v<version>/cli/<provider>/`. It always uses that copy, never a CLI you installed globally. After an AgentMux update, each CLI is installed again for the new version the first time you use it.
+AgentMux installs every npm-based CLI itself. It runs `npm install <package>@<version>`, at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed globally.
 
 When you pick a harness whose CLI isn't installed yet, an install dialog opens. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**, then **Continue to Launch** when it finishes. If the install fails, click **Retry**. The install needs an internet connection.
 
-Kimi Code CLI is the exception. It's a Python tool, so install it yourself with `pip install kimi-cli` and make sure `kimi` is on your `PATH`.
+Six harnesses aren't on npm, so you install them yourself with the vendor's own installer. AgentMux then finds the CLI on your `PATH`. For all of them but Kimi Code CLI it also looks in the folder the installer uses, so you don't need to restart AgentMux after installing. If it can't find the CLI, the launch fails and shows the install command:
+
+| Harness | Windows (PowerShell) | macOS and Linux |
+|---|---|---|
+| Kimi Code CLI | `pip install kimi-cli` | `pip install kimi-cli` |
+| Antigravity (AGY) | `irm https://antigravity.google/cli/install.ps1 \| iex` | `curl -fsSL https://antigravity.google/cli/install.sh \| bash` |
+| goose | `irm https://github.com/aaif-goose/goose/releases/download/stable/download_cli.ps1 \| iex` | `curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh \| CONFIGURE=false bash` |
+| Grok Build | `irm https://x.ai/cli/install.ps1 \| iex` | `curl -fsSL https://x.ai/cli/install.sh \| bash` |
+| Aider | `irm https://aider.chat/install.ps1 \| iex` | `curl -LsSf https://aider.chat/install.sh \| sh` |
+| Muse Code | `irm https://dev.meta.ai/install.ps1 \| iex` | `curl -fsSL https://dev.meta.ai/install.sh \| sh` |
+
+AgentMux runs whatever version of these you have installed. It turns off their self-update where the CLI allows it (Grok Build and Muse Code), so a working version doesn't change under a running agent. For Muse Code on Windows, AgentMux runs the native binary the installer downloaded, not its launcher script.
 
 ### System prerequisites
 
-The npm-based CLIs need **Node.js** and **npm**. Claude Code and OpenClaw also need **Git**. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Launch anyway** continues. **≡ → Toolchain** shows the same information for all tools at any time.
+The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gemini CLI 20 or later, Claude Code and Qwen Code 22, Pi and DeepSeek Harness 22.19, OpenClaw 24.16, and Mux Code 24.18.1. Claude Code and OpenClaw also need **Git**. The harnesses you install yourself bring what they need, except Kimi Code CLI, which needs Python. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Launch anyway** continues. **≡ → Toolchain** shows the same information for all tools at any time.
 
 ## Create an agent
 
@@ -79,7 +105,9 @@ When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI 
 
 ![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
 
-For the five providers above, a successful login is saved as an account in Connectors → Accounts and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. [Auth flows](/auth/) explains where credentials are kept.
+For the five providers above, a successful login is saved as an account in Connectors → Accounts and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. Aider is the exception: it has no login and no config-folder variable, so it reads model keys from the environment and keeps its own state in `~/.aider`. [Auth flows](/auth/) explains where credentials are kept.
+
+The nine newest harnesses have no status command AgentMux can rely on, so it can't tell before launch whether they're signed in. If one isn't, the CLI says so in the pane (for example "Authentication required"). Their logins are interactive, so AgentMux runs them in a terminal window.
 
 ## Bundles
 
@@ -91,10 +119,10 @@ A **bundle** is a reusable set of instructions and tools that you give to agents
 | **Description** | Optional. |
 | **Suggested for** | Optional: the provider the bundle was made with in mind. A hint only. |
 | **Suggested vendor** | Optional, and shown only when that provider supports more than one vendor. |
-| **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. Kimi Code CLI reads no such file, so instructions don't reach it. |
+| **Instructions** | Text AgentMux delivers through the provider's startup instructions file, such as `CLAUDE.md`, `AGENTS.md` or `GEMINI.md`. All nine newest harnesses use `AGENTS.md`. Aider doesn't read it by itself, so AgentMux passes it with `--read AGENTS.md`. Grok Build and Muse Code read project rules only in a trusted folder, so AgentMux trusts the agent's own folder for them. Kimi Code CLI reads no such file, so instructions don't reach it. |
 | **Per-provider instruction overrides** | Alternative instructions for particular providers. |
 
-Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the catalogs in Connectors and Memory, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
+Click **Save**. After saving, a bundle's detail view also links **MCP servers** and **skills** from the catalogs in Connectors and Memory, or adds servers private to the bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. Harnesses that run over ACP get the same servers from AgentMux when their session starts, so they don't need to read the file. The terminal-tier harnesses (Aider, Crush, Muse Code) don't get them from AgentMux. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
 A bundle works with any agent: the agent's own provider decides which harness it launches with, and an agent's provider is fixed once it's created (fork the agent to run it on another). A bundle's instructions go into the agent's startup file after Global Memory; its MCP servers are added when the agent is opened through MuxAPI, but the Launch button doesn't add them yet. See [Bundles](/bundles/) for the full configuration surface.
 
