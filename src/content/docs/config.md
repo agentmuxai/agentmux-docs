@@ -25,43 +25,50 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 ```jsonc
 {
-  // Enable window transparency (requires compositor support on Linux)
+  // Default theme for windows without their own (the hamburger menu sets one window's)
+  "window:theme": "default",
+
+  // Make windows see-through by default
   "window:transparent": false,
 
-  // Window opacity (0.0 - 1.0, only when transparency is enabled)
-  "window:opacity": 1.0,
-
-  // Restore last window size and position on launch
-  "window:savelastwindow": true
+  // Default opacity for windows without their own, used while window:transparent is on
+  // (0.8 when unset)
+  "window:opacity": 0.8
 }
 ```
+
+Theme and opacity are set per window from the hamburger menu; these keys are the defaults. See [Window appearance](/window-appearance/).
 
 ### Terminal
 
 ```jsonc
 {
-  // Path to the shell binary
-  "term:localshellpath": "/bin/bash",
+  // The shell new local terminals open with: a full path or a name on PATH.
+  // Unset: chosen for the platform (pwsh, else powershell, else cmd on Windows;
+  // $SHELL, else /bin/bash on macOS and Linux). Settings ▸ Terminal ▸ Default shell
+  // lists the shells installed on this machine.
+  "term:localshellpath": "/bin/zsh",
 
-  // Font family for terminal panes
-  "term:fontfamily": "JetBrains Mono",
+  // Font family for terminal panes (default "Hack")
+  "term:fontfamily": "Hack",
 
-  // Font size in pixels
-  "term:fontsize": 12,
+  // Font size in pixels (default 15)
+  "term:fontsize": 15,
 
   // Terminal color theme
   "term:theme": "default-dark"
 }
 ```
 
-### Telemetry
+### Sysinfo
 
 ```jsonc
 {
-  // Controls the local Sysinfo pane's CPU/memory/disk/network sampler only —
-  // not analytics or crash-reporting. Nothing is ever sent off-device either way.
-  // Off by default.
-  "telemetry:enabled": false
+  // Seconds between samples in the Sysinfo pane (local only; nothing is sent anywhere)
+  "telemetry:interval": 1.0,
+
+  // How many samples the Sysinfo charts keep (30-1024)
+  "telemetry:numpoints": 120
 }
 ```
 

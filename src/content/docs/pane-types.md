@@ -12,6 +12,20 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
+### Pin, keep in More, or hide
+
+Every entry the widget bar knows about is in one of three states:
+
+- **Pinned:** an icon on the bar.
+- **More:** only in the **more** menu.
+- **Hidden:** on neither, and not in a pane's **+** menu either.
+
+Set them in **Settings ▸ Widgets ▸ Widget bar**, which lists every entry with a **Pinned / More / Hidden** switch and arrows to move a pinned one left or right on the bar. A widget inside a group, such as one messenger under **Messengers**, has **In group / Pinned / Hidden** instead. **Show icons only** and **Reset widget bar** (back to the default pins, with nothing hidden) are there too. The bar, Settings and an open **+** menu all update together.
+
+On the bar itself, right-click a widget for **Pin to bar** or **Unpin from bar**, and for **Hide from widget bar**. Hiding shows a notice for a few seconds with **Undo**; after that, bring the widget back from Settings ▸ Widgets. Settings can't be hidden, so you can always get back to it. Right-clicking an empty part of the title bar shows **Pin Widgets**, a checklist of everything that can be pinned.
+
+Widgets from installed [widget packages](/widgets/) can be pinned too, from the bar's right-click menu or from Settings ▸ Widgets, and keep their place when you reorder the bar. The pins are saved as `widget:pinned` and the hidden entries as `widget:hidden` in `settings.json`; see the [settings reference](/settings/#widget-bar-settings).
+
 To see what each one looks like, see the [widget gallery](/widget-gallery/).
 
 | Pane | Icon | View ID | Description |
@@ -39,15 +53,15 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Per-agent: **Stash** icon (`backpack`) → **Accounts** tab (read-only). App-wide: **Connectors** → **Accounts**. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Identity** | Per-agent: **Stash** icon (`toolbox`) → **Accounts** tab (read-only). App-wide: **Connectors** → **Accounts**. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
 | **Global and Personal Memory** | Per-agent: **Stash** icon → **Personal Memory** tab (the agent's own notes, not the Bundle editor — see below). App-wide: **Memory** → **Global** and **Personal**. |
 | **Bundles** | App-wide: **Memory** → **Bundles**. Per-agent, the **Stash** icon → **Bundles** tab picks which bundles the agent starts with, in order; no per-agent tab edits bundles. |
 | **MCP Servers** | Per-agent: **Stash** icon → **MCP Servers** tab. App-wide: **Connectors** → **MCP servers**. |
 | **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Memory** → **Skills**. |
-| **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with its own sections (Appearance/Terminal/Agent/Sounds/Network/Files/Advanced) — no longer just opens `settings.json` in an external editor. |
+| **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with ten tabs (Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Advanced); see [Settings reference](/settings/#the-settings-tabs) — no longer just opens `settings.json` in an external editor. |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
-The **Stash** icon (`backpack`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Subsections](#subsections) below.
+The **Stash** icon (`toolbox`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Subsections](#subsections) below.
 
 ## Terminal
 
@@ -67,6 +81,24 @@ Features:
 Open a terminal: `⌘N` / `` Ctrl+Shift+` `` or click the **Terminal** icon in the top bar.
 
 The shell-integration scripts deployed to `~/.agentmux/shell/` set the env vars and define helpers; see [Multi-instance & dev mode](/multi-instance/#whats-shared) for the `muxlog` helper.
+
+### Default shell
+
+A new local terminal opens with the shell chosen in **Settings ▸ Terminal ▸ Default shell**. See [Default shell](/settings/#default-shell). Terminals on an SSH host or a WSL distribution open that machine's own login shell.
+
+### CPU and memory badge
+
+The badge in the top-right corner of a terminal shows the CPU and memory used by the pane's shell and everything started in it. Hover it for a panel that explains each figure:
+
+- **CPU**, as a share of one core (above 100% is more than one core);
+- **Memory**, in RAM now; **Private** and **Committed**, where the system reports them; and **Peak**, the highest Memory has been;
+- **Renderer**: whether the terminal draws with **WebGL (GPU)** or **DOM (software)**, and why, for example when the graphics context was lost and it switched to DOM.
+
+The title of the panel says which processes it counts and when the shell started. Local figures update every second.
+
+For an SSH or WSL terminal, the figures are measured on that machine, every 2 seconds while the pane is visible, with figures for the whole host where it reports them. If the remote machine can't tell the pane's processes from the rest, the panel says so and shows the machine's totals.
+
+Turn the badge off with **Settings ▸ Terminal ▸ Show CPU/mem badge** (`term:showstatsbadge`). While no badge is showing, AgentMux scans the panes' processes only every 30 seconds instead of every second.
 
 ### Predictive echo
 
@@ -248,6 +280,17 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 
 10 MB file-size cap on read and write — over that, the editor refuses to load.
 
+### Document tabs
+
+The Editor and Media panes each keep their open files as **document tabs** in the pane header, with the same tab bar, keys and saving in both. The **+** at the end opens a new, empty tab.
+
+- **Drag a tab** along the bar to reorder it.
+- **Drop it on another pane of the same kind** to move it there. An Editor tab keeps its unsaved changes and undo history.
+- **Drop it near the edge of any pane** to open it in a new pane on that side.
+- **Right-click a tab** and choose **Move to New Pane** to open it in a new pane to the right of its own.
+
+A new pane made this way is an empty Editor (on the same connection) or Media pane, holding just that tab. A tab that is being saved stays where it is.
+
 ## Hangar
 
 Hangar is a file browser (`frontend/app/view/files/files-view.tsx`). It opens on your home folder, or on the folder in its `files:path` setting, and on a remote host's files when you choose **Browse files** in [Connectors → Remotes](/connectors/#remotes). The pane title is the folder's name.
@@ -398,11 +441,11 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 ### Subsections
 
-The agent pane has a single **Stash** icon (`backpack`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
+The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
 
 <figure class="docs-clip">
 <video controls loop muted playsinline preload="metadata" width="800" height="586" poster="/recordings/stash-tour-poster.webp" aria-describedby="clip-stash-tour"><source src="/recordings/stash-tour.mp4" type="video/mp4" /></video>
-<figcaption id="clip-stash-tour">A 20-second clip with no sound: opening the Stash from the backpack in an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices.</figcaption>
+<figcaption id="clip-stash-tour">A 20-second clip with no sound: opening the Stash from an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices.</figcaption>
 </figure>
 
 - **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
@@ -572,6 +615,8 @@ Right-click a pane's header for its menu: **Copy**, the four splits, **Magnify P
 
 **Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
 
+The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A minimized pane shrinks to a chip the size of its header, in its place in the layout. A maximized pane can be minimized directly: it goes back to its slot as a header chip.
+
 ![The Agent pane maximized to fill its tab](../../assets/screenshots/chrome/chrome-pane-maximized.png)
 
 ### Navigation
@@ -619,7 +664,9 @@ If the operating system doesn't give AgentMux a dropped file's path, the file's 
 
 ### Tab tear-off
 
-Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree, but the same binary as the source, so it's the same (channel, version) — both share the per-version runtime state (CEF cache, cookies, SQLite stores, host logs) *and* the channel-wide agents/settings. Different channel → fully isolated. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
+Press `Esc` while dragging a window tab or a pane tab out of the window to cancel the drag, on Windows, macOS and Linux. To move a window tab into another AgentMux window instead, drop it on that window's tab strip: the tab joins that window. Dropped anywhere else, it tears off, as in Chrome.
+
+Drag a tab below the tab bar to move it into a **new window** of its own, in a new workspace. The window runs in the same AgentMux processes as the one it came from (same backend, settings, agents and browser profile); it is not a separate instance. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-its-own-window) for the full gesture.
 
 ### Floating panes
 

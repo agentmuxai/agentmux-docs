@@ -1,12 +1,9 @@
 name: No Co-Authored-By trailers
 
-# Duplicated (not a workflow_call reference) because this repo is owned by
-# `agentmuxai`, and the canonical copy lives in `a5af/shared-infrastructure`
-# (a private repo under a different, non-enterprise-linked account) —
-# GitHub's reusable-workflow access control has no cross-owner allowlist for
-# a private repo short of making it public. The source of truth is the
-# co-author trailer check spec in that repo; keep this file in sync with
-# its reusable workflow by hand.
+# Duplicated (not a workflow_call reference) because the canonical copy
+# lives in an internal repo under a different account, and GitHub's
+# reusable-workflow access control can't share a private workflow across
+# owners. Keep this file in sync with the canonical copy by hand.
 
 on:
   pull_request:

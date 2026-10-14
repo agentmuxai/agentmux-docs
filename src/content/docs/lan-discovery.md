@@ -30,7 +30,7 @@ What it does not do: enforce any policy on peers, or share workspace state betwe
 The `lan_key` is sent in cleartext, so **treat it as known to every device on the network.** It is a separate key from the instance's full auth key and opens only four routes. With it, anyone on the LAN can:
 
 - send a message into any of your agents' conversations. The message is marked `DELIVERY=lan` and, unless it carries a valid signature, `TRUST=network-claimed`; it is not flagged sensitive unless its content triggers that;
-- list your agents' names, and look up one agent's registration details and public signing key;
+- list your agents' names, with each agent's one-line summary of what it's working on unless you turn that off (see [Swarm summary lines](#swarm-summary-lines)), and look up one agent's registration details and public signing key;
 - ask whether a given agent is running on this machine, and since when.
 
 Answers from peers aren't authenticated either: a device that pretends to be a peer and claims to be running one of your agents can keep that agent from starting here, or stop it.
@@ -51,6 +51,28 @@ You can also set `"network:lan_discovery": true` in `settings.json` by hand (`~/
 
 With LAN discovery on, the host popover offers **Show QR code**, for pairing the AgentMux mobile app. The QR code contains this machine's LAN address, the server port, and **the instance's full auth key**, not the `lan_key`. Anyone who scans or photographs it can control this AgentMux instance over the network, with the same power as the app itself, until AgentMux restarts. Show it only to the device you are pairing.
 
+## What a paired device can see
+
+A device paired with this computer (the AgentMux mobile app) watches it, read-only. Settings ▸ **Paired devices** lists the paired devices, and you can revoke each one there.
+
+- **Its panes.** The device can list every pane on this computer, window by window and tab by tab: agents, by the name their live feed opens by; terminals, including each agent's shell, and whether they are running; and every other pane by name.
+- **Agents' live feeds.** A feed keeps following an agent after it restarts in another pane, and shows lines that another pane or another AgentMux instance adds to the agent's conversation.
+- **Terminals, only if you allow it.** Turn on **Share terminals with paired devices** (`viewer:shareterminals`) and a paired device can watch this computer's terminals, read-only and live. It's off by default, because terminals often show passwords and keys. Turning it off closes any terminal a device is watching.
+
+An agent you hide from paired devices (the **Devices** tab of its [Stash](/pane-types/#subsections), **Hide from paired devices**) is left out of the list and can't be watched. Its shell stays hidden too, even with terminal sharing on.
+
+### Publish this computer to my devices
+
+While you are signed in to MuxBus Cloud, this computer tells the cloud it is online, so your signed-in devices can list it from anywhere, not only on your network. The setting is **Settings ▸ Paired devices ▸ Publish this computer to my devices** (`cloud:publishpresence`), on by default.
+
+Your devices see this computer go offline at once when you quit AgentMux, sign out of MuxBus Cloud or turn the setting off. Dev builds, headless installs and isolated homes never publish, whatever the setting says, and Settings says why.
+
+### Swarm summary lines
+
+The [Swarm](/subagent-watcher/) shows agents running in this computer's other AgentMux instances (other channels) and on LAN peers, each with its status. By default it also shows each agent's one-line summary of what it is working on. Your signed-in devices see the same lines, over the cloud and on the local network.
+
+The summaries go out through the same route as your agents' names, so anyone on your network who has the `lan_key` can read them. To share status only, turn off **Settings ▸ Paired devices ▸ Share what my agents are working on** (`swarm:sharesummaries`).
+
 ## Windows Firewall
 
 The first time you turn LAN discovery on, **Windows Firewall asks** whether to allow AgentMux on the network, because it opens network-facing sockets.
@@ -70,7 +92,7 @@ While it's on, anyone on your broadcast domain learns:
 
 - your machine's **hostname** and IP addresses;
 - the **AgentMux version** and the server's port;
-- the **`lan_key`**, and through it the **names of your agents** and which of them are running.
+- the **`lan_key`**, and through it the **names of your agents**, which of them are running, and, unless you turn off `swarm:sharesummaries`, each agent's one-line summary.
 
 The broadcast carries no conversation content, files, or credentials other than the `lan_key`.
 

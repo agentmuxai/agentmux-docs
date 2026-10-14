@@ -39,7 +39,7 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 
 **Per-agent (read-only):**
 1. Open an Agent pane (pinned in the widget bar).
-2. Click the **Stash** icon (`backpack`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
+2. Click the **Stash** icon (`toolbox`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
 3. Switch to the **Accounts** tab — a Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). It's read-only, with one exception: for a Claude agent, its Claude row (or the empty table, if it has no Claude link) offers **Connect** / **Re-login**, the in-pane way to fix a missing or broken Claude binding.
 
 **App-wide manager (Connectors pane):**

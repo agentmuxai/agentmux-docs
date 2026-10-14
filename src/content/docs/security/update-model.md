@@ -20,7 +20,7 @@ Releases are built by the `release.yml` workflow in the AgentMux repository and 
 
 | Platform | Files | Architecture |
 |---|---|---|
-| Windows | Installer (`AgentMux-<version>-x64-setup.exe`), portable ZIP, MSIX | x64 only |
+| Windows | Installer (`AgentMux-<version>-x64-setup.exe`), portable `.7z`, MSIX | x64 only |
 | macOS | `AgentMux_<version>_arm64.dmg` | Apple Silicon only |
 | Linux | AppImage, `.deb`, `.rpm`, portable `.tar.gz` | x86_64 only |
 
@@ -32,7 +32,7 @@ Start-at-login is a separate, opt-in setting in the app. On Windows it creates a
 
 | File | Signed? |
 |---|---|
-| Windows installer and portable ZIP | **No.** Neither the installer nor the executables are Authenticode-signed, so Windows SmartScreen may warn. |
+| Windows installer and portable `.7z` | **No.** Neither the installer nor the executables are Authenticode-signed, so Windows SmartScreen may warn. |
 | Windows MSIX on GitHub Releases | **No**, so Windows won't install it directly. The Microsoft Store signs the copy it distributes. |
 | macOS DMG | **Yes**, with a Developer ID certificate and the hardened runtime. Notarization is attempted on every build. If Apple doesn't accept it, the build logs a warning and still ships a signed but un-notarized DMG. |
 | Linux AppImage, `.deb`, `.rpm`, `.tar.gz` | **No.** No GPG signatures, and no package repository. |

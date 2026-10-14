@@ -98,11 +98,37 @@ The hosts AgentMux can open terminals, file browsers and agents on: the SSH host
 - **A row** shows the host's colour and connection status, its nickname, platform and helper state, how many sessions and agents use it, and buttons for **New terminal** and **Browse files**. Right-click a row for the same actions as a menu.
 - **Click a row** to expand it: **Connect** / **Disconnect**, **Sessions…** (the host's durable terminal sessions), **Pin**, **Hide**, **Forget**, **Remove helper**, **Test connection** and **Edit in ssh config**; settings for **Nickname**, **Colour**, **Keep sessions alive** and **Install the helper**; and the agents **always allowed here (as you, with your SSH keys)**, each with **Revoke**.
 
+### SSH terminals that survive a dropped link
+
+An SSH terminal can be **durable**: its shell keeps running on the host, inside AgentMux's small helper there, so a dropped link, your computer sleeping or an AgentMux restart reconnects to the same shell instead of ending it.
+
+Durable terminals need the helper on the host. The first terminal you open on a host without it asks first, in a separate AgentMux window: **Install AgentMux's helper on *host*?** The helper is about 500 KB, goes in `~/.agentmux-remote` on that machine and needs no root. It also lets [Hangar](/pane-types/#hangar) browse the host's files.
+
+- **Install** installs it, and the terminal is durable.
+- **Not now** opens a plain SSH terminal, as before. AgentMux doesn't ask again for that host until it restarts.
+- Tick **Don't ask again for *host*** to make the answer stick: with Install it becomes **Always** for that host, with Not now **Never**.
+
+All the terminals waiting on the same host share one question, so a restart with several of them open asks once. If the helper is later removed from the host, the next terminal asks again. A first terminal on a host it can't reach (a mistyped name, a host that's down) becomes a plain terminal showing ssh's error after a few tries, instead of reconnecting for ever. An install that an agent's pane needs is always asked about, whatever the settings say.
+
+To remove the helper, expand the host's row here and choose **Remove helper**. **Sessions…** lists the host's durable terminal sessions.
+
+The settings:
+
+| Where | Setting | Choices |
+|---|---|---|
+| Settings ▸ Terminal ▸ **Keep SSH sessions alive** (`term:durable`) | Whether SSH terminals are durable | **On, else a plain terminal** (the default: durable where the helper is or gets installed), **Always (needs the helper)**, **Never** |
+| Settings ▸ Terminal ▸ **Install the helper on new hosts** (`conn:helper`) | Whether to ask before installing the helper | **Ask first** (the default), **Always**, **Never** |
+| A host's row here: **Keep sessions alive** and **Install the helper** | The same two, for that host only | They override the settings above |
+
+### Remote terminals in the tab strip
+
+A terminal on a remote machine names the remote in its pane tab: the nickname you gave it here, or else the host name, with the remote's icon. A Sysinfo pane on a remote reads "CPU · *host*". The CPU and memory badge of an SSH or WSL terminal shows the remote shell's own figures, measured on that machine.
+
 ## Per-agent: the Stash
 
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
-1. Open any Agent pane → click the **Stash** icon (`backpack`) in the pane header.
+1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
 2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
 **Accounts** and **MCP Servers** are the per-agent side of Connectors; **Personal Memory**, **Skills** and **Bundles** are the per-agent side of [Memory](/memory/#per-agent-the-stash). The Registration tab shows the agent's message-delivery registration, and Devices has **Hide from paired devices**, which leaves the agent out of what a paired device (the mobile app) lists and can watch.

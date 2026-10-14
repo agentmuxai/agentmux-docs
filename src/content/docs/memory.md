@@ -118,7 +118,7 @@ Bundles are created and edited here only. An agent's **Stash → Bundles** tab p
 
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
-1. Open any Agent pane → click the **Stash** icon (`backpack`) in the pane header.
+1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
 2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
 **Personal Memory**, **Skills** and **Bundles** are the per-agent side of Memory; **Accounts** and **MCP Servers** are the per-agent side of [Connectors](/connectors/#per-agent-the-stash).
