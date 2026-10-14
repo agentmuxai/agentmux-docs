@@ -1,10 +1,12 @@
 # Spec: Two-Tone "AgentMux" Site Title in Docs Header
 
+**Status:** implemented — `src/components/SiteTitle.astro`, wired as the `SiteTitle` override in `astro.config.mjs` (2812636, with follow-ups e895861 and 2ea1990).
+
 ## Problem
 
 The "AgentMux" wordmark at the top-left of the landing page (`agentmux.ai`) and the docs site (`docs.agentmux.ai`) render differently:
 
-- **Landing (`Nav.tsx`):** `<span class="text-[var(--color-primary-light)]">Agent</span>Mux` — "Agent" is colored with the brand primary accent, "Mux" is in the default text color.
+- **Landing (agentmux.ai):** `<span class="text-[var(--color-primary-light)]">Agent</span>Mux` — "Agent" is colored with the brand primary accent, "Mux" is in the default text color.
 - **Docs (Starlight default):** "AgentMux Docs" rendered as a single uniform-color string via Starlight's built-in `SiteTitle` component.
 
 ## Goal

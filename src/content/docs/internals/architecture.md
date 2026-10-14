@@ -18,7 +18,15 @@ AgentMux is a desktop application built around a small set of long-running proce
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Spawned and supervised by the launcher (which owns its lifecycle); listens on a dynamic local port and serves the host + frontend over a WebSocket. Users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process running the SolidJS frontend JS for one browser context. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another. Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
 
-A fifth crate — `agentmux-common` — provides shared utilities (path resolution, runtime mode detection) that all the above consume.
+The Rust workspace has eight crates (`Cargo.toml`, `[workspace] members`). The three above, plus five that aren't long-running processes of the instance:
+
+| Crate | What it is |
+|---|---|
+| `agentmux-common` | Shared library: path resolution (`DataPaths`), runtime mode, the IPC `Command`/`Event` types the launcher and sidecar reducers share, jekt signing. |
+| `agentmux-mcp` | The MCP server each agent's CLI spawns over stdio. It advertises the [MuxAPI](/internals/muxapi/) tools and forwards each call to the sidecar. |
+| `agentmux-bashwrap` | The streaming bash wrapper for agents' shell calls. It is also the program Claude Code's `PreToolUse`, `PreCompact` and `SessionStart` hooks run, and `ssh`'s askpass when AgentMux runs ssh for an agent. |
+| `agentmux-remote` | The helper AgentMux installs on an SSH host: it keeps durable terminal sessions running there, serves the remote file protocol, and lists processes for Tower. |
+| `agentmux-procstats` | Per-process CPU and memory read without elevation, for Tower. Used by the sidecar and by `agentmux-remote`. |
 
 > The four processes above plus the Chromium subprocesses that the host transparently spawns (GPU, network, storage, …) are collectively one **[instance](/glossary/#instance)** — a process tree rooted at one launcher. A baseline single-window dev session runs as launcher + sidecar + host + 1 renderer = 4 processes; opening more windows or browser panes spawns additional renderers. Multiple instances (different versions, dev + portable) run side-by-side without colliding — see [Multi-instance & dev mode](/multi-instance/).
 
@@ -35,7 +43,7 @@ This split is what makes multi-instance work cleanly: each instance has its own 
 
 ## The warm window pool
 
-New windows and tear-off floating panes don't pay full CEF startup cost on demand. At app start the host spawns a hidden, pre-warmed **pool** of CEF windows — `window-pool-*` browsers back new tabs/windows, `floating-pool-*` browsers back floating panes (`init_pool` / `init_pane_pool` in [`crates/cef/src/client/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/client/mod.rs)). Opening a new window or tearing off a pane **promotes** a pooled browser: the host repositions and shows it, so the operation is near-instant rather than a cold spawn. Pool windows are kept hidden (not merely off-screen-but-visible) to avoid a Windows blank-window bug. Pool browsers don't count as user windows — they're excluded by type from the live-window count that keeps the instance alive (see below).
+New windows and tear-off floating panes don't pay full CEF startup cost on demand. At app start the host spawns a hidden, pre-warmed **pool** of CEF windows — `window-pool-*` browsers back new tabs/windows, `floating-pool-*` browsers back floating panes (`init_pool` in `crates/cef/src/commands/window_pool.rs`, `init_pane_pool` in `crates/cef/src/commands/pane_pool.rs`). Opening a new window or tearing off a pane **promotes** a pooled browser: the host repositions and shows it, so the operation is near-instant rather than a cold spawn. Pool windows are kept hidden (not merely off-screen-but-visible) to avoid a Windows blank-window bug. Pool browsers don't count as user windows — they're excluded by type from the live-window count that keeps the instance alive (see below).
 
 ## Window lifecycle
 
@@ -58,10 +66,12 @@ Every cross-process edge has its own event format, its own ack semantics, and it
 
 This is where the [reducer stack](/internals/reducer-stack/) lives. Briefly:
 
-- **Layer 1 — launcher reducer** owns process / OS / monitor / pool state. Single-writer; durable JSONL event log.
-- **Layer 2 — host reducer** (in flight) owns CEF-side coordination: pending window creations, active drag, lifecycle.
-- **Layer 3 — srv reducer** owns the app domain: workspaces, tabs, blocks, layouts, agents.
+- **Layer 1 — launcher reducer** (`crates/launcher/src/reducer/`) owns process, window-mirror, pool, monitor and instance-registry state. Single-writer; durable JSONL event log.
+- **Layer 2 — host reducer** (`crates/cef/src/reducer/`) owns CEF-side coordination: pending window creations, browser panes, the browser map, drag, both warm pools, quit and window opacity — 30 host-internal commands.
+- **Layer 3 — srv reducer** (`crates/srv/src/reducer.rs` and `crates/srv/src/reducer/`) owns the app domain: workspaces, tabs, blocks, layouts.
 - **Layer 4 — frontend slices** project the above into per-pane Solid signals via per-slice reducer modules.
+
+Multi-step work runs as sagas, on two separate frameworks: the launcher's coordinator (`crates/launcher/src/saga/`) and srv's async-function sagas (`crates/srv/src/sagas/`). The [reducer stack page](/internals/reducer-stack/#how-sagas-fit) explains the difference.
 
 The full layout, slice list, and migration plan are in the [reducer stack page](/internals/reducer-stack/).
 
@@ -74,7 +84,7 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 | Mode | Channel root | Runtime dirs |
 |---|---|---|
 | **Installed** | `~/.agentmux/channels/<channel>/` (default `stable`) | `~/.agentmux/channels/<channel>/versions/<v>/` (v0.41.1+) — per-version runtime DB, cache, logs, IPC |
-| **Portable** (released ZIP) | Same as installed | Same as installed |
+| **Portable** (released `.7z`) | Same as installed | Same as installed |
 | **Portable** (local `task package`) | `~/.agentmux/channels/local-<branch>/` | No version sub-dir — local builds aren't versioned releases. |
 | **Dev** (`task dev`) | n/a | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair. |
 

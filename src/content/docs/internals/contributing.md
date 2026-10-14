@@ -56,10 +56,12 @@ task dev
 #    - Frontend changes auto-reload
 #    - Rust crates: task build:backend (or task build:host) and restart task dev
 
-# 6. Run tests
-task test
+# 6. Run tests (see Building from Source → Tests)
+npx vitest run
+cargo test --workspace -- --test-threads=1
 
-# 7. Commit and push
+# 7. Add a changeset, then commit and push
+scripts/changeset.sh patch "fix(term): what changed, for the changelog"
 git commit -m "feat: description of change"
 git push -u origin yourname/feature-name
 
@@ -70,14 +72,18 @@ git push -u origin yourname/feature-name
 
 ```
 agentmux/
-├── crates/launcher/          # 325 KB launcher: spawns the host, owns Layer 1 reducer
+├── crates/launcher/          # Launcher: spawns the host and the sidecar, owns the Layer 1 reducer
 ├── crates/cef/               # Host: embeds Chromium via CEF, owns the OS window
 ├── crates/srv/               # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
-├── crates/common/            # Shared utilities: path resolution, runtime mode
+├── crates/common/            # Shared library: path resolution, runtime mode, IPC types
+├── crates/mcp/               # agentmux-mcp: the MCP server that gives agents MuxAPI
+├── crates/bashwrap/          # Streaming bash wrapper + CLI hook helper
+├── crates/remote/            # Helper installed on SSH hosts: durable sessions, remote files
+├── crates/procstats/         # Per-process CPU and memory for Tower
 ├── frontend/                 # SolidJS + TypeScript renderer (Vite)
 │   ├── app/view/             # Pane view implementations (term, browser, agent, drone, …)
 │   ├── app/block/            # Block / pane rendering + registry
-│   ├── app/store/            # State management (jotai atoms, slice stores, RPC client)
+│   ├── app/store/            # State management (Solid signals and stores, slice reducers, RPC client)
 │   └── app/element/          # Reusable UI components
 ├── docs/                     # Specs, plans, status documents
 │   └── specs/                # Architecture specs (read these for design context)
@@ -99,7 +105,7 @@ agentmux/
 ## Style
 
 - **Language:** American English
-- **Formatting:** Prettier + EditorConfig (`task format`)
+- **Formatting:** Prettier + EditorConfig (`npx prettier --write <files>`; there is no `task format`)
 - **TypeScript:** strict mode; prefer narrow return types; avoid `any`
 - **Rust:** `cargo fmt` + `cargo clippy --workspace -- -D warnings` before pushing
 
@@ -107,7 +113,7 @@ agentmux/
 
 - Branch from `main`; don't commit directly to `main`
 - Link the relevant issue or spec in the PR body — every architectural change should reference a spec or discussion thread
-- Bump the version using `bump-cli` (see below) — required for the `reagentx-workflow` bot
+- Add a changeset (see [Version management](#version-management)); the `changeset` check fails a PR without one
 - For minor changes (a typo, a one-line fix), open a PR directly
 - For major changes (a new pane type, a reducer slice, a saga refactor), open an issue or comment on [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) first
 
@@ -115,12 +121,12 @@ agentmux/
 
 Every PR is auto-reviewed by:
 
-- **`reagentx-workflow[bot]`** — surfaces P1/P2/P3 issues; addresses correctness, missing tests, and consistency
-- **`chatgpt-codex-connector[bot]`** — second-opinion review focused on code quality and architecture. Codex isn't run on every push: reagent asks it once reagent has approved a commit, and again only when a push could change its answer.
+- **muxreview** (`muxreview[bot]`) — surfaces P1/P2/P3 issues; addresses correctness, missing tests, and consistency
+- **`chatgpt-codex-connector[bot]`** — second-opinion review focused on code quality and architecture. Codex isn't run on every push: muxreview asks it once muxreview has approved a commit, and again only when a push could change its answer. The `Codex review` status on the PR shows where that stands.
 
-Address every `CHANGES_REQUESTED` finding from reagent. Codex inline comments are P2-level signal — read both `/pulls/N/comments` (inline) and `/issues/N/comments` (top-level).
+Address every `CHANGES_REQUESTED` finding from muxreview. Codex inline comments are P2-level signal — read both `/pulls/N/comments` (inline) and `/issues/N/comments` (top-level).
 
-To ask for another Codex pass, comment `@reagentx-workflow codex re-review` on the PR (collaborators and the project's agent accounts; at most twice an hour). Codex only responds to requests from the maintainer account, so a direct `@codex review` from anyone else is ignored — reagent relays the request for you.
+To ask for another Codex pass, comment `@muxreview codex re-review` on the PR. Codex only responds to requests from the maintainer account, so a direct `@codex review` from anyone else is ignored — muxreview relays the request for you.
 
 ### State-machine discipline
 
@@ -135,16 +141,14 @@ These rules are written into the AgentA team's working memory because they each 
 
 ## Version management
 
-Use `@a5af/bump-cli` for every version bump — never edit version numbers manually:
+Feature PRs don't change version numbers. Each PR adds one **changeset**, a small file in `.changesets/` that says what changed, for the changelog:
 
 ```bash
-bump patch -m "Description of change" --commit
-bump verify
+scripts/changeset.sh patch "fix(term): what changed, for the changelog"
+# or: task changeset -- patch "..."
 ```
 
-`bump --commit` stages and commits **only** the version files. Stage and commit code changes **first**, separately — otherwise they'll be silently dropped.
-
-See [Building from Source](/internals/building/) for full version management details.
+`type` is `patch`, `minor` or `major`. Commit the file it writes with your change; the `changeset` check fails a PR without one. The version moves only in a release commit: `task release` folds the pending changesets into `VERSION_HISTORY.md` and bumps the version files. See `.changesets/README.md` in the repo, and [Local build labels](/internals/building/#local-build-labels) for how local builds are labelled without a bump.
 
 ## License
 

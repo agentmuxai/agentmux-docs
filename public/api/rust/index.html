@@ -22,7 +22,7 @@
 </head>
 <body>
     <h1>Rust API reference</h1>
-    <p class="lede">Rustdoc for the four crates in the <code>agentmuxai/agentmux</code> Cargo workspace.</p>
+    <p class="lede">Rustdoc for the eight crates in the <code>agentmuxai/agentmux</code> Cargo workspace.</p>
 
     <ul class="crates">
         <li>
@@ -39,7 +39,23 @@
         </li>
         <li>
             <a href="./agentmux_common/index.html"><code>agentmux-common</code></a>
-            <span class="blurb">Shared utilities — data paths, runtime mode, common types.</span>
+            <span class="blurb">Shared library — data paths, runtime mode, IPC command and event types.</span>
+        </li>
+        <li>
+            <a href="./agentmux_mcp/index.html"><code>agentmux-mcp</code></a>
+            <span class="blurb">MCP server each agent spawns — the MuxAPI tools, forwarded to the sidecar.</span>
+        </li>
+        <li>
+            <a href="./agentmux_bashwrap/index.html"><code>agentmux-bashwrap</code></a>
+            <span class="blurb">Streaming bash wrapper for agents' shell calls, and the CLI hook helper.</span>
+        </li>
+        <li>
+            <a href="./agentmux_remote/index.html"><code>agentmux-remote</code></a>
+            <span class="blurb">Helper installed on SSH hosts — durable terminal sessions, remote file protocol, process list.</span>
+        </li>
+        <li>
+            <a href="./agentmux_procstats/index.html"><code>agentmux-procstats</code></a>
+            <span class="blurb">Per-process CPU and memory, read without elevation, for the Tower pane.</span>
         </li>
     </ul>
 

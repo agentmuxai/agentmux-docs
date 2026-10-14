@@ -460,7 +460,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ### CORS
 
-`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs:50-54`). External origins rejected. This is a narrowing from the previous `CorsLayer::permissive()` that accepted any origin (corrected in 2026-05-11 audit C3).
+`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs:51-55`). External origins rejected. This is a narrowing from the previous `CorsLayer::permissive()` that accepted any origin (corrected in 2026-05-11 audit C3).
 
 ### Wire Format
 
@@ -527,7 +527,7 @@ All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-proce
 
 ## 10. Channel H: OSC 16162 — Terminal Shell Integration Escape Sequences
 
-**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:181-330`, `frontend/app/view/term/termwrap.ts:227-228`
+**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:147-239`, `frontend/app/view/term/termwrap.ts:231-232`
 
 ### Transport
 
@@ -546,7 +546,7 @@ None. The sequence is parsed from PTY byte stream. Any program running in the te
 
 | Sub-command | Wire example | Handler action | Security implication |
 |-------------|-------------|----------------|---------------------|
-| `E` | `\033]16162;E;{"AGENTMUX_AGENT_ID":"Alice","AGENTMUX_AGENT_COLOR":"#ff0000"}\007` | Calls `RpcApi.SetMetaCommand` to write `{"cmd:env": <payload>}` into the block's persistent metadata (`termosc.ts:266-271`). Empty payload clears. | **Env-key injection**: any terminal program can write arbitrary keys into `cmd:env`. Values are then injected into child process environments (`shell.rs:366-376`). The `AGENTMUX_AGENT_COLOR=#000000` Win11 focus-border bug was caused by a user's shell profile emitting this sequence with a black color — no valid value range is enforced. |
+| `E` | `\033]16162;E;{"AGENTMUX_AGENT_ID":"Alice","AGENTMUX_AGENT_COLOR":"#ff0000"}\007` | Calls `RpcApi.SetMetaCommand` to write `{"cmd:env": <payload>}` into the block's persistent metadata (`termosc.ts:266-271`). Empty payload clears. | **Env-key injection**: any terminal program can write arbitrary keys into `cmd:env`. Values are then injected into child process environments (`shell.rs:365-375`). The `AGENTMUX_AGENT_COLOR=#000000` Win11 focus-border bug was caused by a user's shell profile emitting this sequence with a black color — no valid value range is enforced. |
 | `X` | `\033]16162;X;{"muxbus_url":"https://...","muxbus_token":"tok"}\007` | Makes an authenticated `POST /agentmux/reactive/poller/config` to reconfigure the cloud MuxBus poller URL and token (`termosc.ts:286-312`). | **Poller injection**: any terminal program can redirect the srv's outbound polling to an attacker-controlled endpoint. Pre-audit C1/C2 this route was unauthenticated; now requires `X-AuthKey`. |
 | `A` | `\033]16162;A;{}\007` | Sets `shell:state = "ready"` in block RT info | State metadata injection |
 | `C` | `\033]16162;C;{"cmd64":"<b64>"}\007` | Sets `shell:state = "running-command"`, decodes `cmd64` → `shell:lastcmd` | Last-command display |
@@ -695,7 +695,7 @@ There is no sub-module or feature-flag separation between launcher-domain and sr
 
 ## 15. Environment Variable Contract
 
-The following env vars are injected into PTY child processes by the shell controller (`shell.rs:803-930`) and are consumed by the OSC 16162 shell integration scripts. Their documented meaning, the source that sets them, and known hazards are listed here.
+The following env vars are injected into PTY child processes by the shell controller (`shell.rs:796-923`) and are consumed by the OSC 16162 shell integration scripts. Their documented meaning, the source that sets them, and known hazards are listed here.
 
 | Variable | Set by | Consumed by | Notes |
 |----------|--------|-------------|-------|
@@ -714,7 +714,7 @@ The following env vars are injected into PTY child processes by the shell contro
 | `ZDOTDIR` | `shellintegration.rs` (zsh only) | zsh startup | Redirects zsh config to `~/.agentmux/shell/zsh/` |
 | `AGENTMUX_ZDOTDIR` | `shellintegration.rs` (zsh only) | Integration script | Preserved original ZDOTDIR |
 
-Variables **removed** from the environment when launching non-agent panes (no explicit `cmd:env` agent config, `shell.rs:331-335`):
+Variables **removed** from the environment when launching non-agent panes (no explicit `cmd:env` agent config, `shell.rs:330-334`):
 - `AGENTMUX_AGENT_ID`, `AGENTMUX_AGENT_COLOR`, `AGENTMUX_AGENT_TEXT_COLOR`, `WAVEMUX_AGENT_ID`, `WAVEMUX_AGENT_COLOR`
 
 **Gap:** There is no schema for what values are valid for `AGENTMUX_AGENT_COLOR`. The shell controller accepts and injects whatever value the block meta contains without validation. A color value of `#000000` produced a visible Win11 focus-border regression; other values (e.g., malformed CSS) could cause UI rendering issues.
@@ -733,14 +733,14 @@ This section maps the sweep findings to the specific code locations documented a
 | **`get_auth_key` IPC command returns srv auth key** | `ipc.rs:203-207` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
 | **`get_env` returns any env var** | `platform.rs:37-50`; `ipc.rs:319` | Renderer can extract `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`, etc. from the host process environment. Requires `ipc_token`. | No allowlist or blocklist enforced |
 | **`/agentmux/browser/eval` runs arbitrary JS** | `routes.rs:238` | Any caller with `ipc_token` can execute JS in any open browser pane (including cross-origin pages). | Auth: `ipc_token` required. No script length or content restriction. |
-| **OSC 16162 `E` injects env keys into block meta** | `termosc.ts:265-285` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs:366-376`. | No key allowlist. No value validation. Caused `AGENTMUX_AGENT_COLOR` Win11 bug. |
+| **OSC 16162 `E` injects env keys into block meta** | `termosc.ts:265-285` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs:365-375`. | No key allowlist. No value validation. Caused `AGENTMUX_AGENT_COLOR` Win11 bug. |
 | **OSC 16162 `X` reconfigures srv poller** | `termosc.ts:286-312` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
-| **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:94` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs:50-54`); host has not. |
+| **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:94` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs:51-55`); host has not. |
 | **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `crates/srv/src/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
 | **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1069-1079` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
 | **WS authkey in query string** | `crates/srv/src/server/auth.rs:80-90` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
-| **`AGENTMUX_AGENT_COLOR` no value validation** | `shell.rs:366-376`; `termosc.ts:266-271` | Shell profile can inject arbitrary CSS color value into block meta → UI rendering with unvalidated color value. Root cause of Win11 focus-border regression. | No validation added as of 0.44.1. |
+| **`AGENTMUX_AGENT_COLOR` no value validation** | `shell.rs:365-375`; `termosc.ts:266-271` | Shell profile can inject arbitrary CSS color value into block meta → UI rendering with unvalidated color value. Root cause of Win11 focus-border regression. | No validation added as of 0.44.1. |
 
 ---
 

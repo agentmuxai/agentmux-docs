@@ -12,7 +12,7 @@ Build AgentMux from source on Windows, macOS, or Linux. AgentMux is a Rust deskt
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| **Node.js** | 22 LTS | Frontend build (Vite + SolidJS) |
+| **Node.js** | 24 LTS (`>=24.11.0`) | Frontend build (Vite + SolidJS) |
 | **Rust** | 1.77+ | Backend, host, and launcher |
 | **[Task](https://taskfile.dev/)** | Latest | Build orchestration |
 | **CMake** | 3.20+ | Required by `cef-dll-sys` (CEF C wrapper) |
@@ -41,7 +41,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 #### Linux (Debian/Ubuntu)
 
 ```bash
-sudo apt install build-essential cmake ninja-build curl wget file libssl-dev
+sudo apt install cmake ninja-build build-essential curl wget file libssl-dev git zip \
+  libwayland-dev libxkbcommon-dev libgtk-3-dev \
+  libglib2.0-dev libpango1.0-dev libcairo2-dev \
+  libgdk-pixbuf2.0-dev libatk1.0-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -92,13 +95,15 @@ This launches the four-process app with Vite hot reload. The frontend rebuilds o
 | `task bundle` | Bundle CEF runtime DLLs |
 | `task build:backend` | Build `agentmux-srv` |
 | `task build:frontend` | Build frontend only |
-| `task package` | Package a **local** portable for the host platform (Windows ZIP) — ephemeral labeled build, see below |
+| `task package` | Package a **local** Windows portable (a folder plus a `.7z`) — ephemeral labeled build, see below |
 | `task package -- --fresh` | …with a throwaway data dir (clean-slate session) instead of the branch's persistent one |
-| `task package:linux` | Linux AppImage (writes to `~/Desktop` per `build-appimage-linux.sh`) |
-| `task test` | Run tests (`vitest`) |
+| `task package:linux` | Local Linux AppImage to `~/Desktop` (`package:linux:deb`, `:rpm` and `:tarball` make the other formats) |
+| `task package:macos` | Local signed macOS `.app` + `.dmg` to `~/Desktop` (notarized when a `notarytool` profile is set up) |
+| `task package:msix` | Windows MSIX built from a portable (`-- -Sign` for a self-signed test package) |
+| `task package:installer` | Windows `.exe` installer (Inno Setup) built from a portable |
 | `task clean` | Clean build artifacts |
 
-Run `task --list` to see every task. Note that `task package:macos` and `task package:msix` exist as TODO stubs in `Taskfile.yml` but do nothing — full DMG / MSIX / .deb release artifacts are produced by the release pipeline, not local builds.
+Run `task --list` to see every task. Each `package` task runs only on its own platform. `package`, `package:macos` and the `package:linux` tasks each have a `package:release` twin that bakes the `stable` channel and refuses to run unless `HEAD` is a merged release commit; published release artifacts are built by the release pipeline.
 
 ### Local build labels
 
@@ -110,17 +115,30 @@ agentmux-<version>+g<sha>[.dirty].<stamp>-x64-portable
 
 Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10) — ignored for version precedence, so a local label can never collide with or reorder a release version. The `<sha>` ties the build back to its source commit, `.dirty` marks a build made from uncommitted changes, and `<stamp>` (a UTC build timestamp) makes every build's folder unique — so a running instance can never lock the next build's output folder. The data dir is keyed on a per-build channel `local-<branch>-<hash>-<build-id>` baked at compile time, so **each build is its own isolated instance** (its own data dir, cef-cache, and single-instance pipe) — two rebuilds of one branch do **not** share a data dir or session. Agents and auth are account-wide (under `~/.agentmux/shared/`), so a fresh per-build data dir still shows every agent and stays logged in; only pane layout and memories start fresh. (`--fresh` is now a no-op, since every build is already isolated.) Full rationale: [`SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md).
 
+## Tests
+
+There is no `task test`. CI runs these, and so can you:
+
+```bash
+npx vitest run                                      # frontend and script tests (npm test starts vitest in watch mode)
+npx tsc --noEmit -p tsconfig.citypecheck.json       # TypeScript type check
+cargo test --workspace -- --test-threads=1          # Rust tests, all crates
+```
+
 ## Source Layout
 
 ```
 agentmux/
-├── crates/launcher/     # Launcher shim (≈325 KB) — spawns the host, owns OS-level facts
+├── crates/launcher/     # Launcher — spawns the host and the sidecar, owns OS-level facts
 ├── crates/cef/          # CEF host — embeds Chromium, owns the OS window
 ├── crates/srv/          # Sidecar — RPC engine, SQLite persistence, sagas
-├── crates/common/       # Shared utilities (path resolution, runtime mode)
+├── crates/common/       # Shared library (path resolution, runtime mode, IPC types)
+├── crates/mcp/          # agentmux-mcp — the MCP server agents use for MuxAPI
+├── crates/bashwrap/     # Streaming bash wrapper and CLI hook helper
+├── crates/remote/       # Helper installed on SSH hosts (durable sessions, files)
+├── crates/procstats/    # Per-process CPU and memory for Tower
 ├── frontend/            # SolidJS + TypeScript (Vite)
-├── docs/                # Architecture docs and specs
-├── specs/               # Top-level specs
+├── docs/                # Architecture docs; specs in docs/specs/
 └── Taskfile.yml         # Build task definitions
 ```
 
@@ -133,7 +151,7 @@ launcher ◀── named pipe ──▶ host (CEF)
                               │
                               ├── websocket ──▶ sidecar (agentmux-srv)
                               │                   │
-                              │                   └── websocket / wshrpc ──▶ remote `wsh`
+                              │                   └── ssh ──▶ agentmux-remote on an SSH host
                               │
                               ▼
                          OS window, browser panes

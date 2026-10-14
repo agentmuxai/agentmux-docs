@@ -1,5 +1,6 @@
 # Docs Update Plan — v0.40.1 through v0.41.1
 **Date:** 2026-06-01  
+**Status:** implemented in #63 (2026-06-03), which shipped all three tiers.  
 **Covers:** Features shipped since last deploy (v0.0.50, commit e3ed165, ~2026-05-28)  
 **Current local version:** 0.0.51 (not yet deployed)
 

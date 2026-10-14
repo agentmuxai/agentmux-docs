@@ -1,5 +1,7 @@
 # Docs vs. Code Audit — 2026-07-07
 
+**Status:** implemented — #102 fixed P0, P1 and P4. It left the Swarm live-feed (P2) and the internals citation sweep (P3) for later; `AUDIT_DOCS_VS_CODE_2026_08_10.md` and `AUDIT_DOCS_VS_CODE_2026_10_13.md` took them over.
+
 **Scope:** `agentmux-docs` last had its content genuinely synced to the code on
 2026-06-23 (PR #93, submodule bump to `v0.48.0-31`). Code `main` HEAD is now
 2026-07-06/07 (`v0.50.3`-ish, commit `43f02344`). This audit covers ~2 weeks /

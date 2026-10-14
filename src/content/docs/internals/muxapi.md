@@ -32,20 +32,20 @@ Agent CLI (claude / codex / gemini / …)
 
 Agents using MCP tools never touch `X-AuthKey` directly — the MCP sidecar handles it. The REST API is for scripts or tooling that run with explicit access to the auth key (e.g. inside the sidecar itself, or a trusted subprocess you spawn with the key explicitly).
 
-## Two layers: MCP tools vs. the app-API RPC surface
+## Two layers: MCP tools vs. the MuxAPI RPC surface
 
 It helps to keep two layers separate:
 
-- **MCP tools** — the curated, agent-facing verbs that `agentmux-mcp` advertises and maps onto REST endpoints. These are the high-level "operate your workspace" actions (`WhoAmI`, `Layout`, `SetName`, `OpenEditor`, `Shell`, `SendMessage`, …) documented in the next section. This is the intentionally small surface most agents use.
-- **The app-API RPC surface** — the full set of JSON-RPC commands the backend (`agentmux-srv`) registers over its WebSocket transport. The frontend and internal tooling drive AgentMux through these. They include agent lifecycle, process management, session/blockfile persistence, agent-definition CRUD, identity, memory, drones, and more. The MCP tools are a thin, curated slice of this larger surface.
+- **MCP tools** — the curated, agent-facing verbs that `agentmux-mcp` advertises and maps onto REST endpoints. These are the high-level "operate your workspace" actions (`WhoAmI`, `Layout`, `SetName`, `OpenEditor`, `Shell`, `SendMessage`, …) listed in [MCP tools](#mcp-tools-curated-agent-facing-slice) below. This is the curated surface most agents use.
+- **The MuxAPI RPC surface** — the full set of JSON-RPC commands the backend (`agentmux-srv`) registers over its WebSocket transport. The frontend and internal tooling drive AgentMux through these. They include agent lifecycle, process management, session/blockfile persistence, agent-definition CRUD, identity, memory, drones, and more. The MCP tools are a thin, curated slice of this larger surface.
 
-The catalog below documents the **app-API RPC commands** by group, with each command's exact name verified against source. This is the *current* surface and grows actively — treat it as a snapshot, not a frozen contract.
+The catalog below documents the **MuxAPI RPC commands** by group, with each command's exact name verified against source. This is the *current* surface and grows actively — treat it as a snapshot, not a frozen contract.
 
-## App-API RPC catalog
+## MuxAPI RPC catalog
 
-These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_api/mod.rs`, `crates/srv/src/server/agent_handlers/mod.rs`, and the command-name constants in `crates/srv/src/backend/rpc_types/mod.rs`) and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
+These commands are registered in `agentmux-srv`: the MuxAPI handlers are split by domain into the files of `crates/srv/src/server/app_api/` (registered from `crates/srv/src/server/app_api/mod.rs`), the agent-management handlers into `crates/srv/src/server/agent_handlers/` (registered from `crates/srv/src/server/agent_handlers/mod.rs`), and the command-name constants are in `crates/srv/src/backend/rpc_types/commands.rs`. They are exposed and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
 
-### Agent lifecycle (`app_api.rs`)
+### Agent lifecycle (`agent_open.rs`, `agent_io.rs`, `agent_define.rs` in `app_api/`)
 
 | Command | Purpose |
 |---|---|
@@ -57,7 +57,7 @@ These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_
 | `agent.output` | Read paginated persisted output lines for an agent block. |
 | `agent.define` | Create or upsert an agent definition (broadcasts `agents:changed`). |
 
-### Agent process management (`app_api.rs`)
+### Agent process management (`agent_io.rs` in `app_api/`)
 
 | Command | Purpose |
 |---|---|
@@ -66,13 +66,13 @@ These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_
 | `agent.kill-process` | Terminate a single tracked PID within a block's process tree. |
 | `agent.kill-tree` | Terminate a block's entire process tree (job object / cgroup / killpg). |
 
-### Panes (`app_api.rs`)
+### Panes (`pane.rs` in `app_api/`)
 
 | Command | Purpose |
 |---|---|
 | `pane.open` | Open a non-agent pane (editor / term / browser / sysinfo / help), docked or floating. Like `agent.open`, routes through the reducer/`CreateBlock` for saga consistency (PR #1681). This is what the `OpenEditor` MCP tool calls. |
 
-### Blockfile pagination (`app_api.rs`)
+### Blockfile pagination (`blockfile.rs` in `app_api/`)
 
 | Command | Purpose |
 |---|---|
@@ -81,17 +81,18 @@ These commands are registered in `agentmux-srv` (see `crates/srv/src/server/app_
 | `blockfile:read_state` | Read a block's persisted state JSON. |
 | `blockfile:write_state` | Write a block's persisted state JSON. |
 
-### Session (`app_api.rs`)
+### Session (`session.rs` in `app_api/`)
 
 | Command | Purpose |
 |---|---|
-| `session:digest` | Produce a digest/summary of a session. |
+| `session:resume_preflight` | Before a pane opens, answer whether its conversation will resume or start new, without spawning anything. |
 | `session:archive` | Archive a session. |
 | `session:restore` | Restore a previously archived session. |
 | `session:export` | Export a session. |
-| `session:activity_summary` | Per-turn live activity summary (writes `term:activity`). |
+| `session:activity_summary` | Per-turn live activity summary (writes `term:ambient_summary`). |
+| `session:next_prompt_suggestion` | Per-turn ghost-text suggestion for the next prompt (writes `term:next_prompt_suggestion`). |
 
-### Agent-anchored session zone (`agent_handlers.rs`)
+### Agent-anchored session zone (`session.rs` in `agent_handlers/`)
 
 A session zone is bound to the agent *definition* (`definition_id`), so every block of the same agent shares it.
 
@@ -111,9 +112,9 @@ A session zone is bound to the agent *definition* (`definition_id`), so every bl
 | `agent:memory:read_file` | Read one native memory file. |
 | `agent:memory:write_file` | Write one native memory file. |
 
-### Broader `agent_handlers.rs` surface (grouped)
+### Broader `agent_handlers/` surface (grouped)
 
-The backend also registers a large set of management RPCs that the frontend (and tooling) use. These are grouped here rather than exhaustively expanded; names are verified against `crates/srv/src/backend/rpc_types/mod.rs`.
+The backend also registers a large set of management RPCs that the frontend (and tooling) use. These are grouped here rather than exhaustively expanded; names are verified against `crates/srv/src/backend/rpc_types/commands.rs`.
 
 | Group | Commands |
 |---|---|
@@ -131,7 +132,7 @@ The backend also registers a large set of management RPCs that the frontend (and
 
 ### Identity, Memory (native), MCP, Skill & Bundle — shipped MuxAPI namespaces
 
-Five higher-level, agent-scoped namespaces wrap the low-level handlers above behind MuxAPI's permission boundary. All are registered in `crates/srv/src/server/app_api/mod.rs` today — none of these are "planned," despite earlier drafts of this page saying so.
+Five higher-level, agent-scoped namespaces wrap the low-level handlers above behind MuxAPI's permission boundary. All are registered today, from `crates/srv/src/server/app_api/` (`identity.rs`, `memory.rs`, `mcp.rs`, `skill.rs` and `bundle/`).
 
 #### `identity.*`
 
@@ -194,7 +195,7 @@ The reusable agent-definition primitive (see [Bundles](/bundles/)):
 | `bundle.delete` | Delete a bundle | `id` |
 | `bundle.self.get` | Resolve the calling agent's currently-bound bundle (or the blank singleton) | `agent_id` |
 
-`bundle.*` is backed by the same storage as the older `preset.*` commands (`crates/srv/src/backend/storage/bundles.rs`, table `db_bundles`) — `preset.*` still works today as a compatibility alias registered against the identical handlers, but new code should use `bundle.*`.
+`bundle.*` is backed by `crates/srv/src/backend/storage/bundles.rs` (table `db_bundles`). The old WebSocket `preset.*` aliases are retired; the `PresetList` and `PresetGet` MCP tools still reach bundles through the REST routes `/api/v1/agent/preset/list` and `/api/v1/agent/preset/get`.
 
 Prerequisite these all share: `RpcContext` carries an `agent_id` field populated from `bus_agent_id` in `websocket.rs`, enforcing per-agent scope (an agent can only read/write its own links, private primitives, and bindings — not another agent's).
 
@@ -209,7 +210,7 @@ Recent additions for widget panes that run a local HTTP server (PR #1689). The f
 
 ## MCP tools (curated agent-facing slice)
 
-These are the high-level tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically. Each maps to a REST endpoint (see the [REST API](#rest-api) table), which in turn drives an app-API RPC command from the catalog above.
+These are the high-level tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically. Each one calls the sidecar over HTTP; the [REST API](#rest-api) table lists the endpoints behind the core tools.
 
 ### Self-context
 
@@ -344,6 +345,70 @@ Open a file in an editor pane.
 
 Returns `{ block_id, tab_id, view, created }`.
 
+#### More pane tools
+
+| Tool | What it does |
+|---|---|
+| `OpenMedia` | Open an image, video or audio file (absolute host path) in a media pane next to the conversation. |
+| `OpenFiles` | Open a folder in a Files pane next to the conversation, optionally with some entries selected. Navigation only; it changes nothing on disk. Takes `connection` for a folder on an SSH host. |
+| `OpenAgent` | Launch an agent from My Agents (by name or definition id) into a new pane in the target tab. Idempotent: an agent already open in that tab returns its existing pane. Templates are refused. |
+| `ClosePane` | Close a pane. With a `block_id` it closes any pane, logged with your verified identity; another agent's pane waits 15 seconds for its user to keep it. With no arguments it closes your own pane after the same window. |
+| `QuitSelf` | End your own session and close your own tab, only when the user has told you to in this conversation. Unless the user's own message started the current turn, the user gets a 15-second window to keep you running. |
+| `RegisterDevServer` | Container agents only: register a dev server running in your own container with AgentMux's reverse proxy, at `http://<project>-<agent-id>.localhost:8090`. |
+
+---
+
+### Widgets
+
+See [Build a widget](/build-a-widget/) for the package format.
+
+| Tool | What it does |
+|---|---|
+| `WidgetList` | List installed widgets: id, name, version, kind, state, permissions, folder and the views each adds. |
+| `WidgetInstall` | Install a widget package you built (a folder, its `widget.json`, or a `.zip`) and ask the user to approve it. Returns `installed`, `declined`, `pending`, or the validation error. You can't approve it yourself. |
+| `OpenWidget` | Open a view of an installed, approved widget (`ext:<id>/<pane>`) next to the conversation, optionally setting keys of its pane state. |
+
+---
+
+### UI automation
+
+`UIScreenshot`, `UIQuery` and `UIClick` reach your own pane and the shared app chrome (status bar, menus, window controls), never another pane or agent's UI; pass `pane` (from `OpenBrowser`) to act on a browser pane you opened. The shortcut tools act in the window that holds your pane.
+
+| Tool | What it does |
+|---|---|
+| `UIScreenshot` | Screenshot your own pane, clipped to it. Returns a file path. |
+| `UIQuery` | Find elements matching a CSS selector: tag, text, attributes, bounding rect and focus state. |
+| `UIClick` | Click an element with a real synthesized mouse click. Refused on a pane you opened with `OpenBrowser`; use `BrowserClick` there. |
+| `ListShortcuts` | List the keyboard shortcuts as the Help pane shows them, with the user's remaps: command id, label, keys, context and the pane that handles each. |
+| `RunCommand` | Run a shortcut's command by id (from `ListShortcuts`) in your own window, optionally focusing a target pane first. Commands keep the user's protections: `tab:close` asks first, and permanent deletes are refused. |
+| `PressKeys` | Press a shortcut from the table as real key events in your own window and report which command it resolved to. Keys bound to permanent delete or `pane:close` are refused. |
+| `CaptureWindow` | Screenshot a top-level window on this machine (another AgentMux instance, your own floating windows, or another application) by pid or title. Windows owned by another OS user are withheld; every call is audited. |
+| `DiscoverWindows` | List top-level windows (pid, title, executable, whether each can be captured) to pick a `CaptureWindow` target. Other applications are listed only with `include_foreign`. |
+
+---
+
+### Browser panes
+
+`OpenBrowser` opens a browser pane next to yours and makes you its owner. The other tools take that pane's id as `pane`; without it they act on your own pane, if it is a browser pane. You can drive only browser panes you opened, and page content is untrusted.
+
+| Tool | What it does |
+|---|---|
+| `OpenBrowser` | Open a browser pane at an http(s) URL. `allowed_origins` keeps it on the sites the task needs; a page that tries to leave them is stopped and the user is asked. |
+| `BrowserSnapshot` | Read the page as an accessibility snapshot, one line per element, with a `ref` on each one you can act on. |
+| `BrowserClick` | Click an element by `ref` with a real mouse click. A click that submits a form, or is named like Submit, Send, Pay or Delete, waits for the user to approve it. |
+| `BrowserFill` | Replace a text field's value by `ref`, as typed input, and read it back. Refuses password, one-time-code and card fields. |
+| `BrowserSelect` | Choose an option of a `<select>` by `ref` and the option's label or value. |
+| `BrowserCheck` | Set a checkbox, radio button or switch by `ref`. |
+| `BrowserSetFiles` | Put files from your own workspace into a file input by `ref`, up to 25 MB in all. Every upload is logged. |
+| `BrowserWaitFor` | Wait until the page shows some text, its URL contains something, or an element is gone. |
+| `BrowserHandoff` | Hand the pane to the user for something you must not do (signing in, two-factor codes, payment details) and wait for Done or Cancel. |
+| `BrowserNavigate` | Navigate to a URL. |
+| `BrowserBack` / `BrowserForward` / `BrowserReload` | Walk history back or forward, or reload the page. |
+| `BrowserEval` | Run JavaScript in the page and return the result. Refused on a pane you opened with `OpenBrowser`. |
+| `BrowserDispatchKey` | Type text or a named key into whatever has focus in the pane, optionally focusing a selector first. Enter and Space are refused on a pane you opened with `OpenBrowser`. |
+| `BrowserFocusElement` | Call `.focus()` on the first element matching a CSS selector. |
+| `BrowserFocusInfo` | Report the currently focused element, in `UIQuery`'s shape. |
+
 ---
 
 ### Shell management
@@ -382,6 +447,20 @@ Query whether a shell started by `Shell` is still running.
 Parameters: `shell_id` (required).
 
 Returns a plain-text summary: running state, exit code (if exited), and total output line count so far.
+
+#### Interactive shell (PTY) and connections
+
+`PtyShell` attaches to the pane's one interactive shell: the same real terminal the user sees in the shell drawer, so programs that need a PTY (password prompts, `sudo`, `ssh`, REPLs) work. While you type into it, the user's own keyboard input to it is locked out for a few seconds.
+
+| Tool | What it does |
+|---|---|
+| `PtyShell` | Attach to (or create) the pane's interactive shell; returns a `shell_id`. Takes `connection` to run in WSL or on an SSH host. |
+| `PtyShellInput` | Write raw text, exactly as typed: no newline is appended, and `\u0003` is Ctrl+C. |
+| `PtyShellRead` | Read back the output tail as text (default the last 200 lines). |
+| `PtyShellResize` | Resize the terminal (default 25 rows by 200 columns). |
+| `PtyShellStatus` | Whether the shell is still running, and its exit code once it ended. |
+| `PtyShellStop` | Release your keyboard lock at once. It doesn't stop the shell. |
+| `ConnList` | List the connections `Shell` and `PtyShell` can take as `connection`: this machine, each WSL distribution, the user's ssh config hosts, and their status. An SSH host asks the user to allow you the first time. |
 
 ---
 
@@ -468,6 +547,21 @@ Parameters: `to` (target agent name, required), `message` (string, required).
 
 Returns `{ success, error? }`. The message is delivered to the target agent's pane as if a user typed it — the agent picks it up on its next turn.
 
+#### More coordination tools
+
+| Tool | What it does |
+|---|---|
+| `GetAgentTranscript` | Read the tail of another agent's transcript by name, and whether it has a turn in flight. Reaches agents on this host, including other channels; not LAN or WAN. |
+| `ListConversations` | Every agent's latest activity across host, other channels, LAN and WAN in one call. Host and cross-channel entries carry a preview line and what the agent is working on; LAN and WAN entries are liveness only. |
+| `SearchHistory` | Search your own past conversations, including ended or compacted sessions, by text or by tool call. Only `complete: true` with no hits means it didn't happen. |
+| `WhoIsWorkingOn` | Which other agents are working on a file, folder, repository, branch, topic or open PR. Informational; nothing is locked. |
+| `ClaimWork` | Say what you're working on (a path, branch or topic, with a note) so other agents see it in `WhoIsWorkingOn` and get a note if they edit inside it. Lapses after `ttl_minutes` (default 120). |
+| `ReleaseWork` | Release one of your claims by id, or all of them. |
+| `SupervisorNudge` | For a Warden Supervisor watcher: record a decision about an agent that ended its turn. `nudge` sends a fixed, server-owned continuation message; `decline` only logs. |
+| `FleetList` | List every reachable agent with the target ids `FleetBroadcast` and `FleetBulkStop` take. |
+| `FleetBroadcast` | Send the same message to many agents, each delivered and signed as `SendMessage` would. |
+| `FleetBulkStop` | Stop many agent panes at once, optionally in stages that abort on a high failure rate. Stopping an agent you don't own waits 15 seconds for its user to keep it. |
+
 ### Muxqueue — the shared work queue
 
 `SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is **pull and deferred** — work is enqueued, and an agent takes it when it asks, rather than being handed it.
@@ -538,12 +632,45 @@ For a richer view from a terminal, including stuck-lease detection, see [`muxspe
 
 ---
 
+### Memory
+
+Personal memory is the calling agent's own native memory files; Global Memory is the workspace-wide list every agent gets at launch. Every write keeps a version. See [Memory](/memory/).
+
+| Tool | What it does |
+|---|---|
+| `MemoryList` | List your own memory files: filename, whether it is the index, type, size and modified time. |
+| `MemoryRead` | Read one of your memory files. |
+| `MemoryWrite` | Create or overwrite one of your memory files, atomically. |
+| `MemoryHistory` | List a memory file's recorded versions, newest first, with who wrote each. |
+| `MemoryDiff` | Line diff between two versions of a memory file. |
+| `MemoryRevert` | Restore a memory file to an earlier version, recorded as a new version. |
+| `GlobalMemoryList` | List Global Memory entries (id, name, updated, `system`). AgentMux's own system entries are listed but can't be read, changed or removed here. |
+| `GlobalMemoryRead` | Read one Global Memory entry. |
+| `GlobalMemoryWrite` | Create an entry, or update one by id. Changes what every agent gets at its next launch. |
+| `GlobalMemoryRemove` | Take an entry off the Global Memory list (the entry itself isn't deleted). |
+| `GlobalMemoryHistory` | List an entry's recorded versions, newest first. |
+| `GlobalMemoryDiff` | Line diff between two versions of an entry. |
+| `GlobalMemoryRevert` | Restore an entry to an earlier version, recorded as a new version. |
+
+---
+
+### Presets and identities
+
+| Tool | What it does |
+|---|---|
+| `PresetList` | List the presets (bundles) available to you, summary fields only. |
+| `PresetGet` | Fetch a preset by id or name; with neither, your own bound preset. |
+| `IdentityAccounts` | List your own linked accounts: id, provider, name, kind, status and a masked tail. Secrets are never returned. |
+| `IdentityValidate` | Check one of your linked accounts against its provider with the stored key. |
+
+---
+
 ## REST API
 
-Every MCP tool has an equivalent REST endpoint on `$AGENTMUX_LOCAL_URL`. All requests require `X-AuthKey: $AGENTMUX_AUTH_KEY`.
+The core MCP tools have these REST endpoints on `$AGENTMUX_LOCAL_URL`. All requests require `X-AuthKey: $AGENTMUX_AUTH_KEY`.
 
 :::note
-This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of the full app-API RPC catalog above — most RPC commands (agent lifecycle, sessions, blockfiles, identity, memory, drones, widgets) are reached over the WebSocket JSON-RPC transport, not via a dedicated `/api/v1/*` REST route.
+This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of the full MuxAPI RPC catalog above — most RPC commands (agent lifecycle, sessions, blockfiles, identity, memory, drones, widgets) are reached over the WebSocket JSON-RPC transport, not via a dedicated `/api/v1/*` REST route.
 :::
 
 | Method | Endpoint | MCP equivalent |
@@ -576,7 +703,7 @@ This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of th
 | `DELETE` | `/agentmux/work/:id` | *(cancel — no MCP tool; operator action)* |
 
 :::note
-`Loop`/`LoopStop`/`LoopList` and `CronCreate`/`CronDelete`/`CronList`/`CronPause`/`CronResume` (see [Scheduling](#scheduling)) aren't in this REST table — they're MCP-only today, with no dedicated `/api/v1/*` route.
+`Loop`/`LoopStop`/`LoopList` (see [Scheduling](#scheduling)) have no route of their own: a loop lives in the `agentmux-mcp` process and each fire is a `POST /agentmux/reactive/inject`. The `Cron*` tools use `/agentmux/cron` (`POST` to create, `GET` to list, `DELETE /agentmux/cron/:id`, and `PATCH /agentmux/cron/:id` to pause or resume).
 :::
 
 Example — rename the current tab from a trusted script that has access to the auth key (e.g. an `agentmux-mcp` subprocess or a sidecar utility, not an agent's own PTY shell):
@@ -602,9 +729,9 @@ The WebSocket connection receives server-pushed JSON-RPC notifications for live 
 
 Agents are *sub-trusted*: they run as the user but do not hold the sidecar's full auth key at the OS level. MuxAPI is the curated surface across that boundary — scoped, reversible operations.
 
-What the curated MCP tool surface allows today: open panes, rename UI elements, navigate, discover and message peers, manage shells. The broader app-API RPC surface (agent lifecycle, sessions, identity, memory, drones) is driven by the frontend and internal tooling over the authenticated WebSocket transport.
+What the curated MCP tool surface allows today: open panes, browser panes and widgets, rename UI elements, navigate, drive its own pane's UI, discover and message peers, manage shells, and read and write its own memory and Global Memory. The broader MuxAPI RPC surface (agent lifecycle, sessions, identity, memory, drones) is driven by the frontend and internal tooling over the authenticated WebSocket transport.
 
-What it does not expose: delete arbitrary panes belonging to other agents, access other agents' file systems, or call raw `dispatch_service` destructive commands. A finer-grained per-agent permission model (allow-lists, scoped capabilities) is on the roadmap.
+What it does not expose: access to other agents' file systems, or raw `dispatch_service` destructive commands. An agent can ask to close another agent's pane (`ClosePane` with a `block_id`) or stop it (`FleetBulkStop`), but that waits 15 seconds for the pane's user to keep it running. A finer-grained per-agent permission model (allow-lists, scoped capabilities) is on the roadmap.
 
 **Practical advice:** don't inject `AGENTMUX_AUTH_KEY` into agent instructions when running less-trusted agents. The API is designed for agents you authored or trust, not for arbitrary model output from external sources.
 

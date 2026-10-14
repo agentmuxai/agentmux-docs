@@ -16,7 +16,7 @@ Earlier builds isolated by **version** — each new build got a fresh, empty `~/
 | Runtime mode | Default channel | Data directory |
 |---|---|---|
 | **Installed** (production install) | `stable` | Runtime root: `~/.agentmux/channels/stable/versions/<version>/` (`data/` for SQLite, `logs/`, `cef-cache/`, `runtime/` are siblings under it). Channel root: `~/.agentmux/channels/stable/` (`agents/`, `config/` — shared across versions). See [Per-channel contents](#per-channel-contents) for the full breakdown. |
-| **Portable** (downloaded released ZIP) | `stable` | Same as installed — both bind to the `stable` channel |
+| **Portable** (downloaded released `.7z`) | `stable` | Same as installed — both bind to the `stable` channel |
 | **Portable** (local `task package` build) | `local-<branch>-<hash>-<build-id>` | `~/.agentmux/channels/local-<branch>-<hash>-<build-id>/versions/<version>/` — version-scoped like any Installed/Portable build. The channel is baked per build (compile-time `AGENTMUX_BUILD_CHANNEL_DEFAULT`), so **each rebuild gets a different channel** and its own isolated data dir — two rebuilds of the same branch do **not** share a session. |
 | **Dev** (`task dev`) | `dev-<branch>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
@@ -62,7 +62,7 @@ Pre-migration snapshots auto-save when an upgrade-with-migration is detected, th
   └── filestore.db
 ```
 
-The snapshot is a `VACUUM INTO` copy of each of the sidecar's SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. (The launcher's `launcher-sagas.db` is a separate saga log and is not part of the pre-migration snapshot.) Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
+The snapshot is a `VACUUM INTO` copy of each of the sidecar's SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption).
 
 To roll back manually if a migration goes wrong, close AgentMux and copy the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/` (v0.41.1+), matching the version whose runtime DB you want to restore. There's no CLI for this yet — it's a planned follow-up.
 
@@ -74,7 +74,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 
 | Path | Owns |
 |---|---|
-| `versions/<v>/data/` | SQLite stores live in `data/db/` — `objects.db` (reducer state), `sagas.db` + `launcher-sagas.db` (saga logs), `filestore.db` (per-block content) — plus the launcher's JSONL event log (`launcher-events.log`) directly in `data/` |
+| `versions/<v>/data/` | SQLite stores live in `data/db/` — `objects.db` (reducer state), `sagas.db` (srv saga log), `filestore.db` (per-block content) — plus the launcher's JSONL event log (`launcher-events.log`) directly in `data/` |
 | `versions/<v>/logs/` | Host logs (rotated daily, 7-day retention). **Sidecar logs are not here** — they live at `~/.agentmux/logs/` (account-wide), see [Account-wide (shared) contents](#account-wide-shared-contents) below. |
 | `versions/<v>/cef-cache/` | Chromium cookies, local storage, IndexedDB, service workers, cached JS |
 | `versions/<v>/runtime/` | Runtime IPC artifacts (the `ipc-port` file and single-instance `lock`; named-pipe sockets on Windows / Unix domain sockets on Linux + macOS) |
@@ -116,7 +116,7 @@ The host writes its own logs to `<data-dir>/logs/`. To make those discoverable f
 The pointer file's contents are the **absolute path** to the current log file:
 
 ```
-C:\Users\area54\.agentmux\channels\stable\versions\0.41.2\logs\agentmux-host-v0.41.2.log.2026-06-03
+C:\Users\you\.agentmux\channels\stable\versions\0.41.2\logs\agentmux-host-v0.41.2.log.2026-06-03
 ```
 
 So the canonical "find the running host's log" recipe is:
