@@ -372,7 +372,7 @@ See [Build a widget](/build-a-widget/) for the package format.
 
 ### UI automation
 
-These reach your own pane and the shared app chrome (status bar, menus, window controls), never another pane or agent's UI. Pass `pane` (from `OpenBrowser`) to act on a browser pane you opened.
+`UIScreenshot`, `UIQuery` and `UIClick` reach your own pane and the shared app chrome (status bar, menus, window controls), never another pane or agent's UI; pass `pane` (from `OpenBrowser`) to act on a browser pane you opened. The shortcut tools act in the window that holds your pane.
 
 | Tool | What it does |
 |---|---|

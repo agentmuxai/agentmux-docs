@@ -19,8 +19,6 @@ Three pressures drove it:
 
 <img src="/diagrams/reducer-stack.svg" alt="Reducer stack: five layers from bottom (Persistence) through Srv, Launcher, Host up to Frontend, connected by labeled arrows showing data flow." style="max-width:100%" />
 
-### Layer 1 — Launcher
-
 There are three reducers in Rust, one per process, each a pure `update` function over its own `State`:
 
 | | Launcher | Host (cef) | Sidecar (srv) |
@@ -41,7 +39,7 @@ CEF-side coordination, in `crates/cef/src/reducer/`: pending window creations, b
 
 ### Layer 3 — Sidecar (srv)
 
-Owns the app domain: workspaces, tabs, block ids, which workspace each window shows, and each tab's layout tree with its focus and magnify. Lives in `crates/srv/src/reducer.rs` plus the per-domain modules in `crates/srv/src/reducer/` (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Multi-step commands (tear-off, restore, move, delete) run as srv sagas. An idempotent persist subscriber writes the events back to SQLite. **Status:** done.
+Owns the app domain: workspaces, tabs, block ids, which workspace each window shows, and each tab's layout tree with its focus and magnify. Lives in `crates/srv/src/reducer.rs` plus the per-domain modules in `crates/srv/src/reducer/` (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Multi-step commands (tear-off, restore, redock, delete) run as srv sagas. An idempotent persist subscriber writes the events back to SQLite. **Status:** done.
 
 ### Layer 4 — Frontend slices
 
