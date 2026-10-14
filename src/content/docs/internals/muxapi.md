@@ -43,7 +43,7 @@ The catalog below documents the **MuxAPI RPC commands** by group, with each comm
 
 ## MuxAPI RPC catalog
 
-These commands are registered in `agentmux-srv`: the MuxAPI handlers are split by domain into the files of `crates/srv/src/server/app_api/` (registered from `crates/srv/src/server/app_api/mod.rs`), the agent-management handlers into `crates/srv/src/server/agent_handlers/` (registered from `crates/srv/src/server/agent_handlers/mod.rs`), and the command-name constants are in `crates/srv/src/backend/rpc_types/commands.rs`. They are and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
+These commands are registered in `agentmux-srv`: the MuxAPI handlers are split by domain into the files of `crates/srv/src/server/app_api/` (registered from `crates/srv/src/server/app_api/mod.rs`), the agent-management handlers into `crates/srv/src/server/agent_handlers/` (registered from `crates/srv/src/server/agent_handlers/mod.rs`), and the command-name constants are in `crates/srv/src/backend/rpc_types/commands.rs`. They are exposed and dispatched over the WebSocket JSON-RPC transport described at the bottom of this page.
 
 ### Agent lifecycle (`agent_open.rs`, `agent_io.rs`, `agent_define.rs` in `app_api/`)
 

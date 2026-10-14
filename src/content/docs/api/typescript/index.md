@@ -14,7 +14,7 @@ Per-module reference for the TypeScript stores, reducers, and command source tha
 
 ## Cross-references
 
-- [Rust API](/api/rust/) — rustdoc for the four crates in the Cargo workspace.
+- [Rust API](/api/rust/) — rustdoc for the eight crates in the Cargo workspace.
 - [The reducer stack](/internals/reducer-stack/) — explains how these stores fit together.
 - [MuxAPI](/internals/muxapi/) — runtime API agents call to render their own UI.
 

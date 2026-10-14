@@ -30,7 +30,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:449-455
+// layoutModel.ts:450-456
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -72,7 +72,7 @@ The getter `focusedNodeId` (`layoutModel.ts:777-779`) simply returns `this.focus
 The reactive memo `focusedNode` (`layoutModel.ts:545-555`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:544-554
+// layoutModel.ts:545-555
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -344,7 +344,7 @@ Priority 3 (lowest / fallback): theme accent
 The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1213-1222`):
 
 ```typescript
-// blockframe.tsx:1164-1173
+// blockframe.tsx:1213-1222
 const blockAgentColor = createMemo(() => {
     if (!props.preview && paneTabCapability(blockData()?.meta?.view, "hueBorder")) {
         const isLightTheme = isLightThemeActive();
