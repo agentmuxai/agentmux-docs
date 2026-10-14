@@ -210,7 +210,7 @@ Recent additions for widget panes that run a local HTTP server (PR #1689). The f
 
 ## MCP tools (curated agent-facing slice)
 
-These are the high-level tools registered by `agentmux-mcp`. All providers that support MCP (Claude Code, Codex, Gemini, OpenClaw, Kimi) get them automatically. Each one calls the sidecar over HTTP; the [REST API](#rest-api) table lists the endpoints behind the core tools.
+These are the high-level tools registered by `agentmux-mcp`. Most providers that support MCP get them automatically. Claude Code, Codex, Gemini and Kimi read them from the agent's configuration files. The ACP harnesses (OpenClaw, GitHub Copilot CLI, Pi, Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build and DeepSeek Harness) get the `agentmux` server, with the agent's other MCP servers, in the `mcpServers` of ACP's `session/new` or `session/load`. The terminal-tier harnesses (Aider, Crush and Muse Code) don't get them. Each one calls the sidecar over HTTP; the [REST API](#rest-api) table lists the endpoints behind the core tools.
 
 ### Self-context
 

@@ -132,7 +132,8 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | `api.anthropic.com/v1/models` | At each launch, when a Claude login token is found |
 | `muxbus.agentmux.ai`, `muxbus-ws.agentmux.ai` | Only after you sign in to MuxBus Cloud |
 | `registry.npmjs.org` (or your configured npm registry) | Installing an agent CLI; checking CLI versions in the Toolchain pane |
-| `github.com` release downloads | Installing jq or ripgrep from the tool catalog |
+| `github.com` release downloads | Installing jq or ripgrep from the tool catalog; Crush's npm install script fetches its binary there |
+| `github.com` release downloads (goose), `x.ai` (Grok Build), `aider.chat` and `pypi.org` (Aider), `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com` (Muse Code), `antigravity.google` (Antigravity) | Made by the vendor's installer when you install one of these harnesses, not by AgentMux |
 | `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
 | `agentmux.ai` | Opening a browser pane with no URL (its default Home page) |
 | Your default search engine (Google) | Typing in a browser pane's address bar: each edit is sent for suggestions before Enter, unless **Search suggestions while typing** (`browser:searchsuggestions`) is off; text that isn't a URL is searched on Enter |
@@ -153,7 +154,7 @@ There is no telemetry endpoint, crash-report upload, update check or license che
 
 Restrict these to your LAN subnet or to known peers.
 
-**Outbound:** allow whatever your agents' providers need, plus the destinations above for the features you use. Blocking `muxbus.agentmux.ai` and `muxbus-ws.agentmux.ai` disables MuxBus Cloud. Blocking the npm registry disables in-app CLI installs.
+**Outbound:** allow whatever your agents' providers need, plus the destinations above for the features you use. Blocking `muxbus.agentmux.ai` and `muxbus-ws.agentmux.ai` disables MuxBus Cloud. Blocking the npm registry disables in-app CLI installs. Blocking a vendor's download site stops you installing that harness, not AgentMux.
 
 ---
 

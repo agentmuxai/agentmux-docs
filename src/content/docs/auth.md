@@ -7,7 +7,7 @@ description: Per-provider sign-in (OAuth vs API key), how AgentMux runs each CLI
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux supports ten providers: `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot` and `antigravity`. Each provider's CLI does its own sign-in and keeps its own credentials. AgentMux doesn't implement those logins: it runs the CLI's own login command and points the CLI at a config directory AgentMux manages, through the environment variable that CLI already supports (for example `CLAUDE_CONFIG_DIR` or `CODEX_HOME`).
+AgentMux supports nineteen providers: `claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `pi`, `copilot`, `antigravity`, `kilo`, `cline`, `opencode`, `goose`, `grok`, `dsh`, `aider`, `crush` and `muse`. Each provider's CLI does its own sign-in and keeps its own credentials. AgentMux doesn't implement those logins: it runs the CLI's own login command and points the CLI at a config directory AgentMux manages, through the environment variable that CLI already supports (for example `CLAUDE_CONFIG_DIR` or `CODEX_HOME`).
 
 `muxcode` ("Mux Code") is AgentMux's own agentic coding CLI (npm: `@agentmuxai/muxcode`). It emits Claude-compatible stream-JSON, so AgentMux reuses the Claude translator for it.
 
@@ -25,22 +25,44 @@ The per-provider values come from `frontend/app/view/agent/providers/catalog.ts`
 | Kimi Code CLI | `api-key` | `kimi login` | `KIMI_SHARE_DIR` |
 | OpenClaw | `oauth` | `openclaw models auth login --provider openai-codex` | `OPENCLAW_HOME` |
 | GitHub Copilot CLI | `oauth` | `copilot auth login` | `COPILOT_HOME` |
-| Pi | `api-key` | `pi config` | `PI_HOME` |
-| Antigravity (AGY) | `oauth` | `agy auth login` | `ANTIGRAVITY_CONFIG_DIR` (plus `ANTIGRAVITY_FORCE_FILE_STORAGE=true`) |
+| Pi | `cli-managed` | `pi-acp --terminal-login` | `PI_CODING_AGENT_DIR` |
+| Antigravity (AGY) | `cli-managed` | None: `agy` signs in the first time it runs | None: `agy` signs in once per machine |
+| Kilo Code CLI | `cli-managed` | `kilo auth login` | `XDG_DATA_HOME` |
+| Cline CLI | `cli-managed` | `cline auth` | `CLINE_DIR` |
+| OpenCode | `cli-managed` | `opencode auth login` | `XDG_DATA_HOME` |
+| goose | `cli-managed` | `goose configure` | `GOOSE_PATH_ROOT` (plus `GOOSE_DISABLE_KEYRING=1`) |
+| Grok Build | `cli-managed` | `grok login` | `GROK_HOME` |
+| DeepSeek Harness | `cli-managed` | `dsh web` (set the key on its Models page) | `DSH_HOME` |
+| Aider | `cli-managed` | None: set your model provider's key in the environment | None: Aider keeps its state in `~/.aider` |
+| Crush | `cli-managed` | `crush login` | `CRUSH_GLOBAL_DATA` |
+| Muse Code | `cli-managed` | `muse login` | `XDG_CONFIG_HOME` |
 
-AgentMux checks whether a CLI is signed in by running its own status command (for example `claude auth status --json` or `codex login status`).
+Kilo Code CLI and OpenCode keep their sign-in under `XDG_DATA_HOME`, and Muse Code under `XDG_CONFIG_HOME`. AgentMux sets that variable to the provider's folder, and the CLI makes its own `kilo`, `opencode` or `muse` folder inside it. Each of these variables was checked against the installed CLI: setting it moves where the CLI keeps its sign-in.
+
+AgentMux checks whether a CLI is signed in by running its own status command (for example `claude auth status --json` or `codex login status`). The nine newest harnesses have no status command AgentMux can rely on, so for them there is no check: the launch goes ahead, and a CLI that isn't signed in says so in the pane when its session starts.
 
 ## OAuth providers
 
-Six providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw, GitHub Copilot CLI and Antigravity. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
+Five providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
 
-Five of them (Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI) are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`). Antigravity is marked `oauth` in the catalog but is not account-backed; it uses the ambient directory described below.
+All five are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`).
 
 AgentMux does not pass an API-key environment variable to these CLIs as a fallback.
 
 ## API-key providers
 
-Four providers are configured with their own CLI's login or config command and a key: Mux Code, Qwen Code, Kimi Code CLI and Pi. Mux Code also counts as signed in when a local model is installed; its `auth login` pulls a default local model when nothing is configured. Qwen Code talks to an OpenAI-compatible endpoint (for example OpenRouter), set through `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL`.
+Three providers are configured with their own CLI's login or config command and a key: Mux Code, Qwen Code and Kimi Code CLI. Mux Code also counts as signed in when a local model is installed; its `auth login` pulls a default local model when nothing is configured. Qwen Code talks to an OpenAI-compatible endpoint (for example OpenRouter), set through `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL`.
+
+## CLI-managed providers
+
+For Pi, Antigravity and the nine newest harnesses (Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build, DeepSeek Harness, Aider, Crush and Muse Code), the CLI keeps its own sign-in and AgentMux binds no account. AgentMux points the CLI at its shared folder for the provider, so every agent of that provider uses the same sign-in, kept apart from any copy of the CLI you use outside AgentMux.
+
+- **Kilo Code CLI** and **OpenCode** run signed out on their own free models. Sign in to use your own account or keys.
+- **Cline CLI** and **Grok Build** refuse to start a session until you sign in. Grok Build also takes `XAI_API_KEY`.
+- **goose** has no sign-in of its own: `goose configure` picks a model provider and key once. Until then its session fails, naming `GOOSE_PROVIDER`. AgentMux sets `GOOSE_DISABLE_KEYRING=1`, so goose keeps its keys in a file in its folder instead of the OS keyring, whose prompt could block an agent nobody is watching.
+- **DeepSeek Harness** starts signed out but needs a DeepSeek API key for its first prompt. Set it on the Models page of `dsh web`, or as `DEEPSEEK_API_KEY`.
+- **Aider** has no login. It reads your model provider's key from the environment.
+- **Crush** also takes a key set in its own UI, and **Muse Code** takes `META_API_KEY`.
 
 ## Signing in from an agent pane
 
@@ -57,7 +79,7 @@ When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, th
 
 **Login via terminal** skips step 2 and goes straight to the terminal window.
 
-For the other providers (the four API-key providers, and Antigravity), no account is created: the login writes to the ambient directory described next.
+For every other provider, no account is created: the login writes to the ambient directory described next. The newer CLI-managed harnesses log in interactively, so their login always runs in a terminal window.
 
 ## Where credentials are stored
 
@@ -72,11 +94,11 @@ There are two places.
 …
 ```
 
-This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName` (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`). It is account-wide: every channel, version and instance on the machine shares it.
+This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName`, which is the provider id (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`, `kilo`, `cline`, `opencode`, `goose`, `grok`, `dsh`, `aider`, `crush`, `muse`). It is account-wide: every channel, version and instance on the machine shares it.
 
 On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `crates/common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
 
-Only Mux Code, Qwen Code, Kimi Code CLI, Pi and Antigravity actually run on the ambient directory. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
+Every provider except the five account-backed ones runs on the ambient directory, apart from Antigravity and Aider, which read no config-dir variable. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
 
 **Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI or OpenClaw is saved as an account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
 

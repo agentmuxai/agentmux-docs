@@ -16,18 +16,30 @@ AgentMux does not call AI provider APIs directly. Instead, it manages a provider
 | Claude Code | `claude` | `@anthropic-ai/claude-code` | `persistent` | `stream-json` (NDJSON) |
 | Codex | `codex` | `@openai/codex` | `subprocess` | JSONL — `codex exec --json` (NDJSON, one JSON object per line; not a single JSON blob) |
 | Gemini | `gemini` | `@google/gemini-cli` | `subprocess` | `stream-json` (NDJSON) |
-| OpenClaw | `openclaw` | — | `acp` | JSON-RPC 2.0 over stdio |
-| Kimi | `kimi` | — | `subprocess` | `stream-json` (NDJSON) |
+| Qwen Code | `qwen` | `@qwen-code/qwen-code` | `subprocess` | `stream-json` (NDJSON) in Claude Code's frame shape, read by the Claude translator as `qwen-stream-json` |
+| Kimi | `kimi` | — (PyPI `kimi-cli`, installed by you) | `subprocess` | `stream-json` (NDJSON) |
 | Muxcode | `muxcode` | `@agentmuxai/muxcode` | `subprocess` | `stream-json` (NDJSON) — reuses the Claude translator |
-| Antigravity | `agy` | `@google/antigravity-cli` | `subprocess` | `stream-json` (NDJSON) — reuses the Gemini translator |
+| Antigravity | `agy` | — (Google's installer) | `subprocess` | `stream-json` (NDJSON) in its own schema, with its own translator (`agy-stream-json`) |
+| OpenClaw | `openclaw` | `openclaw` | `acp` | ACP: JSON-RPC 2.0 over stdio |
+| GitHub Copilot CLI | `copilot` | `@github/copilot` | `acp` | ACP |
+| Pi | `pi-acp` | `pi-acp`, with `@earendil-works/pi-coding-agent` | `acp` | ACP |
+| Kilo Code CLI | `kilo` | `@kilocode/cli` | `acp` | ACP |
+| Cline CLI | `cline` | `cline` | `acp` | ACP |
+| OpenCode | `opencode` | `opencode-ai` | `acp` | ACP |
+| goose | `goose` | — (GitHub release, installed by you) | `acp` | ACP |
+| Grok Build | `grok` | — (xAI's installer) | `acp` | ACP |
+| DeepSeek Harness | `dsh` | `@deepseek-ai/dsh` | `acp` | ACP |
+| Aider | `aider` | — (PyPI `aider-chat`, through Aider's installer) | `terminal` | None: its own UI in a terminal pane |
+| Crush | `crush` | `@charmland/crush` | `terminal` | None: its own UI in a terminal pane |
+| Muse Code | `muse` | — (Meta's installer) | `terminal` | None: its own UI in a terminal pane |
 
-The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` uses the Agent Communication Protocol over stdio.
+The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` keeps one process speaking the Agent Client Protocol over stdio; `terminal` opens a terminal pane that runs the CLI's own UI (see [The terminal tier](#the-terminal-tier)).
 
 :::note
-The current provider registry also includes `pi` and `copilot` (both documented in [Auth flows](/auth/)) and `qwen` — their exact controller type / output format weren't re-verified for this table. **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/). **Antigravity** is Google's agentic coding CLI harness, added most recently (PR #2558) — it's a sibling of Gemini CLI closely enough that it reuses the Gemini translator rather than shipping a new one.
+**Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/). **Antigravity** is Google's agentic coding CLI. Its stream-json looks like Gemini CLI's but is its own schema, so it has its own translator, and it takes the prompt as an argument (`-p <prompt>`) rather than on stdin.
 :::
 
-Provider definitions live in `frontend/app/view/agent/providers/index.ts` (frontend) and `crates/srv/src/backend/providers.rs` (backend, source of truth for the table above).
+Provider definitions live in `frontend/app/view/agent/providers/catalog.ts` (frontend) and `crates/srv/src/backend/providers.rs` (backend, source of truth for the table above).
 
 ## Provider (harness) vs. model vendor
 
@@ -43,12 +55,10 @@ The **effective vendor** an agent is actually using is computed, not stored: a n
 
 Before spawning, AgentMux resolves the CLI binary path via the `ResolveCliCommand` RPC. The resolution order is:
 
-1. **AgentMux-managed install** — `~/.agentmux/cli/<provider>/node_modules/.bin/<provider>` (`.cmd` on Windows). This is always preferred; versions are pinned per release (e.g., Claude Code `2.1.185`).
-2. **System PATH** — used only as a fallback for informational display (`detect_installed_clis`), never for actually launching agents.
+1. **AgentMux-managed install**, for a provider with an npm package: `~/.agentmux/shared/cli/<provider>/<pinned version>/`, shared by every AgentMux version and channel on the machine. AgentMux installs it there at the pinned version the first time it's needed, so agents run a known, tested version regardless of what the user has globally installed.
+2. **System PATH, then the installer's own folder**, for a provider with no npm package (Kimi, Antigravity, goose, Grok Build, Aider, Muse Code). AgentMux never runs their installers. It looks on `PATH`, then in the folder each vendor's installer uses by default, because a running AgentMux keeps the `PATH` it started with. If neither has the CLI, the launch fails with the vendor's install command as a hint.
 
-AgentMux installs provider CLIs via npm into its own directory so agents always run a known, tested version regardless of what the user has globally installed.
-
-Source: `crates/cef/src/commands/providers.rs` `get_local_cli_bin_path()`, `detect_installed_clis()`.
+Source: `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/backend/cli_install.rs`, and `known_install_paths` in `crates/srv/src/backend/providers.rs`.
 
 ## Step 2 — Argument construction
 
@@ -153,15 +163,29 @@ Source: `crates/srv/src/backend/blockcontroller/shell/translation.rs` `extract_a
 
 Source: `crates/srv/src/agents/translator/claude.rs`.
 
-### ACP (OpenClaw)
+### ACP
 
-OpenClaw uses JSON-RPC 2.0 over stdio rather than NDJSON. Its controller is in `crates/srv/src/backend/blockcontroller/acp.rs`.
+OpenClaw, GitHub Copilot CLI, Pi, Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build and DeepSeek Harness speak the Agent Client Protocol: JSON-RPC 2.0 over stdio rather than NDJSON. One controller drives all of them (`crates/srv/src/backend/blockcontroller/acp.rs`), and one translator renders them (`frontend/app/view/agent/providers/acp-translator.ts`), so a new ACP harness needs configuration, not protocol code.
+
+- **Session start.** After `initialize`, the controller sends `session/new`, or `session/load` to resume when the agent says it supports that. Both carry the agent's MCP servers from its `.mcp.json`, AgentMux's own `agentmux` server included, in ACP's shape. Every ACP agent gets the stdio servers; HTTP and SSE servers go only to an agent whose `initialize` response says it takes them.
+- **Permissions.** AgentMux approves tool use by default, as it does for every harness: it answers `session/request_permission` with the agent's "allow always" option, else "allow once". AgentMux adds no permission flags to an ACP harness's command line.
+- **Before launch.** Two harnesses need a file in their own config folder first. Grok Build reads project rules only in a trusted folder, so AgentMux adds the agent's own folder to Grok's trusted folders, and nothing else. DeepSeek Harness uploads its session logs to DeepSeek unless a profile patch turns that off, so AgentMux writes that patch when there is none yet.
 
 ### Codex JSONL
 
 Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `crates/srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
 
 Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `crates/srv/src/agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
+
+## The terminal tier
+
+Aider, Crush and Muse Code have no interface AgentMux can parse: no ACP, and no structured output it can read (Muse Code's own protocol needs a controller of its own, which doesn't exist yet). They use the `terminal` controller type. Launching one turns the agent's pane into a terminal pane (`view: "term"`, an interactive command run on start) that runs the CLI with its launch arguments in the agent's folder (`TERMINAL_PANE_META` in `frontend/app/view/agent/launch-args.ts`).
+
+AgentMux still does the launch work it does for every harness: it writes the startup instructions file (`AGENTS.md`) and sets the CLI's config folder and opt-out variables. Where the CLI won't read the file by itself, the launch passes it: Aider runs as `aider --read AGENTS.md`. Muse Code runs with `--trust-workspace`, so it reads project rules in the agent's folder.
+
+What the terminal tier doesn't get: an AgentMux transcript, token counts, resume, AgentMux's MCP tools, or a model picker. The CLI's own UI does those. A terminal-tier CLI also can't be a `.cmd` wrapper on Windows, so for Muse Code AgentMux runs the native binary its installer downloaded.
+
+Crush moves to ACP when upstream ships it, and Muse Code when AgentMux has a controller for its protocol.
 
 ## Step 5 — Subprocess lifecycle and signal handling
 
@@ -206,7 +230,7 @@ The abstraction is **hybrid** — not a single unified interface throughout:
 |---|---|
 | Frontend provider definitions | Static lookup table (`PROVIDERS` record), conditional branching on `provider.id` |
 | Argument construction | Conditional logic per provider in `buildRuntimeArgs.ts` |
-| Backend spawn | Conditional on `ProviderDefinition.controllerType` (persistent / subprocess / acp) |
+| Backend spawn | Conditional on `ProviderDefinition.controllerType` (persistent / subprocess / acp / terminal) |
 | Backend stream parsing | Abstract `Translator` trait — currently only Claude Code has a concrete implementation (`translate(frame) -> Vec<AgentEvent>`); other providers' interactive-pane frames are parsed generically inline (see Step 4's Codex note) |
 
 ## See also
