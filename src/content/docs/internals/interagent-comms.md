@@ -99,7 +99,7 @@ The claim on a cloud message is atomic and happens before local delivery, so whe
 
 Before it pulls an agent's messages, the instance claims that agent's lease on the relay and renews it every 20 seconds while the agent is registered. While another instance holds the lease, the relay refuses this instance's pulls (HTTP 409), and this instance stops its own copy of the agent.
 
-A message between two installs signed in to the same MuxBus Cloud account can carry the sender's WAN signature, which the receiver verifies (`TRUST=wan-verified`). The signature is carried only once the sending agent's key has been published to the relay's key directory; until then the message is relayed unsigned. See [WAN signing](/security/reactive-event-bus/#wan-signing).
+A message between two installs signed in to the same MuxBus Cloud account can carry a WAN signature, which the receiver verifies (`TRUST=wan-verified`). The sending install makes it, for the agent whose identity token sent the message, once that agent's key has been published to the relay's key directory; until then the message is relayed unsigned. See [WAN signing](/security/reactive-event-bus/#wan-signing).
 
 ## Message delivery semantics
 

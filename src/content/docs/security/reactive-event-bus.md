@@ -9,12 +9,13 @@ For the agent-facing overview (`SendMessage`, `DiscoverAgents`, return values), 
 
 ## How a message enters the bus
 
-Agents send with the `SendMessage` MCP tool. The tool, running in the agent's own `agentmux-mcp` process, signs the message with the agent's keys (see [Signing keys](#signing-keys)) and posts it to its own AgentMux server:
+Agents send with the `SendMessage` MCP tool. The tool, running in the agent's own `agentmux-mcp` process, signs the message with the agent's keys (see [Signing keys](#signing-keys)) and posts it to its own AgentMux server, with the agent's identity token:
 
 ```
 POST /agentmux/reactive/inject      X-AuthKey: <instance auth key>
+                                    X-Agent-Token: <the agent's AGENTMUX_AGENT_TOKEN>
 { "target_agent", "message", "source_agent", "request_id", "ts_secs",
-  "jekt_sig", "lan_sig", "channel_sig", "source_channel", "wan_sig", "wan_source_host" }
+  "jekt_sig", "lan_sig", "channel_sig", "source_channel" }
 ```
 
 `source_agent` comes from the agent's `AGENTMUX_AGENT_ID`. The tool does not set a tier or a priority, so a `SendMessage` jekt starts at `TIER=coord` and `PRIORITY=normal`.
@@ -158,28 +159,28 @@ The marker is instruction text for the receiving agent. `ESCALATE=required` does
 
 ## Signing keys
 
-`agentmux-mcp` signs every `SendMessage` with each key it has. The receiving server checks the one that fits the tier. The verification code is in `crates/common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
+`agentmux-mcp` signs every `SendMessage` with each key it has: the HMAC, LAN and cross-channel signatures. A WAN signature is made by the sending AgentMux server itself (see [WAN signing](#wan-signing)). The receiving server checks the one that fits the tier. The verification code is in `crates/common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
 
 | Key | Scheme | Minted | Verified when | Lifetime |
 |---|---|---|---|---|
 | `AGENTMUX_JEKT_KEY` | HMAC-SHA256 | At each launch of the agent, if missing or older than 24 h | On every request to the inject route, whatever its tier, whenever this instance holds a key for the claimed sender | Replaced at the next launch once 24 h old (`agent_jekt_key_ensure`); a running agent keeps using its old key until relaunched |
 | `AGENTMUX_LAN_KEY` | Ed25519 private key | At the agent's first launch | `DELIVERY=lan` (against the sender's public key) and `DELIVERY=channel` (against the published copy) | Never rotated |
-| `AGENTMUX_WAN_KEY` | Ed25519 private key, certified by the install's instance key | At the agent's first launch, in the channel's `wan.db` (an older key from `objects.db` is carried over once) | `DELIVERY=wan`, for a sender on the same MuxBus Cloud account, once the key is published | Never rotated; kept across upgrades |
+| The agent's WAN key | Ed25519 private key, certified by the install's instance key. Held only by AgentMux, never by the agent | At the agent's first launch, in the channel's `wan.db` (an older key from `objects.db` is carried over once) | `DELIVERY=wan`, for a sender on the same MuxBus Cloud account, once the key is published | Never rotated; kept across upgrades |
 | muxreview `reagent-v1` | Ed25519, public key built into AgentMux | Held only by AgentMux's GitHub review-notification service | `DELIVERY=wan` | — |
 
 Signatures cover the message id, sender, target, timestamp and body. Channel and WAN signatures also bind the sending channel (and, for WAN, the sending install's instance id), under their own domain prefix, so a signature from one tier can't be replayed on another. Freshness windows are 5 minutes for host and channel signatures, 10 minutes for LAN and muxreview signatures, and 35 minutes for WAN signatures (the relay's 30-minute delivery window plus 5 minutes; up to 5 minutes in the future).
 
-The three agent keys are keyed by agent name, not UID, so two agents with the same name on one instance share them. They are deleted with the agent unless another agent still uses the name.
+The HMAC, LAN and WAN keys are keyed by agent name, not UID, and the name is compared ignoring case. A new agent whose name would differ from an existing one only in case gets a numbered name instead, and two older agents whose names differ only in case get no signing keys at all. The keys are deleted with the agent unless another agent still uses the name.
 
 ### Where the keys live
 
-At every launch, AgentMux writes the agent's HMAC key, its LAN and WAN private keys, and its install's instance id (`AGENTMUX_HOST_LABEL`) into the `mcpServers.agentmux.env` block of `.mcp.json` **in the agent's working directory**, and the MCP server reads them from there (`crates/srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix) through a temporary file renamed into place. An existing `.mcp.json` is merged, not replaced: server entries AgentMux didn't write are kept, and the `agentmux` entry is always AgentMux's. A file that isn't valid JSON is left untouched, and the agent's MCP servers aren't written for that launch.
+At every launch, AgentMux writes the agent's HMAC key and its LAN private key into the `mcpServers.agentmux.env` block of `.mcp.json` **in the agent's working directory**, and the MCP server reads them from there (`crates/srv/src/backend/agent_config.rs`). The WAN key is not written there: AgentMux signs WAN messages itself, and it removes a WAN key (`AGENTMUX_WAN_KEY`, `AGENTMUX_HOST_LABEL`) that an older version wrote. The file is written owner-only (`0600` on Unix) through a temporary file renamed into place. An existing `.mcp.json` is merged, not replaced: server entries AgentMux didn't write are kept, and the `agentmux` entry is always AgentMux's. A file that isn't valid JSON is left untouched, and the agent's MCP servers aren't written for that launch.
 
 The default working directory is `~/.agentmux/agents/<slug>/`, which AgentMux excludes from git with a `*` rule in `~/.agentmux/.gitignore`. **If you point an agent at a project directory, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Don't commit it: add `.mcp.json` to that project's `.gitignore`.**
 
 ### What a signature proves
 
-A verified signature proves that the sender held the key. Every key is stored in an AgentMux database and in the agent's `.mcp.json`, and any process running as your OS user can read both. That includes every agent, since agents run as your user and can read files. `host-verified`, `channel-verified`, `lan-verified` and `wan-verified` therefore protect against a sender that merely *claims* another agent's name. They do not protect against a same-user process, or an agent, that reads another agent's `.mcp.json` and signs with its keys. Nothing in this system can defend against that; see the [trust model](/security/trust-model/).
+A verified signature proves that the sender held the key, or, for WAN, that the sending install vouched for the agent its token named. Every key is stored in an AgentMux database, the HMAC and LAN keys also in the agent's `.mcp.json`, and any process running as your OS user can read both. That includes every agent, since agents run as your user and can read files. `host-verified`, `channel-verified`, `lan-verified` and `wan-verified` therefore protect against a sender that merely *claims* another agent's name. They do not protect against a same-user process, or an agent, that reads another agent's `.mcp.json` and signs with its keys. Nothing in this system can defend against that; see the [trust model](/security/trust-model/).
 
 ### LAN signing
 
@@ -190,7 +191,13 @@ The sender's public key is fetched from whichever LAN peer answers `GET /agentmu
 WAN signatures are checked only between installs signed in to the **same** MuxBus Cloud account. Each install (one per channel on a machine) has an instance keypair, created on first start and kept in `channels/<channel>/wan-identity/wan.db` together with its agents' WAN keys, so upgrades keep the same identity (`crates/srv/src/backend/storage/wan_identity.rs`). The instance id is derived from the instance public key: the first 128 bits of its SHA-256, as 26 base32 characters.
 
 - **Publishing.** While you are signed in, the install certifies each agent's WAN public key with its instance key and publishes the record to the relay's key directory (`PUT /agents/<agent>/wan-key`, `crates/srv/src/muxbus/wan_publish.rs`). An unpublished key is retried every 5 minutes, or hourly while the relay has no key directory. A key counts as published per key directory, meaning per relay and account (`wan_agent_key_publications` in `wan.db`), so after you sign in to a different account, or the relay changes, the install publishes its keys again to the directory that hasn't seen them. Until it has, that agent's messages go out unsigned.
-- **Sending.** The relay carries a message's WAN signature only if the sender proved itself on this install with its host signature, signed as this install and channel, the signature verifies under its key in `wan.db`, and that key is confirmed published (`wan_carry_gate` in `crates/srv/src/muxbus/relay.rs`). Otherwise the message is relayed unsigned, exactly as before, and arrives `TRUST=network-claimed`. Agents started before `wan.db` existed sign with a hostname instead of an instance id and are sent unsigned until they are restarted.
+- **Sending.** The sending AgentMux signs the message itself, with the agent's key from `wan.db`, when it relays it, and only if all of these hold (`wan_sign_at_origin` in `crates/srv/src/muxbus/relay.rs`, `wan_signer` in `crates/srv/src/server/actor.rs`):
+  - the request carried the agent's own identity token (`X-Agent-Token`), or is a scheduled job that agent created;
+  - the token names the message's sender by its name, ignoring case, and no other agent on the install has a name that differs from it only in case (two such agents get no signing keys at all; a new agent whose name would differ only in case gets a numbered name instead);
+  - this install is where the message started: a message forwarded from another install on the machine or the LAN carries no token and is never signed;
+  - the agent's key is confirmed published.
+
+  AgentMux sets every signed field except the message and its target: its own instance id and channel, its clock, and the message id. Otherwise the message is relayed unsigned and arrives `TRUST=network-claimed`. `muxsh agent send` run in an agent's own shell passes that agent's token and is signed; run in a terminal you opened, it carries no token and is not. In older versions the agent's MCP server signed WAN messages with its own copy of the key.
 - **Receiving.** For a carried signature that the relay marks as same-account, the receiver checks the envelope and freshness, fetches the sender's key record from the directory (2-second timeout, at most 60 fetches a minute), checks that the instance key certified it, verifies the signature, and rejects a message id it has already delivered from that install and agent (`crates/srv/src/muxbus/wan_verify.rs`). A directory that is down or slow means "couldn't check", and the message is delivered as `network-claimed`.
 
 `INSTANCE_STATUS` says what is known about the sending install:
@@ -251,7 +258,7 @@ Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`
 - `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
 - `crates/srv/src/backend/storage/jekt_held.rs`, `crates/srv/src/server/jekt_held.rs` — durable hold and replay
 - `crates/srv/src/backend/lan_discovery.rs` — LAN key advertisement and public-key lookup
-- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_carry_gate`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
+- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_sign_at_origin`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/wan_publish.rs`, `crates/srv/src/backend/storage/wan_identity.rs` — WAN signing
 - `crates/srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`
 - `crates/mcp/src/main.rs` — `sign_outgoing_jekt`, `SendMessage`
