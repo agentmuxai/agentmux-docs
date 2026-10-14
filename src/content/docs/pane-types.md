@@ -666,7 +666,7 @@ If the operating system doesn't give AgentMux a dropped file's path, the file's 
 
 Press `Esc` while dragging a window tab or a pane tab out of the window to cancel the drag, on Windows, macOS and Linux. To move a window tab into another AgentMux window instead, drop it on that window's tab strip: the tab joins that window. Dropped anywhere else, it tears off, as in Chrome.
 
-Drag a tab below the tab bar to spawn a **new AgentMux instance** containing that tab's pane. The new window is a separate process tree, but the same binary as the source, so it's the same (channel, version) — both share the per-version runtime state (CEF cache, cookies, SQLite stores, host logs) *and* the channel-wide agents/settings. Different channel → fully isolated. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-a-new-instance) for the full gesture and platform details.
+Drag a tab below the tab bar to move it into a **new window** of its own, in a new workspace. The window runs in the same AgentMux processes as the one it came from (same backend, settings, agents and browser profile); it is not a separate instance. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-its-own-window) for the full gesture.
 
 ### Floating panes
 

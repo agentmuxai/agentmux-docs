@@ -110,21 +110,21 @@ Switching branches within a clone still re-keys the data dir by `<branch>` — y
 | `AGENTMUX_VITE_PORT=<n>` | Override the auto-derived per-clone Vite port. Useful when the derivation collides or you need a specific port for an external integration. |
 | `AGENTMUX_HOME_OVERRIDE=<path>` | Test-only — replace `~/.agentmux/` as the root. Used by the test suite to keep tempdirs isolated. |
 
-## Tearing a tab into a new instance
+## Tearing a tab into its own window
 
-You can spawn a fresh AgentMux instance directly from a running window by **dragging a tab below the tab bar**. The drag has to clear the tab bar by ~5px before it commits — pulling the tab back into the bar before that threshold cancels the gesture, as does pressing `Esc` mid-drag.
+You can move a tab into a window of its own by **dragging it below the tab bar**. The drag has to clear the tab bar by ~5px before it commits — pulling the tab back into the bar before that threshold cancels the gesture, as does pressing `Esc` mid-drag.
 
 What happens on a successful tear-off:
 
-- A new top-level AgentMux window spawns at the cursor, matching the source window's size and position across monitors (DPI-corrected).
+- A new top-level AgentMux window opens at the cursor, matching the source window's size across monitors (DPI-corrected). AgentMux keeps a window warmed up for this, so it appears at once.
 - The window paints live during the drag (Chrome-style follow), at full opacity.
-- The new window is a **full new instance**: own backend sidecar, own data dir, own workspace, and its own entry in the OS window manager (Windows taskbar, macOS Dock, GNOME activities, etc.) — same independence as launching AgentMux twice from a fresh shortcut.
+- The tab moves into a new workspace of its own in that window, which gets its own entry in the OS window manager (Windows taskbar, macOS Dock, GNOME activities, etc.).
 
-Because the new window is a separate instance — but the same binary, so the same (channel, version) — it shares the per-version runtime state (cookies, CEF cache, SQLite stores) and the channel-wide settings of the source window, plus the account-wide agents and auth. A tear-off can only land on the same channel; channel-scoped state is never crossed.
+A torn-off window is **not** a new instance. It runs in the same AgentMux processes as the window it came from — the same backend, data directory, settings, agents and browser profile — so it is always on the same channel and version. To run a second, isolated instance, start one on another channel (see [Running multiple instances at once](#running-multiple-instances-at-once) above).
 
 **Platform support:** Windows ✅, macOS ✅ (v0.40+), Linux ✅ Phase A (v0.41+, Wayland). There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
 
-**Known limitation:** Dropping the dragged tab into *another* running AgentMux instance's tab bar is not yet wired up — Phase 1 only supports tearing to the desktop, not cross-instance docking. That's planned for Phase 2.
+**Moving a tab between windows:** drop the dragged tab on another AgentMux window's tab strip and it joins that window (see [Pane Management](/pane-types/#tab-tear-off)). This works between windows of the same instance only; a tab can't be dropped into a different instance, such as one on another channel.
 
 **Floating panes** (pop a single pane into its own owned window without spawning a new instance) are a distinct feature — drag a pane header outside the window to float it. See [Pane Management → Floating panes](/pane-types/#floating-panes) for the full gesture and redock behaviour.
 
