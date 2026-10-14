@@ -14,18 +14,18 @@ AgentMux bundles its own Chromium runtime (CEF), so it doesn't use a system brow
 
 ## Downloads
 
-Release files carry the version in their name. The sizes below are for v0.57.6 and change a little from release to release.
+Release files carry the version in their name. The sizes below are for v0.59.24 and change a little from release to release.
 
 | Platform | File | Download size |
 |---|---|---|
-| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 142.3 MB |
-| Windows | `agentmux-<version>-x64-portable.zip` (portable) | 197.1 MB (437 MB extracted) |
-| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 197.8 MB |
-| macOS | `AgentMux_<version>_arm64.dmg` | 156.1 MB |
-| Linux | `AgentMux_<version>_amd64.AppImage` | 167.2 MB |
-| Linux | `AgentMux_<version>_amd64.deb` | 180.5 MB |
-| Linux | `AgentMux-<version>-1.x86_64.rpm` | 180.4 MB |
-| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 181.1 MB (443 MB extracted) |
+| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 147.4 MB |
+| Windows | `agentmux-<version>-x64-portable.7z` (portable) | 125.3 MB |
+| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 207.3 MB |
+| macOS | `AgentMux_<version>_arm64.dmg` | 218.9 MB |
+| Linux | `AgentMux_<version>_amd64.AppImage` | 177.1 MB |
+| Linux | `AgentMux_<version>_amd64.deb` | 191.3 MB |
+| Linux | `AgentMux-<version>-1.x86_64.rpm` | 191.2 MB |
+| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 192.0 MB |
 
 ## Windows
 
@@ -41,9 +41,11 @@ Download `AgentMux-<version>-x64-setup.exe` and run it. It's an Inno Setup insta
 
 The installer and the portable build are not code-signed, so Windows SmartScreen may show "Windows protected your PC". Choose **More info**, then **Run anyway**.
 
-### Portable (.zip)
+### Portable (.7z)
 
-Download `agentmux-<version>-x64-portable.zip`, extract it anywhere and run `agentmux.exe`. Nothing is installed and no administrator rights are needed.
+Download `agentmux-<version>-x64-portable.7z`, extract it anywhere and run `agentmux.exe`. Nothing is installed and no administrator rights are needed.
+
+The archive is a `.7z`, not a `.zip`, because it is much smaller. Windows 11 opens `.7z` files itself. On Windows 10, extract it with [7-Zip](https://7-zip.org).
 
 The portable build keeps no data in its own folder. Like the installed app, it stores everything under `%USERPROFILE%\.agentmux\` in the `stable` channel. A portable copy and an installed copy therefore share settings and agents. Each AgentMux version keeps its own runtime data (databases, logs, browser cache) in a separate folder. See [Multi-instance & dev mode](/multi-instance/) for how instances and channels are kept apart.
 

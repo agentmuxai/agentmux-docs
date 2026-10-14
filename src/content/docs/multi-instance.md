@@ -12,7 +12,7 @@ This page explains how that works from a user's perspective. For the underlying 
 | Mode | When | Default channel | Data dir |
 |---|---|---|---|
 | **Installed** | Inno Setup installer | `stable` | Runtime (DB, cache, logs): `~/.agentmux/channels/stable/versions/<v>/`. Shared (agents, settings): `~/.agentmux/channels/stable/`. See [Data layout → Per-channel contents](/internals/data-layout/#per-channel-contents) for the full split. |
-| **Portable** (released ZIP) | Extracted release ZIP, run from `<extracted-folder>/agentmux.exe` | `stable` | Same as installed — both bind to the `stable` channel. |
+| **Portable** (released `.7z`) | Extracted release `.7z`, run from `<extracted-folder>/agentmux.exe` | `stable` | Same as installed — both bind to the `stable` channel. |
 | **Portable** (local `task package`) | A portable you built yourself from source | `local-<branch>-<hash>-<build-id>` (per build) | `~/.agentmux/channels/local-<branch>-<hash>-<build-id>/versions/<v>/` (version-scoped like any release; **each rebuild gets its own channel** — `--fresh` is now a no-op since every build is already isolated) |
 | **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 

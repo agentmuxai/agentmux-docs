@@ -12,7 +12,7 @@ Get AgentMux running with your first agent in a few minutes.
 
 Download it from [GitHub Releases](https://github.com/agentmuxai/agentmux/releases) (or the buttons on [agentmux.ai](https://agentmux.ai)):
 
-- **Windows (x64):** the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), the `.exe` installer, or the portable `.zip`
+- **Windows (x64):** the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), the `.exe` installer, or the portable `.7z`
 - **macOS:** the `.dmg`, Apple Silicon only
 - **Linux (x86_64):** AppImage, `.deb`, `.rpm` or portable `.tar.gz`
 

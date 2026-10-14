@@ -107,6 +107,8 @@ A widget can add entries to the command palette (under **Widgets**) and small it
 
 A widget added with a `module` entry in `widgets.json`, the way it was done before widget packages, is listed as a trusted widget and asks for approval like any other. It keeps working as it did once you approve it.
 
+An entry in `widgets.json` that should appear only inside its group's flyout (not on the bar, in **more** or in a pane's **+** menu) sets `"display:grouponly": true`. The older name, `display:hidden`, still works. It is not the same as hiding a widget yourself in Settings ▸ Widgets, which is saved in `settings.json` as `widget:hidden`.
+
 ## See also
 
 - [Build a widget](/build-a-widget/): your first widget in five minutes.

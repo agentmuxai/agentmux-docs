@@ -1,6 +1,6 @@
 ---
 title: "Browser pane"
-description: A Chromium browser embedded in an AgentMux pane through CEF — not an iframe — with bookmarks, a start page, per-pane camera and microphone grants, and HTTP sign-in prompts.
+description: A Chromium browser embedded in an AgentMux pane through CEF — not an iframe — with address-bar suggestions, profiles and Incognito tabs, bookmarks, a Home page, per-pane camera and microphone grants, and HTTP sign-in prompts.
 ---
 
 :::caution[Alpha Software]
@@ -30,9 +30,9 @@ Some things differ from a normal browser tab:
 
 The **Messengers** widget (Discord, Slack, Telegram, WhatsApp, Teams) opens browser panes too, with the navigation bar hidden.
 
-### Start page
+### Home page
 
-A new browser pane opens its configured URL if it has one, otherwise your start page, otherwise `https://agentmux.ai` (`frontend/app/view/browser/browser-model.ts`). To choose your start page, see [Bookmarks and start page](#bookmarks-and-start-page). For a blank pane, open `about:blank`.
+A new browser pane opens its configured URL if it has one, otherwise your Home page, otherwise `https://agentmux.ai` (`frontend/app/view/browser/browser-model.ts`). To choose your Home page, see [Bookmarks and Home page](#bookmarks-and-home-page). For a blank pane, open `about:blank`.
 
 ## Navigation bar
 
@@ -40,11 +40,27 @@ A new browser pane opens its configured URL if it has one, otherwise your start 
 |---|---|
 | ← / → | Back / Forward. Disabled when there's nowhere to go. |
 | ↻ | Reload |
-| Bookmark icon | Opens the [bookmarks menu](#bookmarks-and-start-page) |
+| Home (house icon) | Opens your Home page. Right-click it for **Set this page as Home**. |
+| Bookmark icon | Opens the [bookmarks menu](#bookmarks-and-home-page) |
 | Address bar | Enter a URL or search terms ("Enter URL or search...") |
 | → (Go) | Load the address-bar value |
+| Profile button | Shows who the tab is browsing as, and opens a new tab as someone else. See [Profiles and Incognito](#profiles-and-incognito). |
 
-The address bar keeps anything starting with `http://`, `https://` or `about:`. Otherwise, if what you typed contains a dot and no spaces, `https://` is added in front. Anything else is sent to Google search. Type the scheme for addresses without a dot, e.g. `http://localhost:3000`.
+Clicking into the address bar selects the whole address, as in Chrome, so typing replaces it. A second click places the cursor, and a drag selects just what you drag over.
+
+### Suggestions as you type
+
+The address bar suggests as you type, from Chrome's own engine:
+
+- your history and the addresses you typed before, with the best match completed inline (type `git` and it may complete to `github.com`);
+- a "search for what you typed" entry;
+- your search engine's suggestions.
+
+Use the arrow keys to move through the list; the address bar shows the highlighted entry. `Enter` opens the highlighted entry, or the engine's best match when nothing is highlighted. `Esc` closes the list and puts back what you typed. Leaving the address bar without choosing shows the page's own address again.
+
+Asking your search engine for suggestions sends it what you type before you press Enter, as Chrome does. It's on by default. To keep suggestions to this computer (your history and typed addresses), turn off **Settings ▸ Browser ▸ Search suggestions while typing** (`browser:searchsuggestions`). Incognito tabs never ask the search engine, as in Chrome.
+
+If suggestions aren't available, the address bar keeps anything starting with `http://`, `https://` or `about:`. Otherwise, if what you typed contains a dot and no spaces, `https://` is added in front. Anything else is sent to Google search.
 
 The pane title follows the page title, and shows the host name while a page is loading. The pane icon is the site's favicon, or a globe when the site has none.
 
@@ -58,24 +74,42 @@ These shortcuts are handled by AgentMux itself (`crates/cef/src/client/handlers.
 | `Ctrl+R` (`Cmd+R` on macOS) | Reload |
 | `Alt+Left` | Back |
 | `Alt+Right` | Forward |
+| `Alt+Home` | Home page |
+| `Ctrl+Shift+N` (`Cmd+Shift+N` on macOS) | Open a new [Incognito tab](#profiles-and-incognito) in this pane |
 
-With `Shift` held (for example `Ctrl+Shift+R`), AgentMux doesn't intercept these keys and leaves them to Chromium. There is no find-in-page (`Ctrl+F`), and the browser has no page tabs of its own; use [pane tabs](/pane-types/) instead.
+`Ctrl+Shift+N` opens an Incognito tab whether the page, the address bar or the toolbar has the keyboard. Outside a browser pane, the same keys open a new AgentMux window. Apart from `Ctrl+Shift+N`, with `Shift` held (for example `Ctrl+Shift+R`), AgentMux doesn't intercept these keys and leaves them to Chromium. There is no find-in-page (`Ctrl+F`), and the browser has no page tabs of its own; use [pane tabs](/pane-types/) instead.
 
 A new browser pane that opens as the selected pane puts the keyboard straight into the page as soon as the page is created, unless you have already clicked into its address bar. Clicking in the page gives it the keyboard; clicking AgentMux's own interface takes it back. On macOS, typing into a browser pane works this way since AgentMux 0.57.5.
 
 **Zoom:** on Windows, `Ctrl`+scroll zooms just that browser pane (50%–200%); the zoom lasts until the pane is closed or moved. On macOS and Linux, `Ctrl`+scroll uses Chromium's own page zoom, which applies to every pane showing the same site.
 
-## Bookmarks and start page
+## Bookmarks and Home page
 
-The bookmark button next to Reload opens a menu (`frontend/app/view/browser/browser-nav-bar.tsx`). While a page is loaded it shows:
+The bookmark button next to Home opens a menu (`frontend/app/view/browser/browser-nav-bar.tsx`). While a page is loaded it shows:
 
-- **Set as Start Page** (reads **This Is Your Start Page** when the current page already is);
+- **Set as Home Page** (reads **This Is Your Home Page** when the current page already is);
 - **Bookmark This Page**, or **Remove Bookmark** if the page is already bookmarked;
 - your bookmarks, each with its favicon and title. Click one to open it. With none saved, the list shows **No bookmarks yet**.
 
 There is no bookmarks bar. To remove a bookmark, open that page and choose **Remove Bookmark**.
 
-Bookmarks and the start page are shared by every browser pane and every AgentMux channel on your machine. They are stored in `~/.agentmux/shared/browser-bookmarks.json` and `~/.agentmux/shared/browser-start-page.json`.
+Bookmarks and the Home page are shared by every browser pane and every AgentMux channel on your machine. They are stored in `~/.agentmux/shared/browser-bookmarks.json` and `~/.agentmux/shared/browser-start-page.json`.
+
+## Profiles and Incognito
+
+Every browser tab browses as one identity, which never changes. The **Profile** button in the toolbar names it and opens a menu (`frontend/app/view/browser/browser-profile-menu.tsx`):
+
+- **Open new Incognito tab** (`Ctrl+Shift+N`, `Cmd+Shift+N` on macOS);
+- **Personal**, and each profile you created;
+- **New profile…** and **Manage profiles…**.
+
+Choosing an entry opens a **new tab in the same pane**, at the current page (or your Home page), as that identity. The tab you were on stays as it was.
+
+- **Personal** is the identity every tab starts with: your saved sign-ins.
+- **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**, with a name and a colour. A new profile opens at your Home page, since it is signed in nowhere. Manage them in **Settings ▸ Browser**.
+- **An Incognito tab** has its own cookie jar, separate from your normal browsing and from every other Incognito tab. Nothing is saved, and it's gone when the tab closes.
+
+An agent can browse as a profile only if you switch on **Agents may use it** for that profile in Settings ▸ Browser.
 
 ## Camera, microphone and screen sharing
 
@@ -113,7 +147,7 @@ The popup shares the pane's cookies and session, so the page's sign-in completes
 
 ## Load failures
 
-If a page hasn't loaded after 20 seconds, the pane stops waiting and shows an error page in the style of Chrome's "This site can't be reached", with a **Retry** button. Redirects don't reset the 20-second limit. Other load failures (DNS, TLS, blocked requests) use the same error page. The pane never retries on its own.
+If a page hasn't loaded after 20 seconds, the pane stops waiting and shows an error page in the style of Chrome's "This site can't be reached", with a **Retry** button. Redirects don't reset the 20-second limit. Other load failures (DNS, TLS, blocked requests) use the same error page. The pane never retries on its own. The address bar keeps showing the address that failed, and that is the address the pane saves, so a restored pane tries the same page again.
 
 ## Context menu
 

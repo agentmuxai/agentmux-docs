@@ -17,9 +17,9 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | Item | Shortcut | What it does |
 |------|---------|--------------|
 | **New Tab** | `Ctrl+Shift+T` / `⌘T` | Adds a new tab to the current window. |
-| **New Window** | `Ctrl+Shift+N` / `⇧⌘N` | Opens a second AgentMux window — fully isolated tabs/state from the first. See [Running multiple instances](/multi-instance/). |
-| **Theme** | — | Submenu listing the available color themes. Selection persists via `window:theme` in `settings.json`. |
-| **Opacity** | — | Submenu of preset levels (35% – 100%). Below 100%, the window becomes translucent. Per-window override is in the [InstancePanel](/window-appearance/). |
+| **New Window** | `Ctrl+Shift+N` / `⇧⌘N` | Opens a second AgentMux window — fully isolated tabs/state from the first. It starts with this window's theme and opacity. See [Running multiple instances](/multi-instance/). |
+| **Theme** | — | Submenu listing the available color themes. It changes only this window, and the choice is saved with the window. Settings ▸ Appearance sets the default for windows without their own. See [Window appearance](/window-appearance/). |
+| **Opacity** | — | Submenu of preset levels (35% – 100%). It changes only this window, on Windows, macOS and Linux. It is the same value as this window's slider in the status bar's Instance Panel, so each follows the other. See [Window appearance](/window-appearance/). |
 | **Layouts** | — | Submenu. **Save layout…** saves this window's tabs and pane layout to a `.agentmux-layout.json` file (the Save dialog starts in `~/.agentmux/shared/layouts/`); if anything in it is worth checking before you share the file, a notice lists it. **Open layout…** picks a layout file and shows a preview first: its tabs and panes, anything that can't be reproduced exactly here, and any terminal commands it would run, with **Run these commands** (ticked only for a file this AgentMux saved in its layouts folder). Choose **In a new window** (the default) or **Add to this window**; adding never replaces what's open. |
 | **Settings** | `Ctrl+,` / `⌘,` | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
@@ -30,7 +30,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window (not the whole app — other windows stay open). |
 
-The Theme and Opacity submenus check-mark the currently active value, so you can see at a glance what you're on. A submenu opens when you hover its row.
+The Theme and Opacity submenus check-mark this window's current value, so you can see at a glance what you're on. A submenu opens when you hover its row.
 
 ![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-hamburger-theme.png)
 
