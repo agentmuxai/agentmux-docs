@@ -77,6 +77,24 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 
 How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel; while the agent is writing, the message is held and released at its next tool call or turn boundary. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
 
+#### Sending files
+
+`SendMessage` also takes `files`: up to 10 paths, preferably absolute (a relative path is taken from the agent's workspace folder, not its shell's current directory). The recipient gets each file as a local file listed in the message, as if its user had attached it, and its marker gains `FILES=<n>`, the number delivered. Every file is checked against the SHA-256 the sender's signature covers, so a file changed on the way is left out and reported. An agent passes on a file it received by sending the path from its own list.
+
+| Tier | Per file | Per message |
+|---|---|---|
+| Host and Channel | 100 MB | 200 MB |
+| LAN | 50 MB | 100 MB |
+| WAN | 25 MB | 50 MB |
+
+- **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `SendMessage` says so.
+- **WAN:** files go only to an agent running now on an AgentMux 0.59.28 or later; otherwise nothing is sent. Each file is encrypted before it leaves the sender's computer. From 0.59.29, when the recipient's AgentMux is also 0.59.29 or later, each file's key is sealed to the AgentMux that runs the recipient, so the cloud relay can read the message text but not the files. A recipient on 0.59.28 receives files whose keys the relay can read, like the message text.
+- **Trust:** files from a verified sender are delivered, and Claude agents see images and PDFs inline. Files from a sender with no proof of identity are listed by path but never shown inline. When a signature check actively fails, the files are withheld.
+
+:::note
+Sending files between two computers through the cloud relay, including sealed keys, hasn't yet had its final end-to-end test.
+:::
+
 ## Host and Channel tiers
 
 Every agent pane registers with its instance's in-process handler on startup and unregisters on shutdown. Registration also writes a file to a machine-wide registry (`~/.agentmux/agents/<name>.json` and `~/.agentmux/shared/agents/reactive/<name>/<channel>.json`, mode `0600` on Unix), holding the instance's URL and auth key. That is how an instance on the same machine finds and reaches an agent it doesn't host. Entries older than 4 hours are removed at startup, and an entry is removed when a delivery to it fails and it looks stale.
