@@ -46,11 +46,13 @@ See [Auth flows](/auth/) for each provider's login command and credential locati
 
 ## You don't need to preinstall the agent CLIs
 
-AgentMux installs every npm-based CLI itself. It runs `npm install <package>@<version>`, at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed globally.
+AgentMux manages its own agent CLIs. It installs every npm-based CLI itself: it runs `npm install <package>@<version>` (never a global install), at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed globally, and it keeps each agent's login and settings in its own folders rather than in your `~/.claude`, `~/.codex` and similar.
 
-When you pick a harness whose CLI isn't installed yet, an install dialog opens. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**, then **Continue to Launch** when it finishes. If the install fails, click **Retry**. The install needs an internet connection.
+This isolates the tools, not what an agent can do: a host agent still runs on your computer, with your files, your `HOME` and your `PATH`.
 
-Six harnesses aren't on npm, so you install them yourself with the vendor's own installer. AgentMux then finds the CLI on your `PATH`. For all of them but Kimi Code CLI it also looks in the folder the installer uses, so you don't need to restart AgentMux after installing. If it can't find the CLI, the launch fails and shows the install command:
+When a harness's CLI isn't installed, its card shows **Click to install**, and the panel that opens under the card starts with the install. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**; the agent's fields follow when it finishes. If it fails, click **Retry**. The install needs an internet connection. Closing the panel doesn't stop it: the card shows **Installing…**, and a notification says when it has finished. **Cancel install** stops it.
+
+Six harnesses aren't on npm, so you install them yourself with the vendor's own installer. These are the vendors' full installers, not isolated by AgentMux: each installs into your user account and puts the CLI on your `PATH`, and a login you make with it is the CLI's own. **≡ → Toolchain** marks such a copy **your install**. AgentMux then finds the CLI on your `PATH`. For all of them but Kimi Code CLI it also looks in the folder the installer uses, so you don't need to restart AgentMux after installing. If it can't find the CLI, its card shows **Click to install**, and the panel under it shows the install command for your system, with **Copy**, a link to the vendor's instructions, and **Check again**:
 
 | Harness | Windows (PowerShell) | macOS and Linux |
 |---|---|---|
@@ -65,7 +67,7 @@ AgentMux runs whatever version of these you have installed. It turns off their s
 
 ### System prerequisites
 
-The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gemini CLI 20 or later, Claude Code and Qwen Code 22, Pi and DeepSeek Harness 22.19, OpenClaw 24.16, and Mux Code 24.18.1. Claude Code and OpenClaw also need **Git**. The harnesses you install yourself bring what they need, except Kimi Code CLI, which needs Python. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. Click **Refresh** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Launch anyway** continues. **≡ → Toolchain** shows the same information for all tools at any time.
+The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gemini CLI 20 or later, Claude Code and Qwen Code 22, Pi and DeepSeek Harness 22.19, OpenClaw 24.16, and Mux Code 24.18.1. Claude Code and OpenClaw also need **Git**. The harnesses you install yourself bring what they need, except Kimi Code CLI, which needs Python. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. They show as the first step of the panel under the card; click **Check again** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Continue anyway** moves on. **≡ → Toolchain** shows the same information for all tools at any time.
 
 ## Create an agent
 
@@ -77,7 +79,7 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 
 ![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
 
-Clicking a card first runs the install and prerequisite checks above. It then opens **Create new agent from &lt;template&gt;**, which makes a new, independent agent and leaves the template unchanged. Fields, top to bottom:
+Clicking a card opens a panel under it, pushing the cards below it down; click the card again, or press `Esc`, to close it. The panel shows only the steps that apply: the prerequisites and the install above, then the new agent's fields. It makes a new, independent agent and leaves the template unchanged, and what you type is kept if you open another card and come back. Fields, top to bottom:
 
 1. **Name**: required, and empty to start with. Name it for its job, like Reviewer or Docs writer. Names must be unique among your agents (ignoring case).
 2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
@@ -87,9 +89,9 @@ Clicking a card first runs the install and prerequisite checks above. It then op
 
 There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the agent's **Stash → Accounts**. If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
 
-![Create new agent from Claude: Name, Runtime, Model, Model Vendor / Custom Endpoint and Bundles](../../assets/screenshots/agent/agent-create.png)
+![The panel under the Claude Code card: Name, Runtime, Model, Model Vendor / Custom Endpoint and Bundles, with Cancel and Create and start](../../assets/screenshots/agent/agent-create.png)
 
-Click **Create**. The agent is created and launched in the pane.
+Click **Create and start** (or press `Enter`). The agent is created and launched in the pane.
 
 The model lists are built into AgentMux. For Claude Code only, AgentMux also asks Anthropic's models API for the current models at startup and updates the list. It needs a token for that: a Claude Code login in the shared folder `~/.agentmux/shared/providers/claude/`, or the `CLAUDE_CODE_OAUTH_TOKEN` environment variable. A login saved as an account in Connectors → Accounts isn't used for this. Without a token, the built-in list stays.
 
@@ -195,7 +197,7 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 **Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is host-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the dialog notices within a few seconds.
 
-The Claude template suggests the container runtime, so when Docker is running, **Create new agent from Claude** preselects it. Choose **On this computer (host)** if you want a host agent.
+The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **On this computer (host)** if you want a host agent.
 
 ## Skills
 

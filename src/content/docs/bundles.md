@@ -85,18 +85,18 @@ Personal Memory, the notes an agent keeps about itself (stored as "native memory
 
 ## Launch flow
 
-The **Create new agent** form, opened from a template card in the agent picker:
+The new agent's fields, in the panel that opens under a template card in the agent picker:
 
 ```
 ┌────────────────────────────────────────────────┐
-│ Create new agent from Claude Code               │
+│ New Claude Code agent                           │
 │  Name:      [my-agent_________]                 │
 │  Runtime:   (•) host   ( ) container            │
 │  Model:     [▼ opus ]                           │
 │  Bundles:   Reviewer                 ↑ ↓ ✕      │
 │             [▼ Add another bundle… ]            │
 │                                                 │
-│  [Cancel]                          [Create]     │
+│  [Cancel]                [Create and start]     │
 └────────────────────────────────────────────────┘
 ```
 
