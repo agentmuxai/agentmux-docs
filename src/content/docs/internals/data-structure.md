@@ -5,7 +5,7 @@ description: Every database and file AgentMux keeps on disk — where it lives, 
 
 This page is the map of everything AgentMux stores: eight SQLite databases, a set of JSON records and logs, and the folders that hold them. [Data layout](/internals/data-layout/) explains how channels, versions and dev builds pick their folders. [Persistence](/internals/persistence/) explains how srv's reducer loads and writes `objects.db`.
 
-Checked against `agentmux` main on 2026-10-20 (0.59.34). Every database is opened by `agentmux-srv`, the running server or its `migrate` subcommand: it is the only crate that links SQLite. The launcher and the CEF host never open one.
+Checked against `agentmux` main on 2026-10-20. Every database is opened by `agentmux-srv`, the running server or its `migrate` subcommand: it is the only crate that links SQLite. The launcher and the CEF host never open one.
 
 ## Four scopes
 
@@ -63,7 +63,7 @@ A `task dev` build has no version level: its per-version folders are at `~/.agen
 | `sagas.db` | `versions/<v>/data/db/` | Per version | 1 | Multi-step commands, for undo after a crash |
 | `store.db` | `shared/` | Machine-wide | 12 | Accounts, bundles and Global Memory, drones, cron jobs, MuxBus sign-in metadata, native memory |
 | `identity-store.db` | `shared/` | Machine-wide | 11 | Agent ↔ account links, Skills and MCP catalogs, work queue, coordination posts, vault |
-| transcripts `filestore.db` | `shared/agents/transcripts/` | Machine-wide | 1 | Every agent's conversation, the Global Memory record, per-agent memory records |
+| transcripts `filestore.db` | `shared/agents/transcripts/` | Machine-wide | 2 | Every agent's conversation, the Global Memory record, per-agent memory records |
 | `wan.db` | `channels/<ch>/wan-identity/` | Channel-wide | — (own counter, 3) | WAN instance and agent keys, peer records, replay guard |
 | `migrations.lock.db` | `shared/` and `versions/<v>/data/db/` | Both | — | No data: a lock held while migrations run |
 
@@ -168,6 +168,8 @@ Triggers keep a revision counter and an incarnation id per file, so readers can 
 |---|---|
 | Per version | One zone per block (its oid): `term` (terminal scrollback), `output` (agent output), and per-block state and index files |
 | Shared transcripts | `agent:<id>:current` and `agent:<id>:archive:<time>` (conversations), `agent-uid:<uid>:memory` (memory record), `agent-uid:<uid>:bundle`, `global-memory:<scope>` |
+
+The shared store has the same schema but is stamped version 2 rather than 1. The number is a lock: builds that bundle SQLite older than 3.51.3, whose WAL-reset bug can corrupt a database several processes write, refuse to open it and run without it.
 
 An agent's conversation is written to both: its block's `output` in the per-version store and `agent:<id>:current` in the shared one, so it survives a new version and opens from any channel. The shared file is used by every srv on the computer; one of them, the holder of `filestore.db.owner`, truncates its WAL.
 
