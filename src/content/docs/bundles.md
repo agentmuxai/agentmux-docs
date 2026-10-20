@@ -127,7 +127,7 @@ is_system                 INTEGER
 
 The table is defined in `crates/srv/src/backend/storage/migrations.rs`, both in `objects.db`'s flat schema (`run_object_schema`) and in the shared store's schema (`run_shared_store_schema`). [Global Memory](/memory/#global) entries are rows in the same table with `is_global` set.
 
-An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`). Its own bundle is `db_agents.default_memory_id`. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") now lives separately in `db_agent_definitions`.
+An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`). Its own bundle is `db_agents.default_memory_id`. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") is now one `db_agents` row per agent (the separate `db_agent_definitions` table was merged into it).
 
 ## Bundles and per-instance overrides
 
