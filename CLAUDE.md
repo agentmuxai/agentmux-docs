@@ -39,12 +39,29 @@ on every push to `main` (added 2026-06-27, PR #97) — merging a PR *is* deployi
 production. There is no separate manual step in the normal flow; don't tell a user
 "merged, but not deployed" without checking the workflow run.
 
+How it behaves (checked against the workflow and its run history on 2026-10-20):
+
+- **Any merge deploys,** whatever it changes: there is no path filter, so a merge that only
+  touches CI or `CLAUDE.md` rebuilds and re-uploads the whole site.
+- **A newer merge cancels a deploy still running** (`concurrency: deploy-prod`,
+  `cancel-in-progress: true`). A `cancelled` run is normal when merges land close together;
+  only the latest run on `main` has to succeed.
+- **It can be rerun by hand** (`workflow_dispatch`), e.g. after a transient AWS failure:
+  `gh-agent workflow run deploy.yml --repo agentmuxai/agentmux-docs --ref main`.
+- **It takes about 4–7 minutes** (median 4.7 over the 37 successful runs from 2026-10-05 to
+  2026-10-20; none failed, 2 were cancelled by a newer merge). The page is live when the run
+  is green: its last step checks the live site.
+- **PR checks don't build the Rust reference.** `pr-check.yml` runs `build:typedoc` + `build`
+  (not `build:full`) and skips `/api/rust/` in its link check, so a broken `cargo doc` shows
+  up only in the deploy run, which then fails before uploading anything.
+
 The CI job runs exactly this sequence (also useful to reproduce locally when debugging
 a failed run):
 
 ```bash
 git submodule update --init --recursive   # one-time, makes src/agentmux available
 npm run build:full                         # build:typedoc + build:rust-docs + build
+node scripts/check-links.mjs               # every link and #anchor; a failure stops the deploy before upload
 
 # 1. Sync non-HTML assets first (new CSS/JS available before old ones are removed)
 aws s3 sync dist/ s3://<docs-bucket>/ --delete --exclude "*.html"
@@ -82,7 +99,7 @@ If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves diff
   `DOCS_DEPLOY_ROLE_ARN`); the resources are defined in a private infrastructure repo.
   This repository is public: never write those values into a file, commit message or PR.
 - **Domain:** `docs.agentmux.ai` (DNS alias to the CloudFront distribution)
-- **Deploy status:** `gh run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success
+- **Deploy status:** `gh-agent run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success (agents use `gh-agent`; plain `gh` is not signed in for them)
 
 ### Content Source
 
