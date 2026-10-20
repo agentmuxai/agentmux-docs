@@ -152,6 +152,7 @@ export default defineConfig({
 								{ label: 'Environment variable contract', slug: 'internals/env-vars' },
 								{ label: 'Window Reality Reconciliation', slug: 'internals/wrr' },
 								{ label: 'Persistence', slug: 'internals/persistence' },
+								{ label: 'Data structure', slug: 'internals/data-structure' },
 								{ label: 'Modal system', slug: 'internals/modal-system' },
 								{ label: 'Error catalog', slug: 'internals/error-catalog' },
 								{ label: 'Clipboard & export', slug: 'internals/clipboard' },

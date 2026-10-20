@@ -68,7 +68,7 @@ For CLI-OAuth accounts (Claude, Codex, Gemini, OpenClaw), only agents whose prov
 
 ### Credential storage
 
-Ambient provider credentials (used by agents with no Account explicitly bound) are stored account-wide under `~/.agentmux/shared/providers/<provider>/` — always global, unconditionally shared across every channel and version. Credentials for an explicitly-connected or bound **Account**, by contrast, follow a conditional default: shared account-wide on the `stable` channel, but isolated to that one channel by default everywhere else (a fresh non-`stable` channel — a `task dev` branch, or a local `task package` build — starts with no accounts). See [Auth flows → Isolated auth by channel](/auth/#isolated-auth-by-channel) for the full rule and the override env var.
+Ambient provider credentials (used by agents with no Account explicitly bound) are stored account-wide under `~/.agentmux/shared/providers/<provider>/` — always global, unconditionally shared across every channel and version. Credentials for an explicitly-connected or bound **Account** are shared by every channel too, unless `AGENTMUX_ISOLATED_AUTH=1` gives one channel its own, empty account list for testing. See [Auth flows → Isolated auth by channel](/auth/#isolated-auth-by-channel).
 
 ### Relationship to Identities
 

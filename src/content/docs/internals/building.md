@@ -167,7 +167,7 @@ Open Chromium DevTools from the **hamburger menu (≡)** in the top tab bar → 
 
 ### Backend Logs
 
-The host log lives in `<data-dir>/logs/` (per channel/version). The sidecar logs directly to the shared `~/.agentmux/logs/`, alongside pointer files that resolve to the running host's per-channel log. Use the `muxlog` shell helper from any AgentMux terminal — it handles both:
+The host and sidecar logs both live in `<data-dir>/logs/` (per channel/version), next to pointer files naming each one's current log file. Use the `muxlog` shell helper from any AgentMux terminal — it handles both:
 
 ```bash
 muxlog host           # tail the current host log

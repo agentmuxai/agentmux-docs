@@ -1,28 +1,28 @@
 ---
 title: Persistence
-description: The three SQLite stores and one JSONL log AgentMux writes — what each owns, who writes them, and how to back them up.
+description: How srv keeps session state in its per-version stores (objects.db, filestore.db, sagas.db), how agents persist across channels, and the launcher's event log.
 ---
 
-AgentMux persists state across four files, owned by two processes (sidecar + launcher). This page enumerates them and explains the boundary.
+This page covers the per-version stores srv keeps session state in, how agents persist across channels, and the launcher's event log. AgentMux also keeps machine-wide databases under `~/.agentmux/shared/` (accounts, bundles and memory, the Skills and MCP catalogs, every agent's conversation) and a channel-wide `wan.db`; [Data structure](/internals/data-structure/) maps all eight databases and every other file.
 
 ## At a glance
 
 | File | Format | Writer | Owns |
 |---|---|---|---|
-| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, controllers + the agent-definition / identity / memory / drone catalog — the app-domain reducer state of record |
-| `filestore.db` | SQLite | sidecar | Per-block content blobs (agent configs, snapshots, file-pane content) |
+| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, plus each agent's row, content, keys and drone runs — the app-domain reducer state of record |
+| `filestore.db` | SQLite | sidecar | Per-block files: terminal scrollback, agent output and its index and state files |
 | `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv sagas (compensated after a crash) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
-All four live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share SQLite DBs or caches. Dev builds use `~/.agentmux/dev/<branch>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
+All four live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share these files or their caches (they do share the machine-wide stores under `shared/`). Dev builds use `~/.agentmux/dev/<branch>/<clone-id>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
 
-> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, including shortcut overrides) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
+> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and an unused `runtime/` (the host's IPC port file is `data/ipc-port-<hash>`). But `config/` (settings, including shortcut overrides) lives one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/`, and agent working folders live at `~/.agentmux/agents/<slug>/`, shared by every channel — so settings and agent working folders survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
 ## `objects.db` — sidecar reducer state
 
-Owned by `agentmux-srv`. Opened via `WaveStore::open(<data-dir>/db/objects.db)` in `crates/srv/src/main.rs`. The historical type name `WaveStore` predates the AgentMux rebrand — the file itself is `objects.db`.
+Owned by `agentmux-srv`. Opened via `Store::open(<data-dir>/db/objects.db)` in [`crates/srv/src/bootstrap/stores.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/bootstrap/stores.rs).
 
 Stores every:
 
@@ -32,21 +32,26 @@ Stores every:
 - **Window** — OS-window record; the host reads this on launch to restore window geometry
 - **Layout** — per-tab pane tree (split orientation, focus path, sizes)
 - **Client** — per-CEF-session client record
-- **Controller** — block controller registration (shell, command runner, web view)
 
-It also holds the agent domain: **agent definitions** (the launchable agent
-catalog — formerly "Forge"), **accounts** and **bundles**, per-launch
-**agent instances**, and **drone** definitions/runs.
+It also holds the agent domain: one `db_agents` row per agent (definition
+and latest launch state — the separate definition and instance tables were
+merged), the agent's content, skills, keys and input history, and **drone
+runs**. Accounts, bundles, drone definitions and the Skills and MCP catalogs
+live in the shared stores; `objects.db` keeps fallback copies of those tables
+for when the shared stores can't be opened. The full table list is in
+[Data structure](/internals/data-structure/#objectsdb).
 
 The schema is a single flat table set built by `run_object_schema`
-(`crates/srv/src/backend/storage/migrations.rs`) — no migration ladder. A
-`PRAGMA user_version` stamp acts as a downgrade tripwire.
+(`crates/srv/src/backend/storage/migrations.rs`), which adds missing tables
+and columns every time the file is opened. Data changes go through numbered
+migrations (`crates/srv/src/migrations/`), recorded in `db_migrations`. A
+`PRAGMA user_version` stamp (currently 44) acts as a downgrade tripwire.
 
-This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch comes up with a single empty workspace.
+This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch copies it forward again from the newest older version of the same channel, if there is one, and otherwise comes up with a single empty workspace.
 
 ### Bootstrap + persist subscriber
 
-At startup the sidecar's reducer loads its in-memory state from `objects.db` ([`bootstrap_state_from_wstore`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/persist.rs)). During the session, **HTTP/WS RPC writes still go directly to SQLite via `wcore`** — SQLite stays authoritative even if the reducer's session-only projection diverges.
+At startup the sidecar's reducer loads its in-memory state from `objects.db` ([`bootstrap_state_from_mstore`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/persist.rs)). During the session, **HTTP/WS RPC writes still go directly to SQLite via `wcore`** — SQLite stays authoritative even if the reducer's session-only projection diverges.
 
 A separate **persist subscriber** ([`crates/srv/src/persist_subscriber.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/persist_subscriber.rs)) consumes the reducer's broadcast bus and mirrors lifecycle events back to SQLite for entities the reducer owns. On a `Lagged` error it does a scoped full-resync (insert/update only, never delete — there's a code comment explaining the migration-window reason).
 
@@ -75,7 +80,7 @@ version-independent), as siblings resolved in
 
 ### What travels with the definition
 
-A global definition record is not just the row from `db_agent_definitions`. The
+A global definition record is not just the row from `db_agents`. The
 mirror (`agent_definition_to_record`) folds the agent's **content blobs** (e.g.
 instructions, the per-agent `ui:zoom`) and its **skills** into the same record,
 because both live in separate local tables and must travel together for a
@@ -130,9 +135,9 @@ per-channel UI state — so the mirror skips any definition with `is_seeded != 0
 
 ## `filestore.db` — content blobs
 
-Same writer (`agentmux-srv`), opened via `FileStore::open(<data-dir>/db/filestore.db)`. Where blob content lives: agents' generated config files, session archives, file-pane buffers, captured screenshots. `objects.db` holds the meta — `filestore.db` holds the bytes.
+Same writer (`agentmux-srv`), opened via `FileStore::open(<data-dir>/db/filestore.db)`. It holds per-block files, addressed by zone (the block's oid) and name, stored in 64 KB parts: terminal scrollback (`term`), agent output (`output`) and its index and state files. Agents' conversations are also written to a machine-wide transcripts store at `~/.agentmux/shared/agents/transcripts/filestore.db`, with the same schema, so they open from any channel or version (see [Data structure](/internals/data-structure/#filestoredb-per-version-and-shared-transcripts)).
 
-You can rebuild `filestore.db` from scratch (you'll lose snapshots) without losing your workspace structure. The reverse is not true — `objects.db` references blobs by hash; deleting `filestore.db` while keeping `objects.db` leaves dangling references that the file pane will report as missing.
+Deleting `filestore.db` keeps your workspace structure, which is in `objects.db`, but loses each block's scrollback and output history in this version; agent conversations remain in the shared transcripts store.
 
 ## `sagas.db` — sidecar saga coordinator
 
@@ -162,25 +167,28 @@ grep -E "HiddenSinceOpen|HwndWithoutBrowser|WRR-DRIFT|wfr:gate|wfr:runner|pendin
 
 Each file is independently restorable:
 
-- **Cold-copy the whole `<data-dir>/data/` directory** while AgentMux is closed — that's the simplest, most reliable backup.
-- **Hot copy of an individual SQLite file** while AgentMux is open is supported because the writer holds short transactions; use `sqlite3 .backup`. JSONL log is append-only and safe to copy at any time.
+- **Cold-copy `~/.agentmux/shared/`, `~/.agentmux/channels/` and `~/.agentmux/agents/`** while AgentMux is closed. A version's `data/` folder alone misses the shared stores most of your data is in.
+- **Hot copy of an individual SQLite file** while AgentMux is open: use `sqlite3 <file> ".backup <copy>"`, not a plain file copy, which can miss recent writes still in the `-wal` file. JSONL log is append-only and safe to copy at any time.
 
-Re-importing into a fresh install: stop AgentMux, place the files at `<data-dir>/data/db/` (and the log at `<data-dir>/data/`), and launch. Bootstrap reads them.
+Re-importing into a fresh install: stop AgentMux, place the files back where they came from, remove any `-wal` and `-shm` files beside the restored databases, and launch. See [Data structure → Backing up and restoring](/internals/data-structure/#backing-up-and-restoring).
 
 ## What's NOT here
 
-For completeness, things that are NOT stored in these four files:
+Things that are NOT stored in these four files:
 
-- **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json`; **not** under `versions/<version>/`, so settings survive version upgrades
-- **Agent working directories** — per-agent workspace dirs under the **channel-wide** `~/.agentmux/channels/<channel>/agents/`, again one level above the version dir (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see below)
-- **Cookies / OAuth tokens / dictionary downloads** — `~/.agentmux/shared/` (account-wide, version- and channel-independent)
+- **Settings** — JSON at the **channel-wide** `~/.agentmux/channels/<channel>/config/settings.json` (`~/.agentmux/channels/settings.json` for the stable channel); **not** under `versions/<version>/`, so settings survive version upgrades
+- **Agent working directories** — `~/.agentmux/agents/<slug>/`, shared by every channel (the agent *definitions* themselves live in `objects.db` locally and in the global registry — see above)
+- **Accounts, bundles, memory, Skills and MCP catalogs** — the machine-wide `~/.agentmux/shared/store.db` and `shared/identity-store.db` (see [Data structure](/internals/data-structure/))
+- **Provider sign-ins** — provider login folders under `~/.agentmux/shared/providers/` and `shared/identities/`; MuxBus tokens in the OS keychain
+- **Cookies and spell-check dictionaries** — Chromium's version-scoped `versions/<version>/cef-cache/`, copied forward to a new version on its first start
 - **Global agent registry** — user-agent definitions + named instances live account-wide under `~/.agentmux/shared/agents/` (see [Cross-channel agent persistence](#cross-channel-agent-persistence))
 - **Cross-process session-ownership leases** — `~/.agentmux/shared/agents/registry/leases/<instance_id>.lease.json`, a sibling directory of the instances registry above, **not** part of any per-channel/per-version `<data-dir>/data/` tree at all. One JSON file per agent `instance_id`: TTL-based (renewed every 5s, reclaimable once ~3 renewals are missed — `LEASE_TTL_MS`/`RENEW_INTERVAL_MS`) and scoped to a `boot_id`, so at most one process can hold the right to drive a given agent's turns at a time in host-mode. Guarded by a real OS advisory lock (`flock`/`LockFileEx`) for the claim/renew/release critical section, not the atomic-rename-only pattern `Registry::upsert` uses elsewhere. See [`crates/srv/src/registry/leases.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/registry/leases.rs).
 - **Chromium cache** — version-scoped `~/.agentmux/channels/<channel>/versions/<version>/cef-cache/`
-- **CLI provider configs** — auth-config-dir managed by each provider's CLI
+- **CLI provider configs** — each provider CLI's own config folder, which AgentMux points at `~/.agentmux/shared/providers/<provider>/` or `shared/identities/<id>/<provider>/`
 
 ## See also
 
+- [Data structure](/internals/data-structure/) — every database and file, and which builds share it
 - [Architecture overview](/internals/architecture/) — process topology
 - [Multi-instance & dev mode](/multi-instance/) — full data-dir layout
 - [Reducer stack](/internals/reducer-stack/) — how persistence relates to the reducer model

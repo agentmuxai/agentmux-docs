@@ -104,14 +104,13 @@ Every provider except the five account-backed ones runs on the ambient directory
 
 ### Isolated auth by channel
 
-Accounts are isolated per channel by default, except on `stable` (`crates/common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
+Accounts are shared by every channel by default (`crates/common/src/data_paths.rs`, `isolated_auth_enabled` and `identities_dir`):
 
-- **`stable`** (every release build) shares one account list and one account-directory tree, `~/.agentmux/shared/identities/`.
-- **Any other channel**, such as a `dev-<branch>` build from `task dev` or a local `task package` build's `local-<branch>-<hash>-<build-id>` channel, gets its own account list and keeps account directories under that channel's own directory (`<channel dir>/identities/`). A fresh non-`stable` channel starts with no accounts.
+- **Every channel**, `stable`, a `dev-<branch>` build from `task dev` and a local `task package` build's `local-<branch>-<hash>-<build-id>` channel alike, shares one account list (in `~/.agentmux/shared/store.db`) and one account-directory tree, `~/.agentmux/shared/identities/`. A new build needs no login.
+- **`AGENTMUX_ISOLATED_AUTH=1`** isolates one channel: it gets its own account list (`<channel dir>/identity-store.db`) and account directories (`<channel dir>/identities/`), and starts with no accounts. Use it to test the login and re-login paths from an empty store. Any other value, or no value, means shared.
 - **The ambient directory is never isolated.** It stays account-wide on every channel.
-- **Override:** `AGENTMUX_ISOLATED_AUTH=1` forces isolation, even on `stable`. Setting the variable to any other value turns isolation off, even on a non-`stable` channel.
 
-This exists so that dev and local builds exercise real login code paths instead of silently inheriting a signed-in global session. See [Identity & Accounts](/identity/#persistence) for how an agent's link to an account survives a channel switch, and [Multi-instance & dev mode](/multi-instance/) for channels in general.
+Until 2026-10-03 every channel except `stable` was isolated by default. Accounts that such channels created in their own store are copied into the shared store once, at startup (see [Data structure → How data reaches a new version](/internals/data-structure/#how-data-reaches-a-new-version)). See [Identity & Accounts](/identity/#persistence) for how an agent's link to an account survives a channel switch, and [Multi-instance & dev mode](/multi-instance/) for channels in general.
 
 ### History
 
@@ -149,7 +148,7 @@ These mappings are in `crates/srv/src/identity/resolver/provider.rs` (`provider_
 These are independent layers:
 
 - **The ambient directories** are account-wide, provider-scoped and always global. Every instance on the machine shares them.
-- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later with **Bind**. They override the ambient directory for that agent, and the five account-backed providers require one. Unlike the ambient directories, they follow the [Isolated auth by channel](#isolated-auth-by-channel) default.
+- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later with **Bind**. They override the ambient directory for that agent, and the five account-backed providers require one. Like the ambient directories, they are shared by every channel unless [`AGENTMUX_ISOLATED_AUTH=1`](#isolated-auth-by-channel) isolates one.
 
 Two agents in the same instance can use different accounts for the same provider.
 

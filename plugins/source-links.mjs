@@ -74,6 +74,11 @@ export const notSourcePaths = new Set([
     'accounts/requirements.json', // inside an .abf archive (abf.md)
     'dist/widget.json', // the reader's own widget build (build-a-widget.mdx)
     '.claude/.agentmux-managed-mcp-servers.json', // written into an agent's workspace at runtime
+    // Files under ~/.agentmux at runtime (data-structure.md, data-layout.md)
+    'channels/settings.json',
+    'channels/widgets.json',
+    'shared/adoption-ledger.json',
+    'shared/browser-bookmarks.json',
 ]);
 
 let pinned;

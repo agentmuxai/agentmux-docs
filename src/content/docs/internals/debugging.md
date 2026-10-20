@@ -10,22 +10,21 @@ This page is the practical "something's off, where do I look first" reference. A
 | Source | File | Tail recipe |
 |---|---|---|
 | Host (CEF) — includes frontend `[fe]` console | `<data-dir>/logs/agentmux-host-v<v>.log.<date>` | `muxlog host` (or `muxlog host '\[fe\]'` for frontend only) |
-| Sidecar (`agentmux-srv`) | `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
-| Launcher (early-startup) | `~/.agentmux/logs/agentmux-launcher.log` | `cat "$AGENTMUX_LOG_DIR/agentmux-launcher.log"` |
+| Sidecar (`agentmux-srv`) | `<data-dir>/logs/agentmuxsrv-v<v>.log.<date>` | `muxlog srv` |
+| Launcher (early-startup) | `~/.agentmux/logs/agentmux-launcher.log` | `tail -F ~/.agentmux/logs/agentmux-launcher.log` |
 | Launcher reducer events | `<data-dir>/data/launcher-events.log` | `tail -F` directly (JSONL) |
 
-Only the host log lives in the per-version data dir — the sidecar and launcher both log directly to the shared `~/.agentmux/logs/`.
+Host and sidecar log to the per-version `logs/` folder (`$AGENTMUX_LOG_DIR`); only the launcher logs to the shared `~/.agentmux/logs/`.
 
 ### Pointer files
 
 Daily log rotation means the active filename changes at UTC midnight. Rather than guessing, both host and sidecar write a **pointer file** to the active log filename:
 
 ```bash
-LOG="$(cat ~/.agentmux/logs/current-host-v<version>.path)"
-tail -F "$LOG"
+tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-host-v$AGENTMUX_VERSION.path")"
 ```
 
-The host pointer holds an absolute path (since the host log lives in the per-channel data dir). The sidecar pointer (`current-srv-v<version>.path`) holds just the basename, since the sidecar log lives directly in `~/.agentmux/logs/` next to it. Both pointers are rewritten on each launch and on every rotation.
+Both pointers (`current-host-v<version>.path`, `current-srv-v<version>.path`) sit in the version's `logs/` folder and hold the log's file name. The host also writes a copy holding the absolute path to `channels/<channel>/logs/` (`~/.agentmux/dev/logs/` for dev builds). Both pointers are rewritten on each launch and on every rotation.
 
 The shipped `muxlog` shell helper does this lookup for you and also handles the legacy basename-only pointer format used by older instances. See [Multi-instance & dev mode](/multi-instance/) for the full pointer story.
 
