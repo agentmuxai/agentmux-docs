@@ -39,7 +39,7 @@ You pick them in three places, all with the same control: each picked bundle has
 
 | Where | When it's saved |
 |---|---|
-| The new-agent form's **Bundles** field | When you click **Create**. It starts empty. |
+| The new-agent panel's **Bundles** field | When you click **Create and start**. It starts empty. |
 | The launch modal's **Bundles** row | When you click **Launch**, if you changed it. A bundle isn't required to launch. |
 | **Stash → Bundles** in the agent pane | On each change. |
 

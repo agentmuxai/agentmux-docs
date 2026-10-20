@@ -195,7 +195,7 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 **Host agents** run the CLI directly on your machine, with access to your files, environment and credentials.
 
-**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is host-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the dialog notices within a few seconds.
+**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is host-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
 
 The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **On this computer (host)** if you want a host agent.
 
