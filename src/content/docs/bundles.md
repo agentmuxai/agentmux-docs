@@ -39,7 +39,7 @@ You pick them in three places, all with the same control: each picked bundle has
 
 | Where | When it's saved |
 |---|---|
-| The new-agent form's **Bundles** field | When you click **Create**. It starts empty. |
+| The new-agent panel's **Bundles** field | When you click **Create and start**. It starts empty. |
 | The launch modal's **Bundles** row | When you click **Launch**, if you changed it. A bundle isn't required to launch. |
 | **Stash → Bundles** in the agent pane | On each change. |
 
@@ -85,18 +85,18 @@ Personal Memory, the notes an agent keeps about itself (stored as "native memory
 
 ## Launch flow
 
-The **Create new agent** form, opened from a template card in the agent picker:
+The new agent's fields, in the panel that opens under a template card in the agent picker:
 
 ```
 ┌────────────────────────────────────────────────┐
-│ Create new agent from Claude Code               │
+│ New Claude Code agent                           │
 │  Name:      [my-agent_________]                 │
 │  Runtime:   (•) host   ( ) container            │
 │  Model:     [▼ opus ]                           │
 │  Bundles:   Reviewer                 ↑ ↓ ✕      │
 │             [▼ Add another bundle… ]            │
 │                                                 │
-│  [Cancel]                          [Create]     │
+│  [Cancel]                [Create and start]     │
 └────────────────────────────────────────────────┘
 ```
 

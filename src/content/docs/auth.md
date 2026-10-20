@@ -155,7 +155,7 @@ Two agents in the same instance can use different accounts for the same provider
 
 ## Pre-launch OAuth panel
 
-The agent **launch dialog** contains a sign-in panel, **Connect to &lt;provider&gt;**, which creates an account and selects it. Nothing in the current agent picker opens that dialog: creating an agent from a template uses the **Create new agent from &lt;template&gt;** dialog, which has no sign-in panel, and relaunching an agent from **My Agents** launches it directly. Sign-in happens in the agent pane instead, as described in [Signing in from an agent pane](#signing-in-from-an-agent-pane).
+The agent **launch dialog** contains a sign-in panel, **Connect to &lt;provider&gt;**, which creates an account and selects it. Nothing in the current agent picker opens that dialog: creating an agent from a template uses the panel under its card in the agent picker, which has no sign-in step, and relaunching an agent from **My Agents** launches it directly. Sign-in happens in the agent pane instead, as described in [Signing in from an agent pane](#signing-in-from-an-agent-pane).
 
 ## Manual login
 
