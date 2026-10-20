@@ -384,13 +384,14 @@ For installed and portable release builds (v0.41.1+), state is split across **ve
 | Purpose | Path | Scope |
 |---|---|---|
 | Config (`settings.json`, per-provider auth-config-dir homes) | `~/.agentmux/channels/<channel>/config/` | Channel-wide |
-| Agent definitions | `~/.agentmux/channels/<channel>/agents/` | Channel-wide |
+| Agent definitions and registry | `~/.agentmux/shared/agents/` | Account-wide |
+| Agent working folders | `~/.agentmux/agents/<slug>/` | Account-wide |
 | SQLite stores (objects, filestore, sagas) | `~/.agentmux/channels/<channel>/versions/<v>/data/db/` | Version-scoped |
 | Launcher event log (JSONL) | `~/.agentmux/channels/<channel>/versions/<v>/data/launcher-events.log` | Version-scoped |
 | Logs — host (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
-| Logs — sidecar (rotated daily) | `~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>` | Account-wide |
+| Logs — sidecar (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
 | CEF cache (cookies, local storage, IndexedDB) | `~/.agentmux/channels/<channel>/versions/<v>/cef-cache/` | Version-scoped |
-| Account-wide state (dictionaries, cross-channel shared) | `~/.agentmux/shared/` | Account-wide |
+| Account-wide state (shared databases, provider logins, backups) | `~/.agentmux/shared/` | Account-wide |
 | Dev mode root | `~/.agentmux/dev/<branch>/<clone-id>/` | Per-(branch × clone), no version split |
 
 See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/multi-instance/) for the full layout and the historical migration from per-version → channels → channels-plus-version-scoped-runtime.

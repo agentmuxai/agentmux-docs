@@ -91,11 +91,11 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 Inside each channel dir, state is split into **channel-wide** and **version-scoped** paths:
 
 - **Channel-wide** (`channels/<channel>/`): `config/` (settings + per-provider auth dirs) and `agents/` (agent definitions). These survive version upgrades.
-- **Version-scoped** (`channels/<channel>/versions/<v>/`, v0.41.1+): `data/` (SQLite + launcher event log), `logs/` (host log; sidecar log lives elsewhere — see below), `cef-cache/` (cookies, IndexedDB, JS cache), `runtime/` (lock + IPC port file). These are isolated per release so concurrent versions on the same channel can't collide on SQLite writes or corrupt each other's caches.
+- **Version-scoped** (`channels/<channel>/versions/<v>/`, v0.41.1+): `data/` (SQLite + launcher event log), `logs/` (host and sidecar logs), `cef-cache/` (cookies, IndexedDB, JS cache), `runtime/` (currently unused). These are isolated per release so concurrent versions on the same channel don't share session state or caches; the machine-wide stores under `shared/` are opened by every version.
 
 This is a two-step evolution: channels (mid-2026) collapsed the old per-version `~/.agentmux/versions/<v>/` layout into per-channel dirs so agents and settings survived upgrades. Then v0.41.1 reintroduced a *version-scoped* sub-dir for the runtime hazards (concurrent SQLite writers, shared CEF cache, single-instance pipe collisions) while keeping agents and settings channel-wide. See [Data layout](/internals/data-layout/), [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md), and [`SPEC_VERSION_ISOLATION_2026_06_01`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_VERSION_ISOLATION_2026_06_01.md) for the design.
 
-Account-wide state lives outside `channels/`: the sidecar log (`~/.agentmux/logs/agentmuxsrv-v<v>.log.<date>`), pointer files for log discovery, the launcher's `agentmux-launcher.log`, dictionaries, and the launcher's `config.toml` (saga retention etc.). Pre-migration snapshots auto-save at `~/.agentmux/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 per channel kept).
+Account-wide state lives outside `channels/`: the shared databases and agent registries under `~/.agentmux/shared/`, agent working folders under `~/.agentmux/agents/`, and the launcher's `~/.agentmux/logs/agentmux-launcher.log`. Pre-migration snapshots auto-save in each version's `data/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 kept). See [Data structure](/internals/data-structure/) for the full map.
 
 See [Multi-instance & dev mode](/multi-instance/) for the full layout, log discovery story, and per-instance vs shared boundary.
 

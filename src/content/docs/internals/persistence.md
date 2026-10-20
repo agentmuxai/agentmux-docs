@@ -9,14 +9,14 @@ This page covers the per-version stores srv keeps session state in, how agents p
 
 | File | Format | Writer | Owns |
 |---|---|---|---|
-| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, controllers + the agent-definition / identity / memory / drone catalog — the app-domain reducer state of record |
-| `filestore.db` | SQLite | sidecar | Per-block content blobs (agent configs, snapshots, file-pane content) |
+| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, plus each agent's row, content, keys and drone runs — the app-domain reducer state of record |
+| `filestore.db` | SQLite | sidecar | Per-block files: terminal scrollback, agent output and its index and state files |
 | `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv sagas (compensated after a crash) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
 
 All four live under the **version-scoped** data dir at `<data-dir>/data/`. For installed/portable builds the data dir is version-scoped — `~/.agentmux/channels/<channel>/versions/<version>/data/` — so two concurrent release versions never share these files or their caches (they do share the machine-wide stores under `shared/`). Dev builds use `~/.agentmux/dev/<branch>/<clone-id>/data/`. SQLite files are inside `data/db/`; the JSONL log is directly in `data/`. See [Data layout](/internals/data-layout/) for how `<channel>` and `<version>` are derived.
 
-> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and `runtime/` (ipc-port, lock). But `config/` (settings, including shortcut overrides) and `agents/` (agent working dirs) live one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/` — so settings and agent working dirs survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
+> **Not everything is version-scoped.** Alongside `data/`, the version dir also holds `logs/`, `cef-cache/`, and an unused `runtime/` (the host's IPC port file is `data/ipc-port-<hash>`). But `config/` (settings, including shortcut overrides) lives one level **up**, at the **channel-wide** root `~/.agentmux/channels/<channel>/`, and agent working folders live at `~/.agentmux/agents/<slug>/`, shared by every channel — so settings and agent working folders survive version upgrades. Path resolution is in [`data_paths.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs).
 
 Resolution is centralized in [`agentmux-common::DataPaths`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/data_paths.rs) — the launcher resolves once and exports `AGENTMUX_DATA_DIR`; host + sidecar read it from env.
 
