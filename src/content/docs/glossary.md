@@ -49,6 +49,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="jekt"></a>**jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). Use the `SendMessage` MCP tool (MuxAPI) or `POST /agentmux/reactive/inject` to jekt an agent.
 
+<a id="kanban"></a>**Kanban** — The first section of the [Warden](/warden/) pane: one card per task in the shared task queue ([Muxqueue](#muxqueue)), in the columns Backlog, In progress, Needs you, Review and Done. Agents file and update tasks with their `Tasks` tool; you start, answer, accept or send back. Pinned to the widget bar by default and opened by **Open Kanban** (`open:kanban`). See [Kanban](/kanban/).
+
 <a id="knowledge"></a>**Knowledge** — The former name of the [Memory](#memory) pane. Panes, widget-bar pins and keybindings (`app:knowledge`) saved under it are moved to Memory the first time it starts after updating; layout files that use it still open Memory, and `/knowledge/` links redirect.
 
 <a id="launcher"></a>**launcher** — The 325 KB shim process (`agentmux-launcher`) that boots AgentMux. Spawns the host and sidecar, holds the IPC auth-key, tracks window reality. See [Architecture overview](/internals/architecture/).
@@ -61,7 +63,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="mcp"></a>**MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 
-<a id="muxqueue"></a>**Muxqueue** — The shared work queue: durable items any agent can enqueue and claim later. The **pull** counterpart to [MuxBus](#agentbus)'s **push** — `SendMessage` names a recipient and delivers now; a Muxqueue item waits to be claimed instead (usually by anyone, optionally restricted to one agent or group). Claiming grants a time-limited *lease*, not ownership, so a crashed claimant's item can be re-offered — though only while it has attempts left, and only once some agent's next claim triggers the lazy reaper. Lives in the always-global store, so items cross channels and survive restarts. Exposed as the `Work*` MuxAPI tools and `muxspect work`. See [MuxAPI](/internals/muxapi/#muxqueue--the-shared-work-queue).
+<a id="muxqueue"></a>**Muxqueue** — The shared work queue: durable items any agent can enqueue and claim later. The **pull** counterpart to [MuxBus](#agentbus)'s **push** — `SendMessage` names a recipient and delivers now; a Muxqueue item waits to be claimed instead (usually by anyone, optionally restricted to one agent or group). Claiming grants a time-limited *lease*, not ownership, so a crashed claimant's item can be re-offered — though only while it has attempts left, and only once some agent's next claim triggers the lazy reaper. Lives in the always-global store, so items cross channels and survive restarts. Agents use it through their `Tasks` tool, and it is what the [Kanban](/kanban/) shows; also `muxspect work`. See [MuxAPI](/internals/muxapi/#muxqueue--the-shared-work-queue).
 
 <a id="oac"></a>**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
@@ -79,6 +81,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
+<a id="section"></a>**section** — One of the tabs along the top of a pane that has several views of its own: Warden, Connectors, Memory and Settings, and the Vault inside Warden. The selected one is kept in the pane's settings under `<view>:section`, so a [widget-bar](/pane-types/) entry, a palette command or a widget can open a pane on a section, and any section can be pinned to the widget bar. See [Sections](/widgets/#sections).
+
 <a id="sidecar"></a>**sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
 
 <a id="skill"></a>**skill** — A reusable instruction an agent can call, as a `/trigger` or a Claude Code skill file. Global skills are in [Memory → Skills](/memory/#skills); an agent can also have private ones, and its bundles add theirs at launch.
@@ -92,6 +96,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 <a id="swarm"></a>**swarm** — The multi-agent overview pane. Lists every running agent pane on this instance as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
 
 <a id="unix-domain-socket"></a>**Unix domain socket** — The IPC mechanism the launcher uses on Linux and macOS to communicate with the host. The socket lives at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (primary) or `/tmp/agentmux-<uid>/<hash>.sock` (fallback when `$XDG_RUNTIME_DIR` is unset), where `<hash>` is derived from `(data_dir + version)` — the same isolation key as the Windows named pipe. The counterpart Windows primitive is a **named pipe** (`\\.\pipe\agentmux-<hash>`). Both carry the same wire protocol (the reducer command set defined in `crates/common/src/ipc`). See [Platform support → Linux](/internals/platform-support/#linux).
+
+<a id="vault"></a>**Vault** — Your secrets (ID numbers, cards and bank accounts, API keys, logins, notes), kept encrypted with one key in the OS credential store and shared by every AgentMux on the computer. Agents use an entry by its name, to fill a web form field or run a command, and never see its value. A [section](#section) of the [Warden](/warden/) pane since it stopped being a pane of its own. See [The Vault](/vault/).
 
 <a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
 

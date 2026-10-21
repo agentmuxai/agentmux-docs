@@ -364,9 +364,9 @@ See [Build a widget](/build-a-widget/) for the package format.
 
 | Tool | What it does |
 |---|---|
-| `WidgetList` | List installed widgets: id, name, version, kind, state, permissions, folder and the views each adds. |
-| `WidgetInstall` | Install a widget package you built (a folder, its `widget.json`, or a `.zip`) and ask the user to approve it. Returns `installed`, `declined`, `pending`, or the validation error. You can't approve it yourself. |
-| `OpenWidget` | Open a view of an installed, approved widget (`ext:<id>/<pane>`) next to the conversation, optionally setting keys of its pane state. |
+| `Widget` `list` | List installed widgets: id, name, version, kind, state, permissions, folder and the views each adds. |
+| `Widget` `install` | Install a widget package you built (a folder, its `widget.json`, or a `.zip`) and ask the user to approve it. Returns `installed`, `declined`, `pending`, or the validation error. You can't approve it yourself. |
+| `Widget` `open` | Open a view of an installed, approved widget (`ext:<id>/<pane>`) next to the conversation, optionally setting keys of its pane state. |
 
 ---
 
@@ -557,12 +557,15 @@ Returns `{ success, error? }`. The message is delivered to the target agent's pa
 | `WhoIsWorkingOn` | Which other agents are working on a file, folder, repository, branch, topic or open PR. Informational; nothing is locked. |
 | `ClaimWork` | Say what you're working on (a path, branch or topic, with a note) so other agents see it in `WhoIsWorkingOn` and get a note if they edit inside it. Lapses after `ttl_minutes` (default 120). |
 | `ReleaseWork` | Release one of your claims by id, or all of them. |
-| `SupervisorNudge` | For a Warden Supervisor watcher: record a decision about an agent that ended its turn. `nudge` sends a fixed, server-owned continuation message; `decline` only logs. |
 | `FleetList` | List every reachable agent with the target ids `FleetBroadcast` and `FleetBulkStop` take. |
 | `FleetBroadcast` | Send the same message to many agents, each delivered and signed as `SendMessage` would. |
 | `FleetBulkStop` | Stop many agent panes at once, optionally in stages that abort on a high failure rate. Stopping an agent you don't own waits 15 seconds for its user to keep it. |
 
 ### Muxqueue — the shared work queue
+
+:::note[Tool names on this page]
+Agents now reach the queue through one `Tasks` tool with an `action` (`enqueue`, `claim`, `update`, `ask`, `submit`, `complete`, `release`, `heartbeat`, `list`), which is also what the [Kanban](/kanban/) shows. The `Work*` names below are the earlier one-tool-per-action names; the behavior they describe (leases, attempts, targets) is the same. Other sections of this page still use earlier names too, and are being updated.
+:::
 
 `SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is **pull and deferred** — work is enqueued, and an agent takes it when it asks, rather than being handed it.
 

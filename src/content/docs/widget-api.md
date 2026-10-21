@@ -67,6 +67,7 @@ Each pane is a view named `ext:<id>/<name>`, for example `ext:acme.pr-dashboard/
 | `panes` | Open views other than its own |
 | `agents:read` | List the user's agents and whether they're working |
 | `agents:send` | Send messages to the user's agents |
+| `tasks:read` | List the Kanban's tasks (below) |
 
 A **private or local address** (loopback, your network, link-local) is reachable only through a permission that names that address itself, port included: an IP address (`net:http://127.0.0.1:8188`) or `localhost` (`net:http://localhost:3000`). A public name that resolves to a private address is refused, and so is a wildcard.
 
@@ -110,7 +111,27 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 | `am.ui.openUrl(url)` | | Opens an `http`/`https` link in a browser pane next to the widget |
 | `am.ui.setStatusItem(id, look?)` | | Changes how one of the widget's status bar items looks while this pane is open: `{ text, icon, tooltip, tone, hidden }`, where `tone` is `info`, `success`, `warning` or `error`. Fields left out show the `widget.json` look; no `look` puts it back. An id `widget.json` doesn't declare is `not_found` |
 | `am.theme.get()` | | The current theme |
-| `am.panes.open(view, meta?, split?)` | `panes`, except for the widget's own views | Opens a pane; `split` is `right` (default), `down` or `tab` |
+| `am.panes.open(view, meta?, split?)` | `panes`, except for the widget's own views | Opens a pane; `split` is `right` (default), `down` or `tab`. What `meta` may say depends on the view (below) |
+
+### Opening a section
+
+`am.panes.open` passes on only the `meta` a widget may set:
+
+- **One of the widget's own views** (`ext:<id>/<name>`): its `meta` becomes that pane's state, what `am.meta.get()` reads there, with the same key and size checks as `am.meta.set`. No permission needed.
+- **Any other view** (needs `panes`): only a section the pane declares, or for `browser`, an `http`/`https` `url`. Every other key is dropped: a controller, a command, a connection, `vault:request` and anything else. So `panes` opens panes and never runs anything.
+
+A section is the pane's own section key with one of its section ids, and for Warden's Vault, `vault:section` beside it. The sectioned panes and their ids are listed under [Sections](/widgets/#sections).
+
+```js
+await am.panes.open("warden", { "warden:section": "kanban" });
+await am.panes.open("warden", { "warden:section": "vault", "vault:section": "cards" });
+await am.panes.open("settings", { "settings:section": "widgets" }, "tab");
+await am.panes.open("browser", { url: "https://example.com" });
+```
+
+An id the pane doesn't have is dropped, and the pane opens on its default section. So is any section passed through a pane's old view name: `am.panes.open("vault", { "vault:section": "cards" })` still opens Warden's Vault, but on its default section, since sections are checked against the pane's own name. Use `warden`.
+
+The SDK's typings (`v1.d.ts`) list these in a `PaneSections` interface, and `am.panes.open` has an overload for the sectioned views that checks the ids, so `{ "warden:section": "kanbn" }` is a type error.
 
 ### Storage
 
@@ -152,6 +173,12 @@ The widget's page itself can't make network requests: `fetch` and the like are b
 |---|---|---|
 | `am.agents.list()` | `agents:read` | The agents running on this computer: `{ id, name, state }`, `state` being `working`, `idle` or `stopped` |
 | `am.agents.send(agent, text)` | `agents:send` | Delivers `text` to that agent, marked as sent by the widget (`widget:<id>`) and unverified, so the agent treats it like any message whose sender it can't check. At most 8 KB, 10 messages a minute. Resolves to the message id |
+
+### Tasks
+
+| Method | Permission | |
+|---|---|---|
+| `am.tasks.list()` | `tasks:read` | The [Kanban](/kanban/)'s unfinished tasks and those finished in the last 7 days: each one's `num` (`#12`), `title`, `state` (`open`, `held`, `claimed`, `blocked`, `review`, `done`, `failed` or `cancelled`), `agent` (the one on it, else the one it waits for; empty for anyone), `repo`, `pr`, `checklist` (`{ done, total }`), `createdAt` and `updatedAt`. Never a task's prompt, the user's words or its result |
 
 ## Events
 

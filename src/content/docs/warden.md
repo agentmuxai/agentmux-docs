@@ -1,13 +1,13 @@
 ---
 title: Warden widget
-description: The Warden is AgentMux's operator pane for supervising agents — the agents registered on this instance, LAN peers, a jekt and Supervisor audit feed, and opt-in Supervisor auto-continue.
+description: "The Warden is AgentMux's operator pane: the Kanban of agents' work, the Vault of your secrets, the agents registered on this instance, LAN peers, an audit feed, and agents' history."
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Warden** is a pane for supervising agents. It shows which agents are registered to receive messages on this AgentMux instance, which AgentMux instances are on your local network, and a feed of recent message deliveries and Supervisor decisions. It has two control actions: soft-deregistering an agent on this instance, and choosing which agents a supervising agent may nudge to continue when they stall.
+The **Warden** is the pane for overseeing agents. It holds the [Kanban](/kanban/) of what agents are working on and what needs you, the [Vault](/vault/) of secrets agents use without seeing, which agents are registered to receive messages on this AgentMux instance, which AgentMux instances are on your local network, a feed of recent message deliveries, fleet actions and uses of your secrets, and the history agents keep.
 
 ![The Warden widget when it first opens](../../assets/screenshots/widgets/widget-warden-small.png)
 
@@ -19,21 +19,40 @@ The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by
 - Right-click a pane header → **Replace With...** → **Warden**.
 - Press `Ctrl+Shift+K` to turn the focused pane into the widget launcher, then choose **Warden**.
 
-There is no keyboard shortcut or command-palette entry for the Warden itself.
+Two of its sections have their own ways in:
 
-## The five sections
+- **Kanban** is pinned to the widget bar by default, between Swarm and Memory, and is **Open Kanban** (`open:kanban`) in the command palette.
+- **Vault** is in the widget bar's **more** menu, and is **Open Vault** (`open:vault`) in the command palette.
 
-The Warden is a pane view with its sections as tabs along the top, the same layout the [Connectors](/connectors/) and [Memory](/memory/) panes use (`frontend/app/view/warden/warden-view.tsx`). In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. The selected section is saved with the pane.
+Each opens Warden on that section. A tab holds one Warden: these entries, and the Warden entry itself, switch the Warden already in the tab instead of opening a second one. There is no keyboard shortcut for the Warden, and no command-palette entry for its other sections.
+
+Any section can get a widget-bar button of its own: right-click the Warden's header and choose **Pin “LAN” to bar** (named after the section it shows). See [Sections](/widgets/#sections).
+
+## The seven sections
+
+The Warden is a pane view with its sections as tabs along the top, the same layout the [Connectors](/connectors/) and [Memory](/memory/) panes use (`frontend/app/view/warden/warden-view.tsx`). In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. The selected section is saved with the pane, under `warden:section` in its settings; the default is Host.
 
 | Section | Icon | What it covers |
 |---|---|---|
+| **Kanban** | `table-columns` | One card per task in the shared task queue: what agents are working on, what waits for them, and what needs you |
+| **Vault** | `lock` | Your secrets, which agents use by name without seeing them, with its own sections |
 | **Host** | `server` | Agents registered with this instance's message handler, plus soft deregister |
 | **LAN** | `network-wired` | Other AgentMux instances found on the local network (read-only) |
 | **Internet** | `globe` | Placeholder; no functionality yet |
-| **Audit** | `list-check` | Recent jekt deliveries, Supervisor decisions and fleet actions |
-| **Supervisor** | `user-shield` | Per-agent auto-continue opt-in, and recent Supervisor decisions |
+| **Audit** | `list-check` | Recent jekt deliveries and fleet actions, and agents' uses of your secrets |
+| **History** | `clock-rotate-left` | Every agent's kept conversation history, and where it is kept |
 
-All five sections stay mounted while the Warden is showing, so switching between them is instant. Host, LAN, Audit and Supervisor each refresh every 5 seconds, including the sections you aren't looking at; Internet is static. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name, and `Ctrl`+scroll zooms the Warden.
+Host, LAN, Internet and Audit stay mounted while the Warden is showing, so switching between them is instant; Host, LAN and Audit each refresh every 5 seconds, including when you aren't looking at them, and Internet is static. Kanban and History load only while they are shown. The Vault section is mounted the first time you show it, so a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Kanban · 2 need you** when tasks need you, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
+
+## Kanban section
+
+The [Kanban](/kanban/) has a card for each task in the task queue agents use through their `Tasks` tool, in five columns: **Backlog**, **In progress**, **Needs you**, **Review** and **Done**. Agents file, take and hand in tasks; AgentMux moves a card when its agent asks a question, fails or closes; you start, answer, accept or send back. The [Kanban page](/kanban/) covers it.
+
+## Vault section
+
+The [Vault](/vault/) keeps your ID numbers, cards and bank accounts, API keys, logins and secret notes. It has its own row of sections: **Personal data**, **Cards and banks**, **API keys**, **Logins**, **Notes**, **Kept by AgentMux** and **Activity**. Values are never shown in the list; Reveal and Copy confirm it's you each time. Agents fill form fields and run commands with an entry by its name, and never see its value. While the Vault section is on screen, agents' window captures of AgentMux are refused. The [Vault page](/vault/) covers it.
+
+The Vault used to be a pane of its own. Saved Vault panes, pins and layouts now open Warden on its Vault section.
 
 ## Host section
 
@@ -85,7 +104,6 @@ Jekt delivery through AgentMux's MuxBus cloud relay does exist, for instances lo
 The Audit section shows recent entries from the message handler's audit log, most recent first (`frontend/app/view/warden-audit/`):
 
 - jekt deliveries, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
-- every Supervisor decision (nudged, declined, or nudge failed) with the Supervisor's stated reason;
 - agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `FleetBulkStop`, and `ClosePane` calls in which one agent closed another's pane;
 - agents quitting themselves (`/quit`, `/exit`, the `QuitSelf` tool or `ClosePane` with no arguments), including a self-quit that has to wait for your 15-second override;
 - the 15-second override window that an agent's `FleetBulkStop` or its `ClosePane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`crates/srv/src/sagas/pending_shutdown.rs`).
@@ -94,30 +112,19 @@ Each row shows the time, `sender → recipient`, the status, a size in bytes and
 
 The Warden requests the latest 50 entries and hides registration events, so it often shows fewer than 50 rows. The log holds the last 100 entries in memory and is cleared when AgentMux restarts.
 
-## Supervisor section
+### Secrets
 
-The Supervisor section controls which agents may be nudged. It doesn't decide *when* to nudge. That judgment belongs to an ordinary AgentMux agent you designate as a supervisor, which uses two MCP tools:
+The Audit section ends with **Secrets**: every use of a [Vault](/vault/) entry by an agent (filling a web form, running a command), with the entry, where it went and the outcome, and every standing permission ("may be used without asking") with a × to stop it. It never shows a value, and it doesn't list your own saves, reveals or copies; those are in the Vault's own Activity. **Open the Vault** goes to the Vault's Activity, which links back here. Showing this list doesn't read the Vault's entries, so it never makes the OS ask for the Vault key.
 
-- **`GetAgentTranscript`** reads the tail of another agent's transcript (default 100 lines, at most 500) and whether that agent is mid-turn. It finds agents on this instance and on other AgentMux instances on the same machine, not on LAN peers. It is read-only.
-- **`SupervisorNudge`** either sends the fixed message "Continue the task you were already doing." to a stalled agent, or records a `decline` without sending anything. The message text is set by the server and can't be changed by the caller.
+## History section
 
-### Auto-continue opt-in
+The History section is the record of what agents did, beside Audit (`frontend/app/view/warden-history/`). **Agents** lists every agent's kept conversation history and opens it; **Storage** shows where it is kept, how much, and for how long. It loads when you first show it.
 
-Each agent has an **auto-continue** setting, off by default. The Supervisor section lists your agents (not built-in templates) with their provider and an **auto-continue** checkbox. A nudge to an agent that hasn't opted in is refused with an error and isn't written to the audit log. A decline is never refused.
-
-### Consecutive-nudge ceiling
-
-To stop runaway loops, the server allows at most **5 consecutive nudges** to the same agent. The count resets 30 minutes after the last successful nudge, or when the agent's pane or registration changes, which for an ordinary agent pane means its agent process restarted. When the ceiling is hit, the nudge is refused: the Audit feed records it as declined with the reason "consecutive-nudge ceiling reached", and the calling agent gets an error. The `SupervisorNudge` tool description tells a supervising agent to escalate to a human via `SendMessage` instead of retrying.
-
-### Recent decisions
-
-Below the opt-in table, **Recent Supervisor decisions** lists the Supervisor rows from the audit log: target agent, outcome and reason.
-
-There is no "spawn a Supervisor" button. You create and configure the supervising agent like any other agent.
+The Supervisor section is gone. The Supervisor, which keeps agents working until they are done or need you, is now set per agent from its row in [Swarm](/subagent-watcher/).
 
 ## What the Warden is *not*
 
-- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery and Supervisor record.
+- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows the work ([Kanban](/kanban/)), who is registered for messages, who is on the network, and the delivery record. A Swarm row links to the Kanban task its agent is on.
 - The **host popover** in the status bar shows this instance's own details and the LAN discovery toggle. The Warden doesn't repeat the host details.
 
 ## Status today
@@ -125,14 +132,14 @@ There is no "spawn a Supervisor" button. You create and configure the supervisin
 | Capability | Status |
 |---|---|
 | See agents registered on this instance | ✅ Live |
-| Recent jekts, Supervisor decisions and fleet actions (audit) | ✅ Live |
+| Kanban of agents' tasks | ✅ Live |
+| The Vault, and agents' uses of it in Audit | ✅ Live (Reveal and Copy on Windows only) |
+| Recent jekts and fleet actions (audit) | ✅ Live |
+| Agents' kept history (History) | ✅ Live |
 | Soft-deregister an agent | ✅ Live |
 | See LAN peers | ✅ Live (turn on LAN discovery) |
-| Per-agent auto-continue opt-in | ✅ Live |
-| Read another agent's transcript (`GetAgentTranscript`) | ✅ Live (at most 500 lines) |
-| Nudge or decline a stalled agent (`SupervisorNudge`) | ✅ Live (target must opt in; at most 5 consecutive nudges) |
+| Supervisor (keep agents working) | Not in the Warden. Set per agent in Swarm. |
 | Stop agent processes | Not in the Warden. Use the Swarm fleet toolbar or `FleetBulkStop` (an agent's `FleetBulkStop` waits for your 15-second override). |
-| Spawn or designate a Supervisor from the Warden | ❌ Not planned; create the agent normally |
 | Pause host / kill all | ❌ Not built |
 | `governance.json` policy file | ❌ Not built |
 | Approval queue (human in the loop) | ❌ Not built |
@@ -141,9 +148,12 @@ There is no "spawn a Supervisor" button. You create and configure the supervisin
 
 ## See also
 
-- [Swarm](/subagent-watcher/) — live agent activity and the fleet toolbar
+- [Kanban](/kanban/) — the Kanban section
+- [The Vault](/vault/) — the Vault section
+- [Swarm](/subagent-watcher/) — live agent activity, the Supervisor and the fleet toolbar
+- [Sections](/widgets/#sections) — pinning a Warden section to the widget bar
 - [Connectors](/connectors/) and [Memory](/memory/) — the panes whose section tabs the Warden shares
 - [LAN discovery](/lan-discovery/) — the substrate the LAN section reads from
 - [Warden architecture (internals)](/internals/warden/) — design, layers, RPC contracts
 - [Interagent communication](/internals/interagent-comms/) — how jekts are delivered
-- `docs/specs/SPEC_WARDEN_WIDGET_2026-05-25.md` in the main repo — the original Host/LAN/Internet design (predates the Audit and Supervisor sections)
+- `docs/specs/SPEC_WARDEN_WIDGET_2026-05-25.md` in the main repo — the original Host/LAN/Internet design (predates the Kanban, Vault, Audit and History sections)
