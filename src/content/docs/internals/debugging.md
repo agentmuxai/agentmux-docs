@@ -148,9 +148,9 @@ node ~/.agentmux/shell/muxspect.mjs work open       # just the claimable backlog
 node ~/.agentmux/shell/muxspect.mjs work claimed    # what's being worked, by whom
 ```
 
-The [Muxqueue](/internals/muxapi/#muxqueue--the-shared-work-queue) backlog: state, current holder, attempts burned against the limit, and the `result` field — the completion trace on a `done` item, the reason on a `failed` or handed-back one.
+The [Muxqueue](/internals/muxapi/#the-queue-behind-tasks-leases-and-attempts) backlog: state, current holder, attempts burned against the limit, and the `result` field — the completion trace on a `done` item, the reason on a `failed` or handed-back one.
 
-**The signal to look for is `LEASE EXPIRED`.** A claimed item whose lease has lapsed has nobody working it, but the row still says `claimed` — reaping happens when some agent next calls `WorkClaim`, not in a background sweeper. So a queue can look busy while being entirely idle. This flags those rows and totals them, and distinguishes the ones that will be re-offered from the ones whose attempts are spent (those get parked as `failed`, not returned to the pool).
+**The signal to look for is `LEASE EXPIRED`.** A claimed item whose lease has lapsed has nobody working it, but the row still says `claimed` — reaping happens when some agent next calls `Tasks` `claim`, not in a background sweeper. So a queue can look busy while being entirely idle. This flags those rows and totals them, and distinguishes the ones that will be re-offered from the ones whose attempts are spent (those get parked as `failed`, not returned to the pool).
 
 Read-only, like everything in `muxspect` except `dock clear`.
 

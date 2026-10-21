@@ -91,7 +91,7 @@ The LAN section lists other AgentMux instances on your network. It fills in once
 | `agents` | Number of agents registered on the peer |
 | `last seen` | Time since the peer was last seen |
 
-The section is read-only. Agents can already send jekts to agents on LAN peers with the `SendMessage` MCP tool; the Warden has no controls for LAN peers.
+The section is read-only. Agents can already send jekts to agents on LAN peers with the `Message` MCP tool (action `send`); the Warden has no controls for LAN peers.
 
 ## Internet section
 
@@ -104,9 +104,9 @@ Jekt delivery through AgentMux's MuxBus cloud relay does exist, for instances lo
 The Audit section shows recent entries from the message handler's audit log, most recent first (`frontend/app/view/warden-audit/`):
 
 - jekt deliveries, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
-- agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `FleetBulkStop`, and `ClosePane` calls in which one agent closed another's pane;
-- agents quitting themselves (`/quit`, `/exit`, the `QuitSelf` tool or `ClosePane` with no arguments), including a self-quit that has to wait for your 15-second override;
-- the 15-second override window that an agent's `FleetBulkStop` or its `ClosePane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`crates/srv/src/sagas/pending_shutdown.rs`).
+- agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `Stop` `agents`, and `Stop` `pane` calls in which one agent closed another's pane;
+- agents quitting themselves (`/quit`, `/exit` or `Stop` `self`), including a self-quit that has to wait for your 15-second override;
+- the 15-second override window that an agent's `Stop` `agents` or its `Stop` `pane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user) (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 Each row shows the time, `sender → recipient`, the status, a size in bytes and the reason. Rows for stops, pane closes and quits don't name the action; tell them apart by the reason text. Their byte size is the length of the internal action name, not of a message. A stop from the Swarm toolbar shows `—` as the sender.
 
@@ -139,7 +139,7 @@ The Supervisor section is gone. The Supervisor, which keeps agents working until
 | Soft-deregister an agent | ✅ Live |
 | See LAN peers | ✅ Live (turn on LAN discovery) |
 | Supervisor (keep agents working) | Not in the Warden. Set per agent in Swarm. |
-| Stop agent processes | Not in the Warden. Use the Swarm fleet toolbar or `FleetBulkStop` (an agent's `FleetBulkStop` waits for your 15-second override). |
+| Stop agent processes | Not in the Warden. Use the Swarm fleet toolbar or `Stop` `agents` (an agent's `Stop` `agents` waits for your 15-second override). |
 | Pause host / kill all | ❌ Not built |
 | `governance.json` policy file | ❌ Not built |
 | Approval queue (human in the loop) | ❌ Not built |

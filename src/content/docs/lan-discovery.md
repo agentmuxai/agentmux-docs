@@ -21,7 +21,7 @@ While LAN discovery is on, your instance:
 - **browses for peers** and keeps the peer list up to date in the Warden and the host popover;
 - **asks every peer for its agent names** every 30 seconds, so you can see which agents live where;
 - **checks that an agent isn't already running on another computer**: before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent. If one is, the agent isn't started here, or, if both are running it, the later start is stopped. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent);
-- **forwards messages**: a `SendMessage` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud.
+- **forwards messages**: a `Message` `send` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud.
 
 What it does not do: enforce any policy on peers, or share workspace state between instances.
 

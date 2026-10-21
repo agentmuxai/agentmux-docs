@@ -7,11 +7,11 @@ description: "The MuxBus — how agents discover each other and send messages on
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **MuxBus** is how agents find and message each other: within one AgentMux instance, between instances on the same machine, across the local network, and, optionally, across the internet. Agents use it through the `DiscoverAgents` and `SendMessage` MCP tools, which every agent pane has. It is one part of the larger [MuxAPI](/internals/muxapi/).
+The **MuxBus** is how agents find and message each other: within one AgentMux instance, between instances on the same machine, across the local network, and, optionally, across the internet. Agents use it through the `Agents` MCP tool (action `list`) and the `Message` MCP tool (action `send`), which every agent pane has. It is one part of the larger [MuxAPI](/internals/muxapi/).
 
 ## Delivery tiers
 
-`SendMessage` tries these in order and stops at the first that takes the message:
+`Message` `send` tries these in order and stops at the first that takes the message:
 
 | Tier | Reaches | How | Default |
 |---|---|---|---|
@@ -24,9 +24,9 @@ If none of them takes the message and the target is a known agent of this instan
 
 ## How agents use it
 
-### `DiscoverAgents`
+### `Agents` `list`
 
-No parameters. Returns what is reachable from here, as JSON (`handle_discovery` in `crates/srv/src/server/mod.rs`):
+No parameters besides `action`. Returns what is reachable from here, as JSON (`handle_discovery` in `crates/srv/src/server/mod.rs`):
 
 ```json
 {
@@ -63,23 +63,24 @@ No parameters. Returns what is reachable from here, as JSON (`handle_discovery` 
 
 Names are matched case-insensitively.
 
-### `SendMessage`
+### `Message` `send`
 
-Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) and `message` (text). The tool signs the message with the sending agent's keys and posts it to the local AgentMux server (`crates/mcp/src/main.rs`). It returns one of:
+Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) and `message` (text). The tool signs the message with the sending agent's keys and posts it to the local AgentMux server (`crates/mcp/src/tools/fleet.rs`). It returns one of:
 
 | Result | Meaning |
 |---|---|
-| `Delivered to <to> — injected into their conversation.` | Delivered on the Host, Channel or LAN tier. |
-| `QUEUED for <to> — they're mid-turn, so it has not reached them yet. …` | Accepted by the recipient's AgentMux while the recipient is writing a reply. It reaches the agent at its next tool call or when its turn ends. Don't resend it. |
-| `QUEUED for <to> via the cloud relay — NOT yet delivered. …` | MuxBus Cloud accepted it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed. |
-| `HELD for <to> — not delivered yet. <to> is not running; this AgentMux instance (channel) keeps the message and delivers it when <to> starts here, for up to 24 hours. Do not resend it.` | Held for a known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. |
+| `Delivered to <to> — injected into their running conversation.` | Delivered on the Host, Channel or LAN tier. A live agent gets it at once, even mid-turn. |
+| `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's AgentMux has it and delivers it as soon as the agent is up. Don't resend it. |
+| `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline, and the relay drops it after 30 minutes. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed; the answer adds "No agent of that name has signed in from your account" when the relay says the name isn't one of your agents. |
+| `HELD for <to> (not_running)` | A known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
+| `HELD for <to> (needs_login)` | The agent isn't signed in. This AgentMux keeps the message for up to 24 hours and delivers it once the agent signs in. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
-How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel; while the agent is writing, the message is held and released at its next tool call or turn boundary. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
+How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel at once, even mid-turn; the agent sees it alongside its next tool result, or when its turn ends. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
 
 #### Sending files
 
-`SendMessage` also takes `files`: up to 10 paths, preferably absolute (a relative path is taken from the agent's workspace folder, not its shell's current directory). The recipient gets each file as a local file listed in the message, as if its user had attached it, and its marker gains `FILES=<n>`, the number delivered. Every file is checked against the SHA-256 the sender's signature covers, so a file changed on the way is left out and reported. An agent passes on a file it received by sending the path from its own list.
+`Message` `send` also takes `files`: up to 10 paths, preferably absolute (a relative path is taken from the agent's workspace folder, not its shell's current directory). The recipient gets each file as a local file listed in the message, as if its user had attached it, and its marker gains `FILES=<n>`, the number delivered. Every file is checked against the SHA-256 the sender's signature covers, so a file changed on the way is left out and reported. An agent passes on a file it received by sending the path from its own list.
 
 | Tier | Per file | Per message |
 |---|---|---|
@@ -87,7 +88,7 @@ How the message arrives depends on the recipient. An agent pane with a structure
 | LAN | 50 MB | 100 MB |
 | WAN | 25 MB | 50 MB |
 
-- **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `SendMessage` says so.
+- **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `Message` `send` says so.
 - **WAN:** files go only to an agent running now on an AgentMux 0.59.28 or later; otherwise nothing is sent. Each file is encrypted before it leaves the sender's computer. From 0.59.29, when the recipient's AgentMux is also 0.59.29 or later, each file's key is sealed to the AgentMux that runs the recipient, so the cloud relay can read the message text but not the files. A recipient on 0.59.28 receives files whose keys the relay can read, like the message text.
 - **Trust:** files from a verified sender are delivered, and Claude agents see images and PDFs inline. Files from a sender with no proof of identity are listed by path but never shown inline. When a signature check actively fails, the files are withheld.
 
