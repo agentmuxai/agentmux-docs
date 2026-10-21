@@ -267,13 +267,14 @@ srv never changes its data while it starts. When the launcher starts srv, srv fi
 - a newer version's first start, with an older version of the channel to copy from;
 - a fresh install or a new channel, whose databases don't exist yet;
 - a migration this build brings that hasn't run on this data;
-- or a database it can't read, since a doubt counts as "needs preparing".
+- `store.db`, `objects.db` or `identity-store.db` at an older schema version than this build's, since opening it would change its schema;
+- or a `store.db` or `objects.db` it can't read, since a doubt counts as "needs preparing". (srv starts without `identity-store.db` when it can't open it, so that one doesn't count.)
 
 If so, srv exits before writing anything (`AGENTMUXSRV-NEEDS-PREPARE`, exit code 4). The launcher then runs one upgrade step, `agentmux-srv migrate --prepare`, which the splash shows as **Updating data** with a row for each part:
 
 1. **Copy forward.** If this version has no `data/db/objects.db`, it copies `filestore.db`, `sagas.db` and then `objects.db` from the newest older version of the same channel, with SQLite's `VACUUM INTO`. The older version may still be running; its folder is left as it was. If the copy fails, the step fails: the new version doesn't start on empty data, and the next start tries again.
 2. **Back up** the stores the migrations may write (see below).
-3. **Migrate**: run the migrations this data hasn't had.
+3. **Migrate**: bring each database's schema up to this build's and run the migrations this data hasn't had.
 
 The launcher then starts srv again. Every later start of that version finds nothing to prepare and goes straight to opening its stores: no copy, no backup, no migration lock.
 
