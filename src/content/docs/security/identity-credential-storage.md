@@ -17,7 +17,7 @@ Everything lives under one root, `~/.agentmux` (`%USERPROFILE%\.agentmux` on Win
 | `channels/<channel>/versions/<version>/cef-cache/` | Chromium profile for browser panes: cookies, site storage, cache |
 | `channels/<channel>/wan-identity/wan.db` | The install's WAN instance keypair, agents' WAN signing keys, and WAN verification state. Shared by every version of the channel, so upgrades keep them |
 | `shared/store.db` | Accounts, bundles, drone definitions, MuxBus credential metadata, per-agent MuxBus machine credentials |
-| `shared/identity-store.db` | Agent-to-account links, skills, MCP servers, the work queue |
+| `shared/identity-store.db` | Agent-to-account links, skills, MCP servers, the task queue behind the [Kanban](/kanban/), and the [Vault](/vault/)'s entries, with their secret parts encrypted |
 | `shared/agents/transcripts/filestore.db` | Agent conversation transcripts, continuity summaries, and AgentMux's record of agents' memory and of Global Memory |
 | `shared/providers/<provider>/`, `shared/identities/<account>/<provider>/` | Agent CLIs' own login directories (see [provider CLI logins](#oauthconfigdir-provider-cli-logins)) |
 | `agents/<slug>/` | Default agent working directories, each with an `.mcp.json` holding that agent's signing keys |
@@ -96,6 +96,21 @@ At every launch, AgentMux writes the agent's HMAC key and its LAN private key in
 
 The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
 
+## The Vault
+
+The [Vault](/vault/) holds the secrets you keep for agents to use: ID numbers, cards and bank accounts, API keys, logins and notes. Its storage:
+
+- **One Vault key**, 256 random bits made with the first entry, in the OS secret store (or the file store of a headless server). One item rather than one per value: Windows Credential Manager caps an item's size, and macOS asks about each item separately. If the key goes missing while entries exist, AgentMux says so and doesn't make a new one, which couldn't open them.
+- **Each entry is one row** in `shared/identity-store.db`, which every AgentMux on the computer shares, whatever its channel. The row holds the id, kind, label and plain details, and the secret parts sealed together with the Vault key: ChaCha20-Poly1305, a random nonce each time, and the entry's id as associated data, so sealed parts copied to another row don't open. No column holds a value.
+- **Activity** records who did what to which entry, and where; never a value.
+- A `.vault` export is an [age](https://age-encryption.org) file encrypted to a passphrase you choose. Only you export or import, from the Vault; no agent route starts either or chooses the file.
+
+Only you write the Vault, through the host process: AgentMux's server refuses Vault writes on every route an agent can reach, and no route returns a value to an agent. A value reaches a web page or a command only after you allow it for that site, or for that agent's commands. Reveal and Copy confirm it's you with Windows Hello each time.
+
+The Vault is kept off agents' screens. An agent's `UI` `screenshot` blacks out the Vault, and its `UI` `window` capture of any AgentMux window is refused while the Vault section is on screen in any AgentMux on the computer. The note that says so can be written only by the host, so an agent can't clear it; if AgentMux can't be asked, the capture is refused.
+
+The same limits as the rest of this page apply: a process running as your user can read the OS secret store and the database, and so open the Vault.
+
 ## How credentials reach agent processes
 
 At each agent launch (`inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`):
@@ -137,6 +152,7 @@ These follow from running agents as you. If you need stronger isolation, use OS-
 - `crates/srv/src/identity/resolver/secret.rs` (`resolve_secret`), `crates/srv/src/identity/resolver/inject.rs`, `crates/srv/src/identity/resolver/provider.rs` — resolution and injection
 - `crates/srv/src/identity/secret_store.rs`, `crates/srv/src/identity/browser_credential_store.rs`, `crates/srv/src/backend/storage/muxbus.rs` — OS secret store use
 - `crates/srv/src/backend/storage/agent_credentials.rs` — per-agent MuxBus machine credentials
+- `crates/srv/src/backend/vault/` — the Vault: its key, sealing, export and import
 - `crates/srv/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`, `write_mcp_json_respecting_user_servers`) — signing keys in `.mcp.json`
 - `crates/srv/src/backend/reactive/registry.rs`, `crates/cef/src/dev_authfile.rs`, `crates/launcher/src/ipc/mod.rs` — the explicitly restricted files
 - `crates/cef/src/app/mod.rs` — Chromium password-store switches

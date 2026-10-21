@@ -557,7 +557,6 @@ Returns `{ success, error? }`. The message is delivered to the target agent's pa
 | `WhoIsWorkingOn` | Which other agents are working on a file, folder, repository, branch, topic or open PR. Informational; nothing is locked. |
 | `ClaimWork` | Say what you're working on (a path, branch or topic, with a note) so other agents see it in `WhoIsWorkingOn` and get a note if they edit inside it. Lapses after `ttl_minutes` (default 120). |
 | `ReleaseWork` | Release one of your claims by id, or all of them. |
-| `SupervisorNudge` | For a Warden Supervisor watcher: record a decision about an agent that ended its turn. `nudge` sends a fixed, server-owned continuation message; `decline` only logs. |
 | `FleetList` | List every reachable agent with the target ids `FleetBroadcast` and `FleetBulkStop` take. |
 | `FleetBroadcast` | Send the same message to many agents, each delivered and signed as `SendMessage` would. |
 | `FleetBulkStop` | Stop many agent panes at once, optionally in stages that abort on a high failure rate. Stopping an agent you don't own waits 15 seconds for its user to keep it. |

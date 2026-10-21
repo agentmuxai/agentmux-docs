@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Kanban**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Vault, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). Kanban and Vault open sections of the Warden pane, not panes of their own; see [Sections](/widgets/#sections) to give any section a button. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -42,7 +42,9 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
-| **Warden** | shield-halved | `warden` | Monitor and control agents across Host / LAN / Internet layers — see [Warden widget](/warden/) |
+| **Warden** | shield-halved | `warden` | The operator pane, in seven sections: Kanban, Vault, Host, LAN, Internet, Audit and History — see [Warden widget](/warden/) |
+| **Kanban** | table-columns | `warden` (section `kanban`) | Warden opened on its Kanban section: the tasks agents are working on, what waits for them and what needs you — see [Kanban](/kanban/) |
+| **Vault** | lock | `warden` (section `vault`) | Warden opened on its Vault section: your secrets, which agents use by name without seeing them. Formerly its own pane, `vault` — see [The Vault](/vault/) |
 | **Tower** | tower-observation | `tower` | Read-only task manager: the CPU and memory each agent and everything it started uses, and every process on the machine — see [Tower](/tower/) |
 | **Toolchain** | wrench | `toolchain` | The CLIs and system tools AgentMux uses, with their versions, where they're installed and how to install what's missing — see [First Agent Setup](/first-agent/#system-prerequisites) |
 | **Settings** | cog | `settings` | The settings UI — see [Settings reference](/settings/) |

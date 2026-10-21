@@ -86,7 +86,7 @@ Accounts and their agent bindings live in two SQLite tables (not the per-channel
 
 ## What Identity is not
 
-- **Not a credential vault.** AgentMux doesn't encrypt or audit credential access at the OS level today. An Account is a pointer — the credential still lives wherever the provider's CLI or secret store puts it.
+- **Not where your own secrets go.** An Account is a pointer: the credential still lives wherever the provider's CLI or secret store puts it. Your own secrets (ID numbers, cards, API keys, logins) go in the [Vault](/vault/), which agents use without seeing a value.
 - **Not a grouping object.** There is no bundle/collection layer between an agent and its Accounts — bindings are direct, one Account per provider.
 - **Not a top-level pane.** No widget-bar entry. See [Pane types](/pane-types/) for the full pane catalog.
 
