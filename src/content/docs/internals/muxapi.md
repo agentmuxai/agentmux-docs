@@ -134,7 +134,7 @@ The backend also registers a large set of management RPCs that the frontend (and
 
 Five higher-level, agent-scoped namespaces wrap the low-level handlers above behind MuxAPI's permission boundary. All are registered today, from `crates/srv/src/server/app_api/` (`identity.rs`, `memory.rs`, `mcp.rs`, `skill.rs` and `bundle/`).
 
-#### `identity.*`
+#### `identity.*` RPCs
 
 | Command | Purpose | Params |
 |---|---|---|
