@@ -262,14 +262,26 @@ Because the shared databases are opened read-write by every running AgentMux at 
 
 ## How data reaches a new version
 
-On a version's first start:
+srv never changes its data while it starts. When the launcher starts srv, srv first checks, read-only, whether this version's data needs preparing:
 
-1. **Databases are copied forward.** If `data/db/objects.db` doesn't exist, srv copies `filestore.db`, `sagas.db` and then `objects.db` from the newest older version of the same channel, with SQLite's `VACUUM INTO` (`carry_forward.rs` in `crates/srv/src/bootstrap/`). The older version may still be running; its folder is left as it was.
-2. **Browser sign-ins are copied forward.** The host copies cookies, local storage, IndexedDB, saved logins and `Local State` from the previous version's `cef-cache`, unless that version is still running.
-3. **A snapshot is taken** when `objects.db`'s schema version is older than the new build's.
-4. **Migrations run** (below).
+- a newer version's first start, with an older version of the channel to copy from;
+- a fresh install or a new channel, whose databases don't exist yet;
+- a migration this build brings that hasn't run on this data;
+- or a database it can't read, since a doubt counts as "needs preparing".
+
+If so, srv exits before writing anything (`AGENTMUXSRV-NEEDS-PREPARE`, exit code 4). The launcher then runs one upgrade step, `agentmux-srv migrate --prepare`, which the splash shows as **Updating data** with a row for each part:
+
+1. **Copy forward.** If this version has no `data/db/objects.db`, it copies `filestore.db`, `sagas.db` and then `objects.db` from the newest older version of the same channel, with SQLite's `VACUUM INTO`. The older version may still be running; its folder is left as it was. If the copy fails, the step fails: the new version doesn't start on empty data, and the next start tries again.
+2. **Back up** the stores the migrations may write (see below).
+3. **Migrate**: run the migrations this data hasn't had.
+
+The launcher then starts srv again. Every later start of that version finds nothing to prepare and goes straight to opening its stores: no copy, no backup, no migration lock.
+
+Separately, on a version's first start the host copies browser sign-ins (cookies, local storage, IndexedDB, saved logins and `Local State`) from the previous version's `cef-cache`, unless that version is still running.
 
 Everything else under `data/` starts empty: attachments, event logs, update downloads. Dev builds and `task package` builds have no older version to copy from. Nothing deletes old version folders.
+
+**Without the launcher** (a headless srv, `task dev:standalone`), srv does the same work itself during startup. It also takes a snapshot of the per-version databases first when `objects.db`'s schema version is older than the build's, except after a copy-forward, since the older version's folder already holds that data.
 
 **Adoption.** Channels created before 2026-10-03 kept their accounts and memory in their own `identity-store.db`. At startup srv copies what it hasn't yet into `shared/store.db` and records it in `shared/adoption-ledger.json`.
 
@@ -278,9 +290,9 @@ Everything else under `data/` starts empty: attachments, event logs, update down
 Two mechanisms change the schema:
 
 - **Schema setup** runs every time a database is opened: it creates missing tables and indexes and adds missing columns. It then stamps `PRAGMA user_version`. A build that finds a **higher** version than its own refuses to open the file (`SchemaTooNew`), so an older build never writes to a newer schema. `wan.db` has no such guard.
-- **Migrations** are numbered data changes, `m0000`–`m0037` ([`crates/srv/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
+- **Migrations** are numbered data changes, `m0000`–`m0038` ([`crates/srv/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
 
-Before a batch of migrations, srv takes `migrations.lock.db` (shared first, then the version's), so only one AgentMux on the computer migrates at a time, and copies `store.db` and `objects.db` to `shared/backups/`. A failed migration stops srv from starting; the launcher shows the error and offers to retry, which runs only the migrations that haven't completed. Nothing is restored automatically.
+Before a batch of migrations, `migrate --prepare` takes `migrations.lock.db` (shared first, then the version's), so only one AgentMux on the computer migrates at a time; the splash shows a row while it waits. It then copies `store.db`, `identity-store.db` and `objects.db` to `shared/backups/pre-migration-<version>-<time>/` with `VACUUM INTO`, leaving out `objects.db` when it was just copied forward. A failed step stops srv from starting: the launcher shows the error, and the next start retries, running only the migrations that haven't completed. Nothing is restored automatically.
 
 The oldest version that can upgrade directly is in the release notes as `min-upgrade-from` (currently 0.55.0). Older installs upgrade in two steps.
 
@@ -289,7 +301,7 @@ The oldest version that can upgrade directly is in the release notes as `min-upg
 - **Close AgentMux first** for a complete copy. Copy all of `~/.agentmux/shared/`, `~/.agentmux/channels/` and `~/.agentmux/agents/`. Copying only a version's `data/` misses the shared databases, which most of your accounts, agents and conversations depend on.
 - **While AgentMux is running**, copy a single database with `sqlite3 <file> ".backup <copy>"` or `VACUUM INTO`. A plain file copy can miss recent writes, which sit in the `-wal` file until a checkpoint.
 - **To restore**, stop AgentMux, put the files back, and remove any `-wal` and `-shm` files left beside them. A database restored from a newer version than the build you run is refused (`SchemaTooNew`).
-- **Automatic copies** are in `versions/<v>/data/snapshots/` (per-version databases, before a schema change) and `shared/backups/` (before migrations). Neither covers `identity-store.db`, the transcripts store or `wan.db`.
+- **Automatic copies** are in `shared/backups/` (`store.db`, `identity-store.db` and `objects.db`, before migrations, kept 30 days) and, when srv prepares its data itself, `versions/<v>/data/snapshots/` (the per-version databases, before a schema change). Neither covers the transcripts store or `wan.db`.
 
 ## See also
 

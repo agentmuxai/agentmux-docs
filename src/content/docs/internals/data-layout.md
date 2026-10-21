@@ -51,9 +51,9 @@ Legacy `dev/<branch>/` data from before [PR #1053](https://github.com/agentmuxai
 
 ### Schema safety lock + snapshots
 
-Migrations are **forward-only**. When a newer binary opens a store whose schema is older, it runs the migrations on launch. When an *older* binary tries to open a store whose schema is **newer** than it knows about, it refuses to open with a `StoreError::SchemaTooNew` and an actionable error message — protecting against downgrade corruption. Each release has its own `objects.db`, so in practice the lock matters most for the machine-wide stores under `shared/` (`store.db`, `identity-store.db`, the transcripts store), which every build opens: a build that raises their schema version locks older builds out. The schema versions per database are listed in [Data structure](/internals/data-structure/#schema-versions-and-migrations).
+Migrations are **forward-only**. When a newer version first starts on older data, the launcher runs them in one upgrade step before srv opens its stores (see [How data reaches a new version](/internals/data-structure/#how-data-reaches-a-new-version)). When an *older* binary tries to open a store whose schema is **newer** than it knows about, it refuses to open with a `StoreError::SchemaTooNew` and an actionable error message — protecting against downgrade corruption. Each release has its own `objects.db`, so in practice the lock matters most for the machine-wide stores under `shared/` (`store.db`, `identity-store.db`, the transcripts store), which every build opens: a build that raises their schema version locks older builds out. The schema versions per database are listed in [Data structure](/internals/data-structure/#schema-versions-and-migrations).
 
-Pre-migration snapshots auto-save when `objects.db`'s schema is older than the running build's, inside that version's data folder, and prune to the last 5 there:
+Under the launcher, the upgrade step's backup (below) is the copy taken before migrations. When srv prepares its data itself instead (a headless srv, `task dev:standalone`), it also saves a pre-migration snapshot when `objects.db`'s schema is older than the running build's (not after a copy-forward, whose source folder is that copy), inside that version's data folder, and prunes to the last 5 there:
 
 ```
 channels/<channel>/versions/<v>/data/snapshots/<channel>-pre-v<code-version>-<ISO8601>.bak/
@@ -64,9 +64,9 @@ channels/<channel>/versions/<v>/data/snapshots/<channel>-pre-v<code-version>-<IS
 
 (Dev builds: `dev/<branch>/<clone-id>/data/snapshots/`. Older versions wrote them to `~/.agentmux/snapshots/`.)
 
-The snapshot is a `VACUUM INTO` copy of each of the per-version SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption). Snapshots don't cover the shared stores. Separately, before running migrations srv copies `shared/store.db` and `objects.db` to `~/.agentmux/shared/backups/pre-migration-<version>-<time>/`, kept for 30 days.
+The snapshot is a `VACUUM INTO` copy of each of the per-version SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption). Snapshots don't cover the shared stores. Separately, before running migrations, `store.db`, `identity-store.db` and `objects.db` are copied with `VACUUM INTO` to `~/.agentmux/shared/backups/pre-migration-<version>-<time>/`, kept for 30 days (`objects.db` is left out right after a copy-forward).
 
-To roll back manually if a migration goes wrong, close AgentMux, copy the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/`, and remove any `-wal` and `-shm` files beside them. There's no CLI for this yet — it's a planned follow-up.
+To roll back manually if a migration goes wrong, close AgentMux, copy the backup's or the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/`, and remove any `-wal` and `-shm` files beside them. There's no CLI for this yet — it's a planned follow-up.
 
 ## Per-channel contents
 
