@@ -326,7 +326,7 @@ The pane watches the filesystem via the same `notify`-crate mechanism the Editor
 
 ### Opening it programmatically
 
-Agents have a dedicated `OpenMedia` MCP tool — the Media-pane equivalent of `OpenEditor` — to open a specific file in a Media pane next to the conversation (optionally as a split or a floating pane) without the human having to browse for it manually. Useful for "here's the image/video I just generated" moments mid-turn.
+Agents use the `Pane` MCP tool (action `open`, view `media`) to show a specific file next to the conversation (optionally as a split or a floating pane) without the human having to browse for it manually. It opens in the Editor, whose tab then follows newer files in the same folder. Useful for "here's the image/video I just generated" moments mid-turn.
 
 ## Agent
 
@@ -392,7 +392,7 @@ When an agent calls `AskUserQuestion` (part of the Agent SDK control protocol), 
 
 ### Persistent shell
 
-Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `ShellStop` MCP tool lets the agent stop it programmatically. Tree-kill on close ensures no orphaned child processes. The agent can also write to it (`ShellInput`) and poll its state (`ShellStatus`) — see [MuxAPI](/internals/muxapi/#shell-management).
+Agent panes can host a **persistent shell session** pinned alongside the conversation. Unlike tool-call shells (which run inline and close with the tool call), a persistent shell stays open between turns — the agent can issue commands to it across multiple turns, and you can interact with the same shell directly. Each persistent shell shows a stop button (⏹) in its header; the `Terminal` MCP tool lets the agent stop it programmatically (action `close`). Tree-kill on close ensures no orphaned child processes. The agent can also write to it (`type`) and check its state (`read`, or `wait` until it exits) — see [MuxAPI](/internals/muxapi/#terminal).
 
 ### Next-prompt suggestion (ghost text)
 

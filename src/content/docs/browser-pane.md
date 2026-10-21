@@ -178,7 +178,7 @@ Only the current URL is saved with the pane. Switching to another window tab and
 
 ## Driving the browser from an agent
 
-Agents can control a browser pane with the `Browser*` MCP tools: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. The navigation and JavaScript tools only work on the calling agent's own pane, and only when that pane is a browser pane. These tools drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
+Agents can control a browser pane with the `Browser` MCP tool: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. They work on the calling agent's own pane when it is a browser pane, and on a browser pane the agent opened itself (`Browser` `open`), never on one it didn't open or that the user took over. These actions drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
 
 ## Internals
 

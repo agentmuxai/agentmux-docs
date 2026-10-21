@@ -92,7 +92,7 @@ The CEF host (`agentmux-cef`) runs an HTTP server on an ephemeral `127.0.0.1` po
 
 ## Chromium remote-debugging port
 
-Chromium's remote-debugging (DevTools Protocol) server is **off in release builds** (`crates/cef/src/cdp_port.rs`). AgentMux doesn't need it: its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser*`, `UIScreenshot`, `UIClick` and `UIQuery` agent tools) drives the DevTools Protocol inside the process (`crates/cef/src/browser_api/cdp.rs`), and **Inspect Element** opens Chromium's built-in DevTools window.
+Chromium's remote-debugging (DevTools Protocol) server is **off in release builds** (`crates/cef/src/cdp_port.rs`). AgentMux doesn't need it: its own browser automation (the `/agentmux/browser/*` routes, which back the `Browser` agent tool and the `UI` tool's `screenshot`, `click` and `query` actions) drives the DevTools Protocol inside the process (`crates/cef/src/browser_api/cdp.rs`), and **Inspect Element** opens Chromium's built-in DevTools window.
 
 The `AGENTMUX_CDP_PORT` environment variable, read when AgentMux starts, turns it on or off:
 

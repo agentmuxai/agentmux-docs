@@ -87,7 +87,7 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 | Installing Crush | npm, then Crush's install script downloads its binary from GitHub release downloads |
 | Installing a harness that isn't on npm | Not AgentMux: you run the vendor's installer, which downloads from the vendor. goose: `github.com` release downloads. Grok Build: `x.ai`. Aider: `aider.chat`, then uv, which fetches Python and the `aider-chat` package from `pypi.org`. Muse Code: `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com`. Antigravity: `antigravity.google`. Kimi Code CLI: `pypi.org`. |
 | One-click Node.js, Git or Python install | winget, Homebrew, or your Linux package manager |
-| Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `IdentityValidate` tool. |
+| Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `Identity` tool (action `validate`). |
 | Signing in to MuxBus Cloud | AgentMux's sign-in service (`auth.muxbus.agentmux.ai`) and `muxbus.agentmux.ai` |
 | OAuth sign-in for Google, Microsoft, GitHub or Slack accounts | That provider's OAuth endpoints. AgentMux ships no OAuth client ids, so this runs only with your own OAuth app's credentials. |
 | Voice input | Groq's transcription API by default, and only once you set a Groq API key. The local Whisper engine runs offline, but downloads its model from Hugging Face the first time unless you point it at a model file. |

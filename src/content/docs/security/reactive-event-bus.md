@@ -5,11 +5,11 @@ description: "How agent-to-agent messages (jekts) are routed, authenticated, mar
 
 The **reactive event bus** carries agent-to-agent messages ("jekts") between panes, between AgentMux instances on one machine, across the LAN, and through MuxBus Cloud. This page covers the security side: who may send, how a message is routed, what the trust marker on every delivered message means, and what it does not prove.
 
-For the agent-facing overview (`SendMessage`, `DiscoverAgents`, return values), see [Interagent communication](/internals/interagent-comms/).
+For the agent-facing overview (`Message` `send`, `Agents` `list`, return values), see [Interagent communication](/internals/interagent-comms/).
 
 ## How a message enters the bus
 
-Agents send with the `SendMessage` MCP tool. The tool, running in the agent's own `agentmux-mcp` process, signs the message with the agent's keys (see [Signing keys](#signing-keys)) and posts it to its own AgentMux server, with the agent's identity token:
+Agents send with the `Message` MCP tool (action `send`). The tool, running in the agent's own `agentmux-mcp` process, signs the message with the agent's keys (see [Signing keys](#signing-keys)) and posts it to its own AgentMux server, with the agent's identity token:
 
 ```
 POST /agentmux/reactive/inject      X-AuthKey: <instance auth key>
@@ -18,7 +18,7 @@ POST /agentmux/reactive/inject      X-AuthKey: <instance auth key>
   "jekt_sig", "lan_sig", "channel_sig", "source_channel" }
 ```
 
-`source_agent` comes from the agent's `AGENTMUX_AGENT_ID`. The tool does not set a tier or a priority, so a `SendMessage` jekt starts at `TIER=coord` and `PRIORITY=normal`.
+`source_agent` comes from the agent's `AGENTMUX_AGENT_ID`. The tool does not set a tier or a priority, so a `Message` `send` jekt starts at `TIER=coord` and `PRIORITY=normal`.
 
 Other senders reach the same delivery code: the cron scheduler, the Slack/Discord/Telegram/WhatsApp bridges, the WebSocket `bus:inject` message, and the legacy `/api/bus/inject` route. Any process holding the instance auth key can call `/agentmux/reactive/inject` directly and put any name in `source_agent`. What the receiver can say about that name is decided by signature checks, described below, not by the request body.
 
@@ -59,7 +59,7 @@ All routes live on the local AgentMux server (`agentmux-srv`). See [Network expo
 | `GET /agentmux/reactive/agents`, `/audit`, `/transcript`, `/history/search` | Full auth key | List registrations, read the delivery audit log, read an agent's transcript, search the calling agent's own past conversations (needs its `X-Agent-Token`) |
 | `POST /agentmux/reactive/register`, `/unregister` | Full auth key | Registration. `register` is refused (409) while the agent is running in another AgentMux instance on this machine |
 | `POST /agentmux/agent/release` | Full auth key | Stop this instance's copy of an agent that another instance on this machine is taking over |
-| `GET /agentmux/discovery` | Full auth key | The `DiscoverAgents` view |
+| `GET /agentmux/discovery` | Full auth key | The `Agents` `list` view |
 | `/api/bus/*` | Full auth key | Legacy local message-bus API. Nothing in AgentMux calls it; its inject path runs the same signature check and marker |
 | `/agentmux/reactive/poller/{config,status,stats}` | Full auth key | Legacy. `config` stores a URL and token, and nothing uses them: no poller runs |
 
@@ -104,7 +104,7 @@ Reply: bus:inject to <sender>
 | `INSTANCE`, `INSTANCE_STATUS` | Only with `TRUST=wan-verified`. `INSTANCE` is `<hostname>~<first 8 characters of the instance id>`: the hostname is the one the sending install claims (shown as `?` unless it is 1–48 characters of `a-z`, `0-9`, `.` and `-`); the id is the one its certificate proved. `INSTANCE_STATUS` is `approved`, `new` or `revoked`; see [WAN signing](#wan-signing). |
 | `SIG` | Only on messages carrying a muxreview signature: `verified` or `invalid`. |
 | `ESCALATE` | Only when `TIER=sensitive`: `required` or `none`. |
-| `MSGID` | The request id: the sender's own message id for a `SendMessage` jekt, a new UUID when none was given, or the cloud's injection id for a WAN message. |
+| `MSGID` | The request id: the sender's own message id for a `Message` `send` jekt, a new UUID when none was given, or the cloud's injection id for a WAN message. |
 | `PRIORITY` | The request's priority, `normal` by default. |
 | `TS` | Unix seconds. |
 
@@ -159,7 +159,7 @@ The marker is instruction text for the receiving agent. `ESCALATE=required` does
 
 ## Signing keys
 
-`agentmux-mcp` signs every `SendMessage` with each key it has: the HMAC, LAN and cross-channel signatures. A WAN signature is made by the sending AgentMux server itself (see [WAN signing](#wan-signing)). The receiving server checks the one that fits the tier. The verification code is in `crates/common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
+`agentmux-mcp` signs every message an agent sends with `Message` with each key it has: the HMAC, LAN and cross-channel signatures. A WAN signature is made by the sending AgentMux server itself (see [WAN signing](#wan-signing)). The receiving server checks the one that fits the tier. The verification code is in `crates/common/src/jekt_sign.rs`. The HMAC and LAN key tables are in the instance's `objects.db`; WAN keys are in the channel's `wan.db` (see [WAN signing](#wan-signing)).
 
 | Key | Scheme | Minted | Verified when | Lifetime |
 |---|---|---|---|---|
@@ -261,6 +261,6 @@ Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`
 - `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_sign_at_origin`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/wan_publish.rs`, `crates/srv/src/backend/storage/wan_identity.rs` — WAN signing
 - `crates/srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`
-- `crates/mcp/src/main.rs` — `sign_outgoing_jekt`, `SendMessage`
+- `crates/mcp/src/identity.rs` — `sign_outgoing_jekt`; `crates/mcp/src/tools/fleet.rs` — the `Message` `send` handler
 
 **Related**: [Interagent communication](/internals/interagent-comms/), [Trust model](/security/trust-model/), [Network exposure](/security/network-exposure/).

@@ -39,7 +39,7 @@ The key grants the same local API the AgentMux UI uses. With it, a process can, 
 - send messages into any agent's conversation, stop agents, and close panes;
 - change settings.
 
-A few things need more than the auth key. The browser-password broker, memory-folder adoption and host registration require the host-registration secret. UI automation of a pane (`UIScreenshot`, `UIClick`, `UIQuery`, the `Browser*` tools) requires that pane's agent signing key. `SearchHistory` searches only the history of the agent whose identity token the request carries (see the next section).
+A few things need more than the auth key. The browser-password broker, memory-folder adoption and host registration require the host-registration secret. UI automation of a pane (`UI` `screenshot`, `click` and `query`, and the `Browser` tool) requires that pane's agent signing key. `Agents` `search_history` searches only the history of the agent whose identity token the request carries (see the next section).
 
 **Implication:** anything you run inside AgentMux (an agent, a tool call, a package install script, a command you paste into a terminal pane) can control AgentMux as fully as you can, and through it act as you. The MCP tool list shows what an agent is *offered*, not a limit on what it can do.
 
@@ -54,7 +54,7 @@ A [container agent](/first-agent/#host-and-container-agents)'s `AGENTMUX_AUTH_KE
 - messaging: sending a jekt, looking up agents, listing agent names, discovery;
 - the work queue;
 - its own identity, and its own Personal Memory; Global Memory is read-only;
-- ending its own session (`QuitSelf`, `ClosePane`) and the shutdown status those use.
+- ending its own session (`Stop` `self`, `Stop` `pane`) and the shutdown status those use.
 
 Shells and PTYs on the host, host files, the editor, attachments by path, opening panes or agents, UI automation, cron, `/ws` and the RPC service are all refused. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
 
@@ -67,7 +67,7 @@ An agent created from a definition has a UID (its row id). At each spawn, AgentM
 
 A quick-launch pane that has no definition gets neither. The server always overwrites or removes both at spawn, so a stale value from a reused pane can't carry over.
 
-The agent's MCP server sends the token as `X-Agent-Token`. The server then **attributes** the request to that UID in audit records, the work queue and cron (`crates/srv/src/server/caller.rs`). This is attribution, not authorization. A request with no token, or an unknown one, is still accepted; it is just unattributed. The exception is `SearchHistory` (`/agentmux/reactive/history/search`), which searches the history of the token's own agent and refuses a request without a token (`crates/srv/src/server/reactive.rs`). A token is only honored on requests that also carry the full auth key, never on `lan_key` requests. The agent's child processes inherit the token.
+The agent's MCP server sends the token as `X-Agent-Token`. The server then **attributes** the request to that UID in audit records, the work queue and cron (`crates/srv/src/server/caller.rs`). This is attribution, not authorization. A request with no token, or an unknown one, is still accepted; it is just unattributed. The exception is `Agents` `search_history` (`/agentmux/reactive/history/search`), which searches the history of the token's own agent and refuses a request without a token (`crates/srv/src/server/reactive.rs`). A token is only honored on requests that also carry the full auth key, never on `lan_key` requests. The agent's child processes inherit the token.
 
 **Name resolution refuses to guess.** Two agents can hold the same name. A message, lookup or unregister addressed to a name that two or more live agents hold is refused with the list of candidates (UID, pane, name), so the caller can retry by UID (`crates/srv/src/backend/reactive/handler.rs`). Before delivering, the server also checks the target pane's own identity and rejects a mismatch.
 
@@ -89,14 +89,14 @@ These MCP tools act beyond the calling agent's own pane:
 
 | Tool | Scope | Guard |
 |---|---|---|
-| `ClosePane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted, but another agent's pane closes only after a 15-second window in which you can keep it (a banner in the pane and an OS notification). |
-| `FleetBulkStop` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get the same 15-second window. |
-| `CaptureWindow` | Any window owned by your OS user: other AgentMux instances, and **other applications such as your browser or password manager** | Windows owned by other OS users are refused. Every call is appended to a local audit log, `capture-window-audit.log`. |
-| `DiscoverWindows` | Lists AgentMux windows; with `include_foreign`, other applications' windows and titles too | Audited the same way |
-| `SendMessage` | Any agent's conversation | Sender identity is labelled; see [Reactive event bus](/security/reactive-event-bus/) |
-| `GetAgentTranscript` | Any agent's live transcript on this machine | The auth key only |
+| `Stop` `pane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted, but another agent's pane closes only after a 15-second window in which you can keep it (a banner in the pane and an OS notification). |
+| `Stop` `agents` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get the same 15-second window. |
+| `UI` `window` | Any window owned by your OS user: other AgentMux instances, and **other applications such as your browser or password manager** | Windows owned by other OS users are refused. Every call is appended to a local audit log, `capture-window-audit.log`. |
+| `UI` `windows` | Lists AgentMux windows; with `include_foreign`, other applications' windows and titles too | Audited the same way |
+| `Message` `send` | Any agent's conversation | Sender identity is labelled; see [Reactive event bus](/security/reactive-event-bus/) |
+| `Agents` `transcript` | Any agent's live transcript on this machine | The auth key only |
 
-`UIScreenshot`, `UIClick`, `UIQuery` and the `Browser*` tools act only on the caller's own pane. The server derives that pane from the caller's signature and never takes a pane id from the request. The same holds for `QuitSelf` and for `ClosePane` with no block id, which end the caller's own session. `QuitSelf` skips the 15-second window only when the user's own message started the current turn and asked for the quit; `ClosePane` with no block id always waits for it (`crates/srv/src/server/app_api/pane.rs`).
+`UI` `screenshot`, `click` and `query` and the `Browser` tool act on the caller's own pane, or on a browser pane the caller opened itself (`Browser` `open`, then that pane's id as `pane`). The server takes the caller from its signature and drives a pane only if that caller opened it: the record of who opened which pane is written only after checking the opener's signed identity, and ends when the user takes the pane over or closes it (`crates/srv/src/server/browser_owner.rs`). The caller's own pane needs no id. `Stop` `self` likewise acts only on the caller, which ends the caller's own session. It skips the 15-second window only when the user's own message started the current turn and asked for the quit (`crates/srv/src/server/app_api/pane.rs`).
 
 The 15-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
 

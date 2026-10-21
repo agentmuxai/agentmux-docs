@@ -59,7 +59,7 @@ Every change to Global Memory is also written to a Global Memory record that kee
 
 On an isolated channel, the Global section shows a banner when another scope has entries this channel doesn't: "This channel keeps its own Global Memory. … has N entries it doesn't: …". **Bring them here** copies them in (an entry whose name is already taken is renamed); agents get them at their next launch. Nothing is shared without this click (`frontend/app/view/global-bundle/GlobalMemoryImportBanner.tsx`).
 
-Agents can read and change Global Memory with the `GlobalMemoryList`, `GlobalMemoryRead`, `GlobalMemoryWrite`, `GlobalMemoryRemove`, `GlobalMemoryHistory`, `GlobalMemoryDiff` and `GlobalMemoryRevert` MCP tools.
+Agents can read and change Global Memory with the `Memory` MCP tool and `scope: "global"`, using its `list`, `read`, `write`, `remove`, `history`, `diff` and `revert` actions.
 
 ## Personal
 
@@ -85,7 +85,7 @@ The Stash tab, this section, and an agent acting on itself all go through the sa
 | Surface | Commands |
 |---|---|
 | MuxAPI | `memory.list`, `memory.read`, `memory.write` |
-| MCP tools (agent-callable) | `MemoryList`, `MemoryRead`, `MemoryWrite`, `MemoryHistory`, `MemoryDiff`, `MemoryRevert` |
+| MCP tool (agent-callable) | `Memory` (scope `personal`, the default): `list`, `read`, `write`, `history`, `diff`, `revert` |
 
 See [MuxAPI](/internals/muxapi/#memory-native-memory--brain) for the full parameter reference.
 
@@ -95,7 +95,7 @@ A provider keeps an agent's memory files in a folder tied to its account and wor
 
 - **At each launch**, before the provider CLI starts, AgentMux reconciles the agent's memory folder with the record: files missing from the folder are written back, and changes found on disk are recorded (`crates/srv/src/backend/memory_reconcile.rs`). If a file changed on both sides, the disk version wins and the other is kept beside it as a `<name>__conflict_<id>.md` file. This is how memory follows an agent into a new account, working directory or channel.
 - **While the agent runs**, AgentMux watches its memory folder and records a file Claude writes once it has been unchanged for about 2 seconds, with a periodic sweep as a backup (`crates/srv/src/backend/native_memory_drift.rs`).
-- **AgentMux's own writes** — `MemoryWrite`, edits in Memory → Personal, revert — go into the record first, then to the file.
+- **AgentMux's own writes** — `Memory` `write`, edits in Memory → Personal, revert — go into the record first, then to the file.
 - **Shared folders:** two agents can end up with the same memory folder (same account and working directory, for example). AgentMux only syncs the record with a folder it can show belongs to this agent alone; a shared folder is left as it is (`crates/srv/src/backend/memory_dir_claims.rs`). The first time an agent's record meets a folder, a file whose content another agent's record already has is held for you to review instead of being taken over; it shows up in the adoption panel above.
 
 The older `db_agent_native_memory` mirror is still written through on list, read and write, but it is no longer the main mechanism. See `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo for the design.

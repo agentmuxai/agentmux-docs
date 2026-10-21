@@ -92,7 +92,7 @@ An Agent Tool row whose subagent finished, and a Workflow row whose members all 
 
 ### Shell
 
-Background shells the agent started with the `Shell` MCP tool: title, elapsed time and a **Stop** button.
+Background jobs the agent started with the `Terminal` MCP tool (`run` with `background: true`): title, elapsed time and a **Stop** button.
 
 ### Cron
 
@@ -161,9 +161,9 @@ After either action, the result panel shows a summary such as "Broadcast — 3 s
 
 Agents can do the same through MuxAPI (`crates/mcp/src/tool_schemas.rs`; backend `crates/srv/src/server/app_api/fleet.rs`):
 
-- **`FleetList`** lists every agent reachable from the calling agent, with the IDs the other two tools expect.
-- **`FleetBroadcast`** sends one message to many targets. Each message is signed and delivered exactly like `SendMessage`, so it reaches agents on this machine by block ID and agents on LAN peers or the cloud relay by name. Large broadcasts go out in chunks of 10, about a second apart.
-- **`FleetBulkStop`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
+- **`Agents` `list`** lists every agent reachable from the calling agent, with the IDs the other two calls expect.
+- **`Message` `broadcast`** sends one message to many targets. Each message is signed and delivered exactly like `Message` `send`, so it reaches agents on this machine by block ID and agents on LAN peers or the cloud relay by name. Large broadcasts go out in chunks of 10, about a second apart.
+- **`Stop` `agents`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 See [MuxAPI](/internals/muxapi/) for the full tool reference.
 
