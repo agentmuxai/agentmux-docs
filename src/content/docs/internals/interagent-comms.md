@@ -71,12 +71,12 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 |---|---|
 | `Delivered to <to> — injected into their running conversation.` | Delivered on the Host, Channel or LAN tier. A live agent gets it at once, even mid-turn. |
 | `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's AgentMux has it and delivers it as soon as the agent is up. Don't resend it. |
-| `QUEUED for <to> via the cloud relay — NOT yet delivered. …` | MuxBus Cloud accepted it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed. |
+| `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline, and the relay drops it after 30 minutes. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed; the answer adds "No agent of that name has signed in from your account" when the relay says the name isn't one of your agents. |
 | `HELD for <to> (not_running)` | A known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
 | `HELD for <to> (needs_login)` | The agent isn't signed in. This AgentMux keeps the message for up to 24 hours and delivers it once the agent signs in. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
-How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel; while the agent is writing, the message is held and released at its next tool call or turn boundary. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
+How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel at once, even mid-turn; the agent sees it alongside its next tool result, or when its turn ends. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
 
 #### Sending files
 

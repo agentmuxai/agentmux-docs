@@ -609,7 +609,7 @@ This table covers the **curated MCP-tool slice** only. It is not a 1:1 map of th
 | `POST` | `/agentmux/work/:id/heartbeat` | `Tasks` |
 | `POST` | `/agentmux/work/:id/complete` | `Tasks` |
 | `POST` | `/agentmux/work/:id/release` | `Tasks` |
-| `DELETE` | `/agentmux/work/:id` | `Tasks` |
+| `DELETE` | `/agentmux/work/:id` | *(cancel: no agent tool; an operator action, from the Kanban)* |
 
 :::note
 `Schedule` with `every` (a loop for this session) has no route of its own: the loop lives in the `agentmux-mcp` process and each fire is a `POST /agentmux/reactive/inject`. `Schedule` with `cron` (a persistent job) uses `/agentmux/cron` (`POST` to create, `GET` to list, `DELETE /agentmux/cron/:id`, and `PATCH /agentmux/cron/:id` to pause or resume).
