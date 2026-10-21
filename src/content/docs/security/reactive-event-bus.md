@@ -57,7 +57,7 @@ All routes live on the local AgentMux server (`agentmux-srv`). See [Network expo
 | `GET /agentmux/reactive/agent-names` | Full auth key **or** `lan_key` | List the names of this instance's registered agents |
 | `GET /agentmux/agent/holding?uid=<uid>` | Full auth key **or** `lan_key` | Say whether an agent UID is running on this machine: since when, in which channel and version. Used by LAN peers for [one live instance per agent](/security/trust-model/#one-live-instance-per-agent) |
 | `GET /agentmux/reactive/agents`, `/audit`, `/transcript`, `/history/search` | Full auth key | List registrations, read the delivery audit log, read an agent's transcript, search the calling agent's own past conversations (needs its `X-Agent-Token`) |
-| `POST /agentmux/reactive/register`, `/unregister`, `/supervisor-decision` | Full auth key | Registration and Warden Supervisor decisions. `register` is refused (409) while the agent is running in another AgentMux instance on this machine |
+| `POST /agentmux/reactive/register`, `/unregister` | Full auth key | Registration. `register` is refused (409) while the agent is running in another AgentMux instance on this machine |
 | `POST /agentmux/agent/release` | Full auth key | Stop this instance's copy of an agent that another instance on this machine is taking over |
 | `GET /agentmux/discovery` | Full auth key | The `DiscoverAgents` view |
 | `/api/bus/*` | Full auth key | Legacy local message-bus API. Nothing in AgentMux calls it; its inject path runs the same signature check and marker |

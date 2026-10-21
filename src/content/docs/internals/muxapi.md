@@ -364,9 +364,9 @@ See [Build a widget](/build-a-widget/) for the package format.
 
 | Tool | What it does |
 |---|---|
-| `WidgetList` | List installed widgets: id, name, version, kind, state, permissions, folder and the views each adds. |
-| `WidgetInstall` | Install a widget package you built (a folder, its `widget.json`, or a `.zip`) and ask the user to approve it. Returns `installed`, `declined`, `pending`, or the validation error. You can't approve it yourself. |
-| `OpenWidget` | Open a view of an installed, approved widget (`ext:<id>/<pane>`) next to the conversation, optionally setting keys of its pane state. |
+| `Widget` `list` | List installed widgets: id, name, version, kind, state, permissions, folder and the views each adds. |
+| `Widget` `install` | Install a widget package you built (a folder, its `widget.json`, or a `.zip`) and ask the user to approve it. Returns `installed`, `declined`, `pending`, or the validation error. You can't approve it yourself. |
+| `Widget` `open` | Open a view of an installed, approved widget (`ext:<id>/<pane>`) next to the conversation, optionally setting keys of its pane state. |
 
 ---
 
@@ -562,6 +562,10 @@ Returns `{ success, error? }`. The message is delivered to the target agent's pa
 | `FleetBulkStop` | Stop many agent panes at once, optionally in stages that abort on a high failure rate. Stopping an agent you don't own waits 15 seconds for its user to keep it. |
 
 ### Muxqueue — the shared work queue
+
+:::note[Tool names on this page]
+Agents now reach the queue through one `Tasks` tool with an `action` (`enqueue`, `claim`, `update`, `ask`, `submit`, `complete`, `release`, `heartbeat`, `list`), which is also what the [Kanban](/kanban/) shows. The `Work*` names below are the earlier one-tool-per-action names; the behavior they describe (leases, attempts, targets) is the same. Other sections of this page still use earlier names too, and are being updated.
+:::
 
 `SendMessage` is **push, addressed, immediate**: it names a recipient and delivers now. Muxqueue is **pull and deferred** — work is enqueued, and an agent takes it when it asks, rather than being handed it.
 
