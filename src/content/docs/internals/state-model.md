@@ -30,7 +30,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:435-441
+// layoutModel.ts:436-442
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -65,14 +65,14 @@ model.focusedNodeId (getter)    ← returns focusedNodeIdStack[0]
 model.focusedNode (memo)        ← reactive accessor → LayoutNode
 ```
 
-`focusedNodeIdStack` (`layoutModel.ts:289,555`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
+`focusedNodeIdStack` (`layoutModel.ts:278,542`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
 
 The getter `focusedNodeId` (`layoutModel.ts:738-740`) simply returns `this.focusedNodeIdStack[0]`.
 
 The reactive memo `focusedNode` (`layoutModel.ts:531-541`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:530-540
+// layoutModel.ts:531-541
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -615,10 +615,10 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:436` | line 435 |
-| focusedNodeId getter | `layoutModel.ts:738` | line 737 |
-| focusedNode memo | `layoutModel.ts:531` | line 530 |
-| FocusNode reducer arm | `layoutModel.ts:635` | line 634 |
+| localTreeStateAtom init | `layoutModel.ts:436` | line 436 |
+| focusedNodeId getter | `layoutModel.ts:738` | line 738 |
+| focusedNode memo | `layoutModel.ts:531` | line 531 |
+| FocusNode reducer arm | `layoutModel.ts:635` | line 635 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
 | Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts:76` | `frontend/layout/lib/layoutIntentActions.ts` |
