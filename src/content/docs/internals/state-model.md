@@ -30,7 +30,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:450-456
+// layoutModel.ts:435-441
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -72,7 +72,7 @@ The getter `focusedNodeId` (`layoutModel.ts:737-739`) simply returns `this.focus
 The reactive memo `focusedNode` (`layoutModel.ts:530-540`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:545-555
+// layoutModel.ts:530-540
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -101,7 +101,7 @@ User click / keyboard nav
   → NodeModel.isFocused() returns true for the new node
 ```
 
-`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:690-691`) and calls `persistToBackend()`.
+`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline and, when this page was written, called `persistToBackend()` (since removed; see Persistence above).
 
 ### 1.5 validateFocusedNode — Bootstrap and Stack Reconciliation
 
@@ -344,7 +344,7 @@ Priority 3 (lowest / fallback): theme accent
 The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1185-1194`):
 
 ```typescript
-// blockframe.tsx:1213-1222
+// blockframe.tsx:1185-1194
 const blockAgentColor = createMemo(() => {
     if (!props.preview && paneTabCapability(blockData()?.meta?.view, "hueBorder")) {
         const isLightTheme = isLightThemeActive();
@@ -510,7 +510,7 @@ Blocks are mutated via `RpcApi.SetMetaCommand(TabRpcClient, { oref, meta })`.
 - `leaforder` — ordered leaf list
 - `pendingbackendactions` — queued backend→frontend mutations
 
-Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focused_node_changed` in `persist_subscriber.rs:754`) can write `focusednodeid`. This is the SRV-02 dual-path conflict.
+Both the frontend (via `persistToBackend`, since removed) and the srv reducer (via `apply_focused_node_changed` in `persist_subscriber.rs:639`) can write `focusednodeid`. This is the SRV-02 dual-path conflict.
 
 ---
 
@@ -521,7 +521,7 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 `LayoutState` is persisted via **two conflicting paths** that are not coordinated:
 
 **Path A — Frontend reducer path** (removed since; formerly `persistToBackend` in `layoutPersistence.ts`):
-- `LayoutModel.persistToBackend()` (debounced 100 ms)
+- `LayoutModel.persistToBackend()` (debounced 100 ms; since removed)
 - Writes `rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions` onto the MOS atom
 - Calls `MOS.setObjectValue(muxObj, true)` → `ObjectService.UpdateObject` → srv wcore direct
 
@@ -536,7 +536,7 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 User clicks pane
   → LayoutModel.treeReducer(FocusNode)
   → localTreeStateAtom updated (frontend)
-  → persistToBackend() debounced 100ms
+  → persistToBackend() debounced 100ms (since removed)
     → Path A writes full LayoutState to srv (including focusednodeid)
 
   Meanwhile:
@@ -549,7 +549,7 @@ User clicks pane
 **Status per `MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`:**
 - Phase E.4.B Phase 6 (persist subscriber arms consuming `Event::Layout*`) is **open**.
 - Phase E.4.B Phase 7 (migrate legacy `rootnode` writers off wcore-direct) is **open**.
-- The comment in `persist_subscriber.rs:751-753` confirms: "Other `LayoutState` fields stay on their existing wcore-direct path until Option B lands."
+- The comment in `persist_subscriber.rs:636-638` confirms: "Other `LayoutState` fields stay on their existing wcore-direct path until Option B lands."
 
 ### 6.3 Impact
 
@@ -608,7 +608,7 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 │    • Workspace, Window, Agent, Identity, …                                 │
 │                                                                             │
 │  LayoutState writes: two paths (SRV-02 — see §6)                          │
-│    Path A: LayoutModel.persistToBackend() (100ms debounce, full write)     │
+│    Path A (removed): LayoutModel.persistToBackend() (100ms, full write)    │
 │    Path B: srv persist_subscriber apply_focused_node_changed (focusednodeid only, │
 │             pending Phase E.4.B Phase 6 migration)                         │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -619,9 +619,9 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:435` | line 450 |
-| focusedNodeId getter | `layoutModel.ts:737` | line 777 |
-| focusedNode memo | `layoutModel.ts:530` | line 545 |
+| localTreeStateAtom init | `layoutModel.ts:435` | line 435 |
+| focusedNodeId getter | `layoutModel.ts:737` | line 737 |
+| focusedNode memo | `layoutModel.ts:530` | line 530 |
 | FocusNode reducer arm | `layoutModel.ts:634` | line 634 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
@@ -635,7 +635,7 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | blockAgentColor memo | `blockframe.tsx:1185` | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `autotitle.ts:170` | `frontend/app/block/autotitle.ts` |
 | block-focused CSS (border) | `block.scss:271` | `frontend/app/block/block.scss` |
-| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:747` | `crates/srv/src/persist_subscriber.rs` |
+| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:632` | `crates/srv/src/persist_subscriber.rs` |
 | Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
 | Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7` | `docs/specs/` |
 | Border fix plan | `pane-highlight-fix-plan.md` | `docs/specs/` |
