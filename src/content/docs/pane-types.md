@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Kanban**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Vault, Media, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes)). Kanban and Vault open sections of the Warden pane, not panes of their own; see [Sections](/widgets/#sections) to give any section a button. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Kanban**, **Memory**, **Hangar**, **Connectors**, **Terminal**, **Editor**, **Browser**, **Messengers**, **Sysinfo** and **Help**, in that order; Drone, Warden, Vault, Toolchain, Tower and Settings are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes), and Media is now part of the [Editor](#media)). Kanban and Vault open sections of the Warden pane, not panes of their own; see [Sections](/widgets/#sections) to give any section a button. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts:190-193`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -37,8 +37,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
 | **Hangar** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Hangar](#hangar) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). Formerly Knowledge |
-| **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts) — see [Editor](#editor) |
-| **Media** | image (varies) | `media` | Image/video viewer pointed at a file or a watched directory, updating live as new files land — see [Media](#media) |
+| **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
 | **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
@@ -61,6 +60,7 @@ These views exist in the codebase but are **not** opened directly from the widge
 | **MCP Servers** | Per-agent: **Stash** icon → **MCP Servers** tab. App-wide: **Connectors** → **MCP servers**. |
 | **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Memory** → **Skills**. |
 | **Settings** | Hamburger menu (≡) in the top tab bar → Settings. Opens as a widget-bar pane view with ten tabs (Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Advanced); see [Settings reference](/settings/#the-settings-tabs) — no longer just opens `settings.json` in an external editor. |
+| **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx:16`) — see [Media](#media). |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
 The **Stash** icon (`toolbox`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Subsections](#subsections) below.
@@ -209,7 +209,7 @@ Three small square buttons at the top of the tree, each with an **instant toolti
 
 A path-input affordance lives at the bottom of the tree column when no file is open — handy when an LLM hands you an absolute path and you don't want to navigate the tree to find it. Once a file is open, the input is hidden to give the tree more vertical space.
 
-You can also drop text files from your file manager onto the editor pane: each opens in its own tab (`frontend/app/view/editor/editor-drop.ts`). See [Dropping files onto panes](#dropping-files-onto-panes).
+You can also drop files from your file manager onto the editor pane: each opens in its own tab, in the viewer that fits it (`frontend/app/view/editor/editor-drop.ts`). See [Dropping files onto panes](#dropping-files-onto-panes).
 
 ### Encoding detection
 
@@ -284,14 +284,14 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 
 ### Document tabs
 
-The Editor and Media panes each keep their open files as **document tabs** in the pane header, with the same tab bar, keys and saving in both. The **+** at the end opens a new, empty tab.
+The Editor keeps its open files, text or [media](#media), as **document tabs** in the pane header. The **+** at the end opens a new, empty tab.
 
 - **Drag a tab** along the bar to reorder it.
-- **Drop it on another pane of the same kind** to move it there. An Editor tab keeps its unsaved changes and undo history.
+- **Drop it on another Editor pane** to move it there. It keeps its unsaved changes and undo history.
 - **Drop it near the edge of any pane** to open it in a new pane on that side.
 - **Right-click a tab** and choose **Move to New Pane** to open it in a new pane to the right of its own.
 
-A new pane made this way is an empty Editor (on the same connection) or Media pane, holding just that tab. A tab that is being saved stays where it is.
+A new pane made this way is an Editor on the same connection, holding just that tab. A tab that is being saved stays where it is.
 
 ## Hangar
 
@@ -311,22 +311,24 @@ Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
 
 ## Media
 
-The Media pane is a live-updating image/video viewer for files an agent (or you) produce on disk — the typical case is watching the output of a local generation pipeline (e.g. a ComfyUI-style image/video workflow) land without leaving AgentMux to open a file explorer.
+There is no separate Media pane any more. Images, audio and video open in the [Editor](#editor), as tabs like any other file. The Editor picks a viewer for each file from its content, and from its extension only where the content leaves it open (`frontend/app/view/editor/viewers/viewer-choice.ts`). PDFs get a PDF viewer, and other binary files a card with the file's details.
 
-![The Media widget when it first opens](../../assets/screenshots/widgets/widget-media-small.png)
+| Viewer | Files | What it does |
+|---|---|---|
+| **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
+| **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls. Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
 
-Point it at either:
+A viewer reloads when its file changes on disk. To open one of these files, open it in the Editor as you would any file, or drop it on an Editor pane (see [Dropping files onto panes](#dropping-files-onto-panes)).
 
-- **A single file** — renders that image or video and stays on it.
-- **A directory** — watches it and shows the most recently modified matching file, updating automatically (no manual reload) whenever a new or changed file appears. There's no gallery/grid of every file in the directory yet — it always shows one file at a time.
+### Following a folder
 
-To point it at a file yourself, drop one image, video or audio file onto the pane from your file manager (`frontend/app/view/editor/editor-drop.ts`: the Media pane is now the Editor's image, video and audio viewers). See [Dropping files onto panes](#dropping-files-onto-panes).
+The Media pane's job was watching a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), and showing each new file as it lands. The Editor does this per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
 
-The pane watches the filesystem via the same `notify`-crate mechanism the Editor pane's live-reload uses, generalized from "one open file" to "a whole directory." Supported extensions include common image formats (png, jpg, webp, gif) and video (webm, mp4 — though H.264/AAC `.mp4` playback depends on your build's Chromium codec support; webm typically plays more reliably).
+A saved Media pane opens as an Editor: each of its files becomes a tab that follows its folder (`frontend/app/view/editor/media-migration.ts`).
 
 ### Opening it programmatically
 
-Agents use the `Pane` MCP tool (action `open`, view `media`) to show a specific file next to the conversation (optionally as a split or a floating pane) without the human having to browse for it manually. It opens in the Editor, whose tab then follows newer files in the same folder. Useful for "here's the image/video I just generated" moments mid-turn.
+Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs:14-18`, `crates/srv/src/server/app_api/pane.rs:1072-1085`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
 
 ## Agent
 
@@ -655,12 +657,12 @@ Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) s
 |---|---|
 | **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/first-agent/#host-and-container-agents), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
 | **Terminal** | Copies the files into the terminal's working directory. It doesn't type their paths. |
-| **Media** | Shows the file. Takes exactly one image, video or audio file (png, jpg, jpeg, gif, webp, webm, mp4, mov, wav); the pane then watches that file's folder like any other media pane. |
-| **Editor** | Opens each text file in its own tab. Images, PDFs, Office documents, archives, audio and video are refused. |
+| **Editor** | Opens each file in its own tab, in the viewer that fits it: text, image, PDF, audio and video, or a card with the file's details (see [Media](#media)). An Editor on an SSH connection takes no drops: the files are on this computer, not on that host (`frontend/app/view/editor/editor-model.ts:519-538`). |
+| **Hangar** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Hangar pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx:175-207`). Files with no path on disk can't be copied there. |
 
 Copies land directly in the pane's working folder (`crates/common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
 
-If the operating system doesn't give AgentMux a dropped file's path, the file's contents are used instead: they're copied into the working folder, attached, or opened as an untitled editor tab. A media pane shows such a file but can't watch its folder.
+If the operating system doesn't give AgentMux a dropped file's path, the file's contents are used instead: they're copied into the working folder or attached. The Editor opens a text file as an untitled tab and shows anything else from its bytes, but such a tab can't follow its folder.
 
 `dnd:enabled` turns off drops onto agent and terminal panes; see the [file drop settings](/settings/#file-drop-and-attachment-settings).
 

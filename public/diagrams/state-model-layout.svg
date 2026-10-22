@@ -69,13 +69,13 @@
   <text class="s" x="365" y="213" text-anchor="middle">[0] == current</text>
   <text class="s" x="365" y="229" text-anchor="middle">focus</text>
 
-  <!-- Child 4: waveObjectAtom (steel-blue) -->
+  <!-- Child 4: muxObjectAtom (steel-blue) -->
   <rect class="bs" x="445" y="140" width="130" height="120" rx="7"/>
-  <text class="t" x="510" y="163" text-anchor="middle" style="font-size:11px">waveObjectAtom</text>
-  <text class="s" x="510" y="181" text-anchor="middle">WritableWaveObject</text>
-  <text class="s" x="510" y="196" text-anchor="middle">Atom&lt;LayoutState&gt;</text>
-  <text class="s" x="510" y="214" text-anchor="middle">persistToBackend()</text>
-  <text class="s" x="510" y="229" text-anchor="middle">100ms debounce</text>
+  <text class="t" x="510" y="163" text-anchor="middle" style="font-size:11px">muxObjectAtom</text>
+  <text class="s" x="510" y="181" text-anchor="middle">() =&gt; LayoutState</text>
+  <text class="s" x="510" y="196" text-anchor="middle">read-only</text>
+  <text class="s" x="510" y="214" text-anchor="middle">the row srv stores</text>
+  <text class="s" x="510" y="229" text-anchor="middle">(srv writes it)</text>
 
   <!-- Child 5: nodeModels (steel-blue) -->
   <rect class="bs" x="590" y="140" width="145" height="140" rx="7"/>
@@ -95,6 +95,6 @@
   <text class="s" x="825" y="217" text-anchor="middle">→ localTreeStateAtom</text>
   <text class="s" x="825" y="232" text-anchor="middle">     ._set()</text>
   <text class="s" x="825" y="248" text-anchor="middle">  triggers fan-out</text>
-  <text class="s" x="825" y="266" text-anchor="middle">→ persistToBackend()</text>
-  <text class="s" x="825" y="281" text-anchor="middle">  WOS + backend push</text>
+  <text class="s" x="825" y="266" text-anchor="middle">→ layoutOutbox</text>
+  <text class="s" x="825" y="281" text-anchor="middle">  intent sent to srv</text>
 </svg>

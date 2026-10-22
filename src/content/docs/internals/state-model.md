@@ -14,7 +14,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 3. [Reducer-Stack Initiative — Discussion #707](#3-reducer-stack-initiative)
 4. [Focus / Selection Visual Highlight — 3-Source Color Resolution](#4-focus--selection-visual-highlight)
 5. [MuxObject Store (MOS) — Block and Tab Persistence](#5-muxobject-store-mos)
-6. [SRV-02 Finding — Dual Persistence Paths for LayoutState](#6-srv-02-finding--dual-persistence-paths-for-layoutstate)
+6. [SRV-02 Finding — One Writer for LayoutState](#6-srv-02-finding--one-writer-for-layoutstate)
 7. [Boundary Summary](#7-boundary-summary)
 
 ---
@@ -54,7 +54,7 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 
 **Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:610`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:693`).
 
-**Persistence:** *(changed since this page was written; the sections below that describe `persistToBackend` are out of date.)* The frontend no longer writes the tree back itself: `persistToBackend()` was removed, and layout changes go to srv as layout commands (`queueLayoutCommand`, `frontend/layout/lib/layoutIntents.ts`), which srv's reducer applies and persists.
+**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`layoutModel.ts:627-633`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -96,12 +96,13 @@ User click / keyboard nav
   → model.treeReducer({ type: FocusNode, nodeId })
   → focusNode(this.treeState, action)  layoutTree.ts (sets treeState.focusedNodeId)
   → localTreeStateAtom._set(...)       reactive update fans out
+  → flushLayoutOutbox(model)           layoutIntents.ts (a "view" intent to srv)
   → focusManager.requestNodeFocus()    (only after state has committed)
   → focusedNode memo re-evaluates
   → NodeModel.isFocused() returns true for the new node
 ```
 
-`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline and, when this page was written, called `persistToBackend()` (since removed; see Persistence above).
+`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:682-692`). Like every tree edit it is queued for srv, as a `view` intent: no tree change, just the focused and magnified node (`frontend/layout/lib/layoutIntentActions.ts:128-130`).
 
 ### 1.5 validateFocusedNode — Bootstrap and Stack Reconciliation
 
@@ -142,7 +143,7 @@ Leaf nodes have `data.blockId` set and no `children`. Branch nodes have `childre
 
 ### 1.8 Layout Tree
 
-<img src="/diagrams/state-model-layout.svg" alt="LayoutModel (purple) owns six children: localTreeStateAtom (steel-blue, holds focusedNodeId/magnifiedNodeId/rootNode/leafOrder), treeState (gray, mutable scratch), focusedNodeIdStack (gray), waveObjectAtom (steel-blue, persists with 100ms debounce), nodeModels (steel-blue, per-node isFocused/isMagnified), and treeReducer (purple, mutates state and triggers fan-out)." style="max-width:100%" />
+<img src="/diagrams/state-model-layout.svg" alt="LayoutModel (purple) owns six children: localTreeStateAtom (steel-blue, holds focusedNodeId/magnifiedNodeId/rootNode/leafOrder), treeState (gray, mutable scratch), focusedNodeIdStack (gray), muxObjectAtom (steel-blue, a read-only view of the layout row srv stores), nodeModels (steel-blue, per-node isFocused/isMagnified), and treeReducer (purple, mutates state, triggers fan-out and queues a layout intent for srv)." style="max-width:100%" />
 
 ---
 
@@ -304,17 +305,17 @@ This slice (Slice #11, agent-pane-layout) unifies three previously uncoordinated
 
 The existing `agent-pane-state` reducer (Slice #4) and `agent-document` reducer (Slice #1) are **fully live and wired** with all turn-phase PRs A–G merged. The "dormant" label applies only to the **agent-pane-layout** reducer (Slice #11).
 
-### 3.4 SRV-Side Layout Reducer — Phases 5–7 Open
+### 3.4 SRV-Side Layout Reducer — Phases 5–7
 
-On the srv side, `E.4.B` layout reducer phases 5–7 are open per the master status (`MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`):
+The master status (`MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`) still lists `E.4.B` layout phases 6 and 7 as open. That document is older than the work; at the pinned commit all three phases are in the code:
 
-| Phase | What | Status |
+| Phase | What | Status at the pin |
 |---|---|---|
-| 5 | Reducer arms calling pure helpers | ✅ shipped (§0 code-verified 2026-05-29) |
-| 6 | Persist subscriber arms for layout events | ❌ open |
-| 7 | Migrate legacy `rootnode` writers off wcore-direct | ❌ open |
+| 5 | Reducer arms calling pure helpers | ✅ shipped, including `LayoutApplyIntent` (`crates/srv/src/reducer/layout/intent.rs:26`) |
+| 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv/src/persist_subscriber.rs:213-258`) |
+| 7 | Migrate legacy `rootnode` writers off wcore-direct | ✅ for every edit a window makes; srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs:54-61`). One direct write is left: the default layout a first launch seeds before the reducer has loaded. |
 
-This is directly related to the SRV-02 finding (see §6 below).
+`specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` records the same, phase by phase. This retired the SRV-02 dual write path (see §6 below).
 
 ---
 
@@ -460,31 +461,29 @@ Cache eviction: `cleanMuxObjectCache()` runs every 30 s and removes entries with
 
 ### 5.3 How LayoutState is Persisted
 
-The `LayoutModel` gets its MOS entry via `getLayoutStateAtomFromTab` (`layoutAtom.ts:13`):
+The `LayoutModel` reads its row through `getLayoutStateAtomFromTab` (`layoutAtom.ts:13-19`), a plain accessor over the MOS entry:
 
 ```typescript
-// layoutAtom.ts:18-22
-const atom = () => {
-    const oref = getOref();  // "layout:<tab.layoutstate>"
-    if (!oref) return undefined;
-    return MOS.getMuxObjectAtom<LayoutState>(oref)();
-};
+// layoutAtom.ts:13-19
+export function getLayoutStateAtomFromTab(tabAccessor: () => Tab): () => LayoutState | undefined {
+    return () => {
+        const tabData = tabAccessor();
+        if (!tabData) return undefined;
+        return MOS.getMuxObjectAtom<LayoutState>(MOS.makeORef("layout", tabData.layoutstate))();
+    };
+}
 ```
 
-The `_set` implementation on this atom calls `MOS.setObjectValue(nextValue, true)` — i.e. it pushes to the server immediately when written.
+It has no setter: the row changes only through srv. A layout edit travels the other way, as a *layout intent* (`frontend/layout/lib/layoutIntents.ts`, `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` §4):
 
-*Removed since:* `persistToBackend` (formerly in `layoutPersistence.ts`) was the debounced write path that copied `treeState` back to the `muxObjectAtom`:
+1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`layoutModel.ts:627-633`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts:76-134`).
+2. **Send in order.** `flushLayoutOutbox` sends the outbox one item at a time (`layoutIntents.ts:51-69`). Each intent goes as `LayoutApplyIntentCommand` (`layout.applyIntent`), with the focused and magnified node as they are when it leaves. A failed send is tried up to three times, and a resend of the same action id is a no-op on srv (`layoutIntents.ts:71-96`). Pane-tab commands (activate, close or move a tab in a pane) go through the same queue with `queueLayoutCommand` (`layoutIntents.ts:41-44`, called by `sendStackCommand`, `layoutPersistence.ts:369-389`).
+3. **srv applies and stores it.** `apply_layout_intent` (`crates/srv/src/server/service/layout_intents.rs:29-72`) dispatches `Command::LayoutApplyIntent` while it holds the reducer lock. The reducer arm (`crates/srv/src/reducer/layout/intent.rs:26-117`) applies the intent to a copy of the tab's tree, normalizes it, takes the focused and magnified node from the request, and emits `LayoutTreeReplaced`, `FocusedNodeChanged` and `MagnifiedNodeChanged` for what changed. `apply_layout_intent` writes those events to SQLite before it lets go of the lock, so rows are written in the order intents are applied. A failed write puts the tab back as the row has it (`layout_intents.rs:60-65`). A refused intent changes nothing and answers `applied: false`.
+4. **Show what srv stored.** When the model is quiet (nothing queued or sending, no drag or resize preview) and the row includes every intent it sent (`layoutVersionFloor`), `reconcileWithStoredLayout` compares the stored tree with the local one. If they differ, srv refused an edit or computed it differently, and the stored tree replaces the local one. Focus stays the frontend's while its pane exists (`layoutIntents.ts:126-155`).
 
-```typescript
-// formerly layoutPersistence.ts (removed)
-muxObj.rootnode = model.treeState.rootNode;
-muxObj.focusednodeid = model.treeState.focusedNodeId;
-muxObj.magnifiednodeid = model.treeState.magnifiedNodeId;
-muxObj.leaforder = model.treeState.leafOrder;
-// pendingbackendactions: the live backend queue minus actions this model already processed
-muxObj.pendingbackendactions = unprocessed?.length ? unprocessed : undefined;
-model.setter(model.muxObjectAtom, muxObj);
-```
+Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `layout_intents.rs:136`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `layoutPersistence.ts:82-113`). The queue keeps the latest 32 actions; a window that missed one shows srv's stored tree anyway (`crates/srv/src/persist_subscriber/layout_queue.rs:8-16`).
+
+*Removed:* `LayoutModel.persistToBackend()` used to copy the whole tree back to the row with a debounced `UpdateObject`. It is gone, and srv now refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs:54-61`).
 
 ### 5.4 How Blocks and Tabs Are Persisted
 
@@ -507,59 +506,55 @@ Blocks are mutated via `RpcApi.SetMetaCommand(TabRpcClient, { oref, meta })`.
 - `rootnode` — serialized layout tree
 - `focusednodeid` — focused node ID
 - `magnifiednodeid` — magnified node ID
-- `leaforder` — ordered leaf list
+- `leaforder` — ordered leaf list. Written only when a layout is seeded; the frontend computes its own and doesn't read this one.
 - `pendingbackendactions` — queued backend→frontend mutations
 
-Both the frontend (via `persistToBackend`, since removed) and the srv reducer (via `apply_focused_node_changed` in `persist_subscriber.rs:639`) can write `focusednodeid`. This is the SRV-02 dual-path conflict.
+Only srv writes these fields; §6 lists which code writes each.
 
 ---
 
-## 6. SRV-02 Finding — Dual Persistence Paths for LayoutState
+## 6. SRV-02 Finding — One Writer for LayoutState
 
-### 6.1 Description
+### 6.1 What It Was
 
-`LayoutState` is persisted via **two conflicting paths** that are not coordinated:
+When this page was first written, `LayoutState` had two writers that didn't coordinate:
 
-**Path A — Frontend reducer path** (removed since; formerly `persistToBackend` in `layoutPersistence.ts`):
-- `LayoutModel.persistToBackend()` (debounced 100 ms; since removed)
-- Writes `rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions` onto the MOS atom
-- Calls `MOS.setObjectValue(muxObj, true)` → `ObjectService.UpdateObject` → srv wcore direct
+- **The frontend**, through `LayoutModel.persistToBackend()`: a debounced (100 ms) write of the whole row (`rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions`) with `ObjectService.UpdateObject`.
+- **srv's persist subscriber**, through `apply_focused_node_changed`, which wrote only `focusednodeid` on `FocusedNodeChanged`.
 
-**Path B — Srv reducer path** (`crates/srv/src/persist_subscriber.rs:632-659`):
-- `apply_focused_node_changed(mstore, tab_id, node_id)` (called by persist subscriber on `Event::Layout::FocusedNodeChanged`)
-- Writes only `focusednodeid` to `LayoutState` in SQLite
-- Bypasses `rootnode` and other fields; scoped to Phase E.4.A (Option A)
+A focus change could reach the row both ways, and a whole-row write could land against a version srv had already bumped.
 
-### 6.2 Conflict Scenario
+### 6.2 One Writer Now
+
+The dual path is gone. `persistToBackend()` no longer exists, srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs:54-61`), and every write to the row comes from srv:
+
+| Writer | Fields | When |
+|---|---|---|
+| `apply_layout_tree_replaced` (`crates/srv/src/persist_subscriber.rs:711-779`) | `rootnode`. Also clears focus or magnify when the tree empties or a delete removed that node, and writes every column when a seeding `LayoutSetTree` carries them | `LayoutTreeReplaced`, `LayoutNodeDeleted` |
+| `apply_focused_node_changed` (`crates/srv/src/persist_subscriber.rs:639-659`) | `focusednodeid` | `FocusedNodeChanged` |
+| `apply_magnified_node_changed` (`crates/srv/src/persist_subscriber.rs:664-684`) | `magnifiednodeid` | `MagnifiedNodeChanged` |
+| `apply_layout_backend_actions_queued` (`crates/srv/src/persist_subscriber/layout_queue.rs:26-56`) | `pendingbackendactions`, appended | `LayoutBackendActionsQueued` |
+| `resync_tab` (`crates/srv/src/persist_subscriber/resync.rs:113-151`) | `rootnode`, focus and magnify, from the reducer's own state | The event bus lagged and dropped events |
+| `write_default_three_pane_layout` (`crates/srv/src/backend/wcore/mod.rs:173-190`) | The whole row | A first launch, before the reducer has loaded |
+
+`apply_focused_node_changed` is still how a focus change reaches `focusednodeid`, but it is now the only way. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it. The function's doc comment (`persist_subscriber.rs:632-638`) still says the other fields "stay on their existing wcore-direct path until Option B lands". That is out of date: the tree arrives on `LayoutTreeReplaced`.
 
 ```
 User clicks pane
   → LayoutModel.treeReducer(FocusNode)
-  → localTreeStateAtom updated (frontend)
-  → persistToBackend() debounced 100ms (since removed)
-    → Path A writes full LayoutState to srv (including focusednodeid)
-
-  Meanwhile:
-  → The same FocusNode action also dispatches through srv reducer (if wired)
-  → srv Event::Layout::FocusedNodeChanged fires
-  → Path B writes focusednodeid to SQLite directly
-    → version conflict if Path A arrives after Path B has already incremented version
+  → localTreeStateAtom updated (frontend, at once)
+  → layout.applyIntent { type: "view", focused_node_id }
+    → srv reducer: tab.focused_node_id = …, emits FocusedNodeChanged
+    → apply_focused_node_changed writes focusednodeid (once, in order)
+    → MOS update reaches the window; nothing to correct
 ```
 
-**Status per `MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`:**
-- Phase E.4.B Phase 6 (persist subscriber arms consuming `Event::Layout*`) is **open**.
-- Phase E.4.B Phase 7 (migrate legacy `rootnode` writers off wcore-direct) is **open**.
-- The comment in `persist_subscriber.rs:636-638` confirms: "Other `LayoutState` fields stay on their existing wcore-direct path until Option B lands."
+Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv/src/persist_subscriber.rs:4-19`, `persist_subscriber.rs:764-771`).
 
-### 6.3 Impact
+### 6.3 What Is Left of the Old Concerns
 
-- **Low-risk for focusednodeid:** Path A and Path B write the same value; the last write wins without data loss. Version deduplication at `mos.ts:358` prevents stale signals.
-- **Medium-risk for rootnode:** `rootnode` is only written by Path A (frontend). Path B never touches it. This means if Path B writes `focusednodeid` and bumps the SQLite version, a concurrent Path A write of `rootnode` may arrive against a stale version number.
-- **Resolution:** shipping Phase E.4.B Phase 6 (persist subscriber arms) will retire Path B for `focusednodeid` and make Path A the sole writer, eliminating the conflict.
-
-### 6.4 Workaround in Place
-
-The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue.value.version >= update.obj.version) return`) prevents a stale backend push from overwriting a newer local value. The srv `persist_subscriber`'s idempotency (INSERT OR REPLACE keyed on oid+version) prevents double-write corruption. The dual-path is operational but architecturally unclean.
+- **Version races:** gone with the second writer. The frontend still ignores an update older than the value it holds (`mos.ts:358`), and compares its tree with the stored one only once the row's version includes every intent it sent (`layoutVersionFloor`, `layoutIntents.ts:126-129`).
+- **Two tree implementations:** the frontend predicts each edit with its own tree functions, and srv computes it with its Rust port. When they disagree, srv's tree wins at the next quiet moment (§5.3, step 4), and the console logs "the local layout differs from srv's stored one" (`layoutIntents.ts:141`).
 
 ---
 
@@ -578,6 +573,7 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 │  Focus signal path:                                                         │
 │    user click → focusNode() → treeReducer(FocusNode)                       │
 │              → localTreeStateAtom._set()                                    │
+│              → "view" intent to srv (layoutIntents.ts)                      │
 │              → NodeModel.isFocused() memo                                   │
 │              → "block-focused" CSS class                                    │
 │              → CSS border resolution (3-source color cascade)               │
@@ -607,10 +603,10 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 │    • Layout (type: "layout") — layout tree snapshot                        │
 │    • Workspace, Window, Agent, Identity, …                                 │
 │                                                                             │
-│  LayoutState writes: two paths (SRV-02 — see §6)                          │
-│    Path A (removed): LayoutModel.persistToBackend() (100ms, full write)    │
-│    Path B: srv persist_subscriber apply_focused_node_changed (focusednodeid only, │
-│             pending Phase E.4.B Phase 6 migration)                         │
+│  LayoutState writes: srv only (see §6)                                      │
+│    window: treeReducer() → layout intent → layout.applyIntent               │
+│    srv: reducer applies it → events written to SQLite → MOS update          │
+│    window: shows srv's stored tree if it differs from its own               │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -625,7 +621,10 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | FocusNode reducer arm | `layoutModel.ts:634` | line 634 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
-| persistToBackend (removed; replaced by layout commands to srv) | `queueLayoutCommand` | `frontend/layout/lib/layoutIntents.ts` |
+| Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts:76` | `frontend/layout/lib/layoutIntentActions.ts` |
+| Intent outbox, send, compare with srv's tree | `frontend/layout/lib/layoutIntents.ts:51` | `frontend/layout/lib/layoutIntents.ts` |
+| srv: apply and store an intent | `crates/srv/src/server/service/layout_intents.rs:29` | `crates/srv/src/server/service/layout_intents.rs` |
+| srv: `LayoutApplyIntent` reducer arm | `crates/srv/src/reducer/layout/intent.rs:26` | `crates/srv/src/reducer/layout/intent.rs` |
 | MOS getMuxObjectAtom | `mos.ts:253` | `frontend/app/store/mos.ts` |
 | LayoutState atom from tab | `layoutAtom.ts:13` | `frontend/layout/lib/layoutAtom.ts` |
 | AgentPaneState / TurnPhase types | `types.ts` | `frontend/app/store/agent-pane-state/types.ts` |
@@ -635,7 +634,8 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | blockAgentColor memo | `blockframe.tsx:1185` | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `autotitle.ts:170` | `frontend/app/block/autotitle.ts` |
 | block-focused CSS (border) | `block.scss:271` | `frontend/app/block/block.scss` |
-| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:632` | `crates/srv/src/persist_subscriber.rs` |
+| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs:639` | `crates/srv/src/persist_subscriber.rs` |
+| Strong layout authority (design, status) | `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` | `docs/specs/` |
 | Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
 | Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7` | `docs/specs/` |
 | Border fix plan | `pane-highlight-fix-plan.md` | `docs/specs/` |

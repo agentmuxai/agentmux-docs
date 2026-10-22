@@ -33,7 +33,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="context-delivery"></a>**context delivery** — Content an agent is given without you typing it: its memory at a new session, after `/clear` or after a compaction, and Claude Code's conversation summary after a compaction. The agent pane shows each one as a card that lists what was given, one row per item; a summary card also shows a one-line excerpt, and opens to the full text. See [Memory](/memory/) and [Conversation overhead](/internals/conversation-overhead/).
 
-<a id="document-tab"></a>**document tab** — One file inside one [block](#block), shown in a tab strip under the pane header: the Editor's files and the Media pane's files. The innermost of the three kinds of tab, after [window tabs](#window-tab) and [pane tabs](#pane-tab). A document tab is another document in the same pane; Agent, Terminal and Browser panes have none.
+<a id="document-tab"></a>**document tab** — One file inside one [block](#block), shown in a tab strip under the pane header: the Editor's files, including the images, audio and video its viewers show (Media is no longer a pane of its own). The innermost of the three kinds of tab, after [window tabs](#window-tab) and [pane tabs](#pane-tab). A document tab is another document in the same pane; Agent, Terminal and Browser panes have none.
 
 <a id="global-memory"></a>**Global Memory** — Entries composed into every agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …) at launch, as `# [Workspace] <name>` sections, after AgentMux's own Operator Config entries (`# [AgentMux System]`). Managed in [Memory → Global](/memory/#global); agents use the `Memory` MCP tool with `scope: "global"`. Shared by the channels that share your main accounts.
 
@@ -67,7 +67,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="oac"></a>**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
-<a id="pane"></a>**pane** — A UI slot in the workspace layout. A pane holds one or more [pane tabs](#pane-tab). Panes have types: terminal, agent, code editor, browser, media, swarm, system metrics and more (see [Pane Types](/pane-types/)). The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
+<a id="pane"></a>**pane** — A UI slot in the workspace layout. A pane holds one or more [pane tabs](#pane-tab). Panes have types: terminal, agent, editor (which also shows images, audio and video), browser, swarm, system metrics and more (see [Pane Types](/pane-types/)). The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
 
 <a id="pane-tab"></a>**pane tab** — One [block](#block) stacked in a [pane](#pane), shown in the pane header's tab strip: an Agent and a Terminal can share one pane as two pane tabs. The middle of the three kinds of tab, between [window tabs](#window-tab) and [document tabs](#document-tab). A pane tab is a different pane in the same slot. See [Pane tabs](/pane-types/#pane-tabs).
 
