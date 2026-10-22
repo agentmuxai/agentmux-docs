@@ -42,7 +42,7 @@ The Warden is a pane view with its sections as tabs along the top, the same layo
 | **Audit** | `list-check` | Recent jekt deliveries and fleet actions, and agents' uses of your secrets |
 | **History** | `clock-rotate-left` | Every agent's kept conversation history, and where it is kept |
 
-Host, LAN, Internet and Audit stay mounted while the Warden is showing, so switching between them is instant; Host, LAN and Audit each refresh every 5 seconds, including when you aren't looking at them, and Internet is static. Kanban and History load only while they are shown. The Vault section is mounted the first time you show it, so a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Kanban · 2 need you** when tasks need you, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
+Each section is mounted the first time you show it and then stays mounted, so switching back to it is instant. Host, LAN and Audit refresh every 5 seconds, but only while they are shown; Internet is static. Kanban and History load while they are shown. Because the Vault section too is mounted only when you first show it, a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Kanban · 2 need you** when tasks need you, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
 
 ## Kanban section
 
@@ -120,7 +120,7 @@ The Audit section ends with **Secrets**: every use of a [Vault](/vault/) entry b
 
 The History section is the record of what agents did, beside Audit (`frontend/app/view/warden-history/`). **Agents** lists every agent's kept conversation history and opens it; **Storage** shows where it is kept, how much, and for how long. It loads when you first show it.
 
-The Supervisor section is gone. The Supervisor, which keeps agents working until they are done or need you, is now set per agent from its row in [Swarm](/subagent-watcher/).
+The Supervisor section is gone. The Supervisor, which keeps agents working until they are done or need you, is now set per agent from its row in Swarm: see [Supervisor](/subagent-watcher/#supervisor).
 
 ## What the Warden is *not*
 
@@ -138,7 +138,7 @@ The Supervisor section is gone. The Supervisor, which keeps agents working until
 | Agents' kept history (History) | ✅ Live |
 | Soft-deregister an agent | ✅ Live |
 | See LAN peers | ✅ Live (turn on LAN discovery) |
-| Supervisor (keep agents working) | Not in the Warden. Set per agent in Swarm. |
+| Supervisor (keep agents working) | Not in the Warden. Set per agent in [Swarm](/subagent-watcher/#supervisor). |
 | Stop agent processes | Not in the Warden. Use the Swarm fleet toolbar or `Stop` `agents` (an agent's `Stop` `agents` waits for your 15-second override). |
 | Pause host / kill all | ❌ Not built |
 | `governance.json` policy file | ❌ Not built |

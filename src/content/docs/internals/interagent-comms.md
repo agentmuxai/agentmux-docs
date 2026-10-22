@@ -20,7 +20,7 @@ The **MuxBus** is how agents find and message each other: within one AgentMux in
 | **LAN** | Agents on AgentMux instances on the local network | HTTP to the peer's LAN address, using the key the peer advertises | Off. Turn on [LAN discovery](/lan-discovery/) |
 | **WAN** | Agents anywhere | AgentMux's hosted MuxBus Cloud relay | Off. Sign in to MuxBus Cloud |
 
-If none of them takes the message and the target is a known agent of this instance that isn't running, the message is **held** and delivered when that agent starts, for up to 24 hours.
+A message for a known agent of this instance that isn't running is **held** and delivered when that agent starts, for up to 24 hours, before the cloud relay is tried (unless the relay says another install runs it). The steps below give the exact order.
 
 ## How agents use it
 
@@ -72,7 +72,7 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 | `Delivered to <to> — injected into their running conversation.` | Delivered on the Host, Channel or LAN tier. A live agent gets it at once, even mid-turn. |
 | `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's AgentMux has it and delivers it as soon as the agent is up. Don't resend it. |
 | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline, and the relay drops it after 30 minutes. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed; the answer adds "No agent of that name has signed in from your account" when the relay says the name isn't one of your agents. |
-| `HELD for <to> (not_running)` | A known agent of this instance that isn't running, when MuxBus Cloud didn't take the message. This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
+| `HELD for <to> (not_running)` | A known agent of this instance that isn't running (held before the cloud relay is tried). This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
 | `HELD for <to> (needs_login)` | The agent isn't signed in. This AgentMux keeps the message for up to 24 hours and delivers it once the agent signs in. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
@@ -122,15 +122,25 @@ A message between two installs signed in to the same MuxBus Cloud account can ca
 
 ## Message delivery semantics
 
-| Situation | Result |
-|---|---|
-| Target registered in this instance | Delivered in-process |
-| Target in another instance on this machine | Forwarded over loopback, then `Delivered` |
-| Target on a LAN peer, LAN discovery on in both | Forwarded over the LAN, then `Delivered` |
-| Target not running on this machine or the LAN, and you're signed in to MuxBus Cloud | `QUEUED`, even when the target is one of this instance's agents |
-| Target is a known agent of this instance that isn't running, and MuxBus Cloud didn't take it | `HELD` for up to 24 hours (at most 64 per agent and 1,000 per instance) |
-| Two running agents share the target name | Refused, listing the candidates' UIDs |
-| None of the above | `agent not found` |
+The server tries these steps in order and stops at the first that answers (`crates/srv/src/server/reactive.rs`):
+
+| Step | Situation | Result |
+|---|---|---|
+| 1. This instance | Two running agents of this instance share the target name | Refused: `Message delivery failed: <reason>`, listing each one's UID |
+| | Target running in this instance | `Delivered`, in-process |
+| | Target registered in this instance, but its agent is starting up, restarting or stopping | `QUEUED for <to> — their agent is starting up, restarting or stopping` |
+| | Target registered in this instance, but it can't start because it isn't signed in | `HELD for <to> (needs_login)`, delivered once it signs in. No other step is tried. |
+| 2. Same machine | Target running in another instance on this machine: its own channel first, then other channels, newest registration first | Forwarded over loopback; that instance's answer, usually `Delivered` |
+| 3. LAN | Target on a LAN peer, LAN discovery on in both | Forwarded over the LAN, then `Delivered` |
+| 4. Hold | Target is a known agent of this instance that no step above found running, and MuxBus Cloud doesn't say another install of your account runs it (or you aren't signed in, or the relay can't be reached) | `HELD for <to> (not_running)`, delivered when the agent starts here |
+| 5. Cloud relay | Anything else, when you're signed in to MuxBus Cloud: another install of your account runs the target (or the relay can't tell), or this instance doesn't know the name | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)`, including for a name that exists nowhere |
+| 6. Hold | The relay didn't take it, and the target is a known agent of this instance | `HELD for <to> (not_running)` |
+| 7. | None of the above | `Message delivery failed (not_found): agent not found: <to>` |
+
+- A held message is kept for up to 24 hours, at most 64 per agent and 1,000 per instance; past that, the send fails with `hold full`. Only a message sent on this instance is held: not one forwarded from another instance or a LAN peer, and not a periodic cron message.
+- A target that another instance on this machine or a LAN peer reported as running, but that didn't take the message, is not held (steps 4 and 6); it goes to the relay or fails.
+- A message that arrived over MuxBus Cloud is never sent back to the relay.
+- With [files](#sending-files) the order is the same, except that a target whose AgentMux is too old to receive files is refused, and nothing is sent.
 
 Messages are limited to 10,000 bytes after sanitization (longer ones are truncated) and to 10 deliveries per second per instance.
 
