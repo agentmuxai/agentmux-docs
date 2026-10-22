@@ -23,14 +23,14 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 
 ### 1.1 LayoutModel — Class Overview
 
-`LayoutModel` (`frontend/layout/lib/layoutModel.ts:99`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
+`LayoutModel` (`frontend/layout/lib/layoutModel.ts:100`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
 
-**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:417`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
+**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:418`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
 
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:435-441
+// layoutModel.ts:436-442
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -40,7 +40,7 @@ this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
 });
 ```
 
-`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:104`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
+`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:105`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
 
 The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 
@@ -52,9 +52,9 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 | `leafOrder` | `LeafOrderEntry[]?` | Ordered leaf list (top-left to bottom-right) |
 | `pendingBackendActions` | `LayoutActionData[]` | Queued backend-to-frontend layout mutations |
 
-**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:610`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:693`).
+**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:611`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:694`).
 
-**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`layoutModel.ts:627-633`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
+**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`layoutModel.ts:628-634`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -65,14 +65,14 @@ model.focusedNodeId (getter)    ← returns focusedNodeIdStack[0]
 model.focusedNode (memo)        ← reactive accessor → LayoutNode
 ```
 
-`focusedNodeIdStack` (`layoutModel.ts:289,555`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
+`focusedNodeIdStack` (`layoutModel.ts:278,542`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
 
-The getter `focusedNodeId` (`layoutModel.ts:737-739`) simply returns `this.focusedNodeIdStack[0]`.
+The getter `focusedNodeId` (`layoutModel.ts:738-740`) simply returns `this.focusedNodeIdStack[0]`.
 
-The reactive memo `focusedNode` (`layoutModel.ts:530-540`) re-derives from `localTreeStateAtom` on every change:
+The reactive memo `focusedNode` (`layoutModel.ts:531-541`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:530-540
+// layoutModel.ts:531-541
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -102,7 +102,7 @@ User click / keyboard nav
   → NodeModel.isFocused() returns true for the new node
 ```
 
-`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:682-692`). Like every tree edit it is queued for srv, as a `view` intent: no tree change, just the focused and magnified node (`frontend/layout/lib/layoutIntentActions.ts:128-130`).
+`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:683-693`). Like every tree edit it is queued for srv, as a `view` intent: no tree change, just the focused and magnified node (`frontend/layout/lib/layoutIntentActions.ts:128-130`).
 
 ### 1.5 validateFocusedNode — Bootstrap and Stack Reconciliation
 
@@ -420,7 +420,7 @@ Tabs no longer get a color automatically at creation; a user picks one from the 
 | Pink | `#c02b75` |
 | Rose | `#c42742` |
 
-Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:707`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
+Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:724`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
 ### 4.6 The 2026-06-12 Border Fix
 
@@ -476,7 +476,7 @@ export function getLayoutStateAtomFromTab(tabAccessor: () => Tab): () => LayoutS
 
 It has no setter: the row changes only through srv. A layout edit travels the other way, as a *layout intent* (`frontend/layout/lib/layoutIntents.ts`, `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` §4):
 
-1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`layoutModel.ts:627-633`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts:76-134`).
+1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`layoutModel.ts:628-634`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts:76-134`).
 2. **Send in order.** `flushLayoutOutbox` sends the outbox one item at a time (`layoutIntents.ts:51-69`). Each intent goes as `LayoutApplyIntentCommand` (`layout.applyIntent`), with the focused and magnified node as they are when it leaves. A failed send is tried up to three times, and a resend of the same action id is a no-op on srv (`layoutIntents.ts:71-96`). Pane-tab commands (activate, close or move a tab in a pane) go through the same queue with `queueLayoutCommand` (`layoutIntents.ts:41-44`, called by `sendStackCommand`, `layoutPersistence.ts:369-389`).
 3. **srv applies and stores it.** `apply_layout_intent` (`crates/srv/src/server/service/layout_intents.rs:29-72`) dispatches `Command::LayoutApplyIntent` while it holds the reducer lock. The reducer arm (`crates/srv/src/reducer/layout/intent.rs:26-117`) applies the intent to a copy of the tab's tree, normalizes it, takes the focused and magnified node from the request, and emits `LayoutTreeReplaced`, `FocusedNodeChanged` and `MagnifiedNodeChanged` for what changed. `apply_layout_intent` writes those events to SQLite before it lets go of the lock, so rows are written in the order intents are applied. A failed write puts the tab back as the row has it (`layout_intents.rs:60-65`). A refused intent changes nothing and answers `applied: false`.
 4. **Show what srv stored.** When the model is quiet (nothing queued or sending, no drag or resize preview) and the row includes every intent it sent (`layoutVersionFloor`), `reconcileWithStoredLayout` compares the stored tree with the local one. If they differ, srv refused an edit or computed it differently, and the stored tree replaces the local one. Focus stays the frontend's while its pane exists (`layoutIntents.ts:126-155`).
@@ -615,10 +615,10 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:435` | line 435 |
-| focusedNodeId getter | `layoutModel.ts:737` | line 737 |
-| focusedNode memo | `layoutModel.ts:530` | line 530 |
-| FocusNode reducer arm | `layoutModel.ts:634` | line 634 |
+| localTreeStateAtom init | `layoutModel.ts:436` | line 436 |
+| focusedNodeId getter | `layoutModel.ts:738` | line 738 |
+| focusedNode memo | `layoutModel.ts:531` | line 531 |
+| FocusNode reducer arm | `layoutModel.ts:635` | line 635 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
 | Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts:76` | `frontend/layout/lib/layoutIntentActions.ts` |

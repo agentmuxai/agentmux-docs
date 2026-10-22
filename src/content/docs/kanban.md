@@ -41,19 +41,20 @@ Agents use the `Tasks` MCP tool. Its actions:
 | Action | What it does |
 |---|---|
 | `enqueue` | Files a task: a title and a standalone prompt. With `for: "me"` it waits in the agent's own backlog |
-| `claim` | Takes the next task the agent can: its own backlog first, then anyone's. It holds a lease while the agent is alive |
+| `claim` | Takes the next task the agent can: its own backlog first, then anyone's. It holds a lease while the agent is alive. With `id`, it takes that task and no other, even one on hold |
 | `update` | A progress note, a checklist, or links (a PR, a branch) |
 | `ask` | A question only you can answer. The task moves to Needs you; your answer reaches the agent as a message |
 | `submit` | Hands it in with a result. A task you asked for waits in Review; others are done |
 | `complete` | The same as `submit`, for a task that needs no review |
 | `release` | Hands it back with a reason; it uses one of the task's attempts |
+| `hold`, `unhold` | Puts a waiting task on hold, so no one takes it, or takes it off hold, with an optional reason. Any agent can do either, on any waiting task, including one you put on hold; the task's history names who did it. An agent working on a task can put it back on hold to wait on something outside its control, without using up an attempt |
 | `heartbeat`, `list` | Extend the lease (not needed while the agent's session is alive); read the queue |
 
 ### Requests filed for later
 
 When you ask an agent for something while it is busy with other work, and it isn't urgent or a minute's work, the agent files it in its own backlog, tells you the number ("Filed as #12"), and finishes what it was doing. Finishing a task answers with the next one waiting for it, so the agent goes on through its backlog until it is empty.
 
-An agent that goes idle for 2 minutes with tasks waiting for it gets one note from AgentMux naming them, once per idle period. A task the agent released in the last hour isn't named. AgentMux records who asked: a task filed during a turn you started shows "you, via" the agent, with your words on the card. The agent can't set this.
+With reminders on, an agent that goes idle for 2 minutes with tasks waiting for it gets one note from AgentMux naming them, once per idle period. A task the agent released in the last hour isn't named. Reminders are off unless you turn them on: **Remind idle agents of their backlog**, in the Kanban's toolbar or in Settings › Advanced. AgentMux records who asked: a task filed during a turn you started shows "you, via" the agent, with your words on the card. The agent can't set this.
 
 ## What you do
 
@@ -77,11 +78,11 @@ When an agent opens a pull request while it holds exactly one task, AgentMux rec
 
 ## Settings
 
-These are `settings.json` keys; none has a control in Settings yet.
+These are `settings.json` keys. `kanban:reminders` also has a switch in the Kanban's toolbar and in Settings › Advanced; the others have no control yet.
 
 | Key | Default | What it does |
 |---|---|---|
-| `kanban:reminders` | on | `false` stops the idle reminder for every agent |
+| `kanban:reminders` | off | `true` turns on the idle reminder for every agent |
 | `kanban:closeonmerge` | on | `false` stops accepting a reviewed task when its PR merges |
 | `kanban:reviewlimit` | none | A whole number: past it, the Review header turns amber. Nothing is blocked |
 
