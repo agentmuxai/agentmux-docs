@@ -43,6 +43,9 @@ export const aliases = {
     'layoutPersistence.ts': 'frontend/layout/lib/layoutPersistence.ts',
     'layoutAtom.ts': 'frontend/layout/lib/layoutAtom.ts',
     'layoutNodeModels.ts': 'frontend/layout/lib/layoutNodeModels.ts',
+    'layoutIntents.ts': 'frontend/layout/lib/layoutIntents.ts',
+    'layout_intents.rs': 'crates/srv/src/server/service/layout_intents.rs',
+    'persist_subscriber.rs': 'crates/srv/src/persist_subscriber.rs',
     // Agent-pane-state store (state-model page §3)
     'types.ts': 'frontend/app/store/agent-pane-state/types.ts',
     'reducer.ts': 'frontend/app/store/agent-pane-state/reducer.ts',
