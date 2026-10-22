@@ -52,7 +52,7 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 | `leafOrder` | `LeafOrderEntry[]?` | Ordered leaf list (top-left to bottom-right) |
 | `pendingBackendActions` | `LayoutActionData[]` | Queued backend-to-frontend layout mutations |
 
-**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:626`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:733`).
+**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:610`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:693`).
 
 **Persistence:** *(changed since this page was written; the sections below that describe `persistToBackend` are out of date.)* The frontend no longer writes the tree back itself: `persistToBackend()` was removed, and layout changes go to srv as layout commands (`queueLayoutCommand`, `frontend/layout/lib/layoutIntents.ts`), which srv's reducer applies and persists.
 
@@ -194,7 +194,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1329-1384`):
+**Watchdog constants** (`types.ts:1346-1398`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -460,7 +460,7 @@ Cache eviction: `cleanMuxObjectCache()` runs every 30 s and removes entries with
 
 ### 5.3 How LayoutState is Persisted
 
-The `LayoutModel` gets its MOS entry via `getLayoutStateAtomFromTab` (`layoutAtom.ts:11`):
+The `LayoutModel` gets its MOS entry via `getLayoutStateAtomFromTab` (`layoutAtom.ts:13`):
 
 ```typescript
 // layoutAtom.ts:18-22
@@ -622,12 +622,12 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | localTreeStateAtom init | `layoutModel.ts:435` | line 450 |
 | focusedNodeId getter | `layoutModel.ts:737` | line 777 |
 | focusedNode memo | `layoutModel.ts:530` | line 545 |
-| FocusNode reducer arm | `layoutModel.ts:693` | line 693 |
+| FocusNode reducer arm | `layoutModel.ts:634` | line 634 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
 | persistToBackend (removed; replaced by layout commands to srv) | `queueLayoutCommand` | `frontend/layout/lib/layoutIntents.ts` |
 | MOS getMuxObjectAtom | `mos.ts:253` | `frontend/app/store/mos.ts` |
-| LayoutState atom from tab | `layoutAtom.ts:11` | `frontend/layout/lib/layoutAtom.ts` |
+| LayoutState atom from tab | `layoutAtom.ts:13` | `frontend/layout/lib/layoutAtom.ts` |
 | AgentPaneState / TurnPhase types | `types.ts` | `frontend/app/store/agent-pane-state/types.ts` |
 | AgentDocumentState types | `frontend/app/store/agent-document/types.ts` | `frontend/app/store/agent-document/types.ts` |
 | BrowserPaneState types | `frontend/app/store/browser-pane-state/types.ts` | `frontend/app/store/browser-pane-state/types.ts` |

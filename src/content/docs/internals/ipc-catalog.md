@@ -256,7 +256,7 @@ Srv events dispatched as:
 window.__agentmux_srv_event(<JSON Event>)
 ```
 
-Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:943-1738`).
+Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:885-1571`).
 
 ### Purpose
 
