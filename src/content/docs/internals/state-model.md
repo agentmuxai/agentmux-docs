@@ -54,7 +54,7 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:270-276`):
 
 **Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:626`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:733`).
 
-**Persistence:** after every reducer dispatch, `persistToBackend()` is called (debounced 100 ms, `layoutPersistence.ts:452`). It copies `treeState` fields back onto the `muxObjectAtom` (the live MOS entry) and calls `setObjectValue(..., true)` which pushes the mutation to the backend via `ObjectService.UpdateObject`.
+**Persistence:** *(changed since this page was written; the sections below that describe `persistToBackend` are out of date.)* The frontend no longer writes the tree back itself: `persistToBackend()` was removed, and layout changes go to srv as layout commands (`queueLayoutCommand`, `frontend/layout/lib/layoutIntents.ts`), which srv's reducer applies and persists.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -473,10 +473,10 @@ const atom = () => {
 
 The `_set` implementation on this atom calls `MOS.setObjectValue(nextValue, true)` — i.e. it pushes to the server immediately when written.
 
-`persistToBackend` (`layoutPersistence.ts:447-478`) is the debounced write path that copies `treeState` back to the `muxObjectAtom`:
+*Removed since:* `persistToBackend` (formerly in `layoutPersistence.ts`) was the debounced write path that copied `treeState` back to the `muxObjectAtom`:
 
 ```typescript
-// layoutPersistence.ts:457-475
+// formerly layoutPersistence.ts (removed)
 muxObj.rootnode = model.treeState.rootNode;
 muxObj.focusednodeid = model.treeState.focusedNodeId;
 muxObj.magnifiednodeid = model.treeState.magnifiedNodeId;
@@ -520,7 +520,7 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 
 `LayoutState` is persisted via **two conflicting paths** that are not coordinated:
 
-**Path A — Frontend reducer path** (`layoutPersistence.ts:447-478`):
+**Path A — Frontend reducer path** (removed since; formerly `persistToBackend` in `layoutPersistence.ts`):
 - `LayoutModel.persistToBackend()` (debounced 100 ms)
 - Writes `rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions` onto the MOS atom
 - Calls `MOS.setObjectValue(muxObj, true)` → `ObjectService.UpdateObject` → srv wcore direct
@@ -625,7 +625,7 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | FocusNode reducer arm | `layoutModel.ts:693` | line 693 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
-| persistToBackend | `layoutPersistence.ts:447` | `frontend/layout/lib/layoutPersistence.ts` |
+| persistToBackend (removed; replaced by layout commands to srv) | `queueLayoutCommand` | `frontend/layout/lib/layoutIntents.ts` |
 | MOS getMuxObjectAtom | `mos.ts:253` | `frontend/app/store/mos.ts` |
 | LayoutState atom from tab | `layoutAtom.ts:11` | `frontend/layout/lib/layoutAtom.ts` |
 | AgentPaneState / TurnPhase types | `types.ts` | `frontend/app/store/agent-pane-state/types.ts` |
