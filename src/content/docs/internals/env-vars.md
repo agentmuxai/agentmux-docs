@@ -440,7 +440,7 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:457`); sets it on both srv and host |
-| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:604`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
+| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:574`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv actively removes this from its own process environment
@@ -549,7 +549,7 @@ effect on Unix builds.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:608`); `shellexec.rs:352` |
+| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:578`); `shellexec.rs:352` |
 | **Who reads it** | `agentmux-bashwrap` (`bash_wrap.rs:494,499`) to scope WPS publishes to the correct pane; shell integration scripts have access to it in the PTY environment |
 | **Example** | `550e8400-e29b-41d4-a716-446655440001` (block UUID) |
 
@@ -741,7 +741,7 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | RuntimeMode detection | `crates/common/src/runtime_mode.rs` | 73–121 |
 | AGENTMUX_LOCAL_URL set point | `crates/srv/src/bootstrap/network.rs` | 99–102 |
 | AUTH_KEY strip | `crates/srv/src/config.rs` | 144–152 |
-| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 585–604 |
+| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 555–574 |
 | Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` | 166–246 |
 | Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` | whole file |
 | PowerShell integration script | `crates/srv/src/backend/shellintegration/pwsh.ps1` | whole file |
