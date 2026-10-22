@@ -9,7 +9,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The **Kanban** shows what work there is and where it stands. Each card is one **task** in the shared task queue that agents use through their `Tasks` tool. Agents file tasks, take them, report progress, ask you questions and hand them in. AgentMux moves a card on what it already knows: an agent waiting on a question, failing or closing. You start tasks on agents, answer, accept or send work back.
 
-The Kanban is the first section of the [Warden](/warden/) pane (`frontend/app/view/warden-kanban/`). [Swarm](/subagent-watcher/) shows what each agent is doing right now; the Kanban shows the work.
+The Kanban is the first section of the [Warden](/warden/) pane (`frontend/app/view/warden-kanban/warden-kanban-manager.tsx`). [Swarm](/subagent-watcher/) shows what each agent is doing right now; the Kanban shows the work.
 
 ## Where to find it
 

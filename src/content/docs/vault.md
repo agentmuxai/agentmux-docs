@@ -13,7 +13,7 @@ Only you add, change, reveal, delete, import or export entries. No agent tool re
 
 ## Where to find it
 
-The Vault is the **Vault** section of the [Warden](/warden/) pane (`frontend/app/view/vault/`). Open it in any of these ways:
+The Vault is the **Vault** section of the [Warden](/warden/) pane (`frontend/app/view/vault/vault-in-warden.ts`, which hosts the Vault's view in Warden). Open it in any of these ways:
 
 - Click **more** at the end of the widget bar and choose **Vault**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open Vault** in the command palette (`open:vault`).
