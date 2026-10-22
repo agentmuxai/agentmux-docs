@@ -115,7 +115,7 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 
 ### Opening a section
 
-`am.panes.open` passes on only the `meta` a widget may set:
+`am.panes.open` passes on only the `meta` a widget may set (`frontend/app/block/widget-bridge.ts`, `paneMetaForWidget`):
 
 - **One of the widget's own views** (`ext:<id>/<name>`): its `meta` becomes that pane's state, what `am.meta.get()` reads there, with the same key and size checks as `am.meta.set`. No permission needed.
 - **Any other view** (needs `panes`): only a section the pane declares, or for `browser`, an `http`/`https` `url`. Every other key is dropped: a controller, a command, a connection, `vault:request` and anything else. So `panes` opens panes and never runs anything.

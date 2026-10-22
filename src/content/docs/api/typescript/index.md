@@ -10,7 +10,7 @@ Per-module reference for the TypeScript stores, reducers, and command source tha
 - [agent-document-store](./agent-document-store/readme/) — Document model + command/event types for the chat-style agent pane.
 - [agent-pane-state-store](./agent-pane-state-store/readme/) — Pane registry, slot tracking, dispatch + snapshot helpers.
 - [command-source](./command-source/readme/) — Command bus that pane-types subscribe to; source of UI-driven mutations.
-- [launcher-event-reducer](./launcher-event-reducer/readme/) — Reducer over launcher events (process lifecycle, window reality).
+- [launcher-event/reducer](./launcher-event/reducer/readme/) — Reducer over launcher events (process lifecycle, window reality).
 
 ## Cross-references
 

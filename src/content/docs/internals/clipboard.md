@@ -77,7 +77,7 @@ The provider is **activated when the pane has DOM focus**. Multiple panes can be
 
 ## xterm.js terminals
 
-Both terminal consumers — the regular term pane ([`termwrap.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/term/termwrap.ts)) and the install modal terminal ([`AgentInstallModal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/components/AgentInstallModal.tsx)) — wire three things:
+The terminal pane ([`termwrap.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/term/termwrap.ts)) wires three things (the agent install modal's terminal, which wired the same three, has since been removed):
 
 1. **`onSelectionChange`** — read the `term:copyonselect` setting; if true, copy the current xterm selection on every change.
 2. **`attachCustomKeyEventHandler`** — intercept `Ctrl+Shift+C` and write the selection to clipboard. Return `false` to stop xterm from also routing the keystroke as terminal input.

@@ -58,7 +58,7 @@ focused-border colour, pane title, and jekt auto-registration.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:656` on `agent.open`; `agent_config.rs:231` for MCP env injection |
+| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:648` on `agent.open`; `agent_config.rs:231` for MCP env injection |
 | **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs` reads it to decide jekt auto-registration |
 | **Example value** | `AgentX`, `Aria`, `Terminal` |
 | **Lifetime** | Set once at pane spawn; persists for the lifetime of the PTY session |
@@ -145,8 +145,8 @@ auto-registration path — they are never written by AgentMux.
 ## Group 2 — Path Variables
 
 All path variables are set by the launcher from `DataPaths::to_env_vars()`
-(`data_paths.rs:295-324`) and consumed by downstream binaries via
-`DataPaths::from_env()` (`data_paths.rs:332-372`). The launcher is the
+(`data_paths.rs:296-325`) and consumed by downstream binaries via
+`DataPaths::from_env()` (`data_paths.rs:333-373`). The launcher is the
 single source of truth; downstream binaries must not recompute paths.
 
 ```
@@ -168,7 +168,7 @@ single source of truth; downstream binaries must not recompute paths.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher, via `DataPaths::to_env_vars()` (`data_paths.rs:298`) |
+| **Who sets it** | Launcher, via `DataPaths::to_env_vars()` (`data_paths.rs:299`) |
 | **Who reads it** | srv, host via `DataPaths::from_env()` |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable` |
 | **Purpose** | Channel root; config and agents directories hang directly off this |
@@ -179,12 +179,12 @@ single source of truth; downstream binaries must not recompute paths.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:299`) |
+| **Who sets it** | Launcher (`data_paths.rs:300`) |
 | **Who reads it** | srv for SQLite database location (`objects.db`, `sagas.db`); `DataPaths::from_env()` |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\data` |
 
 **Legacy alias:** srv also publishes `AGENTMUX_DATA_HOME` for any
-code path that pre-dates the unification (`crates/srv/src/bootstrap/stores.rs:78`). New code
+code path that pre-dates the unification (`crates/srv/src/bootstrap/stores.rs:93`). New code
 should read `AGENTMUX_DATA_DIR`.
 
 ---
@@ -193,7 +193,7 @@ should read `AGENTMUX_DATA_DIR`.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:300`) |
+| **Who sets it** | Launcher (`data_paths.rs:301`) |
 | **Who reads it** | srv `config.rs:162`, which re-exports it as `AGENTMUX_CONFIG_HOME` for `config_watcher_fs.rs:51` (`settings.json` and related config files) |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\config` |
 
@@ -206,7 +206,7 @@ DATA_DIR/DATA_HOME above.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:301`); also injected into PTY child environment by srv shell controller (`shell.rs`) with a hardcoded `~/.agentmux/logs` path |
+| **Who sets it** | Launcher (`data_paths.rs:302`); also injected into PTY child environment by srv shell controller (`shell.rs`) with a hardcoded `~/.agentmux/logs` path |
 | **Who reads it** | Shell integration `muxlog` helper (`bash.sh:92-106`, `pwsh.ps1:63-81`); `memory_heartbeat.rs:260`; any process in a pane that wants to locate logs |
 | **Example** | `/home/alice/.agentmux/logs` or `C:\Users\<name>\.agentmux\logs` |
 
@@ -228,7 +228,7 @@ processes cannot see virtualised MSIX writes at their literal path.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:302`) |
+| **Who sets it** | Launcher (`data_paths.rs:303`) |
 | **Who reads it** | CEF host for Chromium profile / cache directory |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\cef-cache` |
 
@@ -240,7 +240,7 @@ Regenerable; can be deleted without data loss.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:303`) |
+| **Who sets it** | Launcher (`data_paths.rs:304`) |
 | **Who reads it** | srv agent definition storage; channel-wide (does not include the version segment) |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\agents` |
 
@@ -250,7 +250,7 @@ Regenerable; can be deleted without data loss.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:304-307`) |
+| **Who sets it** | Launcher (`data_paths.rs:305-308`) |
 | **Who reads it** | srv and launcher for single-instance lock files, IPC port file, named-pipe path |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\runtime` |
 
@@ -260,7 +260,7 @@ Regenerable; can be deleted without data loss.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:308`) |
+| **Who sets it** | Launcher (`data_paths.rs:309`) |
 | **Who reads it** | Identity/OAuth code; provider auth dirs live here so credentials persist across channel/version upgrades |
 | **Example** | `C:\Users\<name>\.agentmux\shared` |
 
@@ -292,7 +292,7 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Test harness only |
-| **Who reads it** | `data_paths.rs:1000`, `crates/srv/src/bootstrap/stores.rs:147`, `crates/srv/src/registry/paths.rs:144` |
+| **Who reads it** | `data_paths.rs:888`, `crates/srv/src/bootstrap/stores.rs:625`, `crates/srv/src/registry/paths.rs:144` |
 | **Purpose** | Replaces `~/.agentmux` root with a temp directory so tests don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
@@ -321,7 +321,7 @@ Detection priority (launcher):
 **PITFALL — dev builds inside an agent pane:** If you run `task dev` from
 inside an agent pane in a portable build, the child process inherits the
 parent's `AGENTMUX_RUNTIME_MODE=portable` (and `AGENTMUX_CHANNEL=stable`).
-The dev host uses `resolve_path_only` (`data_paths.rs:160`) which ignores
+The dev host uses `resolve_path_only` (`data_paths.rs:161`) which ignores
 the env and relies on the exe path to detect dev mode — preventing
 cross-contamination. Do not override `AGENTMUX_RUNTIME_MODE` in an agent
 pane's environment unless you know exactly what you are doing.
@@ -332,8 +332,8 @@ pane's environment unless you know exactly what you are doing.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:313`) from channel resolution; also a user override for `Installed`/`Portable` modes |
-| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:138` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
+| **Who sets it** | Launcher (`data_paths.rs:314`) from channel resolution; also a user override for `Installed`/`Portable` modes |
+| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:618` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
 | **Example** | `stable`, `beta`, `local-main`, `experiment` |
 | **Constraints** | Max 64 chars; cannot be `shared`, `snapshots`, `dev`, `versions`, `channels`, `runtime`; `default` maps to `stable` |
 
@@ -348,7 +348,7 @@ Ignored in dev mode when using `resolve_path_only` (see above).
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`data_paths.rs:320-322`) only when `RuntimeMode::Dev { clone_id: Some(...) }` |
+| **Who sets it** | Launcher (`data_paths.rs:321-323`) only when `RuntimeMode::Dev { clone_id: Some(...) }` |
 | **Who reads it** | `RuntimeMode::from_env_with_clone()` (`runtime_mode.rs:199-209`) to reconstruct the full `Dev` variant |
 | **Example** | `deadbeefcafebabe` (16-char hex FNV-1a hash of the clone's workspace root path) |
 
@@ -377,7 +377,7 @@ sanitized value is empty, mode falls through to `Installed`.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv shell controller (`shell.rs`), `shellexec.rs:360`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
-| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:139` reads it from env as a fallback |
+| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:143` reads it from env as a fallback |
 | **Example** | `0.44.1` |
 
 Available in every PTY pane shell session. Required by `muxlog` to
@@ -400,7 +400,7 @@ resolve the `current-host-v<AGENTMUX_VERSION>.path` pointer file.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Build script (`crates/common/build.rs:37`) from the env at compile time |
-| **Who reads it** | `data_paths.rs:54-58` as `option_env!` — baked into the binary, not read at runtime |
+| **Who reads it** | `data_paths.rs:55-59` as `option_env!` — baked into the binary, not read at runtime |
 | **Example** | `stable` (release CI), `local-main` (local `task package` on `main` branch) |
 
 This is a _compile-time_ variable, not a runtime env var. Setting
@@ -439,8 +439,8 @@ and Claude's bash output does not stream to the drone/log pane.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:422`); sets it on both srv and host |
-| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:603`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
+| **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:457`); sets it on both srv and host |
+| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:604`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv actively removes this from its own process environment
@@ -468,7 +468,7 @@ These three vars form the launcher-managed srv hand-off. When all three
 are present, the host skips `spawn_backend()` and connects to the
 launcher-owned srv instead. If `AGENTMUX_BACKEND_WS` is set but empty or
 malformed, the host hard-fails rather than silently spawning a second srv
-(`crates/cef/src/lib.rs:839-845`).
+(`crates/cef/src/lib.rs:841-847`).
 
 **PITFALL:** Dev builds launched from inside an agent pane inherit these
 vars from the parent. The host uses `launcher_is_genuine_parent()` (checks
@@ -483,7 +483,7 @@ host to the parent's srv.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`srv_spawner.rs:456`) passes it to srv; launcher also advertises it to itself via env for re-use |
+| **Who sets it** | Launcher (`srv_spawner.rs:491`) passes it to srv; launcher also advertises it to itself via env for re-use |
 | **Who reads it** | srv (`crates/srv/src/bootstrap/plumbing.rs:271`): if set, opens a named-pipe IPC server for launcher ↔ srv control channel; CEF host `srv_ipc.rs:62` to connect its IPC bridge |
 | **Example** | `\\.\pipe\agentmux-srv-3f9a8c1d` (Windows) / `/tmp/agentmux-srv-3f9a8c1d.sock` (Unix) |
 
@@ -523,7 +523,7 @@ pane). The host compares its real parent process id to this value (`getppid()` o
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher on both srv and host (`crates/launcher/src/host_spawn.rs:86`, `srv_spawner.rs:427`) |
+| **Who sets it** | Launcher on both srv and host (`crates/launcher/src/host_spawn.rs:86`, `srv_spawner.rs:462`) |
 | **Who reads it** | CEF host `sidecar.rs:116`; identifies the srv instance for multi-instance coordination |
 | **Example** | `v0.44.1` |
 
@@ -537,7 +537,7 @@ raw semver string without the `v` prefix injected into PTY children).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`crates/launcher/src/host_spawn.rs:132`) |
-| **Who reads it** | CEF host `crates/cef/src/client/navigation.rs:265` signals this named Win32 event when the first page load completes, causing the launcher to dismiss the splash window |
+| **Who reads it** | CEF host `crates/cef/src/client/navigation.rs:277` signals this named Win32 event when the first page load completes, causing the launcher to dismiss the splash window |
 | **Example** | A Win32 event object name, unique per run |
 
 Used exclusively for splash-screen synchronisation on Windows. Has no
@@ -549,7 +549,7 @@ effect on Unix builds.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:607`); `shellexec.rs:352` |
+| **Who sets it** | srv shell controller (`shell.rs`); websocket handler for agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:608`); `shellexec.rs:352` |
 | **Who reads it** | `agentmux-bashwrap` (`bash_wrap.rs:494,499`) to scope WPS publishes to the correct pane; shell integration scripts have access to it in the PTY environment |
 | **Example** | `550e8400-e29b-41d4-a716-446655440001` (block UUID) |
 
@@ -584,7 +584,7 @@ Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's ow
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`srv_spawner.rs:455`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:84`) |
+| **Who sets it** | Launcher (`srv_spawner.rs:490`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:99`) |
 | **Who reads it** | srv `base.rs:19` (`MUX_APP_PATH_ENV`); used to locate bundled tool binaries (`jq.exe`, `rg.exe`, etc.) alongside the launcher |
 | **Example** | `C:\Users\<name>\Desktop\agentmux-portable` |
 
@@ -659,7 +659,7 @@ preserve user configuration.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Deprecated alias for `AGENTMUX_DATA_DIR` |
-| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:78` re-publishes it for backward compatibility if `config.data_home` is non-empty |
+| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:93` re-publishes it for backward compatibility if `config.data_home` is non-empty |
 | **Who reads it** | `base.rs:18` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs:25`; `sidecar.rs` (pre-unification path) |
 
 Use `AGENTMUX_DATA_DIR` in new code.
@@ -671,7 +671,7 @@ Use `AGENTMUX_DATA_DIR` in new code.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Deprecated alias for `AGENTMUX_CONFIG_DIR` |
-| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:81` |
+| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:96` |
 | **Who reads it** | `base.rs:17`; `config_watcher_fs.rs:51` |
 
 Use `AGENTMUX_CONFIG_DIR` in new code.
@@ -735,18 +735,18 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
 | Identity strip logic | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
 | Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` | — |
-| DataPaths struct and env var names | `crates/common/src/data_paths.rs` | 77–127 |
-| DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` | 295–324 |
-| DataPaths::from_env() | `crates/common/src/data_paths.rs` | 332–372 |
+| DataPaths struct and env var names | `crates/common/src/data_paths.rs` | 78–128 |
+| DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` | 296–325 |
+| DataPaths::from_env() | `crates/common/src/data_paths.rs` | 333–373 |
 | RuntimeMode detection | `crates/common/src/runtime_mode.rs` | 73–121 |
 | AGENTMUX_LOCAL_URL set point | `crates/srv/src/bootstrap/network.rs` | 99–102 |
-| AUTH_KEY strip | `crates/srv/src/config.rs` | 136–144 |
-| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 584–603 |
+| AUTH_KEY strip | `crates/srv/src/config.rs` | 144–152 |
+| AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 585–604 |
 | Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` | 166–246 |
 | Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` | whole file |
 | PowerShell integration script | `crates/srv/src/backend/shellintegration/pwsh.ps1` | whole file |
 | Zsh integration script | `crates/srv/src/backend/shellintegration/zsh.sh` | whole file |
-| Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` | 439–456 |
+| Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` | 474–491 |
 | Launcher → host env vars (Windows) | `crates/launcher/src/host_spawn.rs` | 77–133 |
 | Launcher → host env vars (Unix) | `crates/launcher/src/host_spawn.rs` | 194–221 |
 | WSH retirement (AGENTMUX sentinel history) | `docs/specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` | — |

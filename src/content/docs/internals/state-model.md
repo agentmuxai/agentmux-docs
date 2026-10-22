@@ -23,14 +23,14 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 
 ### 1.1 LayoutModel — Class Overview
 
-`LayoutModel` (`frontend/layout/lib/layoutModel.ts:118`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
+`LayoutModel` (`frontend/layout/lib/layoutModel.ts:99`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
 
-**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:431`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
+**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:417`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
 
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:450-456
+// layoutModel.ts:435-441
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -40,9 +40,9 @@ this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
 });
 ```
 
-`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:123`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
+`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:104`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
 
-The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:270-276`):
+The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 
 | Field | Type | Description |
 |---|---|---|
@@ -52,9 +52,9 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:270-276`):
 | `leafOrder` | `LeafOrderEntry[]?` | Ordered leaf list (top-left to bottom-right) |
 | `pendingBackendActions` | `LayoutActionData[]` | Queued backend-to-frontend layout mutations |
 
-**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:626`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:733`).
+**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:610`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:693`).
 
-**Persistence:** after every reducer dispatch, `persistToBackend()` is called (debounced 100 ms, `layoutPersistence.ts:452`). It copies `treeState` fields back onto the `muxObjectAtom` (the live MOS entry) and calls `setObjectValue(..., true)` which pushes the mutation to the backend via `ObjectService.UpdateObject`.
+**Persistence:** *(changed since this page was written; the sections below that describe `persistToBackend` are out of date.)* The frontend no longer writes the tree back itself: `persistToBackend()` was removed, and layout changes go to srv as layout commands (`queueLayoutCommand`, `frontend/layout/lib/layoutIntents.ts`), which srv's reducer applies and persists.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -67,12 +67,12 @@ model.focusedNode (memo)        ← reactive accessor → LayoutNode
 
 `focusedNodeIdStack` (`layoutModel.ts:289,555`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
 
-The getter `focusedNodeId` (`layoutModel.ts:777-779`) simply returns `this.focusedNodeIdStack[0]`.
+The getter `focusedNodeId` (`layoutModel.ts:737-739`) simply returns `this.focusedNodeIdStack[0]`.
 
-The reactive memo `focusedNode` (`layoutModel.ts:545-555`) re-derives from `localTreeStateAtom` on every change:
+The reactive memo `focusedNode` (`layoutModel.ts:530-540`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:545-555
+// layoutModel.ts:530-540
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -101,7 +101,7 @@ User click / keyboard nav
   → NodeModel.isFocused() returns true for the new node
 ```
 
-`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:730-731`) and calls `persistToBackend()`.
+`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline and, when this page was written, called `persistToBackend()` (since removed; see Persistence above).
 
 ### 1.5 validateFocusedNode — Bootstrap and Stack Reconciliation
 
@@ -113,7 +113,7 @@ User click / keyboard nav
 
 ### 1.6 isFocused — Per-Node Derivation
 
-Every `NodeModel` carries an `isFocused` accessor (`frontend/layout/lib/types.ts:447`). It is created as a `createMemo` inside `model.runInModelRoot()` so it outlives component lifecycles:
+Every `NodeModel` carries an `isFocused` accessor (`frontend/layout/lib/types.ts:459`). It is created as a `createMemo` inside `model.runInModelRoot()` so it outlives component lifecycles:
 
 ```typescript
 // layoutNodeModels.ts:130-133
@@ -186,7 +186,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 
 <img src="/diagrams/state-model-turnphase.svg" alt="TurnPhase state machine: Idle → Submitting → Streaming → Interrupting, each with arrows to terminal Done (steel-blue) or Disconnected. Purple arrows show timeout/error transitions: SubmitTimeoutElapsed (30s), StreamStalled (60s), InterruptTimeoutElapsed (5s)." style="max-width:100%" />
 
-**Selectors** (`types.ts:588-634`):
+**Selectors** (`types.ts:592-638`):
 
 | Selector | Returns true when |
 |---|---|
@@ -194,7 +194,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1329-1384`):
+**Watchdog constants** (`types.ts:1346-1398`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -341,10 +341,10 @@ Priority 3 (lowest / fallback): theme accent
 
 ### 4.2 Resolution Code Path
 
-The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1213-1222`):
+The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1185-1194`):
 
 ```typescript
-// blockframe.tsx:1213-1222
+// blockframe.tsx:1185-1194
 const blockAgentColor = createMemo(() => {
     if (!props.preview && paneTabCapability(blockData()?.meta?.view, "hueBorder")) {
         const isLightTheme = isLightThemeActive();
@@ -357,7 +357,7 @@ const blockAgentColor = createMemo(() => {
 });
 ```
 
-The result is injected as a CSS custom property (`blockframe.tsx:1407`):
+The result is injected as a CSS custom property (`blockframe.tsx:1379`):
 
 ```
 --block-agent-color: <color> | "transparent"
@@ -381,7 +381,7 @@ In `block.scss`:
 }
 ```
 
-The `has-agent-color` class is added when `blockAgentColor()` is truthy (`blockframe.tsx:1388`). `block-focused` comes from `NodeModel.isFocused()` which tracks `localTreeStateAtom().focusedNodeId` (see §1.6).
+The `has-agent-color` class is added when `blockAgentColor()` is truthy (`blockframe.tsx:1360`). `block-focused` comes from `NodeModel.isFocused()` which tracks `localTreeStateAtom().focusedNodeId` (see §1.6).
 
 ### 4.4 isUsableFocusRingColor — The Luminance Gate
 
@@ -400,7 +400,7 @@ export function isUsableFocusRingColor(color: string | null | undefined): boolea
 
 ### 4.5 Tab Color System
 
-Tabs no longer get a color automatically at creation; a user picks one from the 14-color `TAB_COLORS` palette (`frontend/app/tab/tab.tsx:32-47`):
+Tabs no longer get a color automatically at creation; a user picks one from the 14-color `TAB_COLORS` palette (`frontend/app/tab/tab.tsx:33-48`):
 
 | Name | Hex |
 |---|---|
@@ -419,7 +419,7 @@ Tabs no longer get a color automatically at creation; a user picks one from the 
 | Pink | `#c02b75` |
 | Rose | `#c42742` |
 
-Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:625`). The startup tab is intentionally left without a color (`tabbar.tsx:272-277`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
+Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:707`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
 ### 4.6 The 2026-06-12 Border Fix
 
@@ -460,7 +460,7 @@ Cache eviction: `cleanMuxObjectCache()` runs every 30 s and removes entries with
 
 ### 5.3 How LayoutState is Persisted
 
-The `LayoutModel` gets its MOS entry via `getLayoutStateAtomFromTab` (`layoutAtom.ts:11`):
+The `LayoutModel` gets its MOS entry via `getLayoutStateAtomFromTab` (`layoutAtom.ts:13`):
 
 ```typescript
 // layoutAtom.ts:18-22
@@ -473,10 +473,10 @@ const atom = () => {
 
 The `_set` implementation on this atom calls `MOS.setObjectValue(nextValue, true)` — i.e. it pushes to the server immediately when written.
 
-`persistToBackend` (`layoutPersistence.ts:447-478`) is the debounced write path that copies `treeState` back to the `muxObjectAtom`:
+*Removed since:* `persistToBackend` (formerly in `layoutPersistence.ts`) was the debounced write path that copied `treeState` back to the `muxObjectAtom`:
 
 ```typescript
-// layoutPersistence.ts:457-475
+// formerly layoutPersistence.ts (removed)
 muxObj.rootnode = model.treeState.rootNode;
 muxObj.focusednodeid = model.treeState.focusedNodeId;
 muxObj.magnifiednodeid = model.treeState.magnifiedNodeId;
@@ -510,7 +510,7 @@ Blocks are mutated via `RpcApi.SetMetaCommand(TabRpcClient, { oref, meta })`.
 - `leaforder` — ordered leaf list
 - `pendingbackendactions` — queued backend→frontend mutations
 
-Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focused_node_changed` in `persist_subscriber.rs:754`) can write `focusednodeid`. This is the SRV-02 dual-path conflict.
+Both the frontend (via `persistToBackend`, since removed) and the srv reducer (via `apply_focused_node_changed` in `persist_subscriber.rs:639`) can write `focusednodeid`. This is the SRV-02 dual-path conflict.
 
 ---
 
@@ -520,12 +520,12 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 
 `LayoutState` is persisted via **two conflicting paths** that are not coordinated:
 
-**Path A — Frontend reducer path** (`layoutPersistence.ts:447-478`):
-- `LayoutModel.persistToBackend()` (debounced 100 ms)
+**Path A — Frontend reducer path** (removed since; formerly `persistToBackend` in `layoutPersistence.ts`):
+- `LayoutModel.persistToBackend()` (debounced 100 ms; since removed)
 - Writes `rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions` onto the MOS atom
 - Calls `MOS.setObjectValue(muxObj, true)` → `ObjectService.UpdateObject` → srv wcore direct
 
-**Path B — Srv reducer path** (`crates/srv/src/persist_subscriber.rs:747-774`):
+**Path B — Srv reducer path** (`crates/srv/src/persist_subscriber.rs:632-659`):
 - `apply_focused_node_changed(mstore, tab_id, node_id)` (called by persist subscriber on `Event::Layout::FocusedNodeChanged`)
 - Writes only `focusednodeid` to `LayoutState` in SQLite
 - Bypasses `rootnode` and other fields; scoped to Phase E.4.A (Option A)
@@ -536,7 +536,7 @@ Both the frontend (via `persistToBackend`) and the srv reducer (via `apply_focus
 User clicks pane
   → LayoutModel.treeReducer(FocusNode)
   → localTreeStateAtom updated (frontend)
-  → persistToBackend() debounced 100ms
+  → persistToBackend() debounced 100ms (since removed)
     → Path A writes full LayoutState to srv (including focusednodeid)
 
   Meanwhile:
@@ -549,7 +549,7 @@ User clicks pane
 **Status per `MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`:**
 - Phase E.4.B Phase 6 (persist subscriber arms consuming `Event::Layout*`) is **open**.
 - Phase E.4.B Phase 7 (migrate legacy `rootnode` writers off wcore-direct) is **open**.
-- The comment in `persist_subscriber.rs:751-753` confirms: "Other `LayoutState` fields stay on their existing wcore-direct path until Option B lands."
+- The comment in `persist_subscriber.rs:636-638` confirms: "Other `LayoutState` fields stay on their existing wcore-direct path until Option B lands."
 
 ### 6.3 Impact
 
@@ -608,7 +608,7 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 │    • Workspace, Window, Agent, Identity, …                                 │
 │                                                                             │
 │  LayoutState writes: two paths (SRV-02 — see §6)                          │
-│    Path A: LayoutModel.persistToBackend() (100ms debounce, full write)     │
+│    Path A (removed): LayoutModel.persistToBackend() (100ms, full write)    │
 │    Path B: srv persist_subscriber apply_focused_node_changed (focusednodeid only, │
 │             pending Phase E.4.B Phase 6 migration)                         │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -619,23 +619,23 @@ The frontend `mos.ts:358` version guard (`if (curValue.value != null && curValue
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:450` | line 450 |
-| focusedNodeId getter | `layoutModel.ts:777` | line 777 |
-| focusedNode memo | `layoutModel.ts:545` | line 545 |
-| FocusNode reducer arm | `layoutModel.ts:693` | line 693 |
+| localTreeStateAtom init | `layoutModel.ts:435` | line 435 |
+| focusedNodeId getter | `layoutModel.ts:737` | line 737 |
+| focusedNode memo | `layoutModel.ts:530` | line 530 |
+| FocusNode reducer arm | `layoutModel.ts:634` | line 634 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
-| persistToBackend | `layoutPersistence.ts:447` | `frontend/layout/lib/layoutPersistence.ts` |
+| persistToBackend (removed; replaced by layout commands to srv) | `queueLayoutCommand` | `frontend/layout/lib/layoutIntents.ts` |
 | MOS getMuxObjectAtom | `mos.ts:253` | `frontend/app/store/mos.ts` |
-| LayoutState atom from tab | `layoutAtom.ts:11` | `frontend/layout/lib/layoutAtom.ts` |
+| LayoutState atom from tab | `layoutAtom.ts:13` | `frontend/layout/lib/layoutAtom.ts` |
 | AgentPaneState / TurnPhase types | `types.ts` | `frontend/app/store/agent-pane-state/types.ts` |
 | AgentDocumentState types | `frontend/app/store/agent-document/types.ts` | `frontend/app/store/agent-document/types.ts` |
 | BrowserPaneState types | `frontend/app/store/browser-pane-state/types.ts` | `frontend/app/store/browser-pane-state/types.ts` |
 | EditorPaneState / reducer | `editor-pane-state-store.ts` | `frontend/app/store/editor-pane-state-store.ts` |
-| blockAgentColor memo | `blockframe.tsx:1213` | `frontend/app/block/blockframe.tsx` |
+| blockAgentColor memo | `blockframe.tsx:1185` | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `autotitle.ts:170` | `frontend/app/block/autotitle.ts` |
-| block-focused CSS (border) | `block.scss:298` | `frontend/app/block/block.scss` |
-| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:747` | `crates/srv/src/persist_subscriber.rs` |
+| block-focused CSS (border) | `block.scss:271` | `frontend/app/block/block.scss` |
+| SRV-02 persist-subscriber (focusednodeid) | `persist_subscriber.rs:632` | `crates/srv/src/persist_subscriber.rs` |
 | Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
 | Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7` | `docs/specs/` |
 | Border fix plan | `pane-highlight-fix-plan.md` | `docs/specs/` |

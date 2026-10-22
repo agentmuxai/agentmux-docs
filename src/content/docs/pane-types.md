@@ -320,7 +320,7 @@ Point it at either:
 - **A single file** — renders that image or video and stays on it.
 - **A directory** — watches it and shows the most recently modified matching file, updating automatically (no manual reload) whenever a new or changed file appears. There's no gallery/grid of every file in the directory yet — it always shows one file at a time.
 
-To point it at a file yourself, drop one image, video or audio file onto the pane from your file manager (`frontend/app/view/media/media.tsx`). See [Dropping files onto panes](#dropping-files-onto-panes).
+To point it at a file yourself, drop one image, video or audio file onto the pane from your file manager (`frontend/app/view/editor/editor-drop.ts`: the Media pane is now the Editor's image, video and audio viewers). See [Dropping files onto panes](#dropping-files-onto-panes).
 
 The pane watches the filesystem via the same `notify`-crate mechanism the Editor pane's live-reload uses, generalized from "one open file" to "a whole directory." Supported extensions include common image formats (png, jpg, webp, gif) and video (webm, mp4 — though H.264/AAC `.mp4` playback depends on your build's Chromium codec support; webm typically plays more reliably).
 
