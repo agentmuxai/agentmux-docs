@@ -1,6 +1,6 @@
 ---
 title: "Swarm"
-description: The Swarm pane shows every running agent pane on this AgentMux instance as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, plus a fleet toolbar for broadcasting to or stopping several agents at once.
+description: The Swarm pane shows every running agent pane on this AgentMux instance as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, plus a fleet toolbar for broadcasting to or stopping several agents at once, and the Supervisor that keeps agents working until they are done or need you.
 ---
 
 :::caution[Alpha Software]
@@ -58,12 +58,13 @@ An agent row shows:
 | Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **idle** (green) otherwise |
 | Activity line | A one-line summary of what the agent is doing, when available |
 | Current tool | The tool the agent is running right now, while it is working |
+| Supervisor chip | Claude agents only: the [Supervisor](#supervisor) mode and what it is doing. Click to change it. |
 
 **Clicking an agent row focuses that agent** (`frontend/app/view/swarm/swarm-view.tsx`, `frontend/app/util/reveal-block.ts`): AgentMux switches to the agent's tab, brings its pane tab to the front if the pane has several tabs, and focuses its pane. If the agent is in another window, that window is brought forward. Only the chevron expands or collapses a row, and ticking the checkbox doesn't move focus. Rows start collapsed. Clicking empty space in Swarm focuses the Swarm pane itself.
 
 Rows use the agent's own pane-tab color: the row of the currently focused agent pane has a thin border in that color, and hovering a row outlines it in a lighter shade of it. The color is the pane's **Pane Color** if you set one, otherwise the agent's assigned color.
 
-Under an expanded agent, child rows are grouped in this order. A group is hidden when it is empty.
+Under an expanded agent, child rows are grouped in this order. A group is hidden when it is empty. A supervised agent's first group is the [Supervisor](#supervisor)'s recent decisions.
 
 ### Todos
 
@@ -148,6 +149,7 @@ The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swa
 | **Select all** / **Select none** | Ticks or clears every agent. The toolbar shows **{N} selected**. |
 | **Broadcast** | Opens an inline box ("Message to send to {N} agents…") with **Send** and **Cancel**. `Enter` sends, `Esc` cancels. The Stop button is hidden while the box is open. |
 | **Stop {N}** | Stops the selected agents, after a confirmation dialog. |
+| **Supervisor** | Sets the [Supervisor](#supervisor) mode (Off, Steady or Drive) for the selected agents of this AgentMux, with no confirmation step. |
 | **Stats** | Opens or closes the [Stats](#stats) panel. Doesn't need a selection. |
 | **Clear** | Clears the selection. |
 
@@ -167,6 +169,95 @@ Agents can do the same through MuxAPI (`crates/mcp/src/tool_schemas.rs`; backend
 
 See [MuxAPI](/internals/muxapi/) for the full tool reference.
 
+## Supervisor
+
+The **Supervisor** keeps an agent working until it is done or needs you. Agents often end a turn with "shall I continue?", or stop short of work they had planned, and then sit idle until you notice. With the Supervisor on, each time the agent ends a turn AgentMux reads the end of its conversation, asks a small model (Haiku) whether it should go on, and either sends the agent a message to continue or stops and tells you why. You set it and watch it in Swarm (`frontend/app/view/swarm/`); the decisions are made by AgentMux's server. It used to be a section of the [Warden](/warden/).
+
+### Turning it on
+
+The Supervisor is set per agent, and every agent starts **Off**. Each Claude agent's row has a Supervisor chip (a shield icon). Click it and pick a mode:
+
+| Mode | What the menu says |
+|---|---|
+| **Off** | "Leave the agent to stop when it stops." |
+| **Steady** | "Keep it going when it stops only to check in. Pause for real questions." |
+| **Drive** | "Keep it going through open questions on its own best judgement. Pause for what only you can provide." |
+
+To set several agents at once, tick their rows and use the fleet toolbar's **Supervisor** button, which offers the same three modes (for example "Supervisor: Drive for 3 agents"). There is no confirmation step; the result panel reports each agent, as for Broadcast and Stop.
+
+- **Claude agents only.** Other providers' rows have no chip. If AgentMux can't supervise a pane, the chip's tooltip says "the Supervisor works with Claude agents only for now".
+- **This AgentMux's own agents only.** Each AgentMux supervises its own agents, so the toolbar leaves out selected agents of another instance.
+- **Only you set it.** No MuxAPI tool sets the mode, so an agent can't put itself, or another agent, in Drive.
+
+Setting a mode starts a new run and is recorded in the agent's history. If the agent is idle at that moment, its last turn is judged at once: turning on Drive for an agent that just asked "shall I continue?" gets it going without waiting for another turn.
+
+### What it does when an agent stops
+
+When a supervised agent ends a turn, the Supervisor checks these in order:
+
+1. **You pressed Stop** in the agent's pane (within the last 15 seconds): nothing is judged or sent. It records "You stopped it; it waits for your next message."
+2. **The turn ended in a question tool** (`AskUserQuestion`, or `ExitPlanMode`'s plan approval): it pauses for you without asking the model, with "It asked you a question."
+3. **Your last message has no answer yet:** nothing is judged.
+4. **The agent has background commands still running:** it waits. Those commands wake the agent when they finish, and that turn is judged instead.
+5. **Otherwise** the judge reads the end of the conversation and answers **continue**, **done**, **needs you** or **blocked**, with a one-sentence reason.
+
+AgentMux's own hidden turns are never judged. A turn started by another agent's message, a service or a schedule is judged like any other.
+
+The judge follows the mode:
+
+- **Steady** continues an agent that stopped only to check in, or stopped short of work it had already planned or been asked to do. A real question, a choice only you can make, or an open question it can't settle from the conversation pauses it.
+- **Drive** also continues through open questions the agent can research or decide itself, and suggests a next step. It pauses only for what only you can provide: a credential, a sign-in, a payment, or a product decision with no sensible default.
+- **In both modes**, done needs evidence in the conversation: tests passing, a pull request opened or merged, the result shown. A bare claim is not enough: Drive asks the agent to show the evidence, and Steady pauses for you. A turn that ends by asking you to approve, choose or decide something is never done.
+- **In both modes**, a risky, irreversible or outward-facing next step pauses for you, even when the agent proposes it: deleting data, force-pushing, deploying, spending money, publishing, or messaging people outside the team. When the judge is unsure whether to continue, it pauses.
+
+The judge runs on the agent's own CLI and sign-in, and has 90 seconds per verdict. A call that fails or times out is tried once more, while the turn is still the latest and the agent still idle. If there is still no usable answer, nothing is sent and you get the ordinary "finished" notification: the Supervisor never continues on a guess. If the agent starts a new turn while the judge is working (you reply, or a message arrives), that judgement is dropped.
+
+### The continuation
+
+To keep an agent going, the Supervisor sends it a message like this one:
+
+```
+[SUPERVISOR:MODE=drive N=3 OF=15]
+Keep going without waiting for confirmation. Research open questions thoroughly, choose the best option on your own judgement, and say what you assumed. Stop and ask only for something irreversible or outward-facing, for something only the user can provide, or if you are blocked. If the work is done, say so and show the evidence.
+Why: <the judge's reason>
+Suggested next step: <the judge's next step>
+```
+
+In Steady the instruction is "Continue the task you were already doing. Ask the user only if something truly needs them. If the work is done, say so and show the evidence.", with no suggested next step.
+
+- **In the agent pane** the header is replaced by a label, **Supervisor · Drive · 3 of 15**, and the turn's footer reads "Worked on a Supervisor continuation".
+- **Only AgentMux writes the header.** A `[SUPERVISOR:` header inside a jekt or a broadcast is quoted, so one can't be forged. The judge's reason and next step are flattened to one line and cut at 300 characters.
+- **It is not your message.** It arrives as automated input, so it can't authorize anything that needs your own word, such as an agent quitting itself or an AgentMux upgrade.
+- **It goes only to a running agent.** If the agent's process isn't running, the Supervisor doesn't start it; it pauses with "Couldn't continue it: the agent isn't running".
+
+### Limits
+
+| Limit | Steady | Drive |
+|---|---|---|
+| Continuations in a row since you last sent the agent a message | 5 | 15 |
+| Time since the run's first continuation | none | 2 hours |
+| Continued turns in a row in which the agent used no tool | 2 | 2 |
+| The same final message twice in a row after a continuation | pause | pause |
+
+Reaching a limit pauses the agent for you, with the reason, for example "5 continuations in a row; over to you." A message you send, typed in the pane or broadcast from Swarm, starts a new run and resets the counts, and so does changing the mode. A message from another agent doesn't.
+
+The Supervisor never:
+
+- answers an `AskUserQuestion` or approves a permission prompt;
+- gives an agent new work: it only continues the task the agent already has;
+- starts an agent that isn't running;
+- continues a turn you stopped.
+
+### Watching and stopping it
+
+- **The chip** shows the mode and what the Supervisor is doing: **judging**, **waiting** (for background work), the count so far such as **3/15**, and, while the agent is idle, **paused** or **done**. A paused chip is highlighted. Hover it for the mode, what the mode does and the last reason.
+- **The row's line** reads **Needs you:** and the reason while a paused agent is idle, and the row ranks like one with a pending question. When the agent starts a turn again, the pause is over.
+- **The Supervisor group**, first under an expanded row, lists the last 10 decisions, newest first: the time, what it did (**continued**, **paused**, **done**, **waiting**, **no verdict**, **set**, **stopped by you**) and the reason. They are kept in the pane's metadata (`supervisor:state`), so they survive a restart of AgentMux's server. The group is hidden while the mode is Off.
+- **Notifications:** when it pauses, you get a notification that the agent needs you, "Supervisor paused:" and the reason. When the judge finds the work done, or can't judge, you get the usual "finished" notification. A continuation, and a turn you stopped, send none. A supervised agent never gets the generic "finished" notification on top of these.
+- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the [Stats](#stats) panel.
+
+To turn it off, set the chip, or the toolbar for a selection, to **Off**. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
+
 ## Stats
 
 The toolbar's **Stats** button (`frontend/app/view/swarm/swarm-stats.tsx`) opens a panel under the toolbar headed "AgentMux's own model requests since its server started", with the total. These are the requests AgentMux makes on its own, not your agents' turns: session titles, subagent and workflow names, prompt suggestions, agent previews and narration. The counts start again when AgentMux's server restarts. The button appears once at least one such request has ended.
@@ -182,6 +273,7 @@ The panel has one row per purpose:
 | **Workflow names** | Names for workflow rows in the tree |
 | **Agent previews** | The conversation preview for an agent under **My Agents** in the agent picker |
 | **Narration** | Messages in an agent's pane describing something AgentMux did on its own |
+| **Supervisor verdicts** | The [Supervisor](#supervisor)'s judgements of supervised agents' turns |
 
 Each row counts how its requests ended, for example "12 accepted · 30 kept · 2 refused · 1 failed". Refused, skipped and failed appear only when they aren't zero.
 
