@@ -59,6 +59,8 @@ Tick **Don't ask again**, or turn off **Warn before closing a window with workin
 
 ☰ → **Workspaces**:
 
+![The hamburger menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-hamburger-workspaces.png)
+
 | Item | What it does |
 |---|---|
 | **New Workspace…** | Asks for a name, suggesting the first free "Workspace 2", "Workspace 3", …, then [switches](#switching-workspaces) to a new workspace with one window showing the starting panes. |

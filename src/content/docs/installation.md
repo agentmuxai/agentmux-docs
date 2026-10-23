@@ -152,11 +152,11 @@ New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `
 
 The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Hangar**, **Browser**, **Settings** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Warden, Vault, Toolchain and Tower. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
-![The top bar: the hamburger menu, a window tab, the widget bar and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Hangar, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
 
-![The hamburger menu open: New Tab, New Window, Theme, Opacity, Layouts, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
+![The hamburger menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
 
 Agents need their CLI tools, and most of those need Node.js and npm. The Toolchain pane (the widget bar's **more** → **Toolchain**, or **Open Toolchain** in the command palette) shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 

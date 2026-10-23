@@ -12,7 +12,7 @@ AgentMux groups global actions into two surfaces:
 
 Click the three-line icon at the start of the tab bar. Items, top to bottom:
 
-![The hamburger menu open: New Tab, New Window, Theme, Opacity, Layouts, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
+![The hamburger menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
 
 | Item | Shortcut | What it does |
 |------|---------|--------------|
@@ -33,6 +33,8 @@ Settings, Connectors, Memory and Toolchain aren't in this menu. Open them from t
 The Theme and Opacity submenus check-mark this window's current value, so you can see at a glance what you're on. A submenu opens when you hover its row.
 
 ![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-hamburger-theme.png)
+
+![The hamburger menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-hamburger-workspaces.png)
 
 ## Reopening your windows at the next launch
 
