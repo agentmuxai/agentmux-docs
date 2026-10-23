@@ -13,7 +13,7 @@ The Sysinfo pane displays live system metrics for the machine AgentMux runs on, 
 
 ## Opening Sysinfo
 
-- Click **Sysinfo** (chart icon) in the widget bar. It is pinned by default.
+- Click **more** at the end of the widget bar and choose **Sysinfo** (chart icon). Right-click it there and choose **Pin to bar** to keep it on the bar.
 - Command palette (`Ctrl+P`): **Open System Info**.
 - Click **+** on any pane's tab strip and pick **Sysinfo**.
 - Right-click a pane header → **Replace With...** → **Sysinfo** replaces that pane.

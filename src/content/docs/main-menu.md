@@ -12,7 +12,7 @@ AgentMux groups global actions into two surfaces:
 
 Click the three-line icon at the start of the tab bar. Items, top to bottom:
 
-![The hamburger menu open: New Tab, New Window, Theme, Opacity, Layouts, Settings, Command Palette, Connectors, Memory, Toolchain, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
+![The hamburger menu open: New Tab, New Window, Theme, Opacity, Layouts, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
 
 | Item | Shortcut | What it does |
 |------|---------|--------------|
@@ -21,14 +21,14 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Theme** | — | Submenu listing the available color themes. It changes only this window, and the choice is saved with the window. Settings ▸ Appearance sets the default for windows without their own. See [Window appearance](/window-appearance/). |
 | **Opacity** | — | Submenu of preset levels (35% – 100%). It changes only this window, on Windows, macOS and Linux. It is the same value as this window's slider in the status bar's Instance Panel, so each follows the other. See [Window appearance](/window-appearance/). |
 | **Layouts** | — | Submenu. **Save layout…** saves this window's tabs and pane layout to a `.agentmux-layout.json` file (the Save dialog starts in `~/.agentmux/shared/layouts/`); if anything in it is worth checking before you share the file, a notice lists it. **Open layout…** picks a layout file and shows a preview first: its tabs and panes, anything that can't be reproduced exactly here, and any terminal commands it would run, with **Run these commands** (ticked only for a file this AgentMux saved in its layouts folder). Choose **In a new window** (the default) or **Add to this window**; adding never replaces what's open. |
-| **Settings** | `Ctrl+,` / `⌘,` | Opens the Settings pane view — same as picking *Settings* from the command palette. Editing `settings.json` directly still works too. See [Settings reference](/settings/). |
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
-| **Connectors** | — | Opens the Connectors pane — Accounts, MCP servers and Remotes — or focuses the one already open in the tab. See [Connectors](/connectors/). |
-| **Memory** | — | Opens the Memory pane — Global, Personal, Skills and Bundles — or focuses the one already open in the tab. See [Memory](/memory/). |
-| **Toolchain** | — | Opens the Toolchain Manager — effective PATH and the detected version, path, and status of every provider CLI and system dependency, with install links for anything missing. |
 | **DevTools** | — | Toggles Chromium DevTools. |
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window (not the whole app — other windows stay open). |
+
+**New Window** appears only where AgentMux can open several windows, and **Opacity** only where windows can be see-through (`frontend/app/window/hamburger-menu.tsx`).
+
+Settings, Connectors, Memory and Toolchain aren't in this menu. Open them from the widget bar (Settings, Connectors and Memory are pinned by default; Toolchain is under **more**) or from the command palette (**Settings**, **Connectors**, **Memory**, **Open Toolchain**). Settings also opens with `Ctrl+,` / `⌘,`. See [Settings reference](/settings/), [Connectors](/connectors/) and [Memory](/memory/).
 
 The Theme and Opacity submenus check-mark this window's current value, so you can see at a glance what you're on. A submenu opens when you hover its row.
 
@@ -54,19 +54,19 @@ Registered commands are grouped by category:
 
 | Category | Commands |
 |----------|----------|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Hangar (Files), Open Remotes |
+| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Hangar (Files), Open Remotes, Open Toolchain |
 | **Split** | Split Right, Split Left, Split Down, Split Up |
 | **Window** | New Window, Close Window, Minimize Window, Toggle Maximize |
 | **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
 | **Pane** | Close Pane, Toggle Magnify, Focus Pane Right / Left / Up / Down |
 | **Dev** | Toggle DevTools, Restart Backend, Open Settings File |
 | **View** | Command Palette, Zoom In, Zoom Out, Actual Size |
-| **App** | Connectors, Memory |
+| **App** | Connectors, Memory, Settings |
 | **Help** | Online Docs |
 
 Searching for "accounts", "mcp" or "remotes" also finds **Connectors**, and "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
 
-The palette is **not exhaustive** — most navigation shortcuts (Connect Remote, Settings UI, Focus Block N, raw tab-switching, etc.) are reachable only via [keybindings](/keybindings/), not from the palette.
+The palette is **not exhaustive** — most navigation shortcuts (Connect Remote, Focus Block N, raw tab-switching, etc.) are reachable only via [keybindings](/keybindings/), not from the palette.
 
 ## Why two surfaces?
 

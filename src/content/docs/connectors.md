@@ -26,7 +26,6 @@ An agent's own linked accounts and MCP servers are shown in its [Stash](#per-age
 ## Opening Connectors
 
 - **Widget bar:** click **Connectors**. It is pinned by default. If a Connectors pane is already open in the tab, the click focuses it instead of opening another.
-- **Hamburger menu:** click ≡ in the top tab bar and choose **Connectors**.
 - **Command palette:** run **Connectors**. Searching for "accounts", "mcp" or "remotes" also finds it.
 - **macOS app menu:** **Connectors…**.
 

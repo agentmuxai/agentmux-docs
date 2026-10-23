@@ -29,7 +29,6 @@ This pane was called **Knowledge**, and before that its sections were tabs of th
 ## Opening Memory
 
 - **Widget bar:** click **Memory**. It is pinned by default. If a Memory pane is already open in the tab, the click focuses it instead of opening another.
-- **Hamburger menu:** click ≡ in the top tab bar and choose **Memory**.
 - **Command palette:** run **Memory**. Searching for "skills" or "bundles" also finds it.
 - **macOS app menu:** **Memory…**.
 - **Keybinding:** bind `app:memory`. A binding to the old `app:knowledge` is changed to `app:memory` the first time it starts after updating.
