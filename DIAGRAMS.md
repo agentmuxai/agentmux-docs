@@ -244,6 +244,8 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 
 ### 2.8 `internals/interagent-comms.md` — Three-Tier Architecture
 
+> **Out of date (2026-10-22):** the page no longer has this diagram, and it shows three tiers. There are four (host, channel, LAN, WAN), and the WAN tier is AgentMux's hosted MuxBus Cloud. Redraw from [Jekt protocol §4](/internals/jekt-protocol/#4-delivery) if a diagram is wanted.
+
 **Type:** Three stacked boxes with ┌─┐ │ └─┘ and downward `▼` arrows  
 **Complexity:** Medium  
 **Current form:** Fenced `text` block
@@ -333,6 +335,8 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 ---
 
 ### 2.12 `security/reactive-event-bus.md` — Trust Boundary Diagram
+
+> **Out of date (2026-10-22):** the page no longer has this diagram. The relay is MuxBus Cloud with a WebSocket wake signal, not an outbound poll, and LAN peers authenticate with the advertised `lan_key`. Redraw from [Reactive event bus](/security/reactive-event-bus/) if a diagram is wanted.
 
 **Type:** Three-node diagram with ┌─┐ │ └─┘ and `▼` arrows  
 **Complexity:** Medium  

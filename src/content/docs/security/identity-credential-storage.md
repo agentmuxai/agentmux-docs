@@ -92,7 +92,7 @@ The variant exists, and resolving it always returns an "unsupported" error.
 
 ### Signing keys in `.mcp.json`
 
-At every launch, AgentMux writes the agent's HMAC key and its LAN private key into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**, where its MCP server reads them. The WAN key stays in `wan.db`: AgentMux signs WAN messages itself, and removes a WAN key an older version wrote to `.mcp.json` (`inject_jekt_signing_keys_into_mcp_json` and `write_mcp_json_respecting_user_servers` in `crates/srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix). An existing `.mcp.json` is merged, not replaced: MCP server entries AgentMux didn't write, and other top-level keys, are kept; the `agentmux` entry is always AgentMux's. A file that can't be read or isn't a JSON object is left untouched, and the agent's MCP servers aren't written for that launch.
+The agent's MCP server fetches its HMAC key and LAN private key from AgentMux with its identity token (`GET /agentmux/agents/self/keys`). As a fallback, AgentMux also writes them at every launch into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**. The WAN key stays in `wan.db`: AgentMux signs WAN messages itself, and removes a WAN key an older version wrote to `.mcp.json` (`inject_jekt_signing_keys_into_mcp_json` and `write_mcp_json_respecting_user_servers` in `crates/srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix). An existing `.mcp.json` is merged, not replaced: MCP server entries AgentMux didn't write, and other top-level keys, are kept; the `agentmux` entry is always AgentMux's. A file that can't be read or isn't a JSON object is left untouched, and the agent's MCP servers aren't written for that launch.
 
 The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
 
@@ -130,7 +130,7 @@ It also sets `GH_CONFIG_DIR` in every agent process on the host (not in containe
 - **`Keychain`**: update the account's key; AgentMux rewrites the OS secret-store entry. Agents pick it up at their next launch.
 - **`Env`**: change the variable in the environment AgentMux is started from, then restart AgentMux, not just the agents: the value is read from the server's own environment.
 - **`OAuthConfigDir`**: sign in again through the CLI, or the account's sign-in flow in AgentMux. The CLI refreshes tokens itself.
-- **Agent signing keys**: the HMAC key is replaced at the agent's next launch once it is 24 hours old. LAN and WAN keys are not rotated. All three are deleted with the agent, unless another agent still uses that name. The install's WAN instance key is not rotated either.
+- **Agent signing keys**: the HMAC key is replaced once it is 24 hours old, when the agent's MCP server next fetches its keys (at startup, and again when the key expires). LAN and WAN keys are not rotated. All three are deleted with the agent, unless another agent still uses that name. The install's WAN instance key is not rotated either.
 - **Instance auth key, host IPC token, `lan_key`**: new at every launch.
 
 ## What's not protected

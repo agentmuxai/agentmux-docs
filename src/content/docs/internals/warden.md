@@ -24,13 +24,13 @@ There's no `warden-model.ts` or `warden-view.tsx` split — the widget is small 
 
 ## The three layers
 
-The Warden renders three sections — Host, LAN, Internet — that map **1:1 onto the existing jekt-delivery cascade** documented in [`specs/lan-awareness-and-embedded-jekt-api.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/lan-awareness-and-embedded-jekt-api.md):
+The Warden renders three sections — Host, LAN, Internet — that map onto the jekt delivery tiers specified in [Jekt protocol](/internals/jekt-protocol/#4-delivery):
 
 | Warden section | Jekt tier | Substrate | Status today |
 |---|---|---|---|
-| Host | Tiers 1 + 2 (intra-process + local WS) | `ReactiveHandler` + `MessageBus` | live |
-| LAN | Tier 3 (mDNS peer forward) | `LanDiscoveryController` (mDNS only — forwarding TBD) | live (read-only) |
-| Internet | Tier 4 (cloud relay) | MuxBus | disabled by default |
+| Host | Host, and Channel (another instance on this machine, over loopback) | `ReactiveHandler` | live |
+| LAN | LAN (mDNS-discovered peers; delivery works) | `LanDiscoveryController` | live (read-only view) |
+| Internet | WAN (MuxBus Cloud) | MuxBus Cloud relay (works once signed in) | the Warden section is a stub |
 
 That's why the Warden was framed as "the operator-facing surface of the cascade" — not a new control plane, but a rendering of the layering that already exists in the backend.
 
@@ -59,7 +59,7 @@ Same 5 s + 1 s tick pattern. The LAN section's empty-state copy points the opera
 
 ### Internet section
 
-Pure stub — renders a "closed by default" message. The substrate (MuxBus cloud relay forwarding through the controller) hasn't been wired.
+The section is a stub that renders a "closed by default" message. The tier itself works: jekts travel through MuxBus Cloud once you sign in; the Warden just doesn't show it yet.
 
 ## Authed vs public endpoints
 
@@ -135,7 +135,7 @@ This is the same reason `defwidget@warden` carries a single `description` field 
 - `crates/srv/src/server/reactive.rs` — `/agentmux/reactive/agents`, `/audit`, `/unregister` handlers
 - `crates/srv/src/server/mod.rs` — `/api/lan-instances` route
 - `specs/SPEC_WARDEN_WIDGET_2026-05-25.md` — full design spec
-- `specs/lan-awareness-and-embedded-jekt-api.md` — the cascade the layers map onto
+- [Jekt protocol](/internals/jekt-protocol/) — the delivery tiers the sections map onto
 
 ## See also
 
