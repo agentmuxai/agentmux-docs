@@ -70,7 +70,7 @@ The inject route accepts a JSON object. Receivers MUST ignore keys they don't kn
 | `target_agent` | yes | The recipient: an agent id, a UID, a former slug, or a display name (converted to its route name, `Loap #3` → `Loap-3`). |
 | `message` | yes | UTF-8 text. |
 | `source_agent` | no | The claimed sender. A claim only: Section 5 decides what it is worth. |
-| `request_id` | no | The message id. Missing or empty: the receiving instance makes a UUID. |
+| `request_id` | no | The message id. Missing or empty: the receiving instance makes a UUID, and a host, channel or LAN signature on the request counts as failed. |
 | `jekt_tier` | no | `info`, `coord` (default) or `sensitive`. Another value is rejected. |
 | `priority` | no | Free text, default `normal`. It is shown in the marker and has no other effect. |
 | `delivery_tier` | no | The tier the caller claims. A request authenticated with the LAN key is always `lan`, whatever it says. |
@@ -160,7 +160,7 @@ The sending agent's `agentmux-mcp` signs every `Message` request with each key i
 - The **base material** is `msgid 0x01 source 0x01 target 0x01 ts 0x01 message` (a missing message id is the empty string, a missing timestamp `0`).
 - Signatures and keys are standard Base64 with padding. Ed25519 signatures are 64 bytes; keys are 32 bytes.
 - A signature outside its freshness window counts as failed for host and channel, LAN and muxreview, and as not checked for WAN.
-- **One delivery per signature.** A host, channel, LAN or WAN signature on a message (same sender, target and message id) that the receiving instance has already delivered to one of its agents counts as failed when it arrives again. A request an instance only forwards is not counted.
+- **One delivery per signature.** A host, channel, LAN or WAN signature on a message (same sender, target and message id) that the receiving instance has already delivered or held for one of its agents counts as failed when it arrives again, whichever copy got there first. A request an instance only forwards is not counted. A host, channel or LAN signature on a request with no message id or no sender counts as failed: it can't be counted.
 
 ### 5.1 Host: HMAC-SHA256
 
