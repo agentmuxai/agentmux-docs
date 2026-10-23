@@ -13,7 +13,7 @@ An AgentMux window has three parts: the **top bar**, the **panes** of the curren
 
 ## Top bar
 
-![The top bar: the hamburger menu, a window tab, the widget bar and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Hangar, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 From left to right:
 
@@ -26,7 +26,7 @@ From left to right:
 
 Hover **more** (or click it) to list the widgets that aren't pinned to the bar. Click one to open it.
 
-![The More list open under the widget bar, listing widgets that aren't pinned](../../assets/screenshots/chrome/chrome-more-dropdown.png)
+![The More list open under the widget bar, listing the widgets that aren't pinned: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Warden, Vault, Toolchain and Tower](../../assets/screenshots/chrome/chrome-more-dropdown.png)
 
 ### A tab's menu
 
@@ -99,9 +99,16 @@ This computer: its OS, address, the backend's process id, and the version's data
 
 ### Instance panel
 
-This AgentMux instance: its version, channel, commit, CEF version, runtime and build time (each with a copy button), the windows this process has open with an opacity slider for each, its floating panes, and maintenance (database migrations and vacuum). **Open another window** opens a new window of this instance. See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
+This AgentMux instance: its version, channel, commit, CEF version, runtime and build time (each with a copy button), the windows of the open [workspace](/workspaces/), its floating panes, and maintenance (whether this version is up to date, with **Check for update**). **Open another window** opens a new window in the workspace.
 
-![The instance panel: version, channel, commit, CEF, runtime and build time; this process's window with its opacity slider; floating panes; maintenance; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
+The window list is headed by the workspace's name and how many windows it has ("Default Workspace — 3 windows"); double-click the heading, or press `F2` on it, to rename the workspace. Below it:
+
+- **Open windows** (● this window, ○ the others): click one to focus it, double-click (or `F2`) to rename it. Each has an opacity slider and **Remove from workspace**, which closes the window and deletes its tabs and panes (disabled on the only open window).
+- **Closed windows**, greyed (◌), with when they closed: click one, or its **Reopen** button, to open it where it was, its agents resuming. Right-click one for **Remove from workspace**.
+
+Closing a window keeps it in the workspace as a closed window (see [Workspaces](/workspaces/#windows-in-a-workspace)). See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
+
+![The instance panel: version, channel, commit, CEF, runtime and build time; the Default Workspace's 3 windows, Window 1 (this window) and Window 2 open, each with its opacity slider and trash button, and a closed window, greyed, with when it closed and Reopen; floating panes; maintenance with Check for update; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
 
 ## See also
 

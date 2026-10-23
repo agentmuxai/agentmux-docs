@@ -28,7 +28,7 @@ There is one opacity per window. You can set it from two places, and they show t
 
 ![The hamburger menu's Opacity submenu: 100% down to 35% in 5% steps, the current value checked](../../assets/screenshots/chrome/chrome-hamburger-opacity.png)
 
-![The Instance Panel, with Window 1 and its opacity slider at 100% under This process](../../assets/screenshots/chrome/chrome-status-instance.png)
+![The Instance Panel, with Window 1 and Window 2 each at 100% on their opacity sliders under Default Workspace, and a closed window below them](../../assets/screenshots/chrome/chrome-status-instance.png)
 
 A choice in the menu moves the slider, and dragging the slider moves the menu's checkmark. A value between two steps, such as 72%, checks the nearest step (70%). The Instance Panel lists every open window, so you can also set another window's opacity from there.
 

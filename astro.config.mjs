@@ -86,6 +86,7 @@ export default defineConfig({
 							label: 'Features',
 							items: [
 								{ label: 'The window', slug: 'window' },
+								{ label: 'Workspaces', slug: 'workspaces' },
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'Widget gallery', slug: 'widget-gallery' },
 								{ label: 'Your own widgets', slug: 'widgets' },

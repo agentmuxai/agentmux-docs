@@ -32,7 +32,7 @@ A `task dev` build has no version level: its per-version folders are at `~/.agen
 │   │   └── transcripts/filestore.db   every agent's conversation, Global Memory record
 │   ├── identities/, providers/  provider login folders (one per account, one default per provider)
 │   ├── backups/                 pre-migration copies, kept 30 days
-│   └── …                        CLI installs, layouts, browser bookmarks, audit log (see below)
+│   └── …                        CLI installs, layouts, workspaces, bookmarks, audit log (see below)
 ├── agents/<slug>/               agent working folders
 ├── widgets/<id>/                installed widgets
 ├── logs/                        launcher log, migration error log
@@ -82,13 +82,15 @@ Each object type has its own table with the same three columns: `oid` (primary k
 | Table | Object |
 |---|---|
 | `db_client` | The client record: which windows exist |
-| `db_window` | An OS window and the workspace it shows |
-| `db_workspace` | A workspace: its tabs, pinned tabs, active tab |
+| `db_window` | An OS window and the contents it shows (a `db_workspace` row) |
+| `db_workspace` | One window's contents: its tabs, pinned tabs, active tab. srv calls this object a workspace; it isn't the user's [workspace](/workspaces/), which is a row of `db_workspaces` |
 | `db_tab` | A tab: its blocks and layout |
 | `db_layout` | A tab's pane tree |
 | `db_block` | A pane: its view and meta (agent id, URL, scroll position, …) |
 
 Objects point at each other by oid inside the JSON (client → windows → workspace → tabs → layout and blocks), not with SQL foreign keys. `db_temp` is created but unused.
+
+`db_workspaces` holds the user's [workspaces](/workspaces/), one row each: its name, its windows as last saved (`record`), the last record that loaded cleanly (`previous`) and the one copied from the previous version (`pre_upgrade`). See [Persistence → Workspaces](/internals/persistence/#workspaces-db_workspaces).
 
 ### Agents
 
@@ -203,7 +205,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `shared/cli/<provider>/<version>/` | npm install | Provider CLIs AgentMux installed; unused ones are pruned after 30 days |
 | `shared/backups/pre-migration-<version>-<time>/` | SQLite copies | `store.db` and `objects.db` before migrations ran; kept 30 days |
 | `shared/adoption-ledger.json` | JSON | Which older per-channel stores have been adopted |
-| `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, saved layouts, sign-in refresh locks |
+| `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `workspaces/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, layout files saved by earlier versions, exported workspaces (where **Export…** starts), sign-in refresh locks |
 | `shared/browser-bookmarks.json`, `browser-profiles.json`, `browser-start-page.json` | JSON | Browser pane bookmarks, named profiles, start page |
 | `agents/<slug>/` | Folder | An agent's working folder: its startup instructions file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), `.mcp.json`, `.claude/` settings and skills |
 | `widgets/<id>/` | Folder | Installed widgets: `widget.json`, signature, files |

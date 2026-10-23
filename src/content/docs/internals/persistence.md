@@ -9,7 +9,7 @@ This page covers the per-version stores srv keeps session state in, how agents p
 
 | File | Format | Writer | Owns |
 |---|---|---|---|
-| `objects.db` | SQLite | sidecar | Workspaces, tabs, blocks, windows, layouts, plus each agent's row, content, keys and drone runs — the app-domain reducer state of record |
+| `objects.db` | SQLite | sidecar | Windows and their contents (tabs, blocks, layouts), the saved [workspaces](/workspaces/), plus each agent's row, content, keys and drone runs — the app-domain reducer state of record |
 | `filestore.db` | SQLite | sidecar | Per-block files: terminal scrollback, agent output and its index and state files |
 | `sagas.db` | SQLite | sidecar | Saga step + lifecycle rows for the srv sagas (compensated after a crash) |
 | `launcher-events.log` | JSONL | launcher | Append-only Layer 1 reducer event log (durable, OS-level facts) |
@@ -26,7 +26,7 @@ Owned by `agentmux-srv`. Opened via `Store::open(<data-dir>/db/objects.db)` in [
 
 Stores every:
 
-- **Workspace** — top-level container, identity + window membership
+- **Workspace** — one window's contents: its tabs, pinned tabs and active tab. This is srv's object, not the user's [workspace](/workspaces/) (a named set of windows), which is a row of `db_workspaces` (below)
 - **Tab** — per-window tab list with layout root pointer
 - **Block** — every pane (terminal, browser, agent, file, system metrics, …) including its meta map (controller type, agent id, URL, scroll position, …)
 - **Window** — OS-window record; the host reads this on launch to restore window geometry
@@ -47,7 +47,23 @@ and columns every time the file is opened. Data changes go through numbered
 migrations (`crates/srv/src/migrations/`), recorded in `db_migrations`. A
 `PRAGMA user_version` stamp (currently 44) acts as a downgrade tripwire.
 
-This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch copies it forward again from the newest older version of the same channel, if there is one, and otherwise comes up with a single empty workspace.
+This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch copies it forward again from the newest older version of the same channel, if there is one, and otherwise comes up with a single window showing the starting panes, in a new Default Workspace.
+
+### Workspaces (`db_workspaces`)
+
+A [workspace](/workspaces/), the named set of windows the user works in, is one row of `db_workspaces`: its id and name, `record` (its windows as last saved), `previous` (the last record that loaded cleanly), `pre_upgrade` (the record this version copied from the one before it), and when it was created, updated and last opened. A record holds, for each window, its tabs, its panes with their settings, its split trees, its placement, name, theme and opacity, and its `state`: `open` or `closed`. An agent pane's settings name its agent and session, so the agent resumes. The open workspace is named in the client record's meta (`workspace:current`, `workspace:name`).
+
+**Saving as you go.** srv counts its own writes to windows, window contents, tabs, layouts and blocks, and saves the open workspace when they change: about 1 s after the last change to the arrangement, at least every 15 s while changes keep coming, and 30 s after the first change when only blocks' settings changed (an agent pane writes them as it works). Closing a window, switching workspace, quitting, an OS shutdown and a window losing focus save at once. A save that would store what is stored already is skipped, and each save is one transaction. While a quit closes its windows one by one, saves wait, so the quit's record of every window isn't replaced by the windows still open. The older quit-time session record (`session:last_topology` in the client's meta) is still written for one release; a cold start restores whichever of the two is newer.
+
+**Loading falls back.** A cold start restores the open workspace's `record`; if it doesn't load, `previous`, then `pre_upgrade`, then a fresh window with the starting panes. When it used a fallback, a notice says so ("Default Workspace opened from an older copy").
+
+**Closing a window keeps its contents.** Closing a window used to delete its tabs and panes unless it was the last one. Now srv stops the window's agents and shells and keeps its tabs, its panes (same ids and settings) and their layout, and lists the window in the client's meta (`workspace:closed_windows`, newest first, with when it closed, its placement, name and appearance; no cap). Reopening it reuses the same panes, so its agents resume. Three closes don't keep a window: the last window's (closing it quits, and the window stays `open`), each close during a quit, and the close of a window with nothing of the user's in it (no panes, or only the untouched starting panes). **Remove from workspace** deletes the window's contents. Contents a record names that are no longer in the database are rebuilt from the record, with new ids.
+
+**Switching workspaces** saves the open one and holds further saves until the switch is done, so no save mixes the two. Its other windows close without their contents being deleted, the other workspace's record is restored as a cold start restores one (contents still here are reused, the rest rebuilt from the record), and the closed workspace's agents and shells are then stopped.
+
+**Upgrades and instances.** A new version's first start copies `objects.db` forward from the newest older version of the same channel (see [Data structure](/internals/data-structure/)), so its workspaces come with it; after that each version's are its own. Workspaces are never shared between two running instances.
+
+**Exports** are files the user chooses: `*.agentmux-workspace.json`, by default in `~/.agentmux/shared/workspaces/`. One is an `agentmux.layout` document, version 1, with `scope: "workspace"`, the workspace's `name`, and each window's optional `name` and `state`. An older build ignores the fields it doesn't know, and a file without them reads as open, unnamed windows. AgentMux never reads an export back on its own: only **Import…** does, as a new workspace.
 
 ### Bootstrap + persist subscriber
 
