@@ -160,7 +160,7 @@ The sending agent's `agentmux-mcp` signs every `Message` request with each key i
 - The **base material** is `msgid 0x01 source 0x01 target 0x01 ts 0x01 message` (a missing message id is the empty string, a missing timestamp `0`).
 - Signatures and keys are standard Base64 with padding. Ed25519 signatures are 64 bytes; keys are 32 bytes.
 - A signature outside its freshness window counts as failed for host and channel, LAN and muxreview, and as not checked for WAN.
-- **One delivery per signature.** A host, channel, LAN or WAN signature on a message (same sender, target and message id) that the receiving instance has already delivered or held for one of its agents counts as failed when it arrives again, whichever copy got there first. A request an instance only forwards is not counted. A host, channel or LAN signature on a request with no message id or no sender counts as failed: it can't be counted.
+- **One delivery per signature.** A host, channel, LAN or WAN signature on a message (same sender, target and message id) that the receiving instance has already delivered or held for one of its agents counts as failed when it arrives again, whichever copy got there first. A request an instance only forwards is not counted. A host, channel or LAN signature on a request with no message id or no sender counts as failed: it can't be counted. When the instance's memory of these messages is full of entries still inside their window, a new signed message counts as failed rather than push one out.
 
 ### 5.1 Host: HMAC-SHA256
 
@@ -276,7 +276,7 @@ From: <from> | To: <to> | ts=<unix-seconds>
 <body>
 [file list, Section 4.6]
 SEP
-Reply: Message send to <from>
+Reply: mcp__agentmux__Message (action "send", to "<from>"), not a built-in SendMessage
 [/JEKT]
 ```
 
