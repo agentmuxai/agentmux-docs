@@ -12,7 +12,7 @@ A **jekt** is a message one agent sends another through AgentMux. This page is t
 | | |
 |---|---|
 | **Version** | 1 |
-| **Describes** | AgentMux 0.59.39 (`agentmux` main at `b986cf27f`, 2026-10-22) |
+| **Describes** | AgentMux 0.59.39 (`agentmux` main at `b986cf27f`, 2026-10-22), plus the one-delivery rule and the reply line from agentmux #5346 |
 | **Status** | Living. It describes the current release. A change to any rule here ships with a change to this page. |
 | **Scope** | The send request, delivery between instances, signatures, trust and tier evaluation, the delivered marker, and the receiving agent's obligations. Not in scope: how the MuxBus Cloud relay stores and routes messages internally. |
 
@@ -160,6 +160,7 @@ The sending agent's `agentmux-mcp` signs every `Message` request with each key i
 - The **base material** is `msgid 0x01 source 0x01 target 0x01 ts 0x01 message` (a missing message id is the empty string, a missing timestamp `0`).
 - Signatures and keys are standard Base64 with padding. Ed25519 signatures are 64 bytes; keys are 32 bytes.
 - A signature outside its freshness window counts as failed for host and channel, LAN and muxreview, and as not checked for WAN.
+- **One delivery per signature.** A host, channel, LAN or WAN signature on a message (same sender, target and message id) that the receiving instance has already delivered to one of its agents counts as failed when it arrives again. A request an instance only forwards is not counted.
 
 ### 5.1 Host: HMAC-SHA256
 
@@ -275,7 +276,7 @@ From: <from> | To: <to> | ts=<unix-seconds>
 <body>
 [file list, Section 4.6]
 SEP
-Reply: bus:inject to <from>
+Reply: Message send to <from>
 [/JEKT]
 ```
 
@@ -333,7 +334,6 @@ Not normative. These are known differences between the protocol as built and wha
 - **`PRIORITY` does nothing.** It is shown and stored, but changes neither order nor interruption.
 - **Cross-channel failures are not enforced** as `sensitive` (they only block `ESCALATE=none`). Enforcement is planned once every instance publishes its keys.
 - **A missing sender renders as `FROM=unknown`** with a reply line, though `unknown` is not an agent.
-- **The reply line names an old command.** `Reply: bus:inject to <from>` should name the `Message` tool, which is how an agent replies.
 - **No threads.** A reply is a new jekt; nothing links it to the one it answers.
 
 ## 11. History
