@@ -13,7 +13,7 @@ The Kanban is the first section of the [Warden](/warden/) pane (`frontend/app/vi
 
 ## Where to find it
 
-- **Kanban** on the widget bar, pinned by default between Swarm and Memory. It is Warden opened on its Kanban section (`defwidget@kanban` in `crates/srv/src/config/widgets.json`, with `"section": "kanban"`).
+- **Kanban** in the widget bar's **more** menu (right-click it there and choose **Pin to bar** to keep it on the bar). It is Warden opened on its Kanban section (`defwidget@kanban` in `crates/srv/src/config/widgets.json`, with `"section": "kanban"`).
 - **Open Kanban** in the command palette (`open:kanban`).
 - Warden's **Kanban** tab.
 - On a [Swarm](/subagent-watcher/) row, the chip of the task an agent is on opens the Kanban with that task shown.

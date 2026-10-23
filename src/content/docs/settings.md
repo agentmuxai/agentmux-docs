@@ -12,11 +12,11 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is a **pane view** with ten tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar (unpinned by default, reachable from the widget bar's overflow) and also reachable from the **hamburger menu**:
+Settings is a **pane view** with ten tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
 
-1. Click the hamburger icon (≡) at the start of the tab bar.
-2. Select **Settings**.
-3. AgentMux opens (or focuses) the Settings pane.
+- Click **Settings** in the widget bar. It is pinned by default.
+- Press `Ctrl+,` (`⌘,` on macOS).
+- Run **Settings** from the command palette.
 
 Editing `settings.json` directly still works and is reflected in the pane — use the command palette ("Open Settings File"), or **Open raw settings.json** at the bottom of the pane, if you want the raw file instead of the UI.
 

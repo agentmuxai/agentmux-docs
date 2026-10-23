@@ -66,7 +66,7 @@ Session zones are anchored to the agent's identity (`agent_id`), not the pane th
 
 Bundles are managed **app-wide only**:
 
-1. Click **Memory** in the widget bar, or choose **Memory** from the hamburger menu (≡).
+1. Click **Memory** in the widget bar, or run **Memory** from the command palette.
 2. Switch to the **Bundles** section.
 
 ![A bundle opened: its description, instructions, Edit and Delete, and its skills](../../assets/screenshots/memory/memory-bundle-detail.png)

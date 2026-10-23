@@ -43,7 +43,7 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 3. Switch to the **Accounts** tab — a Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). It's read-only, with one exception: for a Claude agent, its Claude row (or the empty table, if it has no Claude link) offers **Connect** / **Re-login**, the in-pane way to fix a missing or broken Claude binding.
 
 **App-wide manager (Connectors pane):**
-1. Click **Connectors** in the widget bar (pinned by default), or choose **Connectors** from the hamburger menu (≡).
+1. Click **Connectors** in the widget bar (pinned by default), or run **Connectors** from the command palette.
 2. The pane opens on its **Accounts** section — create, edit, and delete Accounts. There is no standalone "Identities" section: Connectors is scoped to shared, reusable resources, and per-agent bindings live on the agent pane instead.
 
 New account↔agent links are created in several places:

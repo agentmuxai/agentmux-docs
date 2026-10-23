@@ -21,7 +21,7 @@ The Warden widget (icon: `shield-halved`) is **not pinned** to the widget bar by
 
 Two of its sections have their own ways in:
 
-- **Kanban** is pinned to the widget bar by default, between Swarm and Memory, and is **Open Kanban** (`open:kanban`) in the command palette.
+- **Kanban** is in the widget bar's **more** menu, and is **Open Kanban** (`open:kanban`) in the command palette.
 - **Vault** is in the widget bar's **more** menu, and is **Open Vault** (`open:vault`) in the command palette.
 
 Each opens Warden on that section. A tab holds one Warden: these entries, and the Warden entry itself, switch the Warden already in the tab instead of opening a second one. There is no keyboard shortcut for the Warden, and no command-palette entry for its other sections.
