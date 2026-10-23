@@ -158,23 +158,24 @@ The full model is in [Reactive event bus](/security/reactive-event-bus/). In sho
 
 ### Message trust markers
 
-Every delivered message is wrapped in a marker the server computes. The first line looks like this:
+Every delivered message is wrapped in a marker the receiving server computes. The first line looks like this:
 
 ```
 [JEKT:FROM=<sender> TO=<target> TIER=<info|coord|sensitive> DELIVERY=<host|channel|lan|wan> TRUST=<trust> MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 ```
 
-with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=` and `ESCALATE=` added when they apply.
+with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=`, `ESCALATE=` and `FILES=` added when they apply. In short:
 
-- **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a signature checked out), `unverified` (a signature was expected and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof). `wan-verified` comes with `INSTANCE=` and `INSTANCE_STATUS=`, which say which install sent it and whether it is this install (`approved`), another one (`new`), or revoked.
-- **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text contains credential or destructive keywords, or when the message is a transcript request.
-- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means the sender was verified, and the sensitive tag is informational. That includes a `wan-verified` message from an `approved` or `new` install; one from a `revoked` install always gets `ESCALATE=required`.
+- **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a check passed), `unverified` (a check was possible and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof).
+- **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text or a file name contains a credential or destructive keyword, or when the message is a transcript request.
+- **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means no check failed and the sender was verified, so the sensitive tag is informational.
 
-These labels are enforced by the server, but whether an agent actually pauses depends on the agent following the instruction. See [Reactive event bus](/security/reactive-event-bus/#the-trust-marker) for every field and rule.
+Every field, every rule, and what a receiving agent must do are specified in [Jekt protocol](/internals/jekt-protocol/). These labels are enforced by the server, but whether an agent actually pauses depends on the agent following the instruction.
 
 ## See also
 
-- [Reactive event bus](/security/reactive-event-bus/): routes, trust marker, signing keys, durable hold
+- [Jekt protocol](/internals/jekt-protocol/): the specification: request, delivery, signatures, trust and tier rules, marker
+- [Reactive event bus](/security/reactive-event-bus/): the security analysis: who can reach the bus, keys, durable hold
 - [LAN discovery](/lan-discovery/): mDNS setup and what it exposes
 - [Warden widget](/warden/): agent state and the delivery feed
 - [MuxAPI](/internals/muxapi/): the full MCP tool reference

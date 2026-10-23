@@ -93,7 +93,7 @@ pub fn apply(&self, enabled: bool) {
 The controller also answers the two lookups the reactive bus needs:
 
 - `find_agent(agent_id)` asks every peer's `GET /agentmux/reactive/agent?id=<agent_id>` concurrently and takes the first 2xx. Positive and negative answers are cached for 60 seconds.
-- `find_agent_lan_pubkey(agent_id)` makes the same query for a sender's LAN public key, used to verify LAN signatures. It is rate-limited to 10 peer fan-outs per second; a rate-limited lookup is reported as `RateLimited`, which the verifier treats as a failed signature, not as "no key".
+- `find_agent_lan_pubkey(agent_id)` makes the same query for a sender's LAN public key, used to verify LAN signatures. It is rate-limited to 10 peer fan-outs per second; a rate-limited lookup is reported as `RateLimited`, and a name that is a former agent id as `Renamed`; the verifier treats both as a failed signature, not as "no key". See [Jekt protocol](/internals/jekt-protocol/#52-lan-ed25519).
 
 The peer list also serves one live instance per agent. `bootstrap.rs` hands the controller to `agent_admission::set_lan_discovery`, and `agent_admission::lan_holders(uid)` asks every peer's `GET /agentmux/agent/holding?uid=<uid>` concurrently, with the peer's `lan_key` and a 1.5-second timeout. It runs before an agent starts and every 30 seconds while it runs (every sixth 5-second lease renewal). Answers from this host are ignored, unreachable peers and peers without the route are skipped, and `peer_wins` decides between two hosts running the same agent: the earlier start wins, and starts within 10 seconds of each other go to the lower hostname. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
 

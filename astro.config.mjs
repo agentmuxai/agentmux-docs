@@ -182,6 +182,7 @@ export default defineConfig({
 							label: 'API reference',
 							items: [
 								{ label: 'MuxAPI', slug: 'internals/muxapi' },
+								{ label: 'Jekt protocol', slug: 'internals/jekt-protocol' },
 								// Generated reference indexes — produced by
 								// `npm run build:typedoc` (writes into
 								// src/content/docs/api/typescript/) and

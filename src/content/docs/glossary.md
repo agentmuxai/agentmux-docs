@@ -47,7 +47,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 > Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two process-isolation containers) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
 
-<a id="jekt"></a>**jekt** — Verb. Inject a message directly into a target agent's terminal stdin. Synchronous, immediate processing. Counterpart to [message](#message). Use the `Message` MCP tool (MuxAPI, action `send`) or `POST /agentmux/reactive/inject` to jekt an agent.
+<a id="jekt"></a>**jekt** — A message one agent sends another through AgentMux, and the verb for sending one. AgentMux checks the sender's signatures, wraps the text in a `[JEKT:…]` marker that says how far the sender's identity was proven, and puts it into the recipient's conversation at once, even mid-turn; a message for an agent that isn't running is held for up to 24 hours. Sent with the `Message` MCP tool (action `send`). See [Jekt protocol](/internals/jekt-protocol/).
 
 <a id="kanban"></a>**Kanban** — The first section of the [Warden](/warden/) pane: one card per task in the shared task queue ([Muxqueue](#muxqueue)), in the columns Backlog, In progress, Needs you, Review and Done. Agents file and update tasks with their `Tasks` tool; you start, answer, accept or send back. Pinned to the widget bar by default and opened by **Open Kanban** (`open:kanban`). See [Kanban](/kanban/).
 
@@ -57,9 +57,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="memory"></a>**Memory** — The app-wide pane for what agents know and carry, in four sections: **Global** ([Global Memory](#global-memory)), **Personal** ([Personal Memory](#personal-memory)), **Skills** and **Bundles**. Opened from the widget bar, the hamburger menu (≡) or the command palette. Formerly [Knowledge](#knowledge); together with [Connectors](#connectors) it replaced the Armory. "Memory" on its own means this pane; the other kinds are always qualified as Global or Personal Memory. See [Memory](/memory/).
 
-<a id="message"></a>**message** — Verb. Deliver a message to the recipient's mailbox; the recipient reads it when they're ready. Asynchronous counterpart to [jekt](#jekt). Use the `Message` MCP tool (MuxAPI, action `send`) with the target agent's name.
+<a id="message"></a>**message** — The MCP tool agents use to talk to each other. Its `send` and `broadcast` actions deliver [jekts](#jekt); `post` and `read` use the per-repository coordination channel, which agents read when they choose and which is never pushed into a conversation.
 
-<a id="agentbus"></a>**MuxBus** — The cross-process, cross-machine interagent messaging substrate, in three tiers: **Host** (in-process reactive handler, same AgentMux instance), **LAN** (mDNS peer-to-peer forwarding, same network, v0.46+), and **WAN** (opt-in cloud relay you operate). Two delivery models: [jekt](#jekt) and [message](#message). Powers the `Agents` `list` and `Message` `send` MuxAPI tool actions. See [Interagent Communication](/internals/interagent-comms/) and [Reactive event bus](/security/reactive-event-bus/). (Formerly called *agentbus*.)
+<a id="agentbus"></a>**MuxBus** — How agents reach each other, in four delivery tiers: **Host** (the same AgentMux instance), **Channel** (another AgentMux instance on the same machine), **LAN** (instances found by [LAN discovery](/lan-discovery/)) and **WAN** (MuxBus Cloud, AgentMux's hosted relay, after you sign in). It carries [jekts](#jekt) and powers the `Agents` `list` and `Message` `send` tools. See [Interagent communication](/internals/interagent-comms/) and [Jekt protocol](/internals/jekt-protocol/).
 
 <a id="mcp"></a>**MCP** — Model Context Protocol. A JSON-RPC protocol that AI agents use to talk to external tools and data sources. Agents subscribe to MCP servers; MCP servers expose tools, resources, and prompts.
 
