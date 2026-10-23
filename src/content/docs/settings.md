@@ -43,7 +43,7 @@ The default theme and opacity for windows without their own, the startup splash 
 
 ### Window & Panes
 
-Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, and whether closing a tab asks first.
+Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, whether closing a tab asks first, and **Warn before closing a window with working agents** (see [Workspaces](/workspaces/#when-an-agent-is-working)).
 
 ![Settings, Window & Panes tab](../../assets/screenshots/settings/settings-window-panes.png)
 
@@ -171,6 +171,7 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
 | `window:magnifiedblockblursecondarypx` | integer | `0` | Backdrop blur, in pixels, applied to the other panes behind it |
 | `window:keepinactivetabslaidout` | boolean | `true` | Keep window tabs you aren't looking at laid out, so switching back to one has nothing to catch up on. `false` skips their layout while hidden. |
+| `window:confirmcloseworking` | boolean | `true` | Ask before closing a window, or switching [workspace](/workspaces/), while an agent in it is mid-turn (Settings: **Warn before closing a window with working agents**). Closing stops its agents; the window stays in the workspace, to reopen from the instance panel. The warning's **Don't ask again** turns it off. |
 
 ## App Settings
 

@@ -99,7 +99,14 @@ This computer: its OS, address, the backend's process id, and the version's data
 
 ### Instance panel
 
-This AgentMux instance: its version, channel, commit, CEF version, runtime and build time (each with a copy button), the windows this process has open with an opacity slider for each, its floating panes, and maintenance (database migrations and vacuum). **Open another window** opens a new window of this instance. See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
+This AgentMux instance: its version, channel, commit, CEF version, runtime and build time (each with a copy button), the windows of the open [workspace](/workspaces/), its floating panes, and maintenance (database migrations and vacuum). **Open another window** opens a new window in the workspace.
+
+The window list is headed by the workspace's name and how many windows it has ("Default Workspace — 3 windows"); double-click the heading, or press `F2` on it, to rename the workspace. Below it:
+
+- **Open windows** (● this window, ○ the others): click one to focus it, double-click (or `F2`) to rename it. Each has an opacity slider and **Remove from workspace**, which closes the window and deletes its tabs and panes (disabled on the only open window).
+- **Closed windows**, greyed (◌), with when they closed: click one, or its **Reopen** button, to open it where it was, its agents resuming. Right-click one for **Remove from workspace**.
+
+Closing a window keeps it in the workspace as a closed window (see [Workspaces](/workspaces/#windows-in-a-workspace)). See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
 
 ![The instance panel: version, channel, commit, CEF, runtime and build time; this process's window with its opacity slider; floating panes; maintenance; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
 

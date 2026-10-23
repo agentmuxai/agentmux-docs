@@ -31,9 +31,11 @@ AgentMux opens a starter layout of three panes:
 Around the panes:
 
 - **Title bar**: tabs, the widget bar (pinned **Agent**, **Swarm**, **Memory**, **Connectors**, **Hangar**, **Browser**, **Settings** and **Help**, with the rest under **more**), and the hamburger menu (**≡**).
-- **Status bar** (bottom): backend status, CPU, GPU, memory, disk and network stats, token usage, and the AgentMux version. Click the version for instance details.
+- **Status bar** (bottom): backend status, CPU, GPU, memory, disk and network stats, token usage, and the AgentMux version. Click the version for instance details and the list of your windows.
 
 See [The window](/window/) for each part of the window and the panels the status bar opens.
+
+Your windows, with their tabs and panes, are your **Default Workspace**. AgentMux saves it as you work, so they're all back at the next launch. See [Workspaces](/workspaces/).
 
 ## 3. Create your first agent
 

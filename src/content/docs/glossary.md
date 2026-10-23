@@ -11,7 +11,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agent-operating-environment"></a>**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [MuxAPI](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
-<a id="muxapi"></a><a id="agent-app-api"></a>**MuxAPI** (formerly the Agent App API) — The typed RPC surface an agent uses to call back into the AgentMux workspace — spawn panes, set titles, render dashboards, update status. See [/internals/muxapi](/internals/muxapi/).
+<a id="muxapi"></a><a id="agent-app-api"></a>**MuxAPI** (formerly the Agent App API) — The typed RPC surface an agent uses to call back into AgentMux — spawn panes, set titles, render dashboards, update status. See [/internals/muxapi](/internals/muxapi/).
 
 <a id="appimage"></a>**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
 
@@ -45,7 +45,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 > Note: "instance" is *not* one process — a baseline single-window dev session has 4 processes ([launcher](#launcher) + [sidecar](#sidecar) + [host](#host) + 1 [renderer](#renderer)), plus shared GPU/utility Chromium subprocesses, plus more renderers as windows and browser panes are opened.
 
-> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. Two portables on the same channel launched from different folders are two distinct instances (two process trees, two process-isolation containers) that share the same on-disk SQLite database — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
+> Note: instances and **data dirs** don't always map 1:1. The data dir is keyed by [*channel*](/internals/data-layout/), not by instance. The same channel and version is one instance: launching it again, even a portable from another folder, opens a new window in the instance that's already running. Two versions of one channel are two instances with separate databases that share the channel's settings — see [Multi-instance & dev mode](/multi-instance/) for the per-instance vs per-channel split.
 
 <a id="jekt"></a>**jekt** — A message one agent sends another through AgentMux, and the verb for sending one. AgentMux checks the sender's signatures, wraps the text in a `[JEKT:…]` marker that says how far the sender's identity was proven, and puts it into the recipient's conversation at once, even mid-turn; a message for an agent that isn't running is held for up to 24 hours. Sent with the `Message` MCP tool (action `send`). See [Jekt protocol](/internals/jekt-protocol/).
 
@@ -67,7 +67,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="oac"></a>**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 
-<a id="pane"></a>**pane** — A UI slot in the workspace layout. A pane holds one or more [pane tabs](#pane-tab). Panes have types: terminal, agent, editor (which also shows images, audio and video), browser, swarm, system metrics and more (see [Pane Types](/pane-types/)). The user composes a workspace by mounting panes in a grid. The `browser` type is a special case — see [browser pane](#browser-pane).
+<a id="pane"></a>**pane** — A UI slot in a [window tab](#window-tab)'s layout. A pane holds one or more [pane tabs](#pane-tab). Panes have types: terminal, agent, editor (which also shows images, audio and video), browser, swarm, system metrics and more (see [Pane Types](/pane-types/)). You arrange a tab's panes in a grid by splitting them. The `browser` type is a special case — see [browser pane](#browser-pane).
 
 <a id="pane-tab"></a>**pane tab** — One [block](#block) stacked in a [pane](#pane), shown in the pane header's tab strip: an Agent and a Terminal can share one pane as two pane tabs. The middle of the three kinds of tab, between [window tabs](#window-tab) and [document tabs](#document-tab). A pane tab is a different pane in the same slot. See [Pane tabs](/pane-types/#pane-tabs).
 
@@ -99,11 +99,15 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="vault"></a>**Vault** — Your secrets (ID numbers, cards and bank accounts, API keys, logins, notes), kept encrypted with one key in the OS credential store and shared by every AgentMux on the computer. Agents use an entry by its name, to fill a web form field or run a command, and never see its value. A [section](#section) of the [Warden](/warden/) pane since it stopped being a pane of its own. See [The Vault](/vault/).
 
-<a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2).
+<a id="window"></a>**window** — An OS window owned by an [instance](#instance)'s [host](#host). One instance can have many windows. Each window has a backend `windowId` (UUID), a launcher `label` (`"main"`, `"window-pool-..."`, internal/IPC), and a [window rank](#window-rank). Renamable via the bottom-right window-list popover (open it via the version chip → double-click a row, or press F2). Belongs to one [workspace](#workspace); closing it keeps it there.
 
 <a id="window-rank"></a>**window rank** — A window's 1-based position within its [instance](#instance), shown after the version in the status bar as `(2)`, `(3)`, etc. when more than one window is open. Cosmetic only — the underlying identity of a window is the `windowId`, not the rank.
 
 <a id="window-tab"></a>**window tab** — A whole layout of [panes](#pane), shown in the tab bar along the top of the window (Tab 1, Tab 2, …). The outermost of the three kinds of tab, before [pane tabs](#pane-tab) and [document tabs](#document-tab).
+
+<a id="workspace"></a>**workspace** — A named set of [windows](#window), each with its tabs and panes, that AgentMux saves as you work. One workspace is open at a time; you start in **Default Workspace**. Closing a window keeps it in the workspace (greyed out in the version chip's panel, with **Reopen**); **Remove from workspace** deletes it. Opening another workspace closes the current one first: its agents stop, and its windows come back when you return to it. Managed from ☰ → Workspaces. Not to be confused with an agent's folder (`AGENTMUX_AGENT_WORKDIR`), nor with the `# [Workspace]` heading of [Global Memory](#global-memory) entries. In srv's object model, a `Workspace` object is one window's contents. See [Workspaces](/workspaces/).
+
+<a id="workspace-export"></a>**workspace export** — A workspace written to a `*.agentmux-workspace.json` file with ☰ → Workspaces → **Export…**, to keep or share. A snapshot: the workspace itself is saved inside AgentMux as you work, and later changes aren't written to the file. **Import…** opens one as a new workspace, as it does a layout file (`*.agentmux-layout.json`) saved by earlier versions. See [Export and import](/workspaces/#export-and-import).
 
 <a id="wrr"></a>**WRR (Window Reality Reconciliation)** — The launcher's loop that reconciles desired window state (what AgentMux *wants*) against actual OS state (what the OS *says*). Defends against state drift when external tools or the user move/resize/close windows. See [Window Reality Reconciliation](/internals/wrr/).
 
