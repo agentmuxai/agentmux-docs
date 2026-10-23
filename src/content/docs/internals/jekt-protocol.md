@@ -245,7 +245,7 @@ The first matching row wins:
 2. **A LAN check failed** (`DELIVERY=lan`).
 3. **A WAN check failed, or the sending install is `revoked`** (`DELIVERY=wan`).
 4. **The muxreview signature failed** (`SIG=invalid`).
-5. **The sender declared `sensitive`.** A WAN jekt carries no declared tier, so it starts at `coord`.
+5. **The sender declared `sensitive`.**
 6. **The body or a file name matches a keyword**, for every sender, verified or not (Section 7.4).
 7. **The body is a transcript request**: JSON with `"type": "transcript_request"`, a `request_id` and `max_lines`.
 
@@ -331,7 +331,6 @@ Not normative. These are known differences between the protocol as built and wha
 
 - **No version field.** A future version should add one to the marker line.
 - **`PRIORITY` does nothing.** It is shown and stored, but changes neither order nor interruption.
-- **The declared tier doesn't cross WAN.** A sender's `sensitive` is lost on the cloud path.
 - **Cross-channel failures are not enforced** as `sensitive` (they only block `ESCALATE=none`). Enforcement is planned once every instance publishes its keys.
 - **A missing sender renders as `FROM=unknown`** with a reply line, though `unknown` is not an agent.
 - **The reply line names an old command.** `Reply: bus:inject to <from>` should name the `Message` tool, which is how an agent replies.
