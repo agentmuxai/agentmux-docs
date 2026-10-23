@@ -182,7 +182,7 @@ A request that carries the sending agent's own identity token, whose UID owns th
 | Window | 600 seconds either way |
 | Pinning | the first public key seen for a name is pinned; a different key later is a forgery |
 
-The LAN check **fails** when the signature is wrong or stale, the key differs from the pinned one, the pin store can't be read, the claimed name is a former slug, or the key lookup is rate-limited. It is **not checked** when no peer has a key for the name. Version 2 binds the sender's UID and is recorded, but doesn't change the verdict.
+The LAN check **fails** when the signature is wrong or stale, the key differs from the pinned one, the pin store can't be read, the claimed name is a former slug, or the key lookup is rate-limited. It is **not checked** when no peer has a key for the name.
 
 ### 5.3 Cross-channel: Ed25519
 
@@ -332,11 +332,9 @@ Not normative. These are known differences between the protocol as built and wha
 - **No version field.** A future version should add one to the marker line.
 - **`PRIORITY` does nothing.** It is shown and stored, but changes neither order nor interruption.
 - **The declared tier doesn't cross WAN.** A sender's `sensitive` is lost on the cloud path.
-- **No duplicate detection** for text jekts on the host, channel and LAN tiers; only WAN signatures and LAN files are checked for replay.
 - **Cross-channel failures are not enforced** as `sensitive` (they only block `ESCALATE=none`). Enforcement is planned once every instance publishes its keys.
 - **A missing sender renders as `FROM=unknown`** with a reply line, though `unknown` is not an agent.
 - **The reply line names an old command.** `Reply: bus:inject to <from>` should name the `Message` tool, which is how an agent replies.
-- **Transcript requests are recognised only on the main paths.** A transcript request sent through the legacy `bus:inject` routes, a bridge or a widget is not forced `sensitive`. Nothing answers transcript requests automatically, so the effect is a missing tag, not a disclosure.
 - **No threads.** A reply is a new jekt; nothing links it to the one it answers.
 
 ## 11. History
