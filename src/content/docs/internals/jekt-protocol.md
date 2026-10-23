@@ -12,7 +12,7 @@ A **jekt** is a message one agent sends another through AgentMux. This page is t
 | | |
 |---|---|
 | **Version** | 1 |
-| **Describes** | AgentMux 0.59.39 (`agentmux` main at `b986cf27f`, 2026-10-22), plus the one-delivery rule and the reply line from agentmux #5346 |
+| **Describes** | AgentMux 0.59.39 (`agentmux` main at `b986cf27f`, 2026-10-22), plus the one-delivery rule and the reply line (agentmux #5346) and the declared tier over MuxBus Cloud (#5348) |
 | **Status** | Living. It describes the current release. A change to any rule here ships with a change to this page. |
 | **Scope** | The send request, delivery between instances, signatures, trust and tier evaluation, the delivered marker, and the receiving agent's obligations. Not in scope: how the MuxBus Cloud relay stores and routes messages internally. |
 
@@ -246,7 +246,7 @@ The first matching row wins:
 2. **A LAN check failed** (`DELIVERY=lan`).
 3. **A WAN check failed, or the sending install is `revoked`** (`DELIVERY=wan`).
 4. **The muxreview signature failed** (`SIG=invalid`).
-5. **The sender declared `sensitive`.**
+5. **The sender declared `sensitive`.** Over MuxBus Cloud the declared tier travels with the jekt, and the receiver takes only `sensitive` from it.
 6. **The body or a file name matches a keyword**, for every sender, verified or not (Section 7.4).
 7. **The body is a transcript request**: JSON with `"type": "transcript_request"`, a `request_id` and `max_lines`.
 
