@@ -38,7 +38,8 @@ From top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 2. The [Stats](#stats) panel, shown while the toolbar's **Stats** button is on.
 3. A result panel, shown only after a fleet action.
 4. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
-5. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
+5. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to.
+6. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
 
 Swarm supports per-pane zoom like other panes, from 50% to 200%: `Ctrl`+scroll, or `Ctrl` `+` / `-` / `0`.
 
@@ -53,6 +54,7 @@ An agent row shows:
 | Checkbox | Selects the agent for a fleet action |
 | Chevron (▸ / ▾) | Expands or collapses the row. Shown only when the agent has child rows. |
 | Provider logo and name | The pane's agent name, or "Agent" if it has none |
+| Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one. Hover over it for the whole seat. |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
 | Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **idle** (green) otherwise |

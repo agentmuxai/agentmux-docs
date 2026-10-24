@@ -68,7 +68,7 @@ Click a card to open its drawer: the prompt, what you asked, the checklist, the 
 
 You can also drag a Backlog card onto another agent's backlog group to give it to that agent, or onto an agent's chip in the strip above the board to start it there.
 
-The toolbar above the board has a search box (title, `#number`, agent or repository), a repository filter when there is more than one, **Lanes** (one row of columns per repository, those with unfinished work first), **Untracked** (show or hide agents working without a task), **New task** and **Refresh**. **New task** takes a title, an optional prompt, the tasks it starts after (`#12`), who it is for, and **On hold**.
+The toolbar above the board has a search box (title, `#number`, agent or repository), a repository filter when there is more than one, **Lanes** (one row of columns per repository, those with unfinished work first), **Untracked** (show or hide agents working without a task), **New task** and **Refresh**. Once an agent has a [seat](/first-agent/#seats), the toolbar also has a **Reports to** filter, and hovering over a card's owner shows the owner's seat. **New task** takes a title, an optional prompt, the tasks it starts after (`#12`), who it is for, and **On hold**.
 
 An untracked card has **Track**, which turns the agent's current work into a task it holds.
 
