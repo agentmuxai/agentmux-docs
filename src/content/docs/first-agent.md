@@ -48,7 +48,7 @@ See [Auth flows](/auth/) for each provider's login command and credential locati
 
 AgentMux manages its own agent CLIs. It installs every npm-based CLI itself: it runs `npm install <package>@<version>` (never a global install), at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed globally, and it keeps each agent's login and settings in its own folders rather than in your `~/.claude`, `~/.codex` and similar.
 
-This isolates the tools, not what an agent can do: a host agent still runs on your computer, with your files, your `HOME` and your `PATH`.
+This isolates the tools, not what an agent can do: a Native agent still runs on your computer, with your files, your `HOME` and your `PATH`.
 
 When a harness's CLI isn't installed, its card shows **Click to install**, and the panel that opens under the card starts with the install. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**; the agent's fields follow when it finishes. If it fails, click **Retry**. The install needs an internet connection. Closing the panel doesn't stop it: the card shows **Installing…**, and a notification says when it has finished. **Cancel install** stops it.
 
@@ -82,7 +82,7 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 Clicking a card opens a panel under it, pushing the cards below it down; click the card again, or press `Esc`, to close it. The panel shows only the steps that apply: the prerequisites and the install above, then the new agent's fields. It makes a new, independent agent and leaves the template unchanged, and what you type is kept if you open another card and come back. Fields, top to bottom:
 
 1. **Name**: required, and empty to start with. Name it for its job, like Reviewer or Docs writer. Names must be unique among your agents (ignoring case).
-2. **Runtime**: **On this computer (host)** or **In a safe sandbox (container)**. See [Host and container agents](#host-and-container-agents).
+2. **Runtime**: **Native (runs on this computer)** or **Container (runs in Docker)**. See [Native and container agents](#native-and-container-agents).
 3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
 5. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
@@ -191,13 +191,14 @@ AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows 
 
 Rows with an explanation or captured CLI output also have **Details**, and every row has a dismiss button.
 
-## Host and container agents
+<a id="host-and-container-agents"></a>
+## Native and container agents
 
-**Host agents** run the CLI directly on your machine, with access to your files, environment and credentials.
+**Native agents** run the CLI directly on your computer, with access to your files, environment and credentials.
 
-**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is host-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
+**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is Native-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
 
-The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **On this computer (host)** if you want a host agent.
+The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent.
 
 ## Skills
 

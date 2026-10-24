@@ -9,7 +9,7 @@ AgentMux is a desktop application that runs as the logged-in user. It installs n
 
 - **Your OS user account is the security boundary.** Anything running as you can control AgentMux, read its data, and act as any of your agents.
 - **Every terminal pane and every agent holds the key to the local AgentMux API.** An agent, or any program it runs, can do anything you can do in the AgentMux UI.
-- **Agents on the host are not sandboxed.** They run as you, with your files and your network.
+- **Native agents are not sandboxed.** They run as you, with your files and your network.
 - **On a machine shared with other OS users, the defaults are not enough.** See [Shared machines](#shared-multi-user-machines).
 
 ## The processes and what they trust
