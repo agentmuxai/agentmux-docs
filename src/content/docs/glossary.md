@@ -85,9 +85,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
-<a id="section"></a>**section** — One of the tabs along the top of a pane that has several views of its own: Warden, Connectors, Memory and Settings, and the Vault inside Warden. The selected one is kept in the pane's settings under `<view>:section`, so a [widget-bar](/pane-types/) entry, a palette command or a widget can open a pane on a section, and any section can be pinned to the widget bar. See [Sections](/widgets/#sections).
-
 <a id="seat"></a>**seat** — Where an agent sits in your team: its role (Leader, Worker, Specialist, Platform tester or Analyst, with an optional qualifier such as "product"), its [lead](#lead) and its [area](#area). Only you set one, in the agent's [Stash](#stash) → **Seat**, from My Agents → **Seat…**, or by importing a roster; agents read seats through `Agents` `list`. Shown in My Agents, the pane tab tooltip, [Swarm](#swarm) and the [Kanban](#kanban). A label on an unchanged identity: it never renames an agent and never allows or refuses anything. See [Seats](/first-agent/#seats).
+
+<a id="section"></a>**section** — One of the tabs along the top of a pane that has several views of its own: Warden, Connectors, Memory and Settings, and the Vault inside Warden. The selected one is kept in the pane's settings under `<view>:section`, so a [widget-bar](/pane-types/) entry, a palette command or a widget can open a pane on a section, and any section can be pinned to the widget bar. See [Sections](/widgets/#sections).
 
 <a id="sidecar"></a>**sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
 
