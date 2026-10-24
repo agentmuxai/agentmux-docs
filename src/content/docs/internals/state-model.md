@@ -195,7 +195,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1346-1398`):
+**Watchdog constants** (`types.ts:1347-1399`):
 
 | Constant | Value | Purpose |
 |---|---|---|

@@ -17,7 +17,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agent-pane"></a>**agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
-<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage; how each request ended is in the Warden's [Ambient section](/warden/#ambient-section). "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+
+<a id="area"></a>**area** — One line, up to 120 characters, saying what an agent owns ("user docs, changelog"). One of the four parts of a [seat](#seat), shown after its [lead](#lead) in My Agents and the pane tab tooltip. A label only: AgentMux doesn't refuse work outside it. See [Seats](/first-agent/#seats).
 
 <a id="block"></a>**block** — One view instance: an Agent, a Terminal, an Editor, a Browser and so on, with its own settings (its *meta*: the view type, the file or URL, zoom, colour) persisted by the [sidecar](#sidecar). Each [pane tab](#pane-tab) is one block. The layout records which blocks sit in which pane. Blocks are not pieces of output: a terminal's output or an agent's messages live inside their block. See [Persistence](/internals/persistence/) and [Pane types](/pane-types/).
 
@@ -55,6 +57,8 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="launcher"></a>**launcher** — The 325 KB shim process (`agentmux-launcher`) that boots AgentMux. Spawns the host and sidecar, holds the IPC auth-key, tracks window reality. See [Architecture overview](/internals/architecture/).
 
+<a id="lead"></a>**lead** — The agent another agent reports to, set in its [seat](#seat) (**Reports to**), or the operator (you) when it names none. Must be an agent on the same computer, not the agent itself, and following the leads up must end at you. A spawned worker with no seat of its own has the agent that spawned it as its lead. Swarm can group agents by lead, and the Kanban filters tasks by it. See [Seats](/first-agent/#seats).
+
 <a id="memory"></a>**Memory** — The app-wide pane for what agents know and carry, in four sections: **Global** ([Global Memory](#global-memory)), **Personal** ([Personal Memory](#personal-memory)), **Skills** and **Bundles**. Opened from the widget bar or the command palette. Formerly [Knowledge](#knowledge); together with [Connectors](#connectors) it replaced the Armory. "Memory" on its own means this pane; the other kinds are always qualified as Global or Personal Memory. See [Memory](/memory/).
 
 <a id="message"></a>**message** — The MCP tool agents use to talk to each other. Its `send` and `broadcast` actions deliver [jekts](#jekt); `post` and `read` use the per-repository coordination channel, which agents read when they choose and which is never pushed into a conversation.
@@ -81,13 +85,15 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="renderer"></a>**renderer** — A Chromium renderer process (`agentmux-cef --type=renderer`). Runs the SolidJS frontend JS for one browser context. **Not a singleton** — every OS [window](#window) gets its own renderer, and every [browser pane](#browser-pane) inside a window adds another. Multiple renderers per [instance](#instance) is the normal case.
 
+<a id="seat"></a>**seat** — Where an agent sits in your team: its role (Leader, Worker, Specialist, Platform tester or Analyst, with an optional qualifier such as "product"), its [lead](#lead) and its [area](#area). Only you set one, in the agent's [Stash](#stash) → **Seat**, from My Agents → **Seat…**, or by importing a roster; agents read seats through `Agents` `list`. Shown in My Agents, the pane tab tooltip, [Swarm](#swarm) and the [Kanban](#kanban). A label on an unchanged identity: it never renames an agent and never allows or refuses anything. See [Seats](/first-agent/#seats).
+
 <a id="section"></a>**section** — One of the tabs along the top of a pane that has several views of its own: Warden, Connectors, Memory and Settings, and the Vault inside Warden. The selected one is kept in the pane's settings under `<view>:section`, so a [widget-bar](/pane-types/) entry, a palette command or a widget can open a pane on a section, and any section can be pinned to the widget bar. See [Sections](/widgets/#sections).
 
 <a id="sidecar"></a>**sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
 
 <a id="skill"></a>**skill** — A reusable instruction an agent can call, as a `/trigger` or a Claude Code skill file. Global skills are in [Memory → Skills](/memory/#skills); an agent can also have private ones, and its bundles add theirs at launch.
 
-<a id="stash"></a>**Stash** — The per-agent drawer behind the `toolbox` icon in an agent pane's header, with tabs **Accounts**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
+<a id="stash"></a>**Stash** — The per-agent drawer behind the `toolbox` icon in an agent pane's header, with tabs **Accounts**, **Seat**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
 
 <a id="streaming-buffer"></a>**streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 

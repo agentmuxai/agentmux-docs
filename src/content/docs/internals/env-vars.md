@@ -58,7 +58,7 @@ focused-border colour, pane title, and jekt auto-registration.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:648` on `agent.open`; `agent_config.rs:231` for MCP env injection |
+| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:649` on `agent.open`; `agent_config.rs:231` for MCP env injection |
 | **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs` reads it to decide jekt auto-registration |
 | **Example value** | `AgentX`, `Aria`, `Terminal` |
 | **Lifetime** | Set once at pane spawn; persists for the lifetime of the PTY session |
@@ -184,7 +184,7 @@ single source of truth; downstream binaries must not recompute paths.
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.44.1\data` |
 
 **Legacy alias:** srv also publishes `AGENTMUX_DATA_HOME` for any
-code path that pre-dates the unification (`crates/srv/src/bootstrap/stores.rs:93`). New code
+code path that pre-dates the unification (`crates/srv/src/bootstrap/stores.rs:104`). New code
 should read `AGENTMUX_DATA_DIR`.
 
 ---
@@ -292,7 +292,7 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Test harness only |
-| **Who reads it** | `data_paths.rs:888`, `crates/srv/src/bootstrap/stores.rs:625`, `crates/srv/src/registry/paths.rs:144` |
+| **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:680`, `crates/srv/src/registry/paths.rs:144` |
 | **Purpose** | Replaces `~/.agentmux` root with a temp directory so tests don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
@@ -333,7 +333,7 @@ pane's environment unless you know exactly what you are doing.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:314`) from channel resolution; also a user override for `Installed`/`Portable` modes |
-| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:618` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
+| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:673` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
 | **Example** | `stable`, `beta`, `local-main`, `experiment` |
 | **Constraints** | Max 64 chars; cannot be `shared`, `snapshots`, `dev`, `versions`, `channels`, `runtime`; `default` maps to `stable` |
 
@@ -377,7 +377,7 @@ sanitized value is empty, mode falls through to `Installed`.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv shell controller (`shell.rs`), `shellexec.rs:360`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
-| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:143` reads it from env as a fallback |
+| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:157` reads it from env as a fallback |
 | **Example** | `0.44.1` |
 
 Available in every PTY pane shell session. Required by `muxlog` to
@@ -468,7 +468,7 @@ These three vars form the launcher-managed srv hand-off. When all three
 are present, the host skips `spawn_backend()` and connects to the
 launcher-owned srv instead. If `AGENTMUX_BACKEND_WS` is set but empty or
 malformed, the host hard-fails rather than silently spawning a second srv
-(`crates/cef/src/lib.rs:841-847`).
+(`crates/cef/src/lib.rs:839-845`).
 
 **PITFALL:** Dev builds launched from inside an agent pane inherit these
 vars from the parent. The host uses `launcher_is_genuine_parent()` (checks
@@ -584,7 +584,7 @@ Controls Chromium's unauthenticated remote-debugging (CDP) server. AgentMux's ow
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher (`srv_spawner.rs:490`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:99`) |
+| **Who sets it** | Launcher (`srv_spawner.rs:490`), host `sidecar.rs:300`; re-set in srv process env at startup (`crates/srv/src/bootstrap/stores.rs:110`) |
 | **Who reads it** | srv `base.rs:19` (`MUX_APP_PATH_ENV`); used to locate bundled tool binaries (`jq.exe`, `rg.exe`, etc.) alongside the launcher |
 | **Example** | `C:\Users\<name>\Desktop\agentmux-portable` |
 
@@ -659,7 +659,7 @@ preserve user configuration.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Deprecated alias for `AGENTMUX_DATA_DIR` |
-| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:93` re-publishes it for backward compatibility if `config.data_home` is non-empty |
+| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:104` re-publishes it for backward compatibility if `config.data_home` is non-empty |
 | **Who reads it** | `base.rs:18` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs:25`; `sidecar.rs` (pre-unification path) |
 
 Use `AGENTMUX_DATA_DIR` in new code.
@@ -671,7 +671,7 @@ Use `AGENTMUX_DATA_DIR` in new code.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Deprecated alias for `AGENTMUX_CONFIG_DIR` |
-| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:96` |
+| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs:107` |
 | **Who reads it** | `base.rs:17`; `config_watcher_fs.rs:51` |
 
 Use `AGENTMUX_CONFIG_DIR` in new code.
@@ -740,7 +740,7 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | DataPaths::from_env() | `crates/common/src/data_paths.rs` | 333–373 |
 | RuntimeMode detection | `crates/common/src/runtime_mode.rs` | 73–121 |
 | AGENTMUX_LOCAL_URL set point | `crates/srv/src/bootstrap/network.rs` | 99–102 |
-| AUTH_KEY strip | `crates/srv/src/config.rs` | 144–152 |
+| AUTH_KEY strip | `crates/srv/src/config.rs` | 161–169 |
 | AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` | 555–574 |
 | Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` | 166–246 |
 | Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` | whole file |

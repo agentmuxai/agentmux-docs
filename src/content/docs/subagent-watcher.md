@@ -28,16 +28,16 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 - Right-click a pane header → **Replace With...** → **Swarm** replaces that pane with Swarm.
 - In an agent pane, click a subagent or workflow dispatch card (it reads **View in Swarm →**; `Enter` or `Space` also work). Each click opens a new Swarm pane (`frontend/app/view/agent/components/tool-renderers/DispatchCard.tsx`).
 
-With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here.", with any agents of other instances below it. The fleet toolbar only appears once there is at least one agent, here or on another instance, or once there are [stats](#stats) to show.
+With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here.", with any agents of other instances below it. The fleet toolbar only appears once there is at least one agent, here or on another instance.
 
 ## Layout
 
 From top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 
 1. The [fleet toolbar](#fleet-toolbar).
-2. The [Stats](#stats) panel, shown while the toolbar's **Stats** button is on.
-3. A result panel, shown only after a fleet action.
-4. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
+2. A result panel, shown only after a fleet action.
+3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
+4. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to.
 5. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
 
 Swarm supports per-pane zoom like other panes, from 50% to 200%: `Ctrl`+scroll, or `Ctrl` `+` / `-` / `0`.
@@ -53,6 +53,7 @@ An agent row shows:
 | Checkbox | Selects the agent for a fleet action |
 | Chevron (▸ / ▾) | Expands or collapses the row. Shown only when the agent has child rows. |
 | Provider logo and name | The pane's agent name, or "Agent" if it has none |
+| Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one. Hover over it for the whole seat. |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
 | Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **idle** (green) otherwise |
@@ -173,10 +174,9 @@ The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swa
 | **Broadcast** | Opens an inline box ("Message to send to {N} agents…") with **Send** and **Cancel**. `Enter` sends, `Esc` cancels. The Stop button is hidden while the box is open. |
 | **Stop {N}** | Stops the selected agents, after a confirmation dialog. |
 | **Supervisor** | Sets the [Supervisor](#supervisor) mode (Off, Steady or Drive) for the selected agents of this AgentMux, with no confirmation step. |
-| **Stats** | Opens or closes the [Stats](#stats) panel. Doesn't need a selection. |
 | **Clear** | Clears the selection. |
 
-**Broadcast** sends the same message to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs:512-526`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+**Broadcast** sends the same message to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs:514-528`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
 
 **Stop** opens a dialog titled "Stop N agents?" (or "Stop 1 agent?") listing the selected panes' block IDs, with a **Stop {N}** button. With 5 or more agents selected you can tick **Staged rollout** to stop them in batches (**Batch size**, default 3) and abort if a batch's failure rate exceeds a percentage (default 50). Stopping ends each agent's CLI process; the pane stays open. Because you are the one stopping them, the agents stop right away, without the 15-second override window an agent-initiated stop gets (see below). The selection is cleared afterwards. If an agent belongs to another AgentMux instance on the same machine (for example, a different channel), the stop is forwarded to that instance. Agents on LAN peers can't be stopped from here yet. Every stop is recorded in the [Warden](/warden/) audit feed.
 
@@ -277,39 +277,9 @@ The Supervisor never:
 - **The row's line** reads **Needs you:** and the reason while a paused agent is idle, and the row ranks like one with a pending question. When the agent starts a turn again, the pause is over.
 - **The Supervisor group**, first under an expanded row, lists the last 10 decisions, newest first: the time, what it did (**continued**, **paused**, **done**, **waiting**, **no verdict**, **set**, **stopped by you**) and the reason. They are kept in the pane's metadata (`supervisor:state`), so they survive a restart of AgentMux's server. The group is hidden while the mode is Off.
 - **Notifications:** when it pauses, you get a notification that the agent needs you, "Supervisor paused:" and the reason. When the judge finds the work done, or can't judge, you get the usual "finished" notification. A continuation, and a turn you stopped, send none. A supervised agent never gets the generic "finished" notification on top of these.
-- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the [Stats](#stats) panel.
+- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the Warden's [Ambient section](/warden/#ambient-section).
 
 To turn it off, set the chip, or the toolbar for a selection, to **Off**. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
-
-## Stats
-
-The toolbar's **Stats** button (`frontend/app/view/swarm/swarm-stats.tsx`) opens a panel under the toolbar headed "AgentMux's own model requests since its server started", with the total. These are the requests AgentMux makes on its own, not your agents' turns: session titles, subagent and workflow names, prompt suggestions, agent previews, narration, running summaries and Supervisor verdicts. The counts start again when AgentMux's server restarts. The button appears once at least one such request has ended.
-
-The panel has one row per purpose:
-
-| Row | What the requests are for |
-|---|---|
-| **Session titles** | The title and activity line of an agent's session |
-| **Session titles (recovery)** | Titles from a periodic background pass that fills in missing ones |
-| **Prompt suggestions** | The ghost-text suggestion for your next message |
-| **Subagent names** | Names for subagent rows in the tree |
-| **Workflow names** | Names for workflow rows in the tree |
-| **Agent previews** | The conversation preview for an agent under **My Agents** in the agent picker |
-| **Narration** | Messages in an agent's pane describing something AgentMux did on its own |
-| **Running summaries** | A running summary of each agent's conversation: its goal, what is done, what is pending and what you prefer. A fresh session that can't resume the old one (after an account switch, say) starts from it. Updated after a turn, once there are three new turns since the last update or the last update is 10 minutes old (`crates/srv/src/backend/continuity_state.rs`) |
-| **Supervisor verdicts** | The [Supervisor](#supervisor)'s judgements of supervised agents' turns |
-
-Each row counts how its requests ended, for example "12 accepted · 30 kept · 2 refused · 1 failed". Refused, skipped and failed appear only when they aren't zero.
-
-| Count | Meaning |
-|---|---|
-| **accepted** | The model's answer passed AgentMux's checks and was taken. The pane can still keep the old title if the new one only rewords it. |
-| **kept** | The model chose to leave things as they were. This is a normal answer, not a failure. |
-| **refused** | The answer was rejected: blank, the wrong shape (several lines, too long, no letters), a non-answer such as "none" or "untitled", or a refusal. |
-| **skipped** | No answer was needed: there was nothing to send, or a newer request replaced this one. |
-| **failed** | The model's CLI couldn't run, failed, timed out, or the request was dropped before it ran. |
-
-Hover a row for every outcome and its count. A row is shown as a warning when refused and failed requests together outnumber accepted and kept ones, and the **Stats** button then reads **N failing**, the number of such rows. An older AgentMux server without these counts leaves the panel empty.
 
 ## Tokens and cost per agent
 
@@ -322,6 +292,7 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 - **No history or search.** Swarm shows live state only. Subagent activity is held in memory; when an agent pane is reopened, AgentMux reloads that session's subagent activity from Claude Code's transcript files.
 - **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For more, see the [Warden](/warden/).
 - **No subagent tracking for providers other than Claude Code.**
+- **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the Warden as its [Ambient section](/warden/#ambient-section) (agentmux #5317).
 
 ## See also
 

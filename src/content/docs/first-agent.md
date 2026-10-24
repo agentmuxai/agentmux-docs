@@ -74,7 +74,7 @@ The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gem
 Open an Agent pane. The starter layout already has one; you can also click **Agent** in the widget bar, or run **Open Agent** from the command palette (`Ctrl + P`). An empty Agent pane shows the **agent picker**:
 
 - A filter bar and sort control.
-- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History** and **Delete**.
+- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History**, **Seat…** (see [Seats](#seats)) and **Delete**.
 - **New Agent**: one card per harness. Each card is a template.
 
 ![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
@@ -213,6 +213,62 @@ Skills are reusable instructions an agent can call. Manage them app-wide in [Mem
 ![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
 
 AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
+
+## Seats
+
+An agent's **seat** says where it sits in your team: what kind of agent it is, whom it reports to and what it owns. It has four parts:
+
+| Part | What it is |
+|---|---|
+| **Role** | **Leader**, **Worker**, **Specialist**, **Platform tester** or **Analyst**. Required. |
+| **Qualifier** | Optional, up to 40 characters, shown after the role: "Leader · product". |
+| **Reports to** | The agent's **lead**: another agent on this computer, or the operator (you). An agent can't be its own lead, and following the leads up must end at you. |
+| **Area** | Optional, one line of up to 120 characters: what the agent owns, such as "user docs, changelog". |
+
+Seats are labels. Setting or changing one never renames an agent and never moves its memory or keys, and nothing is allowed or refused because of a seat: the Kanban doesn't refuse a task outside an agent's area, and a lead gets no say over its reports. AgentMux doesn't add the seat to the agent's startup instructions either; agents read seats with the `Agents` tool (see [Where seats show](#where-seats-show)).
+
+### Setting a seat
+
+Only you set a seat. Agents can read seats but can't set one, their own or another agent's (`crates/srv/src/server/agent_handlers/seat.rs`). There are two ways in:
+
+- In the agent's pane: **Stash** → **Seat**.
+- In **My Agents**: the row's menu → **Seat…**. It opens the same editor over the picker, so the agent doesn't have to be open.
+
+Choose a **Role**, fill in the other fields if you want them, and click **Save**. **Clear** removes the seat.
+
+The seat is kept on the agent's shared definition, so every AgentMux channel and version on this computer shows the same one. An agent that exists only in one channel, with no shared definition, can't have a seat; the tab says so.
+
+### Importing a roster
+
+To seat several agents at once, click **Import roster…** at the bottom of the Seat tab and paste a JSON object that maps each agent, by name or uid, to its seat:
+
+```json
+{
+  "Planner": { "role": "leader", "qualifier": "product", "lead": null, "area": "roadmap, specs" },
+  "Reviewer": { "role": "specialist", "qualifier": "review", "lead": "Planner", "area": "pull request reviews" },
+  "Docs writer": { "role": "worker", "lead": "Planner", "area": "user docs, changelog" }
+}
+```
+
+`role` is one of `leader`, `worker`, `specialist`, `platform_tester` and `analyst`. A `lead` of `null` or `"operator"` means you. A list of objects, each naming its agent in an `agent` field, works too.
+
+Click **Preview**. Each agent, and each lead, is matched by uid or by exact name. **Will set** lists the seat each agent will get. **Not resolved (left alone)** lists the lines that don't match exactly one agent, or that aren't valid, each with the reason; nothing is guessed. **Apply** (**Apply 3 seats** for the example) sets the resolved seats, leads before their reports, and shows how each one went (`frontend/app/view/agent/seat-roster.ts`).
+
+### Where seats show
+
+- **My Agents**: a role badge next to the agent's name ("Worker" for the Docs writer above), and a line under its account: "reports to Planner · user docs, changelog".
+- **The pane header**: hovering over an agent's tab shows its seat in the tooltip: "Leader · product — reports to the operator — roadmap, specs".
+- **[Swarm](/subagent-watcher/)**: the role badge after each agent's name. Once an agent there has a seat, a **Group by** control appears above the list, with **None** and **Lead**. With **Lead**, the agents that report to you are listed under **The operator**, each followed by its own reports, one step in. Agents whose lead has no pane open are grouped under that lead's name, agents with no seat under **No seat**, and the agents of other AgentMux instances under **Other instances**, because Swarm doesn't get their seats yet. Each Swarm pane remembers its choice (`frontend/app/view/swarm/swarm-seat-groups.ts`).
+- **[Kanban](/kanban/)**: hovering over a card's owner shows the owner's seat. Once an agent has a seat, the toolbar has a **Reports to** filter: anyone, the operator, or one lead. It keeps the tasks whose owner (the agent holding the task, or else the one it waits for) reports to that lead. The lead's own tasks aren't included (`frontend/app/view/warden-kanban/kanban-seats.tsx`).
+- **MuxAPI**: in the `Agents` tool's `list`, each entry in `host.agents` has a `seat`: `{role, qualifier, lead: {id, name}, area}`, or `null` when it has none. A `lead` of `null` means the agent reports to you. Agents on LAN peers have theirs in the `lan` entry's `agent_seats`. This is how a leader finds out who reports to it. See [MuxAPI → Agents](/internals/muxapi/#agents).
+
+### Spawned workers
+
+An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's Seat tab marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
+
+### Agents on other computers
+
+Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents you reach only through MuxBus Cloud show no seat.
 
 ## Next Steps
 

@@ -41,7 +41,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
-| **Warden** | shield-halved | `warden` | The operator pane, in seven sections: Kanban, Vault, Host, LAN, Internet, Audit and History — see [Warden widget](/warden/) |
+| **Warden** | shield-halved | `warden` | The operator pane, in eight sections: Kanban, Vault, Host, LAN, Internet, Audit, History and Ambient — see [Warden widget](/warden/) |
 | **Kanban** | table-columns | `warden` (section `kanban`) | Warden opened on its Kanban section: the tasks agents are working on, what waits for them and what needs you — see [Kanban](/kanban/) |
 | **Vault** | lock | `warden` (section `vault`) | Warden opened on its Vault section: your secrets, which agents use by name without seeing them. Formerly its own pane, `vault` — see [The Vault](/vault/) |
 | **Tower** | tower-observation | `tower` | Read-only task manager: the CPU and memory each agent and everything it started uses, and every process on the machine — see [Tower](/tower/) |
@@ -327,7 +327,7 @@ A saved Media pane opens as an Editor: each of its files becomes a tab that foll
 
 ### Opening it programmatically
 
-Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs:14-18`, `crates/srv/src/server/app_api/pane.rs:1072-1085`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
+Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs:14-18`, `crates/srv/src/server/app_api/pane.rs:1092-1105`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
 
 ## Agent
 
@@ -452,6 +452,7 @@ The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it
 </figure>
 
 - **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
+- **Seat** — this agent's role, lead and area, which only you set; also **Import roster…** to seat several agents at once. Renders `AgentSeatPanel`. See [Seats](/first-agent/#seats).
 - **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
 - **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
@@ -463,7 +464,7 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 ## Swarm
 
-The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. The toolbar's **Stats** button opens a panel counting the model requests AgentMux has made on its own (session titles, names, prompt suggestions, narration) since its server started, and how each ended. See [Swarm](/subagent-watcher/).
+The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the Warden's [Ambient section](/warden/#ambient-section).
 
 ![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 
