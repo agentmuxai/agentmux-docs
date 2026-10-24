@@ -582,7 +582,7 @@ Chromium DevTools Protocol over HTTP and WebSocket:
 - Intercept network traffic
 - Modify DOM
 
-**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs:1071-1081`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
+**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs:1069-1079`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
 
 ### Internal Use
 
@@ -727,7 +727,7 @@ This section maps the sweep findings to the specific code locations documented a
 
 | Finding | Location | Impact | Mitigation status |
 |---------|----------|--------|-------------------|
-| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs:1307-1310` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
+| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs:1305-1308` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
 | **`ipc_token` leaks via renderer URL query** | Frontend's load-time URL (not in scope of this sweep's source read; reported by sweep) | Token in browser history, `Referer`, process arguments | Not mitigated in code seen |
 | **`authkey.dev` leaks both tokens (dev mode)** | `dev_authfile.rs:32-50`; written when `AGENTMUX_DEV=1` | Full API access with both `ipc_token` and `auth_key` | File is chmod 0600 / owner DACL. Dev-only. |
 | **`get_auth_key` IPC command returns srv auth key** | `ipc.rs:203-207` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
@@ -738,7 +738,7 @@ This section maps the sweep findings to the specific code locations documented a
 | **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:94` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs:51-55`); host has not. |
 | **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `crates/srv/src/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
-| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1071-1081` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
+| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1069-1079` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
 | **WS authkey in query string** | `crates/srv/src/server/auth.rs:80-90` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
 | **`AGENTMUX_AGENT_COLOR` no value validation** | `shell.rs:365-375`; `termosc.ts:266-271` | Shell profile can inject arbitrary CSS color value into block meta → UI rendering with unvalidated color value. Root cause of Win11 focus-border regression. | No validation added as of 0.44.1. |
 

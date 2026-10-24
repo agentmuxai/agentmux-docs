@@ -17,7 +17,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agent-pane"></a>**agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
-<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage. "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage; how each request ended is in the Warden's [Ambient section](/warden/#ambient-section). "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
 
 <a id="area"></a>**area** — One line, up to 120 characters, saying what an agent owns ("user docs, changelog"). One of the four parts of a [seat](#seat), shown after its [lead](#lead) in My Agents and the pane tab tooltip. A label only: AgentMux doesn't refuse work outside it. See [Seats](/first-agent/#seats).
 

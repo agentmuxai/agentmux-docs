@@ -1,6 +1,6 @@
 ---
 title: Warden widget
-description: "The Warden is AgentMux's operator pane: the Kanban of agents' work, the Vault of your secrets, the agents registered on this instance, LAN peers, an audit feed, and agents' history."
+description: "The Warden is AgentMux's operator pane: the Kanban of agents' work, the Vault of your secrets, the agents registered on this instance, LAN peers, an audit feed, agents' history, and AgentMux's own model requests."
 ---
 
 :::caution[Alpha Software]
@@ -28,7 +28,7 @@ Each opens Warden on that section. A tab holds one Warden: these entries, and th
 
 Any section can get a widget-bar button of its own: right-click the Warden's header and choose **Pin “LAN” to bar** (named after the section it shows). See [Sections](/widgets/#sections).
 
-## The seven sections
+## The eight sections
 
 The Warden is a pane view with its sections as tabs along the top, the same layout the [Connectors](/connectors/) and [Memory](/memory/) panes use (`frontend/app/view/warden/warden-view.tsx`). In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. The selected section is saved with the pane, under `warden:section` in its settings; the default is Host.
 
@@ -41,8 +41,9 @@ The Warden is a pane view with its sections as tabs along the top, the same layo
 | **Internet** | `globe` | Placeholder; no functionality yet |
 | **Audit** | `list-check` | Recent jekt deliveries and fleet actions, and agents' uses of your secrets |
 | **History** | `clock-rotate-left` | Every agent's kept conversation history, and where it is kept |
+| **Ambient** | `wand-magic-sparkles` | How AgentMux's own model requests (session titles, names, prompt suggestions, summaries) have gone since its server started |
 
-Each section is mounted the first time you show it and then stays mounted, so switching back to it is instant. Host, LAN and Audit refresh every 5 seconds, but only while they are shown; Internet is static. Kanban and History load while they are shown. Because the Vault section too is mounted only when you first show it, a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Kanban · 2 need you** when tasks need you, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
+Each section is mounted the first time you show it and then stays mounted, so switching back to it is instant. Host, LAN, Audit and Ambient refresh every 5 seconds, but only while they are shown; Internet is static. Kanban and History load while they are shown. Because the Vault section too is mounted only when you first show it, a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Kanban · 2 need you** when tasks need you, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
 
 ## Kanban section
 
@@ -122,6 +123,36 @@ The History section is the record of what agents did, beside Audit (`frontend/ap
 
 The Supervisor section is gone. The Supervisor, which keeps agents working until they are done or need you, is now set per agent from its row in Swarm: see [Supervisor](/subagent-watcher/#supervisor).
 
+## Ambient section
+
+The Ambient section counts the model requests AgentMux makes on its own, not your agents' turns: session titles, subagent and workflow names, prompt suggestions, agent previews, narration, running summaries and Supervisor verdicts (`frontend/app/view/warden-ambient/warden-ambient-manager.tsx`). These requests write the line under each agent in [Swarm](/subagent-watcher/) and in the pane tab's tooltip, so this is where you see whether that line is working. It was the Swarm toolbar's **Stats** panel until agentmux #5317. The counts start again when AgentMux's server restarts; until a request has ended it shows "No calls have ended since AgentMux's server started."
+
+It has one row per purpose:
+
+| Purpose | What the requests are for |
+|---|---|
+| **Session titles** | The title and activity line of an agent's session |
+| **Session titles (recovery)** | Titles from a periodic background pass that fills in missing ones |
+| **Prompt suggestions** | The ghost-text suggestion for your next message |
+| **Subagent names** | Names for subagent rows in Swarm's tree |
+| **Workflow names** | Names for workflow rows in Swarm's tree |
+| **Agent previews** | The conversation preview for an agent under **My Agents** in the agent picker |
+| **Narration** | Messages in an agent's pane describing something AgentMux did on its own |
+| **Running summaries** | A running summary of each agent's conversation: its goal, what is done, what is pending and what you prefer. A fresh session that can't resume the old one (after an account switch, say) starts from it. Updated after a turn, once there are three new turns since the last update or the last update is 10 minutes old (`crates/srv/src/backend/continuity_state.rs`) |
+| **Supervisor verdicts** | The [Supervisor](/subagent-watcher/#supervisor)'s judgements of supervised agents' turns |
+
+The columns count how each purpose's requests ended. **Requests** is the total, including requests that never reached the model, and the **All** row at the bottom adds up every purpose.
+
+| Column | Meaning |
+|---|---|
+| **Accepted** | The model's answer passed AgentMux's checks and was taken. The pane can still keep the old title if the new one only rewords it. |
+| **Kept** | The model chose to leave things as they were. This is a normal answer, not a failure. |
+| **Refused** | The answer was rejected: blank, the wrong shape (several lines, too long, no letters), a non-answer such as "none" or "untitled", or a refusal. |
+| **Skipped** | No answer was needed: there was nothing to send, or a newer request replaced this one. |
+| **Failed** | The model's CLI couldn't run, failed, timed out, or the request was dropped before it ran. |
+
+Hover over a row for every outcome and its count. A row is marked **failing** when refused and failed requests together outnumber accepted and kept ones, and the pane title then reads **Ambient · N failing**, the number of such rows.
+
 ## What the Warden is *not*
 
 - **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows the work ([Kanban](/kanban/)), who is registered for messages, who is on the network, and the delivery record. A Swarm row links to the Kanban task its agent is on.
@@ -136,6 +167,7 @@ The Supervisor section is gone. The Supervisor, which keeps agents working until
 | The Vault, and agents' uses of it in Audit | ✅ Live (Reveal and Copy on Windows only) |
 | Recent jekts and fleet actions (audit) | ✅ Live |
 | Agents' kept history (History) | ✅ Live |
+| AgentMux's own model requests (Ambient) | ✅ Live |
 | Soft-deregister an agent | ✅ Live |
 | See LAN peers | ✅ Live (turn on LAN discovery) |
 | Supervisor (keep agents working) | Not in the Warden. Set per agent in [Swarm](/subagent-watcher/#supervisor). |
