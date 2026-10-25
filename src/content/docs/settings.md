@@ -95,6 +95,8 @@ Voice input: the microphone button on agent and terminal panes, the transcriptio
 
 Devices paired with this computer over your local network, each of which you can revoke; whether they can watch this computer's terminals; MuxBus sign-in; cloud presence, and whether to publish this computer to your devices; whether to share what your agents are working on; and whether the status bar shows MuxBus Cloud. See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see).
 
+**Pinned senders** lists the keys and installs AgentMux has pinned to the names of agents that speak to it from elsewhere: the first key seen for a name on your network, and the first of your installs seen speaking for a name through your cloud account. A message from anything else for a pinned name is refused as unverified. Beside each pin it shows what was refused (a different key or install, how many times, when). **Accept the new one** pins that key or install instead, for when the agent really was recreated or moved; **Forget** drops the pin, so the next key or install shown is pinned. Both take two presses, only this window can change a pin, and each change is logged in `logs/pin-changes.log`.
+
 ![Settings, Paired devices tab](../../assets/screenshots/settings/settings-paired-devices.png)
 
 ### Widgets
