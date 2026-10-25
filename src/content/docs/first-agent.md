@@ -268,7 +268,7 @@ An agent can open a worker, a new agent it coaches, with the `Agents` tool's `sp
 
 ### Agents on other computers
 
-Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents you reach only through MuxBus Cloud show no seat.
+Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents on other computers on your LAN show the seat that computer reports: [Swarm](/subagent-watcher/#agents-on-other-instances) shows their role badge and groups them by their lead. Agents you reach only through MuxBus Cloud show no seat.
 
 ## Next Steps
 

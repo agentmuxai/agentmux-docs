@@ -37,7 +37,7 @@ From top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 1. The [fleet toolbar](#fleet-toolbar).
 2. A result panel, shown only after a fleet action.
 3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
-4. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to.
+4. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to, including [agents on other instances](#agents-on-other-instances) that report a seat.
 5. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
 
 Swarm supports per-pane zoom like other panes, from 50% to 200%: `Ctrl`+scroll, or `Ctrl` `+` / `-` / `0`.
@@ -141,11 +141,14 @@ Each is one row with no children:
 |---|---|
 | Checkbox | Selects the agent for a fleet action |
 | Provider logo and name | The agent's name, and its provider when its instance reports one |
+| Role badge | The agent's [seat](/first-agent/#seats), such as "Worker", when its instance reports one (LAN peers do). Hover over it for the whole seat. |
 | Where | The machine's name, with the channel when that machine runs more than one instance (for example "laptop · dev"); a badge, **this machine** or **LAN**; and the platform (Windows, macOS or Linux) when the instance reports it |
 | Status chip | The state its instance reports: **working**, waiting for an answer, **idle** (also for a stopped agent) or an error. Hover it for the exact state. No chip when the instance reports no state. |
 | Summary line | The agent's one-line summary, when its instance shares it. Each instance decides with **Share what my agents are working on** (`swarm:sharesummaries`); see [Swarm summary lines](/lan-discovery/#swarm-summary-lines). |
 
 An instance that hasn't been heard from for 60 seconds is shown as stale: its rows say when it was last seen ("seen 2m ago"), have no status or summary, and can't be selected. Another channel on this machine that hasn't been heard from for 10 minutes is left out.
+
+With **Group by: Lead**, an agent that reports a seat sits under its lead, matched by name among the agents of the same machine and channel, so a worker follows a lead on its own machine. A lead that machine couldn't name heads a group called "an agent on another machine". Agents that report no seat, and this machine's other channels, stay under **Other instances**.
 
 Clicking one of these rows doesn't focus the agent: its pane is in another instance. They can be selected for a [Broadcast](#fleet-toolbar), and agents on this machine's other channels for a Stop too.
 
