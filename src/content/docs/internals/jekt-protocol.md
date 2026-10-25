@@ -181,7 +181,7 @@ A request that carries the sending agent's own identity token, whose UID owns th
 | Material, v2 | `amx-jekt-lan-v2 0x01 msgid 0x01 source 0x01 source_uid 0x01 target 0x01 ts 0x01 message` |
 | Key | the agent's LAN key pair, made at its first launch, never rotated; the public half is served at `GET /agentmux/reactive/agent?id=<name>` |
 | Window | 600 seconds either way |
-| Pinning | the first public key seen for a name is pinned; a different key later is a forgery |
+| Pinning | the first public key seen for a name is pinned; a different key later is a forgery until you move or forget the pin (Settings > Paired devices > Pinned senders) |
 
 The LAN check **fails** when the signature is wrong or stale, the key differs from the pinned one, the pin store can't be read, the claimed name is a former slug, or the key lookup is rate-limited. It is **not checked** when no peer has a key for the name.
 
@@ -208,6 +208,8 @@ Version 2 is settled by UID first: a UID that belongs to another agent fails. If
 | Signer | the sending instance, only for the agent named by the request's identity token, only where the jekt started, and only once the key is published |
 | Window | 2,100 seconds in the past, 300 in the future |
 | Replay | a signature already delivered from that install and agent fails |
+
+**Install pin.** A verified signature proves that some install of the account certified the key; it doesn't say which install is meant to speak for an agent name. The first install the account's presence list shows speaking for a name on a channel (stable, dev) is **pinned**. An install that isn't listed, is listed as gone, or can't be looked up pins nothing. A later verified message for the same name and channel from a different install **fails** like any failed WAN check (forced sensitive tier, stop required, `TRUST=network-claimed`) and the delivered message opens with a line naming the pinned install and the one it came from. This install's own agents are never pinned. Pins are dropped on sign-out or an account switch, and you move them in Settings > Paired devices > Pinned senders.
 
 Only installs signed in to the **same** MuxBus Cloud account can verify each other. A check that **fails**: the envelope doesn't match the message, the certificate or key record is wrong, the signature doesn't verify, or it is a replay. A check that is **not done**: another account, missing fields, a stale signature, or a key the directory can't supply. A verified signature carries the sending install's status: `approved` (this install itself; there is no control yet to approve another install), `new` (another install of the account) or `revoked` (the account's key directory marks the install revoked **and** returns the revocation record the install signed with its own key for that id; an answer that says revoked without a valid signed record is ignored).
 
