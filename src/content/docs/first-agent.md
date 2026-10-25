@@ -259,7 +259,7 @@ Click **Preview**. Each agent, and each lead, is matched by uid or by exact name
 
 - **My Agents**: a role badge next to the agent's name ("Worker" for the Docs writer above), and a line under its account: "reports to Planner · user docs, changelog".
 - **The pane header**: hovering over an agent's tab shows its seat in the tooltip: "Leader · product — reports to the operator — roadmap, specs".
-- **[Swarm](/subagent-watcher/)**: the role badge after each agent's name. Once an agent there has a seat, a **Group by** control appears above the list, with **None** and **Lead**. With **Lead**, the agents that report to you are listed under **The operator**, each followed by its own reports, one step in. Agents whose lead has no pane open are grouped under that lead's name, agents with no seat under **No seat**, and the agents of other AgentMux instances under **Other instances**, because Swarm doesn't get their seats yet. Each Swarm pane remembers its choice (`frontend/app/view/swarm/swarm-seat-groups.ts`).
+- **[Swarm](/subagent-watcher/)**: the role badge after each agent's name. Once an agent there has a seat, a **Group by** control appears above the list, with **None** and **Lead**. With **Lead**, the agents that report to you are listed under **The operator**, each followed by its own reports, one step in. Agents whose lead has no pane open are grouped under that lead's name, agents with no seat under **No seat**, and agents of other AgentMux instances that report no seat under **Other instances**. A LAN computer's agents that report a seat are grouped by their lead like the rest, within their own machine and channel. Each Swarm pane remembers its choice (`frontend/app/view/swarm/swarm-seat-groups.ts`).
 - **[Kanban](/kanban/)**: hovering over a card's owner shows the owner's seat. Once an agent has a seat, the toolbar has a **Reports to** filter: anyone, the operator, or one lead. It keeps the tasks whose owner (the agent holding the task, or else the one it waits for) reports to that lead. The lead's own tasks aren't included (`frontend/app/view/warden-kanban/kanban-seats.tsx`).
 - **MuxAPI**: in the `Agents` tool's `list`, each entry in `host.agents` has a `seat`: `{role, qualifier, lead: {id, name}, area}`, or `null` when it has none. A `lead` of `null` means the agent reports to you. Agents on LAN peers have theirs in the `lan` entry's `agent_seats`. This is how a leader finds out who reports to it. See [MuxAPI → Agents](/internals/muxapi/#agents).
 
@@ -269,7 +269,7 @@ An agent can open a worker, a new agent it coaches, with the `Agents` tool's `sp
 
 ### Agents on other computers
 
-Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents you reach only through MuxBus Cloud show no seat.
+Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents on other computers on your LAN show the seat that computer reports: [Swarm](/subagent-watcher/#agents-on-other-instances) shows their role badge and groups them by their lead. Agents you reach only through MuxBus Cloud show no seat.
 
 ## Next Steps
 
