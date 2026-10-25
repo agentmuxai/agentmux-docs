@@ -185,6 +185,8 @@ A request that carries the sending agent's own identity token, whose UID owns th
 
 The LAN check **fails** when the signature is wrong or stale, the key differs from the pinned one, the pin store can't be read, the claimed name is a former slug, or the key lookup is rate-limited. It is **not checked** when no peer has a key for the name.
 
+A version-2 signature (a `source_uid` with a `lan_sig_v2`) is held to the same standard once the name's signature has verified. The check **fails** when the peer answered a different UID for the name, the key pinned for that name and UID differs, the pin store can't be read, or the version-2 signature doesn't verify. A jekt with no version-2 signature, or from a peer that gave no UID key to check against, is judged on the name's signature alone.
+
 ### 5.3 Cross-channel: Ed25519
 
 | | |
@@ -207,7 +209,7 @@ Version 2 is settled by UID first: a UID that belongs to another agent fails. If
 | Window | 2,100 seconds in the past, 300 in the future |
 | Replay | a signature already delivered from that install and agent fails |
 
-Only installs signed in to the **same** MuxBus Cloud account can verify each other. A check that **fails**: the envelope doesn't match the message, the certificate or key record is wrong, the signature doesn't verify, or it is a replay. A check that is **not done**: another account, missing fields, a stale signature, or a key the directory can't supply. A verified signature carries the sending install's status: `approved` (this install itself; there is no control yet to approve another install), `new` (another install of the account) or `revoked` (the account's key directory marks the install revoked).
+Only installs signed in to the **same** MuxBus Cloud account can verify each other. A check that **fails**: the envelope doesn't match the message, the certificate or key record is wrong, the signature doesn't verify, or it is a replay. A check that is **not done**: another account, missing fields, a stale signature, or a key the directory can't supply. A verified signature carries the sending install's status: `approved` (this install itself; there is no control yet to approve another install), `new` (another install of the account) or `revoked` (the account's key directory marks the install revoked **and** returns the revocation record the install signed with its own key for that id; an answer that says revoked without a valid signed record is ignored).
 
 ### 5.5 muxreview (GitHub review notifications): Ed25519
 
