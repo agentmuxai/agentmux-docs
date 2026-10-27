@@ -125,9 +125,9 @@ Some panes have a row of sections: Warden, Connectors, Memory and Settings, and 
 }
 ```
 
-The built-in **Kanban** and **Vault** buttons are entries like this one, with `"section": "kanban"` and `"section": "vault"`. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
+The built-in **Kanban** and **Vault** buttons are entries like this one, with `"section": "kanban"` (on the Swarm) and `"section": "vault"` (on Warden). An entry from before the Kanban moved from Warden to the Swarm, with `"view": "warden"` and `"section": "kanban"`, still opens the Swarm's Kanban. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
 
-Clicking an entry for Warden, Connectors or Memory switches the pane of that kind already in the tab to the section, instead of opening a second one.
+Clicking an entry for Warden, Connectors or Memory switches the pane of that kind already in the tab to the section, instead of opening a second one. An entry for a section of the Swarm (the Kanban's) does the same for the Swarm; the Swarm's own button opens another Swarm.
 
 **Settings ▸ Widgets** flags an entry whose section its pane doesn't have (it would quietly open the pane's default section; the note lists the sections the pane has), a `section` with no `view`, and one that names a pane by an old name (`"view": "vault"`: use `"view": "warden"`).
 
@@ -135,7 +135,8 @@ Clicking an entry for Warden, Connectors or Memory switches the pane of that kin
 
 | Pane | View | Section key | Sections (default first) |
 |---|---|---|---|
-| Warden | `warden` | `warden:section` | `host` (default), `kanban`, `vault`, `lan`, `internet`, `audit`, `history` |
+| Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast`, `kanban` |
+| Warden | `warden` | `warden:section` | `host` (default), `vault`, `lan`, `internet`, `audit`, `history` |
 | The Vault, inside Warden's `vault` | `warden` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
 | Connectors | `connectors` | `connectors:section` | `accounts` (default), `mcp`, `remotes` |
 | Memory | `memory` | `memory:section` | `global` (default), `personal`, `skills`, `bundles` |
