@@ -17,7 +17,7 @@ The **Swarm** pane is the overview of what your agents are doing right now. It l
 </figure>
 
 :::note[This page used to be "Subagent Watcher"]
-Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane has no tabs, and subagent activity now expands inline in the tree instead of opening its own pane.
+Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane's tabs are now its [sections](#sections), and subagent activity expands inline in the tree instead of opening its own pane.
 :::
 
 ## Opening Swarm
@@ -30,9 +30,15 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 
 With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here.", with any agents of other instances below it. The fleet toolbar only appears once there is at least one agent, here or on another instance.
 
+## Sections
+
+The Swarm has three sections, as tabs along the top (icons only when the pane is narrow): **Supervisor** (the default), **Broadcast** and **Kanban**. The selected one is saved with the pane, under `swarm:section` in its settings, and the pane's title follows it: **Swarm · Broadcast**.
+
+Supervisor and Broadcast show the same list of agents, with one selection: a box you tick in one is still ticked in the other. Supervisor shows full rows and Broadcast compact ones. The **Kanban** section replaces the list with the [Kanban](/kanban/) board, the work agents are doing (it moved here from the Warden). The list is only hidden while the Kanban shows, so coming back finds your selection and scroll position where you left them. The Kanban loads when you first show it and only fetches while it is shown. Clicking an agent on one of its cards switches to the Supervisor section and selects that agent's row, and the chip of the task an agent is on, on its row, switches to the Kanban with that task open.
+
 ## Layout
 
-From top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
+In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 
 1. The [fleet toolbar](#fleet-toolbar).
 2. A result panel, shown only after a fleet action.
@@ -300,5 +306,6 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## See also
 
 - [Pane Types](/pane-types/) — every pane type, including the agent pane's dispatch cards
-- [Warden](/warden/) — the Kanban of agents' tasks, the Vault, agents across Host, LAN and Internet, the audit feed and agents' history
+- [Kanban](/kanban/) — the Swarm's third section, the work agents are doing
+- [Warden](/warden/) — the Vault, agents across Host, LAN and Internet, the audit feed and agents' history
 - [Interagent Communication](/internals/interagent-comms/) — how jekts are delivered
