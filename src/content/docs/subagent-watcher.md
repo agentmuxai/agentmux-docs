@@ -306,5 +306,6 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## See also
 
 - [Pane Types](/pane-types/) — every pane type, including the agent pane's dispatch cards
-- [Warden](/warden/) — the Kanban of agents' tasks, the Vault, agents across Host, LAN and Internet, the audit feed and agents' history
+- [Kanban](/kanban/) — the Swarm's third section, the work agents are doing
+- [Warden](/warden/) — the Vault, agents across Host, LAN and Internet, the audit feed and agents' history
 - [Interagent Communication](/internals/interagent-comms/) — how jekts are delivered

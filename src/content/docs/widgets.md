@@ -112,7 +112,7 @@ An entry in `widgets.json` that should appear only inside its group's flyout (no
 
 ### Sections
 
-Some panes have a row of sections: Warden, Connectors, Memory and Settings, and inside Warden, the Vault. Each pane declares its sections on its manifest (`frontend/app/block/pane-sections.ts`; Warden's in `frontend/app/view/warden/warden-sections.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`warden:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **LAN**, which opens Warden on its LAN section:
+Some panes have a row of sections: Swarm, Warden, Connectors, Memory and Settings, and inside Warden, the Vault. Each pane declares its sections on its manifest (`frontend/app/block/pane-sections.ts`; Warden's in `frontend/app/view/warden/warden-sections.ts`, the Swarm's in `frontend/app/view/swarm/swarm-section.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`warden:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **LAN**, which opens Warden on its LAN section:
 
 ```json
 {
