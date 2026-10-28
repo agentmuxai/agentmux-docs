@@ -38,7 +38,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Hangar** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Hangar](#hangar) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). Formerly Knowledge |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
-| **Swarm** | bee | `swarm` | Live tree of your agent panes with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
+| **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
 | **Warden** | shield-halved | `warden` | The operator pane, in sections: Vault, Host, LAN, Internet, Audit, History and Ambient — see [Warden widget](/warden/) |
@@ -464,7 +464,7 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 ## Swarm
 
-The Swarm pane lists every running agent pane on this AgentMux instance as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the Warden's [Ambient section](/warden/#ambient-section).
+The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Click an agent to focus its pane. A fleet toolbar sends one message to several agents, or stops them. The pane has no tabs, and subagent activity expands inline in the tree rather than in a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the Warden's [Ambient section](/warden/#ambient-section).
 
 ![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 

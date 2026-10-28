@@ -1,13 +1,13 @@
 ---
 title: "Swarm"
-description: The Swarm pane shows every running agent pane on this AgentMux instance as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, then the agents of other AgentMux instances on this machine and your local network, plus a fleet toolbar for broadcasting to or stopping several agents at once, and the Supervisor that keeps agents working until they are done or need you.
+description: The Swarm pane shows every agent on this AgentMux instance, with or without a pane, as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, then the agents of other AgentMux instances on this machine and your local network, plus a fleet toolbar for broadcasting to or stopping several agents at once, and the Supervisor that keeps agents working until they are done or need you.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Swarm** pane is the overview of what your agents are doing right now. It lists every running agent pane on this AgentMux instance as a tree: under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands. Below them it lists the [agents of other AgentMux instances](#agents-on-other-instances) on this machine and your local network. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
+The **Swarm** pane is the overview of what your agents are doing right now. It lists every agent on this AgentMux instance, with or without a pane, as a tree: under each running agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands, and agents that aren't running are listed under [Stopped agents](#stopped-agents). Below them it lists the [agents of other AgentMux instances](#agents-on-other-instances) on this machine and your local network. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
 
 ![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
 
@@ -131,6 +131,15 @@ AgentMux reads these statuses from the task reports Claude Code writes to the ag
 ### Clear completed
 
 **Clear completed (N)** dismisses every finished or interrupted Agent Tool row and every retired Workflow row. Dismissals are remembered in this machine's local storage, so they survive reopening Swarm. Nothing is deleted from the agent's own history, and a dismissed row comes back if it shows new activity. Todos, Shell, Cron, Running and Background rows are not affected.
+
+## Stopped agents
+
+Closing an agent's pane doesn't stop it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)), and an agent you have stopped isn't forgotten: Swarm lists every agent you have created. Agents that aren't running appear under **Stopped agents**, a folded list (open when no agent is running) with the count in its heading. Each row shows the agent's name, provider and state, and two buttons:
+
+- **Start** runs the agent with no pane, resuming its session.
+- **Open** starts it in a pane.
+
+If srv refuses a start (the limit of running agents, a sign-in or a usage limit), the reason shows under the row. A stopped agent has no Supervisor, selection or activity: those appear once it runs.
 
 ## Agents on other instances
 
