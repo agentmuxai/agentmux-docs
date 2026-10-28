@@ -17,7 +17,7 @@ Memory is a regular pane (icon: `brain`), opened from the widget bar like any ot
 |---|---|
 | **Global** | Global Memory: instructions composed into every agent's startup file |
 | **Personal** | Personal Memory: what each agent writes in its own memory files, with history |
-| **Skills** | The Skill catalog: global skills plus any agent-private ones |
+| **Skills** | The skills you add, and which agents each one reaches |
 | **Bundles** | Instructions, MCP servers, memory and skills packaged to give to agents; imports [ABF](/abf/) (`.abf`) files |
 
 Memory opens on **Global**. The pane title names the section, for example "Memory · Skills". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
@@ -50,13 +50,15 @@ An Armory pane (the earlier pane that held both Connectors and Memory) is moved 
 
 ![A new Global Memory entry: a name, and the Markdown every agent gets under a Workspace heading](../../assets/screenshots/memory/memory-global-new.png)
 
-Claude Code agents also get their memory again whenever Claude Code starts a new session, including after `/clear` and after a compaction, but not when a session is resumed. AgentMux delivers it through Claude Code's `SessionStart` hook: Global Memory, AgentMux's Operator Config entries and the agent's Personal Memory, split into parts of about 10,000 characters (`crates/bashwrap/src/sessionstart.rs`). If the hook doesn't deliver, for example when AgentMux had to start a fresh session because the previous one couldn't be resumed, AgentMux sends the same memory as a hidden message instead.
+Claude Code agents also get their memory again whenever Claude Code starts a new session, including after `/clear` and after a compaction, but not when a session is resumed. AgentMux delivers it through Claude Code's `SessionStart` hook: Global Memory, AgentMux's Operator Config entries and the agent's Personal Memory, split into up to eight parts of at most 9,000 characters each (`crates/bashwrap/src/sessionstart.rs`, `crates/srv/src/backend/memory_delivery.rs`). If the hook doesn't deliver, for example when AgentMux had to start a fresh session because the previous one couldn't be resumed, AgentMux sends the same memory as a hidden message instead.
 
-Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries up to about 70,000 characters; an entry that didn't fit is marked "cut" or "not sent". When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
+Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries at most 72,000 characters. Global Memory comes first and then Personal Memory, so what doesn't fit is cut off the end, and the last part says how much was left out. On the card, an entry that went out in part is marked "cut" and one that didn't go out at all "not sent". When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
 
 Every change to Global Memory is also written to a Global Memory record that keeps each entry's versions and the order of entries (`crates/srv/src/backend/global_memory_record.rs`). Channels that share your main accounts share one Global Memory; an isolated channel (for example a development build) keeps its own.
 
 On an isolated channel, the Global section shows a banner when another scope has entries this channel doesn't: "This channel keeps its own Global Memory. … has N entries it doesn't: …". **Bring them here** copies them in (an entry whose name is already taken is renamed); agents get them at their next launch. Nothing is shared without this click (`frontend/app/view/global-bundle/GlobalMemoryImportBanner.tsx`).
+
+Everything in Global Memory is delivered whole, to every agent, every time. For instructions an agent needs only now and then, use a [skill](#skills) instead.
 
 Agents can read and change Global Memory with the `Memory` MCP tool and `scope: "global"`, using its `list`, `read`, `write`, `remove`, `history`, `diff` and `revert` actions.
 
@@ -101,15 +103,44 @@ The older `db_agent_native_memory` mirror is still written through on list, read
 
 ## Skills
 
-The catalog of Skill primitives, with the same global-vs-private shape as [MCP servers](/connectors/#mcp-servers) (`skill.catalog.*` for global, `skill.*` for agent-scoped). Click **+ New skill** to add a global one: its name, format, trigger, description and content. An agent's own Skills tab (Stash → Skills) lists what that agent can see and lets it bind or unbind global skills. See [MuxAPI](/internals/muxapi/#skill) for the full RPC reference.
+A **skill** is a reusable procedure an agent follows when it is relevant: "write release notes from the merged pull requests", "pull the tables out of a PDF". Only the skill's **name and description** are in the agent's context all the time. Its full text is read when the agent uses the skill. That is why a skill is the right place for instructions an agent needs only now and then, where [Global Memory](#global) puts everything in front of every agent in every session.
 
-![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
+### A skill or Global Memory?
+
+| | Global Memory | Skill |
+|---|---|---|
+| What the agent gets | The whole entry, in its startup instructions at every launch, and again after a new session, `/clear` or a compaction | Its name and description; the text only when the skill is used |
+| Which agents | Every agent | Only the agents it is bound to |
+| Cost | Context in every session, relevant or not | Almost nothing until used |
+| Use it for | Rules that always apply: how the agent talks to you, repository rules, what it must never do | Procedures needed occasionally: a release checklist, a review routine, how to use a tool |
+
+A rule that only matters for one kind of task belongs in a skill. A rule that must hold even when the agent would never think to look it up belongs in Global Memory.
+
+### Which agents a skill reaches
+
+**AgentMux comes with no skills.** A new install lists none, and AgentMux adds none for you. The starter skills that earlier versions added are removed, unless you edited, renamed or bound one.
+
+**A global skill reaches only the agents it is bound to**, directly or through a [bundle](/bundles/) that includes it. A skill bound to nobody reaches nobody: it stays in the catalog and no agent sees it. Binding or unbinding takes effect at the agent's next launch. AgentMux then writes the skills the agent is bound to into its files: for a Claude Code agent a slash command (`.claude/commands/<trigger>.md`) or an Agent Skill (`.claude/skills/<name>/SKILL.md`), for the other providers a list in the startup file. An agent can also keep skills of its own that only it sees.
+
+### Add your own
+
+1. Open **Memory → Skills** and click **+ New skill**.
+2. Fill in **Name** (required), **Format**, **Trigger** (slash commands only), **Description** and **Content**. The two formats are **Slash command (/trigger)**, which you or the agent run by typing the trigger, and **Agent Skill (SKILL.md)**, a beta format the agent picks up by its description, with no trigger. Write the description as *when to use the skill*: it is all the agent sees until it uses it.
+3. **Bind it**, or no agent will have it. Open the skill, choose an agent under **Bind to agent** and click **Bind**. Or open the agent's [Stash](#per-agent-the-stash) → **Skills** tab and click **Bind** there. Or add the skill to a [bundle](/bundles/) and give the bundle to the agents that should have it.
+
+A skill's page says "Used by N agents" and lists them, each with **Unbind**.
+
+![Memory → Skills: a skill opened: its description, format and content, "Used by 0 agents", and Bind to agent](../../assets/screenshots/memory/memory-skills.png)
 
 ![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
 
+To bring in skills someone else wrote, use **Memory → Bundles → Import Bundle** with an [ABF](/abf/) file. The review before the import shows **each skill's full text**, so you can read what an agent would be told to follow. A skill too long to show in full is marked "Not fully shown" and starts unticked: tick it to import the whole skill. An imported skill is bound only to the bundle it came in, so it reaches only the agents that take that bundle.
+
+Agents manage skills with the `skill.*` commands; see [MuxAPI](/internals/muxapi/#skill) for the RPC reference.
+
 ## Bundles
 
-The app-wide view of all bundles. A bundle packages instructions, MCP servers, memory and skills; an agent takes several, in order. **+ New Bundle** creates one; **Import Bundle** brings in an `.abf` file, and any bundle can be exported as one. See [Bundles](/bundles/) for the full reference, including how an agent's bundles are picked, and [Agent Bundle Format (ABF)](/abf/) for the file format.
+The app-wide view of all bundles. A bundle packages instructions, MCP servers, memory and skills; an agent takes several, in order. **+ New Bundle** creates one; **Import Bundle** brings in an `.abf` file (its review shows each skill's full text before anything is imported), and any bundle can be exported as one. See [Bundles](/bundles/) for the full reference, including how an agent's bundles are picked, and [Agent Bundle Format (ABF)](/abf/) for the file format.
 
 ![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
@@ -120,9 +151,11 @@ Bundles are created and edited here only. An agent's **Stash → Bundles** tab p
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
 1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
+2. A drawer opens under the pane header with tabs: **Accounts · Seat · Environment · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
 **Personal Memory**, **Skills** and **Bundles** are the per-agent side of Memory; **Accounts** and **MCP Servers** are the per-agent side of [Connectors](/connectors/#per-agent-the-stash).
+
+You can also unbind where the thing is managed, without opening the agent: a skill's page in **Memory → Skills** lists its agents with **Unbind**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) and an account's **Used by** list in [Connectors](/connectors/#accounts) do.
 
 ## Portable bundles (beta spec)
 
