@@ -152,7 +152,7 @@ The pane header shows the agent as a tab, with its name and its provider's logo.
 
 Type `/quit` (or `/exit`) in the message box to end the agent gracefully. AgentMux releases the agent's work claims, stops the shells it started and closes its tab. The conversation is kept: pick the agent in **My Agents** to resume it.
 
-Closing an agent pane, with its close button or a shortcut, ends its agents the same way. The pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes. If something can't be stopped, the pane stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
+Closing an agent pane, with its close button or a shortcut, does **not** end its agent (see [Agents keep running without a pane](#agents-keep-running-without-a-pane)). **Stop** is the only way to end one: `/quit` in its message box, **Stop** in the [Swarm](/subagent-watcher/#fleet-toolbar) fleet toolbar, or the `Stop` tool. With [`agents:always_available`](/settings/#agent-settings) turned off, closing the pane ends its agents as `/quit` does: the pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes, and if something can't be stopped it stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
 
 An agent can also end itself, through AgentMux's `Stop` tool (action `self`). It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. The same 15-second window applies when another agent closes this agent's pane or stops it with `Stop` `pane` or `Stop` `agents`. Click **Keep running** to cancel the shutdown (`crates/srv/src/sagas/pending_shutdown.rs`).
 
@@ -172,6 +172,21 @@ The pane's Shell drawer opens below the message box, and the command's output ap
 Some agents can stop and ask you a question. The panel ("The agent is asking") appears above the message box, with **Cancel**, **Accept Recommended** and **Submit answer**. If you don't answer, it picks the recommended answers after 30 seconds (the `agent:askquestiontimeoutms` setting). Hovering over the panel or pressing a key in it pauses the countdown for 15 seconds, after which it starts again from the full timeout. For Claude Code, if the agent produces no output within 4 seconds of your answer, AgentMux re-sends the answer as a follow-up message.
 
 ![The agent is asking: a question with three options, the recommended one first, an Other box, and Cancel, Accept Recommended and Submit answer](../../assets/screenshots/agent/agent-question.png)
+
+## Agents keep running without a pane
+
+An agent is not tied to its pane. Closing the pane, closing its tab, or removing its workspace **parks** the agent: the pane goes away, and the agent keeps running with its conversation recorded as before. Open it again from **My Agents** and you see the conversation, whether the agent is idle or in the middle of a turn, and it carries on from there. If the agent is already shown in another pane, tab or window, opening it focuses that pane instead of making a second one.
+
+- **Stop is the only way to stop an agent.** Closing a pane never does. A stopped agent keeps its conversation and its session, so starting it again resumes where it left off.
+- **A message or a Job starts a stopped agent.** A message from you, from another agent on this computer or from the Kanban starts it and is delivered once it is up, and so does a Job or cron entry that names it. A message from another computer on your network doesn't start it: it is held until the agent next starts.
+- **An agent with no pane stops itself after 60 minutes idle.** Idle means no turn, no message and no pane for that long. It stays addressable: the next message starts it and resumes its session. An agent that is waiting for your answer, holds a claimed Kanban task or a held message, or holds the build slot is never stopped this way, and neither is one shown in a pane. Change the time with `agents:idle_stop_minutes` (`0` never stops one).
+- **At most 12 agents run at once.** Starting a 13th stops the agent that has been idle longest with no pane to make room. If none can be stopped, the start is refused and a message to it stays held. Change the limit with `agents:max_running` (`0` for no limit). On Windows a start is also refused, or the longest-idle agent stopped, when memory commitment is over 85% of the limit (`agents:commit_limit_pct`, `0` to turn the check off).
+- **A stopped agent shows a banner** above its message box, "This agent is stopped. Its conversation is kept; Start runs it again from where it left off.", with a **Start** button.
+- **Swarm lists every agent**, not only the ones with a pane: agents that aren't running appear under **Stopped agents**, each with **Start** (runs it with no pane) and **Open** (starts it in a pane). See [Swarm](/subagent-watcher/#stopped-agents).
+
+Agents with no pane that were running when AgentMux stopped come back when it starts again, a few seconds apart, most recently active first. One you stopped, one idle past its window, and one signed out or out of quota stay stopped until a message or **Start**.
+
+To go back to closing a pane stopping its agent, set `agents:always_available` to `false` in [settings](/settings/#agent-settings).
 
 ## When an agent fails
 

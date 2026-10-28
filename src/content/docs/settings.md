@@ -193,6 +193,10 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
+| `agents:always_available` | boolean | `true` | Closing an agent's pane, its tab or its workspace parks the agent instead of stopping it: it keeps running, and a message or a Job starts a stopped one. `false`: closing a pane stops its agent, as before. See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane). |
+| `agents:idle_stop_minutes` | number | `60` | With `agents:always_available` on, minutes an agent with no pane may be idle before it is stopped (a message starts it again). `0`: never. |
+| `agents:max_running` | number | `12` | With `agents:always_available` on, the most agent processes that run at once. A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
+| `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. `0`: off. |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
 | `agent:overlapnotes` | boolean | `true` | When an agent edits a file that another agent on this computer has uncommitted, or edited in the last two hours (same repository and path, in any clone), AgentMux sends the editing agent a short `[AgentMux]` note naming the other agent, so it can message them first. At most one note per other agent and file every two hours, and three per agent every ten minutes. |
 | `agent:mcpselfheal` | boolean | `true` | When an agent's AgentMux tools (its MCP server) don't connect, AgentMux reconnects them twice, then restarts the agent once without the shell prefix (the conversation continues), and otherwise tells the agent and shows it in the pane. `false`: only show and tell, with no automatic repair. |

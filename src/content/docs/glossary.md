@@ -103,7 +103,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="subagent"></a>**subagent** — An agent spawned by another agent. Claude Code's sub-agent feature is the canonical example. For Claude Code agents, the [Swarm](/subagent-watcher/) pane tracks these and expands each one's activity inline under its parent agent.
 
-<a id="swarm"></a>**swarm** — The multi-agent overview pane. Lists every running agent pane on this instance as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
+<a id="swarm"></a>**swarm** — The multi-agent overview pane. Lists every agent on this instance, with or without a pane, as a tree, with each agent's [subagents](#subagent), todos, shells, cron jobs and background commands, plus a fleet toolbar. See [Swarm](/subagent-watcher/).
 
 <a id="unix-domain-socket"></a>**Unix domain socket** — The IPC mechanism the launcher uses on Linux and macOS to communicate with the host. The socket lives at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (primary) or `/tmp/agentmux-<uid>/<hash>.sock` (fallback when `$XDG_RUNTIME_DIR` is unset), where `<hash>` is derived from `(data_dir + version)` — the same isolation key as the Windows named pipe. The counterpart Windows primitive is a **named pipe** (`\\.\pipe\agentmux-<hash>`). Both carry the same wire protocol (the reducer command set defined in `crates/common/src/ipc`). See [Platform support → Linux](/internals/platform-support/#linux).
 
