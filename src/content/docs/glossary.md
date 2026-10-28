@@ -95,9 +95,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="sidecar"></a>**sidecar** — The Rust app-domain server process (`agentmux-srv`). Owns workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Bound to 127.0.0.1 only. See [Architecture overview](/internals/architecture/).
 
-<a id="skill"></a>**skill** — A reusable instruction an agent can call, as a `/trigger` or a Claude Code skill file. Global skills are in [Memory → Skills](/memory/#skills); an agent can also have private ones, and its bundles add theirs at launch.
+<a id="skill"></a>**skill** — A reusable procedure an agent follows when it is relevant, as a `/trigger` or a Claude Code skill file. Only its name and description are in the agent's context until it is used. AgentMux comes with none; you add them in [Memory → Skills](/memory/#skills), and a global skill reaches only the agents it is bound to, directly or through a bundle. An agent can also have private ones.
 
-<a id="stash"></a>**Stash** — The per-agent drawer behind the `toolbox` icon in an agent pane's header, with tabs **Accounts**, **Seat**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
+<a id="stash"></a>**Stash** — The per-agent drawer behind the `toolbox` icon in an agent pane's header, with tabs **Accounts**, **Seat**, **Environment**, **Personal Memory**, **MCP Servers**, **Skills**, **Bundles**, **Registration** and **Devices**: the per-agent side of [Connectors](#connectors) and [Memory](#memory). Its **Bundles** tab was **Startup**. See [Pane types → Subsections](/pane-types/#subsections).
 
 <a id="streaming-buffer"></a>**streaming buffer** — In the [agent pane](#agent-pane) virtualization model: the trailing ~50 message rows that are always mounted in normal flow and not recycled. Eliminates measurement lag during token streams. See [Agent pane virtualization](/internals/agent-pane-virtualization/).
 

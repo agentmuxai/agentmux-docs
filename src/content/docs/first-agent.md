@@ -217,16 +217,16 @@ The Claude template suggests the container runtime, so when Docker is running, i
 
 ## Skills
 
-Skills are reusable instructions an agent can call. Manage them app-wide in [Memory → Skills](/memory/#skills) (**+ New skill**), or for one agent from the **Stash** button in its pane header, on the **Skills** tab. There are two kinds:
+Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with none: you add them in [Memory → Skills](/memory/#skills) (**+ New skill**), and a skill reaches **only the agents it is bound to**, so bind it there or from the **Skills** tab of the **Stash** (the button in an agent's pane header). There are two kinds:
 
 | Kind | Description |
 |------|-------------|
 | **Slash command (/trigger)** | A prompt the agent runs when you type its trigger |
 | **Agent Skill (SKILL.md)** | A skill in the SKILL.md format (beta) |
 
-**Memory → Skills** lists the app-wide skills, including the ones AgentMux comes with:
+See [Skills](/memory/#skills) for when to use a skill instead of Global Memory, and how binding works:
 
-![Memory → Skills: the skills AgentMux comes with](../../assets/screenshots/memory/memory-skills.png)
+![Memory → Skills: a skill opened, with who uses it and Bind to agent](../../assets/screenshots/memory/memory-skills.png)
 
 AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
 

@@ -128,7 +128,7 @@ A terminal on a remote machine names the remote in its pane tab: the nickname yo
 Some sections have a per-agent equivalent reached from inside an agent pane:
 
 1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
+2. A drawer opens under the pane header with tabs: **Accounts · Seat · Environment · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices** (`frontend/app/view/agent/components/AgentStashModal.tsx`). Each tab is scoped to that agent rather than the app-wide catalog.
 
 **Accounts** and **MCP Servers** are the per-agent side of Connectors; **Personal Memory**, **Skills** and **Bundles** are the per-agent side of [Memory](/memory/#per-agent-the-stash). The Registration tab shows the agent's message-delivery registration, and Devices has **Hide from paired devices**, which leaves the agent out of what a paired device (the mobile app) lists and can watch.
 
