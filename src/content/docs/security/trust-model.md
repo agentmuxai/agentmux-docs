@@ -83,6 +83,18 @@ An agent (its UID) runs in at most one place at a time, so two copies don't driv
 
 This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
 
+## Who each action is recorded as
+
+Every state-changing call on the RPC channel (the WebSocket the UI and agents use) leaves one line in the audit log, `GET /agentmux/reactive/audit` and the audit file: who made it, the command, the agent or pane it acted on, the identifier it acted on (an account id, a widget id, a path), and whether it was done or refused. Who made it comes from the connection, never from anything in the request:
+
+- **An agent** is a connection registered as that agent with its token, recorded as `agent:<id>`.
+- **The operator** is a connection the AgentMux host has proved is its own window, recorded as `operator`.
+- **Anything else** is recorded as `unproven`. Holding the auth key is not enough to be recorded as the operator, and an agent registered on a connection is the agent.
+
+The record names what was acted on, not what was sent: keys, tokens, message text and file contents are not in it. Reads and live terminal input are not recorded, and the window's own view state (layout, tabs, drafts) is recorded only when something other than the proven window changes it.
+
+What this is for: agents run as your OS user with a shell, so these checks stop misuse through AgentMux's own APIs and keep the record honest about who did what through them. They are not a barrier against a determined local process, which can act as you without going through AgentMux. A [container agent](#container-agents) is the boundary that holds.
+
 ## What an agent can do to other panes and windows
 
 These MCP tools act beyond the calling agent's own pane:
