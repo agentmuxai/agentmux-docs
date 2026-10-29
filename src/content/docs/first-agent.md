@@ -103,7 +103,7 @@ When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI 
 
 - **Log in**: runs the provider's own login command. AgentMux opens the login link in your browser and shows it in the pane, with a box to paste an authorization code into if the CLI asks for one. If the CLI prints no link, a terminal window opens for the login instead.
 - **Login via terminal**: runs the login in a terminal window straight away.
-- **Connectors → Accounts**: opens the Connectors pane on its Accounts section. If you already have signed-in accounts for this provider, this action is replaced by **Bind: &lt;account&gt;** (one account) or **Bind account** (several), which links an existing account to this agent.
+- **Connectors → Accounts**: opens the Connectors pane on its Accounts section. If you already have signed-in accounts for this provider, this action is replaced by **Use &lt;account&gt;** (one account) or **Use account…** (several), which attaches an existing account to this agent.
 
 ![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
 
@@ -194,7 +194,7 @@ AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows 
 
 | Failure | Actions |
 |---|---|
-| Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Connectors → Accounts** or **Bind** |
+| Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Connectors → Accounts** or **Use account…** |
 | Rate limited, API overloaded, network error | Retries automatically after about 5, 15, 30, 60 and then 120 seconds, then waits for you. **Retry now** at any time. |
 | Usage limit reached | **Accounts (switch / upgrade)**, which opens Connectors → Accounts. Retrying won't help until the limit resets. |
 | Context window exceeded | **New session** |
