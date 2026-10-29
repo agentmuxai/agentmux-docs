@@ -28,8 +28,9 @@ Vault, History and Audit are widgets in the **more** menu, not pinned to the wid
 Nothing you saved breaks:
 
 - A saved pane, widget-bar pin, `widgets.json` entry or layout file that named a Warden section opens that section's new home. A Vault, History or Audit section opens its pane, and Host opens the Swarm.
-- LAN and Ambient aren't panes, so there is nothing to open. A pane, pin or widget call for them opens nothing and says where the section went. Internet says it is gone.
-- A Warden with no section, or a pin for the whole Warden, opens the **Audit**. That opens nothing that needs your Vault key.
+- LAN, Ambient and Internet aren't panes. A saved pane or layout file that named one opens the **Audit**. A widget call for one, or an entry in **Settings ▸ Widgets**, gets an error that names the new home: the network pill for LAN, the token pill's **AgentMux internal** row for Ambient, and for Internet that it is gone.
+- A saved Warden pane or layout file with no section opens the **Audit**. That opens nothing that needs your Vault key.
+- A widget that calls `am.panes.open("warden")` with no section still opens the **Jobs** pane, until Jobs moves to the Drone.
 - A widget that calls `am.panes.open("warden", { "warden:section": "history" })` still works and opens the History pane. See [Widget API](/widget-api/#opening-a-section).
 
 ## The network pill

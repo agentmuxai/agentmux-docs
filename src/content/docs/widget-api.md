@@ -129,7 +129,7 @@ await am.panes.open("settings", { "settings:section": "widgets" }, "tab");
 await am.panes.open("browser", { url: "https://example.com" });
 ```
 
-An id the pane doesn't have is dropped, and the pane opens on its default section. A call that still names the Warden pane, which has been split up, opens the section's new home: `am.panes.open("warden", { "warden:section": "history" })` opens the History pane. See [Warden](/warden/).
+An id the pane doesn't have is dropped, and the pane opens on its default section. A call that still names the Warden pane, which has been split up, opens the section's new home: `am.panes.open("warden", { "warden:section": "history" })` opens the History pane, and with no section it opens the Jobs pane. A section that is no longer a pane (LAN, Ambient, Internet) is an error that names where it went. See [Warden](/warden/).
 
 The SDK's typings (`v1.d.ts`) list these in a `PaneSections` interface, and `am.panes.open` has an overload for the sectioned views that checks the ids, so `{ "swarm:section": "kanbn" }` is a type error.
 
