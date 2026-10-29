@@ -215,9 +215,10 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent.
 
-### Dev servers in a container
+### What a container agent can do with panes and dev servers
 
 - **Dev servers survive a container recreate.** A container is recreated when AgentMux upgrades or the agent image updates, which ends any process in it. An agent that registers its dev server with the command that starts it (`RegisterDevServer` with `command`, and `dir` if it isn't `/workspace`) has AgentMux start the server and keep it up: when the container next runs a turn and nothing is listening, AgentMux runs the command again and registers the route with the container's new address, so `http://<project>-<agent>.localhost:8090` keeps working. A registration without a command lasts only as long as the container. See [`RegisterDevServer`](/internals/muxapi/#registerdevserver).
+- **Editor and media panes open a read-only snapshot.** When a container agent shows you a file from its workspace (`Pane` `open`, view `editor` or `media`), AgentMux copies the file out of the workspace and opens the pane on the copy: its title says `(read-only snapshot, <time>)`, it does not change when the agent changes the file, and the agent is told to open it again to refresh. A snapshot is capped (10 MB for an editor, 50 MB for a media file) and removed when its pane closes. A folder, a terminal, a pane on another machine and a path outside the workspace can't be opened this way.
 
 ## Skills
 
