@@ -43,9 +43,9 @@ The Warden is a pane view with its sections as tabs along the top, the same layo
 
 Each section is mounted the first time you show it and then stays mounted, so switching back to it is instant. Host, LAN, Audit and Ambient refresh every 5 seconds, but only while they are shown; Internet is static. History loads while it is shown. Because the Vault section too is mounted only when you first show it, a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Ambient · 2 failing** when requests fail, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
 
-## The Kanban moved to the Swarm
+## The Kanban is its own pane
 
-The [Kanban](/kanban/) used to be Warden's first section. It is now the third section of [Swarm](/subagent-watcher/). Warden keeps no stub of it, and a Warden saved on its old Kanban section opens on Host.
+The [Kanban](/kanban/) used to be Warden's first section. It is now a pane of its own. Warden keeps no stub of it, and a Warden saved on its old Kanban section opens on Host.
 
 ## Vault section
 
@@ -153,7 +153,7 @@ Hover over a row for every outcome and its count. A row is marked **failing** wh
 
 ## What the Warden is *not*
 
-- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery record. The [Kanban](/kanban/), the work itself, is a section of Swarm; a Swarm row links to the task its agent is on.
+- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery record. The [Kanban](/kanban/), the work itself, is a pane of its own; a Swarm row links to the task its agent is on.
 - The **host popover** in the status bar shows this instance's own details and the LAN discovery toggle. The Warden doesn't repeat the host details.
 
 ## Status today
@@ -177,7 +177,7 @@ Hover over a row for every outcome and its count. A row is marked **failing** wh
 
 ## See also
 
-- [Kanban](/kanban/) — the Swarm's Kanban section, which used to be Warden's
+- [Kanban](/kanban/) — which used to be Warden's first section
 - [The Vault](/vault/) — the Vault section
 - [Swarm](/subagent-watcher/) — live agent activity, the Supervisor and the fleet toolbar
 - [Sections](/widgets/#sections) — pinning a Warden section to the widget bar
