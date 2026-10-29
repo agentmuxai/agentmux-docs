@@ -7,7 +7,7 @@ description: How AgentMux instances on the same network discover each other via 
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the [Warden widget](/warden/)'s LAN section and in the host popover, with its hostname and version, and agents can send messages directly to agents on those machines.
+AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the status bar's network pill (the host popover), with its hostname and version, and agents can send messages directly to agents on those machines. Click a peer's row for its address and port, operating system and channel, its agents and when it was last seen: see [the network pill](/warden/#the-network-pill).
 
 LAN discovery is **off by default** and can be switched on and off live from the status bar.
 
@@ -18,7 +18,7 @@ While LAN discovery is on, your instance:
 - **opens its API to the network.** The AgentMux server binds its two ports on every non-loopback address of the machine (IPv4, and IPv6 except link-local), in addition to loopback. These listeners serve the full server API, protected by the instance's keys;
 - **advertises itself** as mDNS service `_agentmux._tcp.local.`. The record carries the hostname, the AgentMux version, an instance id (`v` plus the version), the server's port and IP addresses, and the instance's **`lan_key`**;
 - **answers discovery probes** on UDP port 47891 from private and link-local addresses, replying with the same details and the same `lan_key`;
-- **browses for peers** and keeps the peer list up to date in the Warden and the host popover;
+- **browses for peers** and keeps the peer list up to date in the network pill;
 - **asks every peer for its agent names** every 30 seconds, so you can see which agents live where;
 - **checks that an agent isn't already running on another computer**: before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent. If one is, the agent isn't started here, or, if both are running it, the later start is stopped. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent);
 - **forwards messages**: a `Message` `send` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud.
@@ -116,6 +116,6 @@ If a peer is missing, the usual causes are a firewall (yours or the peer's), VPN
 ## See also
 
 - [Network exposure](/security/network-exposure/): every listener and what it accepts
-- [Warden widget](/warden/): the operator surface that shows LAN peers
+- [The network pill](/warden/#the-network-pill): the peers it finds, in the status bar
 - [Running multiple instances](/multi-instance/): multiple AgentMux processes side by side
 - [LAN discovery (internals)](/internals/lan-discovery/): the mDNS module, listeners and live toggle

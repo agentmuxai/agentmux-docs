@@ -7,6 +7,8 @@ description: How the Warden widget is wired — view model, section data flow, p
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented.
 :::
 
+The Warden pane has since been split up: its sections are now the Vault, [History](/history/), [Audit](/audit/) and [Jobs](/jobs/) panes, the Swarm, and the status bar's network and token pills (see [Warden](/warden/)). This page keeps the original design of the Warden widget and the jekt tiers it was built around.
+
 This page covers the Warden widget's internals: the file layout, the view model pattern, the section data sources, and the design constraint that drove the three-layer split. For what the user sees, see [Warden widget](/warden/).
 
 ## File layout

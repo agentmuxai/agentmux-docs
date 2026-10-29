@@ -147,6 +147,21 @@ AgentMux reads these statuses from the task reports Claude Code writes to the ag
 
 **Clear completed (N)** dismisses every finished or interrupted Agent Tool row and every retired Workflow row. Dismissals are remembered in this machine's local storage, so they survive reopening Swarm. Nothing is deleted from the agent's own history, and a dismissed row comes back if it shows new activity. Todos, Shell, Cron, Running and Background rows are not affected.
 
+## Registration badge
+
+An agent's row carries a badge when messages to it may be going astray. A healthy row shows nothing. The Swarm checks every 15 seconds while it is shown.
+
+- **Another instance claims this agent**: another AgentMux instance on this computer also claims the agent's id, so a message for it may go to whichever instance registered last. Hover over the badge for each claimant's channel and process, and when it updated.
+- **A message to it was refused: identity mismatch**: a recent message to the agent was refused because the pane it resolved to reported a different live identity. The hover text gives the time, the pane's block and the error.
+
+On a badged row, the row menu has **Stop receiving messages**. After you confirm, AgentMux removes the agent's routing entry on this instance and its entries in the registries other instances on this computer read, stops its MuxBus cloud subscription, and drops its Swarm subagent tracking.
+
+- The agent's process and pane keep running. Its conversation and data are untouched.
+- Messages are no longer delivered to that pane, whether sent from this computer, the LAN or the cloud relay. If the agent has a saved definition, a message sent to it can be held for up to 24 hours and delivered when the agent registers again.
+- The agent registers again when its agent process restarts or when you next send it a message from its pane.
+
+Use it to stop an agent receiving messages while you investigate, without killing it. To stop agent processes, use the [fleet toolbar](#fleet-toolbar). Registrations, unregistrations and the messages themselves are in [Audit](/audit/).
+
 ## Stopped agents
 
 Closing an agent's pane doesn't stop it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)), and an agent you have stopped isn't forgotten: Swarm lists every agent you have created. Agents that aren't running appear under **Stopped agents**, a folded list (open when no agent is running) with the count in its heading. Each row shows the agent's name, provider and state, and two buttons:
@@ -310,7 +325,7 @@ The Supervisor never:
 - **The row's line** reads **Needs you:** and the reason while a paused agent is idle, and the row ranks like one with a pending question. When the agent starts a turn again, the pause is over.
 - **The Supervisor group**, first under an expanded row, lists the last 10 decisions, newest first: the time, what it did (**continued**, **paused**, **done**, **waiting**, **no verdict**, **set**, **stopped by you**) and the reason. They are kept in the pane's metadata (`supervisor:state`), so they survive a restart of AgentMux's server. The group is hidden while the mode is Off.
 - **Notifications:** when it pauses, you get a notification that the agent needs you, "Supervisor paused:" and the reason. When the judge finds the work done, or can't judge, you get the usual "finished" notification. A continuation, and a turn you stopped, send none. A supervised agent never gets the generic "finished" notification on top of these.
-- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the Warden's [Ambient section](/warden/#ambient-section).
+- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
 
 To turn it off, set the chip, or the toolbar for a selection, to **Off**. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
 
@@ -323,13 +338,14 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## What Swarm doesn't do
 
 - **No history or search.** Swarm shows live state only. Subagent activity is held in memory; when an agent pane is reopened, AgentMux reloads that session's subagent activity from Claude Code's transcript files.
-- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For more, see the [Warden](/warden/).
+- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For the instances themselves, see the [network pill](/warden/#the-network-pill).
 - **No subagent tracking for providers other than Claude Code.**
-- **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the Warden as its [Ambient section](/warden/#ambient-section) (agentmux #5317).
+- **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
 
 ## See also
 
 - [Pane Types](/pane-types/) — every pane type, including the agent pane's dispatch cards
 - [Kanban](/kanban/) — the Swarm's third section, the work agents are doing
-- [Warden](/warden/) — the Vault, agents across Host, LAN and Internet, the audit feed and agents' history
+- [Audit](/audit/) and [History](/history/) — the delivery feed, and agents' kept conversations
+- [Warden](/warden/) — where the Warden's sections went
 - [Interagent Communication](/internals/interagent-comms/) — how jekts are delivered
