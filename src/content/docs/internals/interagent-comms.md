@@ -146,7 +146,7 @@ Messages are limited to 10,000 bytes after sanitization (longer ones are truncat
 
 ## Observing message flow
 
-The [Warden widget](/warden/) shows registered agents and a feed of the last 50 audit events (deliveries and registrations). The same data is available at `GET /agentmux/reactive/agents` and `GET /agentmux/reactive/audit`, which need the instance auth key. The audit log keeps the last 100 events in memory only, with message lengths and hashes but not message text.
+The [Audit](/audit/) pane shows a feed of the last 50 audit events (deliveries, actions and registrations), and the [Swarm](/subagent-watcher/#registration-badge) flags an agent that another instance also claims. The same data is available at `GET /agentmux/reactive/agents` and `GET /agentmux/reactive/audit`, which need the instance auth key. The audit log keeps the last 100 events in memory only, with message lengths and hashes but not message text.
 
 ## Security
 
@@ -177,5 +177,5 @@ Every field, every rule, and what a receiving agent must do are specified in [Je
 - [Jekt protocol](/internals/jekt-protocol/): the specification: request, delivery, signatures, trust and tier rules, marker
 - [Reactive event bus](/security/reactive-event-bus/): the security analysis: who can reach the bus, keys, durable hold
 - [LAN discovery](/lan-discovery/): mDNS setup and what it exposes
-- [Warden widget](/warden/): agent state and the delivery feed
+- [Audit](/audit/): the delivery feed
 - [MuxAPI](/internals/muxapi/): the full MCP tool reference

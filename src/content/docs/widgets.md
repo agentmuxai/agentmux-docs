@@ -112,32 +112,31 @@ An entry in `widgets.json` that should appear only inside its group's flyout (no
 
 ### Sections
 
-Some panes have a row of sections: Swarm, Warden, Connectors, Memory and Settings, and inside Warden, the Vault. Each pane declares its sections on its manifest (`frontend/app/block/pane-sections.ts`; Warden's in `frontend/app/view/warden/warden-sections.ts`, the Swarm's in `frontend/app/view/swarm/swarm-section.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`warden:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **LAN**, which opens Warden on its LAN section:
+Some panes have a row of sections: Swarm, Connectors, Memory, Settings and the Vault. Each pane declares its sections on its manifest (`frontend/app/block/pane-sections.ts`; the Swarm's in `frontend/app/view/swarm/swarm-section.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`vault:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **Cards**, which opens the Vault on its Cards and banks section:
 
 ```json
 {
-  "section@warden-lan": {
-    "label": "LAN",
-    "icon": "network-wired",
-    "section": "lan",
-    "blockdef": { "meta": { "view": "warden" } }
+  "section@vault-cards": {
+    "label": "Cards",
+    "icon": "credit-card",
+    "section": "cards",
+    "blockdef": { "meta": { "view": "vault" } }
   }
 }
 ```
 
-The built-in **Vault** button is an entry like this one, with `"section": "vault"` (on Warden). The Kanban is a pane of its own now, with no section: an entry from before the move, with `"view": "warden"` or `"view": "swarm"` and `"section": "kanban"`, still opens it. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
+An entry from before the Warden pane was split up, with `"view": "warden"` and a `"section"` of `vault`, `history` or `audit`, still opens that pane (see [Warden](/warden/)). The Kanban is a pane of its own, with no section: an entry from before the move, with `"view": "warden"` or `"view": "swarm"` and `"section": "kanban"`, still opens it. AgentMux turns `section` into the pane's section key (`"vault:section": "cards"`), and you can also write that key in `blockdef.meta` yourself.
 
-Clicking an entry for a management pane (Warden, Connectors, Memory, Settings, Swarm and the others listed under [Opening a widget again](/pane-types/#opening-a-widget-again)) brings back the pane you already have, on the entry's section, instead of opening a second one; Shift-click opens another. An entry says so with `"singleton": true` (it opens a new pane each time without it, or with `false`). Your own entry for one of these views keeps the behaviour of the view when it leaves `singleton` out.
+Clicking an entry for a management pane (Vault, History, Audit, Connectors, Memory, Settings, Swarm and the others listed under [Opening a widget again](/pane-types/#opening-a-widget-again)) brings back the pane you already have, on the entry's section, instead of opening a second one; Shift-click opens another. An entry says so with `"singleton": true` (it opens a new pane each time without it, or with `false`). Your own entry for one of these views keeps the behaviour of the view when it leaves `singleton` out.
 
-**Settings ▸ Widgets** flags an entry whose section its pane doesn't have (it would quietly open the pane's default section; the note lists the sections the pane has), a `section` with no `view`, and one that names a pane by an old name (`"view": "vault"`: use `"view": "warden"`).
+**Settings ▸ Widgets** flags an entry whose section its pane doesn't have (it would quietly open the pane's default section; the note lists the sections the pane has), a `section` with no `view`, and one that names a pane by an old name (`"view": "warden"`: use the pane the section moved to, see [Warden](/warden/)).
 
-**Pin a section from the pane** (`frontend/app/window/section-pins.ts`). Right-click the header of a pane with sections and choose **Pin “LAN” to bar**, named after the section it shows. On Warden's Vault section the menu also offers the Vault's own section (**Pin “Cards and banks” to bar**). If an entry already opens exactly that section (like the built-in Vault), AgentMux pins it. Otherwise it adds an entry keyed `section@<view>-<section>` (`section@warden-lan`, `section@warden-vault-cards`) to your `widgets.json` and pins that. On a section that is pinned, the menu offers **Unpin “LAN” from bar** instead; the entry stays in **more**.
+**Pin a section from the pane** (`frontend/app/window/section-pins.ts`). Right-click the header of a pane with sections and choose **Pin “Cards and banks” to bar**, named after the section it shows. If an entry already opens exactly that section (like the built-in Kanban), AgentMux pins it. Otherwise it adds an entry keyed `section@<view>-<section>` (`section@vault-cards`, `section@connectors-mcp`) to your `widgets.json` and pins that. On a section that is pinned, the menu offers **Unpin “Cards and banks” from bar** instead; the entry stays in **more**.
 
 | Pane | View | Section key | Sections (default first) |
 |---|---|---|---|
 | Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast` |
-| Warden | `warden` | `warden:section` | `host` (default), `vault`, `lan`, `internet`, `audit`, `history` |
-| The Vault, inside Warden's `vault` | `warden` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
+| The Vault | `vault` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
 | Connectors | `connectors` | `connectors:section` | `accounts` (default), `mcp`, `remotes` |
 | Memory | `memory` | `memory:section` | `global` (default), `personal`, `skills`, `bundles` |
 | Settings | `settings` | `settings:section` | `appearance` (default), `window`, `browser`, `terminal`, `sounds`, `notifications`, `recording`, `devices`, `widgets`, `advanced` |

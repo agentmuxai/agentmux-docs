@@ -120,18 +120,18 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 - **One of the widget's own views** (`ext:<id>/<name>`): its `meta` becomes that pane's state, what `am.meta.get()` reads there, with the same key and size checks as `am.meta.set`. No permission needed.
 - **Any other view** (needs `panes`): only a section the pane declares, or for `browser`, an `http`/`https` `url`. Every other key is dropped: a controller, a command, a connection, `vault:request` and anything else. So `panes` opens panes and never runs anything.
 
-A section is the pane's own section key with one of its section ids, and for Warden's Vault, `vault:section` beside it. The sectioned panes and their ids are listed under [Sections](/widgets/#sections).
+A section is the pane's own section key with one of its section ids, for example `vault:section` on the Vault. The sectioned panes and their ids are listed under [Sections](/widgets/#sections).
 
 ```js
 await am.panes.open("swarm", { "swarm:section": "broadcast" });
-await am.panes.open("warden", { "warden:section": "vault", "vault:section": "cards" });
+await am.panes.open("vault", { "vault:section": "cards" });
 await am.panes.open("settings", { "settings:section": "widgets" }, "tab");
 await am.panes.open("browser", { url: "https://example.com" });
 ```
 
-An id the pane doesn't have is dropped, and the pane opens on its default section. So is any section passed through a pane's old view name: `am.panes.open("vault", { "vault:section": "cards" })` still opens Warden's Vault, but on its default section, since sections are checked against the pane's own name. Use `warden`.
+An id the pane doesn't have is dropped, and the pane opens on its default section. A call that still names the Warden pane, which has been split up, opens the section's new home: `am.panes.open("warden", { "warden:section": "history" })` opens the History pane, and with no section it opens the Jobs pane. A section that is no longer a pane (LAN, Ambient, Internet) is an error that names where it went. See [Warden](/warden/).
 
-The SDK's typings (`v1.d.ts`) list these in a `PaneSections` interface, and `am.panes.open` has an overload for the sectioned views that checks the ids, so `{ "warden:section": "kanbn" }` is a type error.
+The SDK's typings (`v1.d.ts`) list these in a `PaneSections` interface, and `am.panes.open` has an overload for the sectioned views that checks the ids, so `{ "swarm:section": "kanbn" }` is a type error.
 
 ### Storage
 

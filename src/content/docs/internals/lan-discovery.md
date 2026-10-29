@@ -137,7 +137,7 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 ## HTTP endpoint
 
-`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the four `lan_key` routes. The Warden's LAN section polls it every 5 seconds (`WARDEN_REFRESH_MS`).
+`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the four `lan_key` routes. The network pill in the status bar reads the same list.
 
 ## Boot semantics
 
@@ -168,5 +168,5 @@ Design documents in the main repository (designs, not a description of current b
 
 - [LAN discovery (user guide)](/lan-discovery/) — turning it on, what it exposes
 - [Network exposure](/security/network-exposure/) — every listener
-- [Warden architecture (internals)](/internals/warden/) — the Warden's LAN section
+- [Warden](/warden/#the-network-pill) — the network pill's LAN peers
 - [Interagent communication](/internals/interagent-comms/) — how messages use LAN peers

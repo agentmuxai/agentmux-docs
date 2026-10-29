@@ -1,6 +1,6 @@
 ---
 title: The Vault
-description: "Warden's Vault section: your secrets (ID numbers, cards and bank accounts, API keys, logins, notes), which agents use by name without ever seeing a value."
+description: "The Vault pane: your secrets (ID numbers, cards and bank accounts, API keys, logins, notes), which agents use by name without ever seeing a value."
 ---
 
 :::caution[Alpha Software]
@@ -13,18 +13,17 @@ Only you add, change, reveal, delete, import or export entries. No agent tool re
 
 ## Where to find it
 
-The Vault is the **Vault** section of the [Warden](/warden/) pane (`frontend/app/view/vault/vault-in-warden.ts`, which hosts the Vault's view in Warden). Open it in any of these ways:
+The Vault is a pane of its own (icon: `lock`, view `vault`). It is **not pinned** to the widget bar by default. Open it in any of these ways:
 
 - Click **more** at the end of the widget bar and choose **Vault**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open Vault** in the command palette (`open:vault`).
-- Warden's **Vault** tab.
-- **Fill it in** on an agent's request for an entry, or **Open the Vault** in Warden's Audit section.
+- **Fill it in** on an agent's request for an entry, or **Open the Vault** in the [Audit](/audit/) pane's Secrets block.
 
-Each switches the Warden already in the tab to its Vault section, or opens a Warden. The pane's title reads **Vault · Cards and banks**, naming the Vault's own section.
+A tab holds one Vault: each of these brings back the Vault already open in the tab instead of opening a second. The pane's title reads **Vault · Cards and banks**, naming the Vault's own section.
 
-The Vault used to be a pane of its own (view `vault`). Saved panes, widget-bar pins and `widgets.json` entries that opened it are moved to Warden's Vault section the first time AgentMux starts after updating, and a layout file that says `vault` opens it too.
+The Vault was for a while a section of the Warden pane, which has been split up: see [Warden](/warden/). Saved panes, widget-bar pins, `widgets.json` entries and layout files that opened the Vault, or the Warden's Vault section, open the Vault pane the first time AgentMux starts after updating.
 
-The section loads its entries the first time you show it, so a Warden opened on another section never reads the Vault.
+The Vault reads its entries only while it is shown. Opening the Audit or any other pane never reads them.
 
 ## What it holds
 
@@ -59,7 +58,7 @@ The eye button on an entry opens **Show or copy**, with **Reveal** and **Copy** 
 
 On macOS and Linux, Reveal and Copy are disabled for now: Touch ID and the desktop's prompt aren't built yet.
 
-The Vault opens with a note, **What the Vault may ask you**, listing what your OS may ask and when. Dismiss it with **Got it**; the ⓘ button in Warden's header brings it back.
+The Vault opens with a note, **What the Vault may ask you**, listing what your OS may ask and when. Dismiss it with **Got it**; the ⓘ button in the Vault's header brings it back.
 
 ## How agents use entries
 
@@ -77,11 +76,11 @@ Cleaning a command's output is a guard, not a boundary: a command can transform 
 
 Each entry lists its standing permissions under its label: **Agents may fill it on** the sites you allowed always, and **Agents may run commands with it** for the agents you allowed always. The × next to one revokes it; the next use asks again.
 
-The Vault's **Activity** records every change and every use: saving, revealing, copying, each fill and command with its outcome, imports and exports. **See agents' use in Warden** opens Warden's [Audit section](/warden/#audit-section), which ends with **Secrets**: the agents' uses of entries (not yours), and every standing permission with a way to stop it.
+The Vault's **Activity** records every change and every use: saving, revealing, copying, each fill and command with its outcome, imports and exports. **See agents' use in Audit** opens the [Audit](/audit/) pane, which ends with **Secrets**: the agents' uses of entries (not yours), and every standing permission with a way to stop it.
 
 ## Export and import
 
-The Vault's import and export buttons are in Warden's header while the Vault section is shown.
+The Vault's import and export buttons are in the Vault's header.
 
 **Export the Vault** saves a password-protected `.vault` file: choose the entries (all are selected), type a passphrase twice (at least 8 characters; **Suggest one** makes one from random words), then where to save it. It holds every value, label and detail, but not permissions or Activity. A `.vault` file is an [age](https://age-encryption.org) file encrypted to the passphrase, so you can open your own export without AgentMux with `age -d`. Anyone with the file and its passphrase can read every secret in it.
 
@@ -108,11 +107,12 @@ The Vault is shared by every AgentMux on this computer, installed and developmen
 ## Kept off agents' screens
 
 - `UI` `screenshot` is clipped to the agent's own pane, and the Vault is blacked out in it even when it floats over that pane.
-- `UI` `window` captures a whole OS window, so it can't black out one part. While the Vault section is on screen in any AgentMux on this computer, it refuses to capture any AgentMux window. Leaving the section, or hiding the pane, ends that within seconds.
+- `UI` `window` captures a whole OS window, so it can't black out one part. While the Vault is on screen in any AgentMux on this computer, it refuses to capture any AgentMux window. Hiding the pane or closing it ends that within seconds.
 - `UI` `query` and `click` reach only the agent's own pane, and the Vault's forms and dialogs are drawn inside the Vault.
 
 ## See also
 
-- [Warden](/warden/): the pane the Vault is a section of, and its Audit section
+- [Audit](/audit/): what agents did with your entries, and where they may use them without asking
+- [Warden](/warden/): where the Vault's old home went
 - [Identity & credential storage](/security/identity-credential-storage/): every secret AgentMux keeps, and how
 - [Identity & Accounts](/identity/): the accounts agents run as, which are not Vault entries
