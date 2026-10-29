@@ -9,7 +9,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The Warden pane has since been split up: its sections are now the Vault, [History](/history/), [Audit](/audit/) and [Jobs](/jobs/) panes, the Swarm, and the status bar's network and token pills (see [Warden](/warden/)). This page keeps the original design of the Warden widget and the jekt tiers it was built around.
 
-This page covers the Warden widget's internals: the file layout, the view model pattern, the section data sources, and the design constraint that drove the three-layer split. For what the user sees, see [Warden widget](/warden/).
+This page covers the Warden widget's internals: the file layout, the view model pattern, the section data sources, and the design constraint that drove the three-layer split. For where each section went, see [Warden](/warden/).
 
 ## File layout
 
@@ -141,7 +141,7 @@ This is the same reason `defwidget@warden` carries a single `description` field 
 
 ## See also
 
-- [Warden widget (user guide)](/warden/) — operator-facing intro
+- [Warden](/warden/) — where the Warden's sections went
 - [LAN discovery (internals)](/internals/lan-discovery/) — the substrate the LAN section reads from
 - [Interagent event bus](/internals/interagent-comms/) — the reactive WS-event system
 - [Architecture overview](/internals/architecture/) — broader system context
