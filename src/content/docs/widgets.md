@@ -135,7 +135,7 @@ Clicking an entry for a management pane (Vault, History, Audit, Connectors, Memo
 
 | Pane | View | Section key | Sections (default first) |
 |---|---|---|---|
-| Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast`, `kanban` |
+| Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast` |
 | The Vault | `vault` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
 | Connectors | `connectors` | `connectors:section` | `accounts` (default), `mcp`, `remotes` |
 | Memory | `memory` | `memory:section` | `global` (default), `personal`, `skills`, `bundles` |
