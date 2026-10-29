@@ -154,6 +154,9 @@ A key you don't set uses the default shown below. "Unset" in the Default column 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `browser:searchsuggestions` | boolean | `true` | The address bar also asks your default search engine for suggestions while you type, sending it each edit before you press Enter, as Chrome does. Off: suggestions come only from this computer (history, typed addresses). Incognito tabs never ask. |
+| `browser:hibernate` | boolean | `true` | A browser pane out of sight for a while hibernates: its page closes to free its memory (often 100 to 200 MB) and loads again when you're about to look at it, with a note while it restores. Never a pane an agent is using, one playing or capturing media, one with something typed into it, or a local dev server. Off: browser panes keep running while hidden. See [Windows, tabs, panes and renderers](/internals/renderers/#browser-panes). |
+| `browser:hibernateafter` | number | `30` | Minutes a browser pane is hidden before it hibernates. Sooner when the computer is low on memory: 5 minutes, then 1. |
+| `browser:keepawakesites` | array | `[]` | Sites whose browser panes never hibernate, by host (`example.com`) or origin (`https://example.com`). |
 
 Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 
@@ -173,6 +176,7 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
 | `window:magnifiedblockblursecondarypx` | integer | `0` | Backdrop blur, in pixels, applied to the other panes behind it |
 | `window:keepinactivetabslaidout` | boolean | `true` | Keep window tabs you aren't looking at laid out, so switching back to one has nothing to catch up on. `false` skips their layout while hidden. |
+| `window:autorecycle` | boolean | `true` | Reload a window that has been idle for 10 minutes when its page uses much more memory than it did after loading (over 600 MB and twice its size after load), to give that memory back. Drafts, scroll positions and layout are kept, and it waits while anything would be lost. `false`: reload only on request (**Reload Window (Free Memory)** in the command palette). See [Windows, tabs, panes and renderers](/internals/renderers/#what-gives-memory-back). |
 | `window:confirmcloseworking` | boolean | `true` | Ask before closing a window, or switching [workspace](/workspaces/), while an agent in it is mid-turn (Settings: **Warn before closing a window with working agents**). Closing stops its agents; the window stays in the workspace, to reopen from the instance panel. The warning's **Don't ask again** turns it off. |
 
 ## App Settings
