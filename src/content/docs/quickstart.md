@@ -57,14 +57,12 @@ macOS keys are in brackets.
 
 | Action | Keys |
 |---|---|
-| Split right (opens a terminal) | `Ctrl+Shift+D` (`⌘D`) |
+| Split right (opens a Shortcuts pane) | `Ctrl+Shift+D` (`⌘D`) |
 | Split below | `Ctrl+Alt+Shift+D` (`⇧⌘D`) |
 | Move focus between panes | `Ctrl+Shift+Arrow`, or `F6` |
 | Open the command palette | `Ctrl+Shift+P` (`⇧⌘P`) |
 
-A split opens the new pane beside the one that has focus:
-
-![The Swarm pane (bottom right) split in two with Split Right: the new pane opens beside it](../../assets/screenshots/chrome/chrome-split-layout.png)
+A split opens a Shortcuts pane beside the one that has focus: a grid of tiles for every pane type, the ones you used last first. Pick Terminal, Agent or any other tile and the new pane takes its place (see [Splitting](/pane-types/#splitting)).
 
 To start a second agent, click **Agent** in the widget bar (or run **Open Agent** from the command palette). The new Agent pane shows the picker again: create another agent, or pick one from **My Agents**. Agent names must be unique, so give a second agent from the same template a new name.
 

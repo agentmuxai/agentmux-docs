@@ -127,7 +127,7 @@ Some panes have a row of sections: Swarm, Warden, Connectors, Memory and Setting
 
 The built-in **Kanban** and **Vault** buttons are entries like this one, with `"section": "kanban"` (on the Swarm) and `"section": "vault"` (on Warden). An entry from before the Kanban moved from Warden to the Swarm, with `"view": "warden"` and `"section": "kanban"`, still opens the Swarm's Kanban. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
 
-Clicking an entry for Warden, Connectors or Memory switches the pane of that kind already in the tab to the section, instead of opening a second one. An entry for a section of the Swarm (the Kanban's) does the same for the Swarm; the Swarm's own button opens another Swarm.
+Clicking an entry for a management pane (Warden, Connectors, Memory, Settings, Swarm and the others listed under [Opening a widget again](/pane-types/#opening-a-widget-again)) brings back the pane you already have, on the entry's section, instead of opening a second one; Shift-click opens another. An entry says so with `"singleton": true` (it opens a new pane each time without it, or with `false`). Your own entry for one of these views keeps the behaviour of the view when it leaves `singleton` out.
 
 **Settings ▸ Widgets** flags an entry whose section its pane doesn't have (it would quietly open the pane's default section; the note lists the sections the pane has), a `section` with no `view`, and one that names a pane by an old name (`"view": "vault"`: use `"view": "warden"`).
 

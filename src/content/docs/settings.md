@@ -183,7 +183,7 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `app:defaultnewblock` | string | `""` | View a new tab or pane opens with, for example `term` or `agent`. Blank opens a terminal. |
+| `app:defaultnewblock` | string | `""` | View a new tab or pane opens with, for example `term`, `agent` or `shortcuts` (the [Shortcuts pane](/pane-types/#the-shortcuts-pane)). Blank opens a terminal. |
 | `keybindings` | array | `[]` | Your own keyboard shortcuts, applied over the defaults. See [Keybindings](/keybindings/#your-own-shortcuts). |
 | `app:showoverlayblocknums` | boolean | `true` | Show numbered overlays for the jump-to-pane shortcuts |
 | `tab:confirmclose` | boolean | `false` | Ask before closing a window tab. Off: a tab closes at once. |

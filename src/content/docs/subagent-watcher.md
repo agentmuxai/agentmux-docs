@@ -43,10 +43,25 @@ In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view
 1. The [fleet toolbar](#fleet-toolbar).
 2. A result panel, shown only after a fleet action.
 3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
-4. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to, including [agents on other instances](#agents-on-other-instances) that report a seat.
-5. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
+4. The [filter bar](#filtering-the-list), shown when the list has agents.
+5. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to, including [agents on other instances](#agents-on-other-instances) that report a seat.
+6. The agent tree, followed by the [agents on other instances](#agents-on-other-instances).
 
 Swarm supports per-pane zoom like other panes, from 50% to 200%: `Ctrl`+scroll, or `Ctrl` `+` / `-` / `0`.
+
+## Filtering the list
+
+The filter bar above the list narrows it with one box, in both Supervisor and Broadcast. Type a word and the list keeps the agents whose name **or** whose work matches; type several words and every one must appear. Matching ignores case, keeps the list's order, and highlights what matched in the row.
+
+- **What counts as work:** the row's line (its title or status), the in-progress to-do, the tool in flight, and the name of each running subagent, workflow, background shell and cron job. A match in one of an agent's sub-rows keeps the agent, with all its rows.
+- **Name only or work only:** start with `name:` or `work:`. `name:lark` matches agent names only; `work:login` matches only what agents are working on.
+- **Count:** while a filter is on, the bar says how many rows are shown of how many are listed, for example **7 of 24**. This counts [agents on other instances](#agents-on-other-instances) and [stopped agents](#stopped-agents) too; a stopped agent matches on its name only, so a `work:` filter shows none of them.
+- **Nothing matches:** the list says **No agents match “…”** with a **Clear** button.
+- **Clearing:** the clear button in the box, or `Escape` (a second `Escape` with the box empty leaves it). `Ctrl+F` (`⌘F`) with the Swarm focused moves to the box.
+- **It is kept with the pane,** so it is still there after a restart; the bar and its count stay visible while it is set, so a restored filter can't look like agents that went missing.
+- **Group by Lead** groups what is left: a heading counts the shown agents, and a group with none disappears.
+
+**Select all** works on what is shown: with a filter on the button reads **Select all N shown**, and Select none clears the shown ones. An agent you ticked that the filter now hides stays ticked, but the toolbar's actions skip it: it says **5 selected · 2 hidden by the filter, not included**, and Stop, the Supervisor mode and Broadcast reach only the selected agents you can see.
 
 ## The agent tree
 
@@ -188,7 +203,7 @@ The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swa
 
 | Control | What it does |
 |---|---|
-| **Select all** / **Select none** | Ticks or clears every agent. The toolbar shows **{N} selected**. |
+| **Select all** / **Select none** | Ticks or clears every agent, or, [with a filter on](#filtering-the-list), every agent shown (**Select all N shown**). The toolbar shows **{N} selected**. |
 | **Broadcast** | Opens an inline box ("Message to send to {N} agents…") with **Send** and **Cancel**. `Enter` sends, `Esc` cancels. The Stop button is hidden while the box is open. |
 | **Stop {N}** | Stops the selected agents, after a confirmation dialog. |
 | **Supervisor** | Sets the [Supervisor](#supervisor) mode (Off, Steady or Drive) for the selected agents of this AgentMux, with no confirmation step. |

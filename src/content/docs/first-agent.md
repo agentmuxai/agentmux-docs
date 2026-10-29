@@ -215,6 +215,10 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent.
 
+### Dev servers in a container
+
+- **Dev servers survive a container recreate.** A container is recreated when AgentMux upgrades or the agent image updates, which ends any process in it. An agent that registers its dev server with the command that starts it (`RegisterDevServer` with `command`, and `dir` if it isn't `/workspace`) has AgentMux start the server and keep it up: when the container next runs a turn and nothing is listening, AgentMux runs the command again and registers the route with the container's new address, so `http://<project>-<agent>.localhost:8090` keeps working. A registration without a command lasts only as long as the container. See [`RegisterDevServer`](/internals/muxapi/#registerdevserver).
+
 ## Skills
 
 Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with none: you add them in [Memory → Skills](/memory/#skills) (**+ New skill**), and a skill reaches **only the agents it is bound to**, so bind it there or from the **Skills** tab of the **Stash** (the button in an agent's pane header). There are two kinds:

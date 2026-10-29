@@ -50,7 +50,7 @@ A widget is a folder named for its id, holding `widget.json` and the widget's fi
 | `kind` | no | `sandboxed` (the default) or `trusted`. |
 | `entry` | no | The page a pane loads when it names none: `index.html` by default. |
 | `permissions` | no | What it asks for (below). An unknown permission makes the package invalid. |
-| `contributes.panes` | yes | At least one. Each: `name` (lowercase letters, digits and `-`), `label`, and optionally `icon`, `entry`, and `defaultMeta` (a new pane's initial state, keys written `widget:<id>:<key>`). |
+| `contributes.panes` | yes | At least one. Each: `name` (lowercase letters, digits and `-`), `label`, and optionally `icon`, `entry`, `defaultMeta` (a new pane's initial state, keys written `widget:<id>:<key>`) and `singleton` (`true`: clicking the widget again brings back the pane that is already open instead of opening another; Shift-click still opens a new one. Default `false`). |
 | `contributes.commands` | no | Up to 20 entries in the command palette (see Commands and status bar items). Each: `id` (lowercase letters, digits and `-`), `title` (at most 60 characters), and optionally `icon`, `pane` (the pane it runs in, by `name`; the first one by default) and `keywords` (more words the palette's search matches). |
 | `contributes.statusItems` | no | Up to 4 items in the status bar. Each: `id`, `text` (at most 40 characters), and optionally `icon`, `tooltip` (at most 120 characters), `command` (one of the widget's command ids, run on a click; without one, a click shows the widget's first pane) and `alignment` (`right`, the default, or `left`). |
 
