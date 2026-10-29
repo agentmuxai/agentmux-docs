@@ -35,6 +35,17 @@ Windows 10 or 11, x64.
 
 Install AgentMux from its [Microsoft Store listing](https://apps.microsoft.com/detail/9p9qcxnncrk3). The Store keeps it updated. Store submissions are uploaded by hand, so the Store version can trail the newest release on GitHub for a while.
 
+### Moving off the Microsoft Store build
+
+Most Store installs just update. The exception: a release can name an oldest version it upgrades from (its upgrade floor), and AgentMux's **Maintenance** panel says so when your version is older: "This version is older than vX upgrades from". The Store only installs the latest version, so it can't take you through the older version first, and AgentMux doesn't offer the Store update for that install. A GitHub installer run beside the Store copy wouldn't replace it either. So you move to the GitHub build first:
+
+1. Quit AgentMux (**Quit AgentMux** in its tray icon's menu).
+2. Uninstall the Store copy: **Settings → Apps → Installed apps → AgentMux → Uninstall**. Your settings and agents are kept under `%USERPROFILE%\.agentmux\`, outside the Store package.
+3. From [GitHub Releases](https://github.com/agentmuxai/agentmux/releases), download the installer (`AgentMux-<version>-x64-setup.exe`) of the version the panel named, run it, and start AgentMux once.
+4. Then install the newest release's installer the same way.
+
+After that this copy is a GitHub install: it doesn't update through the Store, and the panel offers the downloads instead.
+
 ### Installer (.exe)
 
 Download `AgentMux-<version>-x64-setup.exe` and run it. It's an Inno Setup installer. By default it installs for the current user into `%LOCALAPPDATA%\Programs\AgentMux`, with no administrator prompt. It also offers an install for all users, into Program Files, which needs administrator rights. It adds a Start menu entry, and a desktop shortcut if you tick that box.
