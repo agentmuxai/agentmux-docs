@@ -37,7 +37,7 @@ Install AgentMux from its [Microsoft Store listing](https://apps.microsoft.com/d
 
 ### Moving off the Microsoft Store build
 
-Most Store installs just update. The exception: a release can name an oldest version it upgrades from (its upgrade floor), and AgentMux's **Maintenance** panel says so when your version is older: "This version is older than vX upgrades from". The Store only installs the latest version, so it can't take you through the older version first, and AgentMux doesn't offer the Store update for that install. A GitHub installer run beside the Store copy wouldn't replace it either. So you move to the GitHub build first:
+Most Store installs just update. The exception: a release can name an oldest version it upgrades from (its upgrade floor), and AgentMux's **Maintenance** panel says so when your version is older: "This version is older than vX upgrades from". The Store only installs the latest version, so it can't take you through the older version first, and AgentMux doesn't offer the Store update for that install. A GitHub installer run beside the Store copy wouldn't replace it either. The Maintenance panel then says what to do and has a **How to move off the Store build** button that opens this section. So you move to the GitHub build first:
 
 1. Quit AgentMux (**Quit AgentMux** in its tray icon's menu).
 2. Uninstall the Store copy: **Settings → Apps → Installed apps → AgentMux → Uninstall**. Your settings and agents are kept under `%USERPROFILE%\.agentmux\`, outside the Store package.

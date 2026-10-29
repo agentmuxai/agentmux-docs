@@ -178,13 +178,13 @@ Some agents can stop and ask you a question. The panel ("The agent is asking") a
 An agent is not tied to its pane. Closing the pane, closing its tab, or removing its workspace **parks** the agent: the pane goes away, and the agent keeps running with its conversation recorded as before. Open it again from **My Agents** and you see the conversation, whether the agent is idle or in the middle of a turn, and it carries on from there. If the agent is already shown in another pane, tab or window, opening it focuses that pane instead of making a second one.
 
 - **Stop is the only way to stop an agent.** Closing a pane never does. A stopped agent keeps its conversation and its session, so starting it again resumes where it left off.
-- **A message or a Job starts a stopped agent.** A message from you, from another agent on this computer or from the Kanban starts it and is delivered once it is up, and so does a Job or cron entry that names it. A message from another computer on your network doesn't start it: it is held until the agent next starts.
+- **A message or a Job starts a stopped agent.** A message from you, from another agent on this computer or from the Kanban starts it and is delivered once it is up, and so does a Job or cron entry that names it. The sender is told the agent is being started and the message will be delivered as soon as it is up (held for up to 24 hours if the start fails), so it doesn't send it again. A message from another computer on your network doesn't start it: it is held until the agent next starts.
 - **An agent with no pane stops itself after 60 minutes idle.** Idle means no turn, no message and no pane for that long. It stays addressable: the next message starts it and resumes its session. An agent that is waiting for your answer, holds a claimed Kanban task or a held message, or holds the build slot is never stopped this way, and neither is one shown in a pane. Change the time with `agents:idle_stop_minutes` (`0` never stops one).
 - **At most 24 agents run at once** (12 in 0.60.5). Starting one more stops the agent that has been idle longest with no pane to make room. If none can be stopped, the start is refused and a message to it stays held. Change the limit with `agents:max_running` (`0` for no limit). On Windows a start is also refused, or the longest-idle agent stopped, when memory commitment is over 85% of the limit (`agents:commit_limit_pct`, `0` to turn the check off).
 - **A stopped agent shows a banner** above its message box, "This agent is stopped. Its conversation is kept; Start runs it again from where it left off.", with a **Start** button.
 - **Swarm lists every agent**, not only the ones with a pane: agents that aren't running appear under **Stopped agents**, each with **Start** (runs it with no pane) and **Open** (starts it in a pane). See [Swarm](/subagent-watcher/#stopped-agents).
 
-Agents with no pane that were running when AgentMux stopped come back when it starts again, a few seconds apart, most recently active first. One you stopped, one idle past its window, and one signed out or out of quota stay stopped until a message or **Start**.
+Agents with no pane that were running when AgentMux stopped come back when it starts again, a few seconds apart, most recently active first, whatever their last turn was: an agent the idle sweep was keeping running (one holding a claimed Kanban task, say) isn't dropped for having been quiet. One you stopped, and one signed out or out of quota, stay stopped until a message or **Start**.
 
 To go back to closing a pane stopping its agent, set `agents:always_available` to `false` in [settings](/settings/#agent-settings).
 
@@ -215,10 +215,18 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent.
 
+### Starting a container agent
+
+The first turn of a container agent can take minutes: the image is downloaded, the container started and the agent CLI installed. The pane shows a **Preparing…** line above the message box while that happens, with where it is ("Downloading the agent image… 42%", "Starting the container…", then "Installing Claude Code …"). It is a status line, not a turn: it has no timer, and what you type isn't queued behind it. When the container is up and nothing is on its way to it, the pane says "Ready: send a message to start".
+
 ### What a container agent can do with panes and dev servers
 
 - **Dev servers survive a container recreate.** A container is recreated when AgentMux upgrades or the agent image updates, which ends any process in it. An agent that registers its dev server with the command that starts it (`RegisterDevServer` with `command`, and `dir` if it isn't `/workspace`) has AgentMux start the server and keep it up: when the container next runs a turn and nothing is listening, AgentMux runs the command again and registers the route with the container's new address, so `http://<project>-<agent>.localhost:8090` keeps working. A registration without a command lasts only as long as the container. See [`RegisterDevServer`](/internals/muxapi/#registerdevserver).
 - **Editor and media panes open a read-only snapshot.** When a container agent shows you a file from its workspace (`Pane` `open`, view `editor` or `media`), AgentMux copies the file out of the workspace and opens the pane on the copy: its title says `(read-only snapshot, <time>)`, it does not change when the agent changes the file, and the agent is told to open it again to refresh. A snapshot is capped (10 MB for an editor, 50 MB for a media file) and removed when its pane closes. A folder, a terminal, a pane on another machine and a path outside the workspace can't be opened this way.
+- **Widgets built in the workspace.** A container agent can install a widget it built under `/workspace`; each file is checked as it is copied out. You still approve the install, exactly as for any widget. See [Widgets](/widgets/).
+- **File watchers poll on Docker Desktop.** Where the workspace is a file-sharing mount that sends no change events (Docker Desktop on Windows and macOS), AgentMux sets the usual file-watcher variables (`CHOKIDAR_USEPOLLING`, `CHOKIDAR_INTERVAL` and `WATCHPACK_POLLING`) so a dev server's hot reload sees the agent's edits. On Linux a bind mount reports changes and nothing is set. A variable the agent's environment already sets is left alone.
+- **Its own browser sign-ins.** A browser pane a container agent opens browses in a fresh Incognito jar of its own by default, never your Personal profile, and the answer says which one the pane got. See [Profiles and Incognito](/browser-pane/#profiles-and-incognito).
+- **Git and `gh`.** Commits made in the container end with `Agent: <name>@<host>`, git trusts every clone in the container, and `gh auth status` says how `gh` is signed in. The image also has `pip`, `venv` and `core.autocrlf=input`.
 
 ## Skills
 
@@ -250,7 +258,7 @@ Seats are labels. Setting or changing one never renames an agent and never moves
 
 ### Setting a seat
 
-Only you set a seat. Agents can read seats but can't set one, their own or another agent's (`crates/srv/src/server/agent_handlers/seat.rs`). There are two ways in:
+You set a seat from the UI, in two ways:
 
 - In the agent's pane: **Stash** → **Seat**.
 - In **My Agents**: the row's menu → **Seat…**. It opens the same editor over the picker, so the agent doesn't have to be open.
@@ -281,15 +289,16 @@ Click **Preview**. Each agent, and each lead, is matched by uid or by exact name
 - **The pane header**: hovering over an agent's tab shows its seat in the tooltip: "Leader · product — reports to the operator — roadmap, specs".
 - **[Swarm](/subagent-watcher/)**: the role badge after each agent's name. Once an agent there has a seat, a **Group by** control appears above the list, with **None** and **Lead**. With **Lead**, the agents that report to you are listed under **The operator**, each followed by its own reports, one step in. Agents whose lead has no pane open are grouped under that lead's name, agents with no seat under **No seat**, and agents of other AgentMux instances that report no seat under **Other instances**. A LAN computer's agents that report a seat are grouped by their lead like the rest, within their own machine and channel. Each Swarm pane remembers its choice (`frontend/app/view/swarm/swarm-seat-groups.ts`).
 - **[Kanban](/kanban/)**: hovering over a card's owner shows the owner's seat. Once an agent has a seat, the toolbar has a **Reports to** filter: anyone, the operator, or one lead. It keeps the tasks whose owner (the agent holding the task, or else the one it waits for) reports to that lead. The lead's own tasks aren't included (`frontend/app/view/warden-kanban/kanban-seats.tsx`).
+- **Agents can set seats too.** The `Agents` tool's `set_seat` sets or clears the seats of agents on this computer in one call, checked together and written all or none, and recorded under the caller's name. A seat's lead can be given as `Name@host` for an agent on another computer on your LAN (`AgentY@narko`): the name has to be in the LAN list, and `Agents` `list` and the Swarm show it that way. A lead on another computer set this way is kept when you edit the seat's other fields in the UI.
 - **MuxAPI**: in the `Agents` tool's `list`, each entry in `host.agents` has a `seat`: `{role, qualifier, lead: {id, name}, area}`, or `null` when it has none. A `lead` of `null` means the agent reports to you. Agents on LAN peers have theirs in the `lan` entry's `agent_seats`. This is how a leader finds out who reports to it. See [MuxAPI → Agents](/internals/muxapi/#agents).
 
 ### Spawned workers
 
-An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's Seat tab marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
+An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A leader's workers open together in a tab of their own, named `<Leader> team`, in the leader's workspace. The tab is made the first time and reused after, so a leader that lives in your main tab doesn't fill it with workers. A parked leader's workers open in the tab the leader was parked from (or where its workers already are), not in the tab you are looking at. If the team tab can't be made, the workers open in the leader's tab as before. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's Seat tab marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
 
 ### Agents on other computers
 
-Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead must be an agent on the same computer. Agents on other computers on your LAN show the seat that computer reports: [Swarm](/subagent-watcher/#agents-on-other-instances) shows their role badge and groups them by their lead. Agents you reach only through MuxBus Cloud show no seat.
+Each computer keeps the seats of its own agents, so set an agent's seat on the computer it runs on. A lead is usually an agent on the same computer; an agent on another computer on your LAN can be a lead too, set as `Name@host` with `Agents` `set_seat`. Agents on other computers on your LAN show the seat that computer reports: [Swarm](/subagent-watcher/#agents-on-other-instances) shows their role badge and groups them by their lead. Agents you reach only through MuxBus Cloud show no seat.
 
 ## Next Steps
 

@@ -33,6 +33,8 @@ Clicking an agent on a card, in the drawer or in the strip of agents shows that 
 | **Review** | Tasks handed in and waiting for you. The header shows how many and how long the oldest has waited |
 | **Done** | Tasks finished or cancelled in the last 7 days, newest first |
 
+**Collapse a column** with the control in its header: it folds to a thin strip with the column's name written down it and its count, held tasks and the age of its oldest task. Click the strip to open the column again. The choice is kept with the pane, so it survives a restart.
+
 A card shows its number (`#12`), title, the agent on it with a live status dot, checklist progress (`3/7`), its pull request once linked, how many times it has been taken when more than once, its repository, who asked for it ("from you, via Agent1") and how long since it last moved.
 
 ## What agents do
