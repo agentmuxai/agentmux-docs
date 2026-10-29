@@ -636,6 +636,8 @@ Right-click a pane's header for its menu: **Copy**, the four splits, **Magnify P
 
 **Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
 
+**Minimizing a pane next to a minimized pane of the same split merges its tabs into that pane**, with a landing animation on the tabs that arrive, instead of adding another minimized pane. The target is the nearest minimized pane before it (above or to the left) in the split, else the nearest after. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore. There is no undo: drag a tab out of the merged pane to separate it again. Minimized panes also count as hidden, so a row of them costs little.
+
 The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A minimized pane shrinks to a chip the size of its header, in its place in the layout. A maximized pane can be minimized directly: it goes back to its slot as a header chip.
 
 ![The Agent pane maximized to fill its tab](../../assets/screenshots/chrome/chrome-pane-maximized.png)

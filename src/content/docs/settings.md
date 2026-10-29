@@ -95,7 +95,9 @@ Voice input: the microphone button on agent and terminal panes, the transcriptio
 
 Devices paired with this computer over your local network, each of which you can revoke; whether they can watch this computer's terminals; MuxBus sign-in; cloud presence, and whether to publish this computer to your devices; whether to share what your agents are working on; and whether the status bar shows MuxBus Cloud. See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see).
 
-**Pinned senders** lists the keys and installs AgentMux has pinned to the names of agents that speak to it from elsewhere: the first key seen for a name on your network, and the first of your installs seen speaking for a name through your cloud account. A message from anything else for a pinned name still arrives, but it fails verification: it is marked sensitive and the receiving agent is told to stop and ask you. Beside each pin it shows what failed (a different key or install, how many times, when). **Accept the new one** pins that key or install instead, for when the agent really was recreated or moved; **Forget** drops the pin, so the next key or install shown is pinned. Both take two presses, only this window can change a pin, and each change is logged in `logs/pin-changes.log`.
+**Pinned senders** lists the keys and installs AgentMux has pinned to the names of agents that speak to it from elsewhere: the first key seen for a name on your network, and the first of your installs seen speaking for a name through your cloud account. A message from anything else for a pinned name still arrives, but it fails verification: it is marked sensitive and the receiving agent is told to stop and ask you. Beside each pin it shows what failed (a different key or install, how many times, when). **Accept the new one** pins that key or install instead, for when the agent really was recreated or moved; **Forget** drops the pin, so the next key or install shown is pinned. Both take two presses, only this window can change a pin without a vouch (below), and each change is logged in `logs/pin-changes.log`.
+
+A key that changes for an ordinary reason (a new channel store, a recreated agent) doesn't have to wait for you. For a name pinned from your network, the new key is accepted and the pin moves by itself when the AgentMux install that hosts the agent vouches for it, and this computer already trusts that install: one it has pinned for some agent, or a live install of your signed-in account. The vouch is a short-lived certificate from the hosting install, so an old one can't move a pin back to a retired key, and a moved pin never makes a message count as verified by itself: the message's own signature must still verify under the new key. Both computers need this release; a host that doesn't send a certificate is refused until you accept as before. Each automatic move is logged in `logs/pin-changes.log` with the agent, the old and new key fingerprints and which install vouched. An agent can ask AgentMux to accept a key it was refused, and AgentMux does so only when the same vouch holds; **Forget** and the unconditional **Accept the new one** stay in this window.
 
 ![Settings, Paired devices tab](../../assets/screenshots/settings/settings-paired-devices.png)
 
@@ -329,6 +331,19 @@ See [Pin, keep in More, or hide](/pane-types/#pin-keep-in-more-or-hide).
 | `widget:pinned` | array of strings | unset | The widget bar's pinned icons, in order: a built-in widget's short name (`"agent"` for `defwidget@agent`) or an installed package widget's full key (`"ext@acme.board/main"`). Unset: the default pins. |
 | `widget:hidden` | array of strings | unset | Widgets hidden from the bar, **more** and a pane's **+** menu, as full keys (`"defwidget@drone"`). Settings can't be hidden. |
 | `widget:icononly` | boolean | `false` | Icon-only widget bar (no labels) |
+
+## Old Version Settings
+
+Every upgrade starts the new version on a copy of the old version's data, and the updater unpacks a new portable beside the running one, so old versions pile up on a machine that upgrades often. AgentMux lists what is left behind once a day (the plan is also at `GET /agentmux/old-versions`). It only removes anything on a computer that turns `oldversions:clean` on.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `oldversions:clean` | boolean | `false` | Remove the old version folders (`channels/<channel>/versions/<version>/`) of the running channel in the daily pass. Off: the pass only logs what it would remove |
+| `oldversions:keep_previous` | number | `1` | How many of the newest older versions to keep as the way back; never fewer than one |
+| `oldversions:idle_hours` | number | `24` | A folder written to within this many hours counts as in use |
+| `oldversions:portables` | boolean | `false` | Also remove the unpacked portable folders (`agentmux-<version>-x64-portable`) the updater made for this channel |
+
+A folder goes only when it is older than the running version, isn't one of the newest `keep_previous` older versions, is named by no running process (its command line, working folder, program path or environment), has nothing written to it within `oldversions:idle_hours`, and the machine's processes could be read at all: a scan that fails keeps everything. The running version and anything in use are always kept. Nothing follows a symlink, and a folder whose name isn't a plain `x.y.z` is left alone.
 
 ## Other Settings
 
