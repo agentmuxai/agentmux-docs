@@ -451,7 +451,7 @@ The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it
 <figcaption id="clip-stash-tour">A 20-second clip with no sound: opening the Stash from an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices.</figcaption>
 </figure>
 
-- **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Bind**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
+- **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Use account…**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
 - **Seat** — this agent's role, lead and area, which only you set; also **Import roster…** to seat several agents at once. Renders `AgentSeatPanel`. See [Seats](/first-agent/#seats).
 - **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
 - **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
