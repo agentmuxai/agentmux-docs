@@ -43,7 +43,7 @@ The Warden is a pane view with its sections as tabs along the top, the same layo
 
 Each section is mounted the first time you show it and then stays mounted, so switching back to it is instant. Host, LAN, Audit and Ambient refresh every 5 seconds, but only while they are shown; Internet is static. History loads while it is shown. Because the Vault section too is mounted only when you first show it, a Warden opened on another section never reads your secrets. If the Warden is a background tab in a pane with several tabs, it is unmounted and stops refreshing until you switch back to it. The pane title shows the selected section's name (**Ambient · 2 failing** when requests fail, **Vault · Cards and banks** on the Vault), and `Ctrl`+scroll zooms the Warden.
 
-## The Kanban moved to the Swarm
+## The Kanban is its own pane
 
 The [Kanban](/kanban/) used to be Warden's first section. It is now a pane of its own. Warden keeps no stub of it, and a Warden saved on its old Kanban section opens on Host.
 
