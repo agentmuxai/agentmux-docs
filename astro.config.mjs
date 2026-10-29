@@ -149,6 +149,7 @@ export default defineConfig({
 							label: 'Architecture',
 							items: [
 								{ label: 'Architecture overview', slug: 'internals/architecture' },
+								{ label: 'Windows, tabs, panes and renderers', slug: 'internals/renderers' },
 								{ label: 'The reducer stack', slug: 'internals/reducer-stack' },
 								{ label: 'Frontend state model', slug: 'internals/state-model' },
 								{ label: 'IPC catalog', slug: 'internals/ipc-catalog' },
