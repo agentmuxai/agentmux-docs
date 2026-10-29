@@ -49,7 +49,7 @@ Identity is **not a widget-bar entry.** Two paths reach it:
 New account↔agent links are created in several places:
 
 - **When the agent is created or first signs in.** A new agent takes its provider's first account; signing in from the agent pane (**Log in**) saves the login as an account and binds it. See [At launch](#at-launch).
-- **The agent pane's failure row**, when the agent can't sign in: **Bind: &lt;account&gt;** or **Bind account**.
+- **The agent pane's failure row**, when the agent can't sign in: **Use &lt;account&gt;** (one candidate) or **Use account…** (several, which opens a picker).
 - **The account chip in the composer strip**, which switches a working agent to another of your accounts for its provider (this restarts the agent).
 - **The "Bind to Agent" right-click menu** on an account row in Connectors → Accounts. It lists the channel's compatible agents, marked with which one is already bound to this account (checkmark) and which is bound to a *different* account for the same provider ("bound: work-claude"); clicking an agent creates or rebinds the link. See [Connectors → Binding an account to an agent](/connectors/#binding-an-account-to-an-agent) for the full mechanics (candidate filtering, live-apply on a running agent, etc.).
 - **Stash → Accounts → Connect / Re-login**, for Claude only (above).
@@ -58,7 +58,7 @@ The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for
 
 ## At launch
 
-The new-agent panel under a harness card in the agent picker has no account field. A new agent takes its provider's first account from [Connectors → Accounts](/connectors/#accounts). If the provider needs an account and none is bound, the pane shows **Not signed in** or **No account linked** when the agent starts, with **Log in** and **Bind** actions (see [First Agent Setup → Sign in](/first-agent/#sign-in)).
+The new-agent panel under a harness card in the agent picker has no account field. A new agent takes its provider's first account from [Connectors → Accounts](/connectors/#accounts). If the provider needs an account and none is bound, the pane shows **Not signed in** or **No account linked** when the agent starts, with **Log in** and **Use account…** actions (see [First Agent Setup → Sign in](/first-agent/#sign-in)).
 
 Each time the agent's process is spawned, AgentMux:
 
