@@ -171,9 +171,9 @@ Each failure row has a title, a short explanation (with the exit code or signal,
 
 ## Providers
 
-Each provider's output goes through a translator that turns it into the same few events (text, thinking, tool call, tool result, the end of a turn, an error), so the rows above look the same whichever provider made them. What differs is which events a provider sends.
+The agent pane reads each provider's output with a provider-specific reader in the frontend (`frontend/app/view/agent/providers/`, chosen from the provider's output format) that turns it into the same few events (text, thinking, tool call, tool result, the end of a turn, an error), so the rows above look the same whichever provider made them. This is separate from the Rust-side `Translator` trait that [Provider CLI integration](/internals/provider-cli-integration/) describes, which the drone runner uses. What differs is which events a provider sends.
 
-| Provider (translator) | Reply | Thinking | Tool rows | Notes |
+| Provider (reader) | Reply | Thinking | Tool rows | Notes |
 |---|---|---|---|---|
 | **Claude Code**, **Mux Code** (Claude's stream) | Yes | Yes | Yes; names pass through: Read, Edit, Bash, Write, Grep, Glob, Task, Agent, Workflow, `mcp__<server>__<tool>` | The approval and question panels come from this stream, as do the session notices, and the subagent rows in the dock and the Swarm are tracked only for Claude Code |
 | **Qwen Code** (Claude's stream, cache-aware) | Yes | Yes | Yes | Same shapes as Claude Code (it does not split cached tokens out) |
