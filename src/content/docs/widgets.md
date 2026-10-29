@@ -125,17 +125,17 @@ Some panes have a row of sections: Swarm, Warden, Connectors, Memory and Setting
 }
 ```
 
-The built-in **Kanban** and **Vault** buttons are entries like this one, with `"section": "kanban"` (on the Swarm) and `"section": "vault"` (on Warden). An entry from before the Kanban moved from Warden to the Swarm, with `"view": "warden"` and `"section": "kanban"`, still opens the Swarm's Kanban. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
+The built-in **Vault** button is an entry like this one, with `"section": "vault"` (on Warden). The Kanban is a pane of its own now, with no section: an entry from before the move, with `"view": "warden"` or `"view": "swarm"` and `"section": "kanban"`, still opens it. For a section of a section, write both ids: `"section": "vault/cards"` opens Warden on the Vault's Cards and banks. AgentMux turns `section` into the pane's section keys (`"warden:section": "vault"` and `"vault:section": "cards"`), and you can also write those keys in `blockdef.meta` yourself.
 
 Clicking an entry for a management pane (Warden, Connectors, Memory, Settings, Swarm and the others listed under [Opening a widget again](/pane-types/#opening-a-widget-again)) brings back the pane you already have, on the entry's section, instead of opening a second one; Shift-click opens another. An entry says so with `"singleton": true` (it opens a new pane each time without it, or with `false`). Your own entry for one of these views keeps the behaviour of the view when it leaves `singleton` out.
 
 **Settings ▸ Widgets** flags an entry whose section its pane doesn't have (it would quietly open the pane's default section; the note lists the sections the pane has), a `section` with no `view`, and one that names a pane by an old name (`"view": "vault"`: use `"view": "warden"`).
 
-**Pin a section from the pane** (`frontend/app/window/section-pins.ts`). Right-click the header of a pane with sections and choose **Pin “LAN” to bar**, named after the section it shows. On Warden's Vault section the menu also offers the Vault's own section (**Pin “Cards and banks” to bar**). If an entry already opens exactly that section (like the built-in Kanban), AgentMux pins it. Otherwise it adds an entry keyed `section@<view>-<section>` (`section@warden-lan`, `section@warden-vault-cards`) to your `widgets.json` and pins that. On a section that is pinned, the menu offers **Unpin “LAN” from bar** instead; the entry stays in **more**.
+**Pin a section from the pane** (`frontend/app/window/section-pins.ts`). Right-click the header of a pane with sections and choose **Pin “LAN” to bar**, named after the section it shows. On Warden's Vault section the menu also offers the Vault's own section (**Pin “Cards and banks” to bar**). If an entry already opens exactly that section (like the built-in Vault), AgentMux pins it. Otherwise it adds an entry keyed `section@<view>-<section>` (`section@warden-lan`, `section@warden-vault-cards`) to your `widgets.json` and pins that. On a section that is pinned, the menu offers **Unpin “LAN” from bar** instead; the entry stays in **more**.
 
 | Pane | View | Section key | Sections (default first) |
 |---|---|---|---|
-| Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast`, `kanban` |
+| Swarm | `swarm` | `swarm:section` | `supervisor` (default), `broadcast` |
 | Warden | `warden` | `warden:section` | `host` (default), `vault`, `lan`, `internet`, `audit`, `history` |
 | The Vault, inside Warden's `vault` | `warden` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
 | Connectors | `connectors` | `connectors:section` | `accounts` (default), `mcp`, `remotes` |

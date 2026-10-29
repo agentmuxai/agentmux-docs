@@ -45,7 +45,7 @@ Each section is mounted the first time you show it and then stays mounted, so sw
 
 ## The Kanban moved to the Swarm
 
-The [Kanban](/kanban/) used to be Warden's first section. It is now the third section of [Swarm](/subagent-watcher/). Warden keeps no stub of it, and a Warden saved on its old Kanban section opens on Host.
+The [Kanban](/kanban/) used to be Warden's first section. It is now a pane of its own. Warden keeps no stub of it, and a Warden saved on its old Kanban section opens on Host.
 
 ## Vault section
 
@@ -153,7 +153,7 @@ Hover over a row for every outcome and its count. A row is marked **failing** wh
 
 ## What the Warden is *not*
 
-- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery record. The [Kanban](/kanban/), the work itself, is a section of Swarm; a Swarm row links to the task its agent is on.
+- **[Swarm](/subagent-watcher/)** shows what agents are doing: turn status, subagents, todos, running commands. It also has the fleet toolbar that broadcasts to or stops several agents. The Warden shows who is registered for messages, who is on the network, and the delivery record. The [Kanban](/kanban/), the work itself, is a pane of its own; a Swarm row links to the task its agent is on.
 - The **host popover** in the status bar shows this instance's own details and the LAN discovery toggle. The Warden doesn't repeat the host details.
 
 ## Status today
@@ -177,7 +177,7 @@ Hover over a row for every outcome and its count. A row is marked **failing** wh
 
 ## See also
 
-- [Kanban](/kanban/) — the Swarm's Kanban section, which used to be Warden's
+- [Kanban](/kanban/) — which used to be Warden's first section
 - [The Vault](/vault/) — the Vault section
 - [Swarm](/subagent-watcher/) — live agent activity, the Supervisor and the fleet toolbar
 - [Sections](/widgets/#sections) — pinning a Warden section to the widget bar

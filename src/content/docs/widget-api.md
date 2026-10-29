@@ -123,7 +123,7 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 A section is the pane's own section key with one of its section ids, and for Warden's Vault, `vault:section` beside it. The sectioned panes and their ids are listed under [Sections](/widgets/#sections).
 
 ```js
-await am.panes.open("swarm", { "swarm:section": "kanban" });
+await am.panes.open("swarm", { "swarm:section": "broadcast" });
 await am.panes.open("warden", { "warden:section": "vault", "vault:section": "cards" });
 await am.panes.open("settings", { "settings:section": "widgets" }, "tab");
 await am.panes.open("browser", { url: "https://example.com" });
