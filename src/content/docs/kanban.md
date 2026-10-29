@@ -1,6 +1,6 @@
 ---
 title: Kanban
-description: "The Swarm's Kanban section: one card per task in the shared task queue, filed and updated by agents, moved by AgentMux, and finished by you."
+description: "The Kanban pane: one card per task in the shared task queue, filed and updated by agents, moved by AgentMux, and finished by you."
 ---
 
 :::caution[Alpha Software]
@@ -9,20 +9,19 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The **Kanban** shows what work there is and where it stands. Each card is one **task** in the shared task queue that agents use through their `Tasks` tool. Agents file tasks, take them, report progress, ask you questions and hand them in. AgentMux moves a card on what it already knows: an agent waiting on a question, failing or closing. You start tasks on agents, answer, accept or send work back.
 
-The Kanban is the third section of the [Swarm](/subagent-watcher/) pane (`frontend/app/view/warden-kanban/kanban-section.tsx`), after Supervisor and Broadcast. The other two sections show what each agent is doing right now; the Kanban shows the work. It used to be Warden's first section; Warden no longer has it.
+The Kanban is a pane of its own (`frontend/app/view/kanban/`). The [Swarm](/subagent-watcher/) shows what each agent is doing right now; the Kanban shows the work. It used to be the Warden's first section, and then the Swarm's third; neither has it now.
 
 ## Where to find it
 
-- **Kanban** in the widget bar's **more** menu (right-click it there and choose **Pin to bar** to keep it on the bar). It is the Swarm opened on its Kanban section (`defwidget@kanban` in `crates/srv/src/config/widgets.json`, with `"section": "kanban"`).
+- **Kanban** in the widget bar's **more** menu (right-click it there and choose **Pin to bar** to keep it on the bar). It is a pane of its own, one per tab (`defwidget@kanban` in `crates/srv/src/config/widgets.json`, view `kanban`).
 - **Open Kanban** in the command palette (`open:kanban`).
-- The Swarm's **Kanban** tab.
-- On a [Swarm](/subagent-watcher/) row, the chip of the task an agent is on switches that Swarm to its Kanban section with the task shown.
+- On a [Swarm](/subagent-watcher/) row, the chip of the task an agent is on opens the Kanban with that task shown.
 
-The button and the command switch the Swarm already in the tab to its Kanban section, or open a Swarm if the tab has none. A widget-bar button, pin or widget call from before the move that still names Warden's Kanban opens the Swarm's too. A Warden saved on its old Kanban section opens on Host.
+The button and the command bring back the Kanban already open in the tab, or open one if the tab has none; Shift-click the button to open another. A widget-bar button, pin, saved pane or widget call from before the move that names the Warden's or the Swarm's Kanban section opens the Kanban pane too.
 
-While the Kanban is shown, the pane's title counts the tasks that need you: **Swarm · Kanban · 2 need you**. The section is mounted the first time you show it and stays mounted; it loads tasks only while it is shown, and a Swarm on another section doesn't fetch or follow them. The Swarm's agent list is not unmounted by the switch: it is hidden while the Kanban shows, so your selection and scroll position are there when you go back.
+The pane's title counts the tasks that need you: **Kanban · 2 need you**. The board loads tasks only while the pane is shown.
 
-Clicking an agent on a card, in the drawer or in the strip of agents switches to the Supervisor section and selects that agent's row. The account strip (agents out of quota or signed out) sits above all the Swarm's sections, so it is not repeated inside the Kanban.
+Clicking an agent on a card, in the drawer or in the strip of agents shows that agent's own pane.
 
 ## Columns
 
@@ -100,4 +99,4 @@ A sandboxed [widget](/widgets/) with the `tasks:read` permission can list the Ka
 
 - [Warden](/warden/): where the Kanban used to be
 - [Swarm](/subagent-watcher/): what each agent is doing right now
-- [Widgets from widgets.json: sections](/widgets/#sections): how the Kanban button opens a section, and how to pin any section yourself
+- [Widgets from widgets.json](/widgets/): how the Kanban button is declared, and how to add your own

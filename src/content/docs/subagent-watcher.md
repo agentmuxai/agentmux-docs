@@ -32,9 +32,9 @@ With no agent panes open, Swarm shows **No active agent panes** and "Start an ag
 
 ## Sections
 
-The Swarm has three sections, as tabs along the top (icons only when the pane is narrow): **Supervisor** (the default), **Broadcast** and **Kanban**. The selected one is saved with the pane, under `swarm:section` in its settings, and the pane's title follows it: **Swarm · Broadcast**.
+The Swarm has two sections, as tabs along the top (icons only when the pane is narrow): **Supervisor** (the default) and **Broadcast**. The selected one is saved with the pane, under `swarm:section` in its settings, and the pane's title follows it: **Swarm · Broadcast**.
 
-Supervisor and Broadcast show the same list of agents, with one selection: a box you tick in one is still ticked in the other. Supervisor shows full rows and Broadcast compact ones. The **Kanban** section replaces the list with the [Kanban](/kanban/) board, the work agents are doing (it moved here from the Warden). The list is only hidden while the Kanban shows, so coming back finds your selection and scroll position where you left them. The Kanban loads when you first show it and only fetches while it is shown. Clicking an agent on one of its cards switches to the Supervisor section and selects that agent's row, and the chip of the task an agent is on, on its row, switches to the Kanban with that task open.
+Supervisor and Broadcast show the same list of agents, with one selection: a box you tick in one is still ticked in the other. Supervisor shows full rows and Broadcast compact ones. The work agents are doing is on the [Kanban](/kanban/), a pane of its own: the chip of the task an agent is on, on its row, opens the Kanban with that task shown.
 
 ## Layout
 
@@ -345,7 +345,7 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## See also
 
 - [Pane Types](/pane-types/) — every pane type, including the agent pane's dispatch cards
-- [Kanban](/kanban/) — the Swarm's third section, the work agents are doing
+- [Kanban](/kanban/) — the work agents are doing
 - [Audit](/audit/) and [History](/history/) — the delivery feed, and agents' kept conversations
 - [Warden](/warden/) — where the Warden's sections went
 - [Interagent Communication](/internals/interagent-comms/) — how jekts are delivered

@@ -125,7 +125,7 @@ Some panes have a row of sections: Swarm, Connectors, Memory, Settings and the V
 }
 ```
 
-An entry from before the Warden pane was split up, with `"view": "warden"` and a `"section"` of `vault`, `history` or `audit`, still opens that pane (see [Warden](/warden/)). AgentMux turns `section` into the pane's section key (`"vault:section": "cards"`), and you can also write that key in `blockdef.meta` yourself.
+An entry from before the Warden pane was split up, with `"view": "warden"` and a `"section"` of `vault`, `history` or `audit`, still opens that pane (see [Warden](/warden/)). The Kanban is a pane of its own, with no section: an entry from before the move, with `"view": "warden"` or `"view": "swarm"` and `"section": "kanban"`, still opens it. AgentMux turns `section` into the pane's section key (`"vault:section": "cards"`), and you can also write that key in `blockdef.meta` yourself.
 
 Clicking an entry for a management pane (Vault, History, Audit, Connectors, Memory, Settings, Swarm and the others listed under [Opening a widget again](/pane-types/#opening-a-widget-again)) brings back the pane you already have, on the entry's section, instead of opening a second one; Shift-click opens another. An entry says so with `"singleton": true` (it opens a new pane each time without it, or with `false`). Your own entry for one of these views keeps the behaviour of the view when it leaves `singleton` out.
 
