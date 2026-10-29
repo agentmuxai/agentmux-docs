@@ -148,7 +148,7 @@ These mappings are in `crates/srv/src/identity/resolver/provider.rs` (`provider_
 These are independent layers:
 
 - **The ambient directories** are account-wide, provider-scoped and always global. Every instance on the machine shares them.
-- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later with **Bind**. They override the ambient directory for that agent, and the five account-backed providers require one. Like the ambient directories, they are shared by every channel unless [`AGENTMUX_ISOLATED_AUTH=1`](#isolated-auth-by-channel) isolates one.
+- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later from the account chip in the agent's composer strip. They override the ambient directory for that agent, and the five account-backed providers require one. Like the ambient directories, they are shared by every channel unless [`AGENTMUX_ISOLATED_AUTH=1`](#isolated-auth-by-channel) isolates one.
 
 Two agents in the same instance can use different accounts for the same provider.
 

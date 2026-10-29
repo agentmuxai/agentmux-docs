@@ -58,7 +58,7 @@ The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for
 
 ## At launch
 
-The new-agent panel under a harness card in the agent picker has no account field. A new agent takes its provider's first account from [Connectors → Accounts](/connectors/#accounts). If the provider needs an account and none is bound, the pane shows **Not signed in** or **No account linked** when the agent starts, with **Log in** and **Bind** actions (see [First Agent Setup → Sign in](/first-agent/#sign-in)).
+The new-agent panel under a harness card in the agent picker has no account field. A new agent takes its provider's first account from [Connectors → Accounts](/connectors/#accounts). If the provider needs an account and none is bound, the pane shows **Not signed in** or **No account linked** when the agent starts, with **Log in** and **Use account…** actions (see [First Agent Setup → Sign in](/first-agent/#sign-in)).
 
 Each time the agent's process is spawned, AgentMux:
 
