@@ -568,10 +568,19 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 
 ### Creating Panes
 
-- **Top bar widgets** — Click the icons on the right side of the top bar
+- **Top bar widgets** — Click the icons on the right side of the top bar. A click on a management widget such as Swarm or Memory brings back the one you already have (see [Opening a widget again](#opening-a-widget-again))
 - **A pane's +** — Adds a tab to that pane (see [Pane tabs](#pane-tabs))
-- **Split** — Split a pane from its right-click menu or with the keys below (see [Splitting](#splitting))
+- **Split** — Split a pane from its right-click menu or with the keys below; the new pane is a [Shortcuts pane](#the-shortcuts-pane) where you choose what it becomes (see [Splitting](#splitting))
 - **Keyboard** — `⌘N` / `` Ctrl+Shift+` `` for a new pane, `⇧⌘A` / `Ctrl+Shift+A` for an agent pane
+
+### Opening a widget again
+
+A widget is either a **singleton**, where one pane is the point, or a widget you can have many of:
+
+- **Brought back:** Swarm, Memory, Connectors, Settings, Warden, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, switches to its tab, and gives it focus. If there is none, it opens one.
+- **Opened each time:** Agent, Terminal, Browser, Editor, Hangar and System info. Every click opens a new pane.
+
+**Shift-click** an entry (or press Shift with it in the palette) to open a new pane even for a singleton. The command palette also lists a **New …** entry for each singleton (**New Tower (Task Manager)**, **New Kanban**, **New Help**, and so on). An installed [widget](/widgets/) says which it is with `singleton` on its pane (see [The package](/widget-api/#the-package)); the default is a new pane each time.
 
 ### Pane tabs
 
@@ -607,9 +616,17 @@ for the full design rationale.
 | Split Below | `⇧⌘D` | `Ctrl+Alt+Shift+D` |
 | Split in Direction | `Ctrl+Shift+S` + Arrow | Same |
 
-A pane's right-click menu has the same four splits. A new split opens beside the pane it came from:
+A pane's right-click menu has the same splits, and the command palette has **Split Right** and **Split Down**. **Every split opens a Shortcuts pane** beside the pane it came from, for you to choose what the new pane should be. It does not copy the pane you split.
 
-![The Swarm pane (bottom right) split in two with Split Right: the new pane opens beside it](../../assets/screenshots/chrome/chrome-split-layout.png)
+### The Shortcuts pane
+
+A Shortcuts pane is a grid of tiles, one for every pane type and every installed widget you've approved: Agent, Terminal, Editor, Hangar, Browser, Swarm, Memory, Connectors and the rest, with their icons and labels. The ones you opened most recently come first (from anywhere: a tile here, the widget bar, the **+** menu, a shortcut); the rest keep the order of the widget bar. Widgets you hid in **Settings → Widgets** are left out.
+
+- **Choose a tile** with a click, or with the arrow keys and **Enter**. The Shortcuts pane is replaced in place by that pane, at the same size and position. The **Agent** tile opens the agent picker.
+- **Type to filter** the tiles by name. A group, such as Messengers, opens its own tiles; **Escape** goes back out.
+- **Escape** clears what you typed first. With an empty box, **Escape** closes a Shortcuts pane that a split opened (it has nothing in it to lose, so nothing is asked, and its neighbour takes the space).
+- **A Terminal or Hangar tile starts where you were.** It opens in the same folder and on the same connection as the pane you split.
+- **It has no entry of its own.** It isn't in the widget bar, **+** or the palette; a split opens it. A Shortcuts pane left open comes back after a restart like any pane. If you set `app:defaultnewblock` to `shortcuts` ([Settings](/settings/)), a new pane opens as one too.
 
 ### The pane menu
 
