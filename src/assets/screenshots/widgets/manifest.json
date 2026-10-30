@@ -135,8 +135,8 @@
     },
     {
       "id": "widget-files",
-      "title": "Hangar",
-      "description": "The Hangar widget, in a pane of its own.",
+      "title": "Files",
+      "description": "The Files widget, in a pane of its own.",
       "size": "medium",
       "viewport": {
         "width": 1280,
@@ -151,8 +151,8 @@
     },
     {
       "id": "widget-files",
-      "title": "Hangar",
-      "description": "The Hangar widget, in a pane of its own.",
+      "title": "Files",
+      "description": "The Files widget, in a pane of its own.",
       "size": "small",
       "viewport": {
         "width": 800,

@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Hangar**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Warden, Vault, Toolchain and Tower are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes), and Media is now part of the [Editor](#media)). Vault is a section of the Warden pane, not a pane of its own; see [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts:190-193`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Warden, Vault, Toolchain and Tower are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes), and Media is now part of the [Editor](#media)). Vault is a section of the Warden pane, not a pane of its own; see [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts:190-193`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -35,7 +35,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
-| **Hangar** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Hangar](#hangar) |
+| **Files** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Files](#files) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). Formerly Knowledge |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
 | **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, plus a fleet toolbar — see [Swarm](/subagent-watcher/) |
@@ -292,18 +292,18 @@ The Editor keeps its open files, text or [media](#media), as **document tabs** i
 
 A new pane made this way is an Editor on the same connection, holding just that tab. A tab that is being saved stays where it is.
 
-## Hangar
+## Files
 
-Hangar is a file browser (`frontend/app/view/files/files-view.tsx`). It opens on your home folder, or on the folder in its `files:path` setting, and on a remote host's files when you choose **Browse files** in [Connectors → Remotes](/connectors/#remotes). The pane title is the folder's name.
+The Files pane is a file browser (`frontend/app/view/files/files-view.tsx`). It opens on your home folder, or on the folder in its `files:path` setting, and on a remote host's files when you choose **Browse files** in [Connectors → Remotes](/connectors/#remotes). The pane title is the folder's name.
 
-![The Hangar widget when it first opens, showing a demo project](../../assets/screenshots/widgets/widget-files-small.png)
+![The Files widget when it first opens, showing a demo project](../../assets/screenshots/widgets/widget-files-small.png)
 
 - **Toolbar:** Back, Forward and Up; a breadcrumb you can click, or double-click (or press `Ctrl+L`) to type a path; **Filter** (`Ctrl+F` or `/`); new folder; show or hide hidden files; refresh; and toggles for the Places sidebar, a list or thumbnail view, and the preview panel.
 - **Places** (left): your home and common folders, drives, WSL distributions, remote hosts (with **Manage remotes…**), and your agents' folders, each in the agent's colour.
 - **The list:** sortable Name, Modified, Size and Kind columns, or a thumbnail grid. In a git repository each row shows its status letter, and a dot marks a file an agent changed (its tooltip names the agent).
 - **Preview** (`Space`, or the eye button): images, highlighted code, rendered Markdown, and cards for folders, audio, video and other files.
 - **Right-click a row** to open it (here, in a new tab, in the Editor, or with the default app), open a terminal there, reveal it in your file manager, **Mention in agent** or **Attach to** an agent, cut, copy or copy its path, rename (`F2`), move it to the Trash or delete it permanently. Right-click empty space for a new folder or file, paste, and the folder's own actions.
-- **Copying and moving:** cut, copy and paste, or drag files. When a name already exists, Hangar asks: **Keep both**, **Skip**, **Replace** or stop, with **Do this for every conflict**.
+- **Copying and moving:** cut, copy and paste, or drag files. When a name already exists, the Files pane asks: **Keep both**, **Skip**, **Replace** or stop, with **Do this for every conflict**.
 - **Status line:** the item count and selection size, the repository's branch and changes, and messages such as an undo for the last change.
 
 Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
@@ -578,7 +578,7 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 A widget is either a **singleton**, where one pane is the point, or a widget you can have many of:
 
 - **Brought back:** Swarm, Memory, Connectors, Settings, Warden, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, switches to its tab, and gives it focus. If there is none, it opens one.
-- **Opened each time:** Agent, Terminal, Browser, Editor, Hangar and System info. Every click opens a new pane.
+- **Opened each time:** Agent, Terminal, Browser, Editor, Files and System info. Every click opens a new pane.
 
 **Shift-click** an entry (or press Shift with it in the palette) to open a new pane even for a singleton. The command palette also lists a **New …** entry for each singleton (**New Tower (Task Manager)**, **New Kanban**, **New Help**, and so on). An installed [widget](/widgets/) says which it is with `singleton` on its pane (see [The package](/widget-api/#the-package)); the default is a new pane each time.
 
@@ -620,12 +620,12 @@ A pane's right-click menu has the same splits, and the command palette has **Spl
 
 ### The Shortcuts pane
 
-A Shortcuts pane is a grid of tiles, one for every pane type and every installed widget you've approved: Agent, Terminal, Editor, Hangar, Browser, Swarm, Memory, Connectors and the rest, with their icons and labels. The ones you opened most recently come first (from anywhere: a tile here, the widget bar, the **+** menu, a shortcut); the rest keep the order of the widget bar. Widgets you hid in **Settings → Widgets** are left out.
+A Shortcuts pane is a grid of tiles, one for every pane type and every installed widget you've approved: Agent, Terminal, Editor, Files, Browser, Swarm, Memory, Connectors and the rest, with their icons and labels. The ones you opened most recently come first (from anywhere: a tile here, the widget bar, the **+** menu, a shortcut); the rest keep the order of the widget bar. Widgets you hid in **Settings → Widgets** are left out.
 
 - **Choose a tile** with a click, or with the arrow keys and **Enter**. The Shortcuts pane is replaced in place by that pane, at the same size and position. The **Agent** tile opens the agent picker.
 - **Type to filter** the tiles by name. A group, such as Messengers, opens its own tiles; **Escape** goes back out.
 - **Escape** clears what you typed first. With an empty box, **Escape** closes a Shortcuts pane that a split opened (it has nothing in it to lose, so nothing is asked, and its neighbour takes the space).
-- **A Terminal or Hangar tile starts where you were.** It opens in the same folder and on the same connection as the pane you split.
+- **A Terminal or Files tile starts where you were.** It opens in the same folder and on the same connection as the pane you split.
 - **It has no entry of its own.** It isn't in the widget bar, **+** or the palette; a split opens it. A Shortcuts pane left open comes back after a restart like any pane. If you set `app:defaultnewblock` to `shortcuts` ([Settings](/settings/)), a new pane opens as one too.
 
 ### The pane menu
@@ -677,7 +677,7 @@ Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) s
 | **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/first-agent/#native-and-container-agents), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
 | **Terminal** | Copies the files into the terminal's working directory. It doesn't type their paths. |
 | **Editor** | Opens each file in its own tab, in the viewer that fits it: text, image, PDF, audio and video, or a card with the file's details (see [Media](#media)). An Editor on an SSH connection takes no drops: the files are on this computer, not on that host (`frontend/app/view/editor/editor-model.ts:519-538`). |
-| **Hangar** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Hangar pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx:175-207`). Files with no path on disk can't be copied there. |
+| **Files** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Files pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx:175-207`). Files with no path on disk can't be copied there. |
 
 Copies land directly in the pane's working folder (`crates/common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
 

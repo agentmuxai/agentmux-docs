@@ -21,11 +21,11 @@ A live tree of your agent panes with their subagents, todos and background comma
 
 ![The Swarm widget when it first opens](../../assets/screenshots/widgets/widget-swarm-small.png)
 
-## Hangar
+## Files
 
 A file browser with places, drives, sorting, previews and drag and drop. Here it shows a small demo project.
 
-![The Hangar widget when it first opens](../../assets/screenshots/widgets/widget-files-small.png)
+![The Files widget when it first opens](../../assets/screenshots/widgets/widget-files-small.png)
 
 ## Terminal
 
