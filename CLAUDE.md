@@ -87,10 +87,11 @@ a missing CSS file → site unstyled. So HTML never goes through `s3 sync`:
 changed (it used to re-upload all of them, about 15k PUTs, every time). It also deletes
 the keys `dist/` no longer has, HTML included, after the new HTML is up: stale rustdoc and
 typedoc pages used to pile up in the bucket and stay reachable. It refuses to delete when
-`dist/` looks broken (too few files, or no `index.html` / `user-guide/index.html`). Its
+`dist/` looks broken (too few files, no `index.html` / `user-guide/index.html`, or the plan would delete more than half the bucket,
+which means a section such as the Rust reference is missing; `--allow-large-delete` overrides). Its
 unit tests run in the PR check (`node --test scripts/publish-html.test.mjs`).
 
-**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
+**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths that the publish step's delete pass just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
 
 `build:full` requires:
 - `cargo` on `PATH` (rustup minimal toolchain is enough).

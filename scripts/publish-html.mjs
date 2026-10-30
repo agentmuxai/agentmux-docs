@@ -24,6 +24,8 @@
  * Usage: node scripts/publish-html.mjs --bucket <name> [--dist dist] [--dry-run]
  *   --dry-run  list the bucket (read-only) and print what a deploy would
  *              upload and delete; change nothing.
+ *   --allow-large-delete  delete even when that is more than half the bucket
+ *              (a deploy refuses by default: it means dist/ is missing a section).
  * The bucket may also come from DOCS_BUCKET.
  */
 
@@ -93,6 +95,14 @@ export function plan(local, remote) {
       deletesOther: deletes.length - deletedHtml,
     },
   };
+}
+
+/** Why a plan must not run, or null: deleting over half the bucket means dist/ lost a section. */
+export function deleteProblem(summary) {
+  if (summary.deletes > summary.remoteObjects / 2) {
+    return `it would delete ${summary.deletes} of ${summary.remoteObjects} objects (more than half); dist/ is probably missing a section`;
+  }
+  return null;
 }
 
 /** Why dist/ must not be trusted to decide deletions, or null when it can be. */
@@ -185,15 +195,16 @@ async function listBucket(bucket) {
   return remote;
 }
 
-async function upload(bucket, root, keys) {
+/** `run` runs one aws CLI call and resolves to its stdout; tests pass a fake. */
+export async function upload(bucket, root, keys, run = aws) {
   let done = 0;
   await pool(keys, UPLOAD_CONCURRENCY, async (key) => {
-    await aws(['s3', 'cp', join(root, ...key.split('/')), `s3://${bucket}/${key}`, '--only-show-errors']);
+    await run(['s3', 'cp', join(root, ...key.split('/')), `s3://${bucket}/${key}`, '--only-show-errors']);
     if (++done % 100 === 0) console.log(`[publish-html] uploaded ${done}/${keys.length}`);
   });
 }
 
-async function remove(bucket, keys) {
+export async function remove(bucket, keys, run = aws) {
   const batches = [];
   for (let i = 0; i < keys.length; i += DELETE_BATCH) batches.push(keys.slice(i, i + DELETE_BATCH));
   const dir = await mkdtemp(join(tmpdir(), 'publish-html-'));
@@ -202,7 +213,7 @@ async function remove(bucket, keys) {
     await pool(batches.map((keysInBatch, n) => ({ keysInBatch, n })), DELETE_CONCURRENCY, async ({ keysInBatch, n }) => {
       const file = join(dir, `batch-${n}.json`);
       await writeFile(file, JSON.stringify({ Objects: keysInBatch.map((Key) => ({ Key })), Quiet: true }));
-      const out = await aws(['s3api', 'delete-objects', '--bucket', bucket, '--delete', `file://${file}`, '--output', 'json']);
+      const out = await run(['s3api', 'delete-objects', '--bucket', bucket, '--delete', `file://${file}`, '--output', 'json']);
       const errors = out.trim() ? (JSON.parse(out).Errors ?? []) : [];
       if (errors.length) {
         throw new Error(`${errors.length} deletes failed in one batch, first: ${errors[0].Code} ${errors[0].Message}`);
@@ -221,17 +232,24 @@ async function main() {
     return at === -1 ? undefined : args[at + 1];
   };
   const dryRun = args.includes('--dry-run');
+  const allowLargeDelete = args.includes('--allow-large-delete');
   const bucket = flag('--bucket') ?? process.env.DOCS_BUCKET;
   const root = flag('--dist') ?? 'dist';
   if (!bucket) throw new Error('no bucket: pass --bucket or set DOCS_BUCKET');
 
   const local = await hashTree(root);
   const problem = distProblem(local);
-  if (problem) throw new Error(`refusing to publish: ${problem}`);
+  if (problem && !dryRun) throw new Error(`refusing to publish: ${problem}`);
+  if (problem) console.log(`[publish-html] a real run would refuse: ${problem}`);
 
   const remote = await listBucket(bucket);
   const { uploads, deletes, summary } = plan(local, remote);
   console.log(`[publish-html] ${dryRun ? 'dry run: ' : ''}${JSON.stringify(summary)}`);
+  const tooMany = deleteProblem(summary);
+  if (tooMany && !allowLargeDelete) {
+    if (!dryRun) throw new Error(`refusing to publish: ${tooMany} (--allow-large-delete overrides)`);
+    console.log(`[publish-html] a real run would refuse: ${tooMany}`);
+  }
   if (dryRun) {
     console.log(`[publish-html] sample uploads: ${uploads.slice(0, 5).join(', ') || '(none)'}`);
     console.log(`[publish-html] sample deletes: ${deletes.slice(0, 5).join(', ') || '(none)'}`);

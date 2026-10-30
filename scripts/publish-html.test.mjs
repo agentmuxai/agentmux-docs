@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { distProblem, etagMd5, plan } from './publish-html.mjs';
+import { readFileSync } from 'node:fs';
+import { deleteProblem, distProblem, etagMd5, plan, remove, upload } from './publish-html.mjs';
 
 const md5 = (text) => createHash('md5').update(text).digest('hex');
 
@@ -62,4 +63,40 @@ test('distProblem refuses a dist/ that is too small or lacks the core pages', ()
   assert.equal(distProblem(full), null);
   assert.match(distProblem(new Map([['index.html', 'x'], ['user-guide/index.html', 'x']])), /only 2 files/);
   assert.match(distProblem(new Map()), /only 0 files/);
+});
+
+test('deleteProblem refuses a plan that deletes over half the bucket', () => {
+  assert.equal(deleteProblem({ deletes: 40, remoteObjects: 100 }), null);
+  assert.equal(deleteProblem({ deletes: 50, remoteObjects: 100 }), null);
+  assert.match(deleteProblem({ deletes: 51, remoteObjects: 100 }), /more than half/);
+  assert.equal(deleteProblem({ deletes: 0, remoteObjects: 0 }), null);
+});
+
+test('upload sends each key to its own object', async () => {
+  const calls = [];
+  await upload('b', 'dist', ['index.html', 'a/b/page.html'], async (args) => calls.push(args));
+  assert.equal(calls.length, 2);
+  const targets = calls.map((args) => new URL(args[3]).pathname).sort();
+  assert.deepEqual(targets, ['/a/b/page.html', '/index.html']);
+  assert.ok(calls.every((args) => new URL(args[3]).hostname === 'b'));
+  for (const args of calls) assert.deepEqual(args.slice(0, 2), ['s3', 'cp']);
+});
+
+test('remove deletes in batches of at most 1000 keys and fails on a per-key error', async () => {
+  const keys = Array.from({ length: 2300 }, (_, i) => `old/${i}.html`);
+  const sizes = [];
+  const seen = new Set();
+  await remove('b', keys, async (args) => {
+    const body = JSON.parse(readFileSync(args[args.indexOf('--delete') + 1].replace('file://', ''), 'utf8'));
+    sizes.push(body.Objects.length);
+    for (const { Key } of body.Objects) seen.add(Key);
+    return '';
+  });
+  assert.deepEqual(sizes.sort((a, b) => b - a), [1000, 1000, 300]);
+  assert.equal(seen.size, 2300);
+
+  await assert.rejects(
+    remove('b', ['x.html'], async () => JSON.stringify({ Errors: [{ Key: 'x.html', Code: 'AccessDenied', Message: 'no' }] })),
+    /AccessDenied/,
+  );
 });
