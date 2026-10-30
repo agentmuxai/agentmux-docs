@@ -89,7 +89,7 @@ An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can
 
 ## Remotes
 
-The hosts AgentMux can open terminals, file browsers and agents on: the SSH hosts in your `~/.ssh/config`, hosts you've connected to, and on Windows your WSL distributions (`frontend/app/view/remotes/remotes-view.tsx`). Besides the Connectors tab, it's reached from **Manage remotes…** in a pane's connection picker and in Files's Places sidebar, and from **Remote settings…** in the header menu of a pane running on a remote, which opens it with that host's row expanded.
+The hosts AgentMux can open terminals, file browsers and agents on: the SSH hosts in your `~/.ssh/config`, hosts you've connected to, and on Windows your WSL distributions (`frontend/app/view/remotes/remotes-view.tsx`). Besides the Connectors tab, it's reached from **Manage remotes…** in a pane's connection picker and in the Places sidebar of the Files pane, and from **Remote settings…** in the header menu of a pane running on a remote, which opens it with that host's row expanded.
 
 ![Connectors → Remotes when it first opens](../../assets/screenshots/widgets/widget-remotes-small.png)
 
