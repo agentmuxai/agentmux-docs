@@ -13,7 +13,7 @@ An AgentMux window has three parts: the **top bar**, the **panes** of the curren
 
 ## Top bar
 
-![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Hangar, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 From left to right:
 
