@@ -73,20 +73,19 @@ jobs:
           aws-region: us-east-1
 
       - name: Sync non-HTML assets to S3
+        # No --delete here: nothing is removed until the new HTML is live (the
+        # next step), so a page never points at an asset that is already gone.
         run: |
           aws s3 sync dist/ s3://${{ env.DOCS_BUCKET }}/ \
-            --delete \
             --exclude "*.html"
 
-      - name: Force-upload HTML files
-        # normalize-mtimes sets all dist mtimes to a fixed epoch so s3 sync
-        # skips HTML when only the CSS hash inside it changes. Always force-
-        # upload HTML to prevent stale pages referencing deleted CSS bundles.
-        run: |
-          aws s3 cp dist/ s3://${{ env.DOCS_BUCKET }}/ \
-            --recursive \
-            --exclude "*" \
-            --include "*.html"
+      - name: Upload changed HTML, then delete what is no longer built
+        # normalize-mtimes sets all dist mtimes to a fixed epoch, so s3 sync
+        # skips an HTML page when only the CSS hash inside it changes. The
+        # script compares content (MD5 against the object's ETag) instead, so
+        # a deploy uploads only the pages that changed, then deletes every key
+        # (HTML included) that dist/ no longer has.
+        run: node scripts/publish-html.mjs --bucket "${{ env.DOCS_BUCKET }}"
 
       - name: Invalidate CloudFront
         run: |

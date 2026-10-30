@@ -33,6 +33,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Deploy script tests
+        run: node --test scripts/publish-html.test.mjs
+
       - name: Build
         # The TypeScript reference (typedoc) plus the site, not build:full:
         # the Rust reference needs a Rust toolchain and stays a deploy.yml
