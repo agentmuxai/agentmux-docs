@@ -15,7 +15,7 @@ The pane has three places where things appear:
 2. **The strip above the message box**: things waiting for you, running work, and status. See [Around the transcript](#around-the-transcript).
 3. **Overlays**: a hover preview and the `/btw` side question.
 
-AgentMux shows **everything** the agent does today. There is no switch that hides thinking, tool calls or messages between agents; see [What you can hide today](#what-you-can-hide-today).
+By default AgentMux shows **everything** the agent does. The pane's **View** chooses how much of the routine work you see: see [Choosing what the pane shows](#choosing-what-the-pane-shows).
 
 ## How rows open and close
 
@@ -190,14 +190,47 @@ The agent pane reads each provider's output with a provider-specific reader in t
 
 Tool names a provider uses that AgentMux doesn't recognise are shown as **Other** with the provider's own name.
 
-## What you can hide today
+## Choosing what the pane shows
+
+A pane shows its whole conversation by default (the **Full** view). Its **View** hides the routine work that has finished, so a long run reads as the replies and what needs you. It changes only what the list shows: the rows, the pane's [History](/pane-types/#agent-history), search and copy stay complete (`frontend/app/view/agent/virtualization/verbosity.ts`).
+
+Open the **View** popover from the view chip in the strip above the message box (beside **Shell**), from the pane's right-click menu, or with **Agent view…** in the command palette. It offers:
+
+| Preset | What it does |
+|---|---|
+| **Full** | Everything, as the rows describe above. The default |
+| **Standard** | Thinking, tool calls, jekts and messages between agents collapse to one line each; AgentMux notes stay; setup rows are hidden |
+| **Replies** | Replies, your own messages and anything that needs you. Thinking, tool calls, jekts, messages between agents, AgentMux notes and setup rows are hidden |
+
+Below the presets is one control per kind of row, so you can set a view of your own (the chip then reads **Custom**):
+
+| Switch | Governs | Values |
+|---|---|---|
+| **Thinking** | The agent's reasoning, and a reply that was cancelled | Auto, Expanded, Collapsed, Hidden |
+| **Tool calls** | Commands and their previews, reads, edits, searches, MCP calls and shells | Auto, Expanded, Collapsed, Hidden |
+| **Jekts and agent messages** | Messages from other agents and jekts | Auto, Expanded, Collapsed, Hidden |
+| **AgentMux notes** | The `[AgentMux]` notes (see [System notes](#system-notes)) | Shown, Hidden |
+| **Context and setup** | Startup context, compaction progress, memory the agent was reminded of, context delivered, and informational CLI notices | Auto, Hidden |
+
+**Auto** is the row's own behaviour from [How rows open and close](#how-rows-open-and-close). A run of hidden rows becomes one line, for example "12 tool calls, 3 thoughts hidden", with ", 2 failed" when some failed; click it to open the rows, and click again to close them. A row you pinned open stays visible in any view.
+
+A switch only hides routine work that finished, or plumbing. Never hidden, whatever the view:
+
+- a tool call that waits for your approval or your answer;
+- a jekt that is sensitive, or whose sender nothing proved;
+- a note that something was lost (a message that expired undelivered);
+- errors, warnings, the outcome of a session, compaction having finished, and the date and history markers.
+
+**Alt+V** cycles the focused pane through Full, Standard and Replies (a Custom view goes to Full first), and **Alt+Shift+V** gives the pane back to the default. The palette has **Agent view: Full**, **Standard**, **Replies** and **Follow default**.
+
+A pane follows the default view until you change it, and then keeps its own, shown as **· this pane** on the chip. **Follow default** puts it back. **Make this the default** in the popover stores the view in the `agent:view` setting ([Agent settings](/settings/#agent-settings)): every pane that follows the default then shows it. Changing a switch also clears the folds and holds you made by hand on the rows it governs (pins are kept), so the switch does what it says.
+
+## What else you can do with a row
 
 - **Fold a row** you are done with: click its header or press `e`. This is per row and is remembered for the pane.
-- **Pin a row open** to keep it out of the way of the auto-close.
+- **Pin a row open** to keep it out of the way of the auto-close, and visible in any view.
 - **Hover** for a preview of a row's time and size.
 - **Agent History** opens the recorded conversation in a separate tab ([Agent History](/pane-types/#agent-history)).
-
-There is no setting or switch that hides thinking, shows only replies, or hides tool calls, jekts or notes. The pane's internal filter record (`showThinking`, `showSuccessfulTools`, and so on) exists but nothing reads it.
 
 ## See also
 

@@ -159,6 +159,8 @@ In the message box at the bottom of an Agent pane (`frontend/app/view/agent/comp
 | `Tab` or `→` | Accept the suggested next prompt (empty box only) |
 | `↑` / `↓`, `Tab`, `Enter`, `Esc` | In the `/` command list: move, fill in, run, dismiss |
 
+In an Agent pane, **Alt+V** cycles what the pane shows (Full, Standard, Replies) and **Alt+Shift+V** gives the pane back to the default view. The keys are matched by key position, so they work on macOS, where Option+V types a character. See [Choosing what the pane shows](/agent-pane-messages/#choosing-what-the-pane-shows).
+
 Typing `/quit` (or `/exit`) and sending it ends the agent gracefully, showing what it stops, and closes its tab. Other tabs in the same pane keep running. The conversation is kept, so reopening the agent resumes it (`frontend/app/view/agent/commands/global/quit.ts`).
 
 `Ctrl + F`, on every platform, opens or closes the search bar for the conversation. In the search bar, `Enter` goes to the next match, `Shift + Enter` to the previous one, and `Esc` closes it.
