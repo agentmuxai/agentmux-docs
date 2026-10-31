@@ -307,6 +307,8 @@ The Files pane is a file browser (`frontend/app/view/files/files-view.tsx`). It 
 - **Copying and moving:** cut, copy and paste, or drag files. When a name already exists, the Files pane asks: **Keep both**, **Skip**, **Replace** or stop, with **Do this for every conflict**.
 - **Status line:** the item count and selection size, the repository's branch and changes, and messages such as an undo for the last change.
 
+A Files pane that a [container agent](/container-agents/) opens on a folder of its workspace shows only that folder. It lists, navigates and previews files and opens them in the Editor, and changes nothing; a link in the folder that leads out of it is refused.
+
 Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
 
 ## Media
@@ -345,6 +347,8 @@ The agent pane is the first-class resident unit of AgentMux. Each agent gets a s
 - **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
 ![An agent pane mid-turn: a subagent's result, a file read, the reply streaming in, and the working timer](../../assets/screenshots/agent/agent-working.png)
+
+An agent that runs in a Docker container shows a **CONTAINER** tag by the model selector; see [Container agents](/container-agents/).
 
 Agent panes are configured through [Bundles](/bundles/), picked when the agent is created; the Stash's **Bundles** tab changes them for an existing agent (see Subsections below).
 
@@ -675,7 +679,7 @@ Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) s
 
 | Pane | What a drop does |
 |---|---|
-| **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/first-agent/#native-and-container-agents), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
+| **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/container-agents/), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
 | **Terminal** | Copies the files into the terminal's working directory. It doesn't type their paths. |
 | **Editor** | Opens each file in its own tab, in the viewer that fits it: text, image, PDF, audio and video, or a card with the file's details (see [Media](#media)). An Editor on an SSH connection takes no drops: the files are on this computer, not on that host (`frontend/app/view/editor/editor-model.ts:518-537`). |
 | **Files** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Files pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx:162-194`). Files with no path on disk can't be copied there. |

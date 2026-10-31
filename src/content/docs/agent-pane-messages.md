@@ -121,7 +121,9 @@ A CLI notice is AgentMux talking about the agent's program, not the agent. One r
 | Compaction failed | "Claude Code couldn't compact the conversation", with the reason |
 | AgentMux tools (MCP health) | "AgentMux tools didn't connect. Reconnecting (try 1 of 2)…", then "…are connected again" or "…couldn't repair them" |
 | Container start | "Downloading the agent image… 42%", "Starting the container…", "Container ready (12 s)" or "Couldn't start the container" |
-| Container image | "This container uses the 0.59.41 image" with an **Update container** button, then "Container removed. The next message starts it from the 0.60.2 image" |
+| Container image | "This container uses the 0.59.41 image" with an **Update container** button, then "Container removed. The next message starts it from the 0.60.2 image"; or, when AgentMux moved an idle agent's container itself, "Updated the container to the 0.60.2 image" |
+| Container limits | "Container limits: Memory limit 16 GB, 6 CPUs, set by Agent1" when a limit changes, "Docker did not take the new container limits", or "A process in this container was stopped: it ran out of its 8 GB memory limit" with a **Raise the limit** button. See [CPU and memory limits](/container-agents/#cpu-and-memory-limits) |
+| Container caches | "This agent's build caches hold 24.0 GB" with a **Container settings** button, once the agent's caches reach 20 GiB. See [Build caches](/container-agents/#build-caches) |
 | Agent ready | "Ready: send a message to start", when a container agent is up and nothing is on its way |
 
 ## Around the transcript

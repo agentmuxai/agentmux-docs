@@ -33,7 +33,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="connectors"></a>**Connectors** — The app-wide pane for what agents connect to outside AgentMux, in three sections: **Accounts** (sign-ins to providers and services such as Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack and AgentMux Cloud, bound to agents), **MCP servers** and **Remotes** (SSH hosts and WSL distributions). Opened from the widget bar or the command palette. Together with [Memory](#memory) it replaced the Armory. See [Connectors](/connectors/).
 
-<a id="container-agent"></a>**container agent** — An agent that runs inside a Docker container that sees only its own workspace, chosen as **Container (runs in Docker)** when you create the agent. The other choice is a [Native agent](#native-agent). See [Native and container agents](/first-agent/#native-and-container-agents).
+<a id="container-agent"></a>**container agent** — An agent that runs inside a Docker container that sees only its own workspace, chosen as **Container (runs in Docker)** when you create the agent. The other choice is a [Native agent](#native-agent). See [Container agents](/container-agents/).
 
 <a id="context-delivery"></a>**context delivery** — Content an agent is given without you typing it: its memory at a new session, after `/clear` or after a compaction, and Claude Code's conversation summary after a compaction. The agent pane shows each one as a card that lists what was given, one row per item; a summary card also shows a one-line excerpt, and opens to the full text. See [Memory](/memory/) and [Conversation overhead](/internals/conversation-overhead/).
 

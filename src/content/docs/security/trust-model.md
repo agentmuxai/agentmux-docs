@@ -49,14 +49,15 @@ Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` an
 
 ### Container agents
 
-A [container agent](/first-agent/#host-and-container-agents)'s `AGENTMUX_AUTH_KEY` is not the instance auth key but a per-pane token starting `amxc_` (`crates/srv/src/backend/container_credential.rs`). The server accepts it only on the routes an agent needs to work as an agent, and refuses everything else with 403:
+A [container agent](/container-agents/)'s `AGENTMUX_AUTH_KEY` is not the instance auth key but a per-pane token starting `amxc_` (`crates/srv/src/backend/container_credential.rs`). The rule is that a container agent can do what a Native agent can, except directly change or run things on your computer. The server accepts the token on every route except those that:
 
-- messaging: sending a jekt, looking up agents, listing agent names, discovery;
-- the work queue;
-- its own identity, and its own Personal Memory; Global Memory is read-only;
-- ending its own session (`Stop` `self`, `Stop` `pane`) and the shutdown status those use.
+- run commands on your computer: shells, PTYs, remote connections and the askpass helper;
+- drive your desktop;
+- read your files outside the container's mounts for the app's windows (a container agent reads its own `/workspace`, and shows a file by opening it in the editor, which opens a read-only snapshot);
+- write Global Memory (it can read it), or upgrade AgentMux;
+- belong to the app itself or to other AgentMux instances: approvals, the cloud relay, the WebSocket and RPC service, and the routes between instances.
 
-Shells and PTYs on the host, host files, the editor, attachments by path, opening panes or agents, UI automation, cron, `/ws` and the RPC service are all refused. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
+A refused route answers with 403, the reason and what to do instead (`crates/srv/src/backend/container_routes.rs` lists them). A route added later is open to container agents unless it is added to that list. Messaging, the work queue, Kanban, the Vault, Browser and UI tools, widgets, dev servers, and opening or creating agents all work. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
 
 ## Per-agent identity
 
@@ -173,3 +174,4 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `crates/cef/src/dev_authfile.rs` — `authkey.dev` permissions
 - `crates/srv/src/backend/account_login_guard.rs` (`strip_account_login`) — the MuxBus login kept out of agent environments
 - `crates/srv/src/backend/container_credential.rs` (`container_route_allowed`) — the container agent token
+- `crates/srv/src/backend/container_routes.rs` — the routes a container agent can't call

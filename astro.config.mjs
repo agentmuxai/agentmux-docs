@@ -89,6 +89,7 @@ export default defineConfig({
 								{ label: 'Workspaces', slug: 'workspaces' },
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'What the agent pane shows', slug: 'agent-pane-messages' },
+								{ label: 'Container agents', slug: 'container-agents' },
 								{ label: 'Widget gallery', slug: 'widget-gallery' },
 								{ label: 'Your own widgets', slug: 'widgets' },
 								{ label: 'Build a widget', slug: 'build-a-widget' },
