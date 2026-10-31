@@ -16,7 +16,6 @@ The Sysinfo pane displays live system metrics for the machine AgentMux runs on, 
 - Click **more** at the end of the widget bar and choose **Sysinfo** (chart icon). Right-click it there and choose **Pin to bar** to keep it on the bar.
 - Command palette (`Ctrl+P`): **Open System Info**.
 - Click **+** on any pane's tab strip and pick **Sysinfo**.
-- Right-click a pane header → **Replace With...** → **Sysinfo** replaces that pane.
 - Press `Ctrl+Shift+K` to turn the focused pane into the widget launcher, then choose **Sysinfo**.
 
 The starter layout on first launch, and in each new window, includes a Sysinfo pane above Swarm, next to the Agent pane.
