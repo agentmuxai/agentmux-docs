@@ -653,7 +653,7 @@ A Shortcuts pane is a grid of tiles, one for every pane type and every installed
 
 Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane that takes typed input), **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**. To split up or left, use the keys under [Splitting](#splitting).
 
-![A pane's right-click menu: Copy, Split Up, Split Down, Split Left, Split Right, Magnify Pane, Close Pane, Inspect Element and Pane Color](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
+![A pane's right-click menu](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
 
 **Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
 
