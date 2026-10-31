@@ -54,7 +54,7 @@ The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux
    ];
    ```
 
-   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `crates/srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s four routes. The TXT field keeps the name `auth_key` for compatibility with older peers.
+   `instance_id` is the server's `--instance` argument, which the launcher sets to `v<version>`. `auth_key` carries the **`lan_key`** (`Config::lan_key` in `crates/srv/src/config.rs`), a per-launch key accepted only by `lan_or_full_auth_middleware`'s routes (jekt delivery with and without files, agent lookup, agent names, the one-live-instance check, the fleet feed and the remote-operation door). The TXT field keeps the name `auth_key` for compatibility with older peers.
 3. Registers the service, then browses `SERVICE_TYPE`.
 4. Spawns three background tasks, each holding its own `Arc<LanDiscovery>`:
    - the **event loop** (`spawn_blocking`), which handles `ServiceResolved` events and skips resolutions of this instance itself (same port and one of its own addresses);
@@ -137,7 +137,13 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 ## HTTP endpoint
 
-`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the four `lan_key` routes. The network pill in the status bar reads the same list.
+`GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the `lan_key` routes. The network pill in the status bar reads the same list.
+
+## Remote operations and fleet sync
+
+The same peer list carries typed requests between machines (`crates/srv/src/server/remote_ops/`). The door is `POST /agentmux/remote/op`, one of the `lan_key` routes, but it is opened by a signature, not by the key (`receive.rs`). It checks, in order, that the call came with the `lan_key`, that `network:remote_ops` is not `false`, the shape and size of the request, that the audience is this instance's `lan_key`, that the timestamp is within 60 seconds and after this srv started, that the requesting agent's key is pinned here, the signature, and the certificate that names the hosting install. Then it looks the operation up (`lookup` in `mod.rs`): `app.version`, `app.health`, `app.activity`, `app.logs.tail`, `app.history_reclaim`, `agents.start`, `agents.open`, `agents.stop`, `agents.set_seat`, `agents.env_get`, `agents.env_set`, `tasks.enqueue`, `tasks.list`, `identity.accounts`, `identity.switch`, `identity.signin.start`, `.notice` and `.finish`, and `memory.global.put`, `.remove` and `.list`. A change, and a read of personal data, also needs an install this instance trusts (`lan_continuity::instance_trust`). An operation runs for at most 25 seconds, and the nonce store answers a repeated request with the first answer. The sending half is `send.rs` (`POST /api/v1/agent/remote/op`): it resolves the `host` to one LAN peer, signs with the asking agent's LAN key and writes `remote.request` to the audit trail.
+
+`crates/srv/src/server/remote_ops/fleet_sync.rs` keeps fleet-scoped Global Memory in step over the same transport. Every 15 seconds it fingerprints what this machine holds for the fleet and, for each proven peer whose last sync saw another fingerprint (or that has just appeared, which is how a machine that was offline catches up), lists what the peer holds and sends what it lacks or has older. A peer is synced again after 10 minutes in any case, and a peer that failed is left alone for 5 minutes. The merge rule (newest `updated_at` wins, a larger content hash on a tie, a removal being a write) is in `crates/srv/src/backend/fleet_memory.rs`.
 
 ## Boot semantics
 
@@ -158,6 +164,7 @@ Turning LAN discovery on exposes the full server API on the network, broadcasts 
 - `crates/srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
 - `crates/srv/src/server/mod.rs` — `/api/lan-instances` and the `lan_key` routes
 - `crates/srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
+- `crates/srv/src/server/remote_ops/` — typed requests between machines; `crates/srv/src/backend/fleet_memory.rs` — the fleet Global Memory merge
 - `crates/srv/src/config.rs` — `lan_key`
 - `frontend/app/statusbar/HostPopover.tsx` — toggle and peer list
 - `frontend/app/store/global.ts` — `lanInstancesAtom`, `lanDiscoveryErrorAtom`, event handlers

@@ -7,7 +7,7 @@ description: How AgentMux instances on the same network discover each other via 
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the status bar's network pill (the host popover), with its hostname and version, and agents can send messages directly to agents on those machines. Click a peer's row for its address and port, operating system and channel, its agents and when it was last seen: see [the network pill](/warden/#the-network-pill).
+AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the status bar's network pill (the host popover), with its hostname and version, and agents can send messages directly to agents on those machines and, once the machines trust each other, [do things there](#remote-operations). Click a peer's row for its address and port, operating system and channel, its agents and when it was last seen: see [the network pill](/warden/#the-network-pill).
 
 LAN discovery is **off by default** and can be switched on and off live from the status bar.
 
@@ -21,17 +21,20 @@ While LAN discovery is on, your instance:
 - **browses for peers** and keeps the peer list up to date in the network pill;
 - **asks every peer for its agent names** every 30 seconds, so you can see which agents live where;
 - **checks that an agent isn't already running on another computer**: before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent. If one is, the agent isn't started here, or, if both are running it, the later start is stopped. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent);
-- **forwards messages**: a `Message` `send` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud.
+- **forwards messages**: a `Message` `send` to an agent that isn't on this machine is tried on the LAN peers before MuxBus Cloud;
+- **carries out [remote operations](#remote-operations)**: signed, typed requests from agents on peers it has proven;
+- **keeps fleet-scoped [Global Memory](/memory/#global-memory-across-machines) in step** with the peers it has proven: within about 15 seconds of a change, and again for a peer that comes back after being offline.
 
-What it does not do: enforce any policy on peers, or share workspace state between instances.
+What it does not do: enforce any policy on peers, or share workspace state between instances beyond that.
 
 ## What the `lan_key` allows
 
-The `lan_key` is sent in cleartext, so **treat it as known to every device on the network.** It is a separate key from the instance's full auth key and opens only four routes. With it, anyone on the LAN can:
+The `lan_key` is sent in cleartext, so **treat it as known to every device on the network.** It is a separate key from the instance's full auth key and opens only a short list of routes. With it, anyone on the LAN can:
 
-- send a message into any of your agents' conversations. The message is marked `DELIVERY=lan` and, unless it carries a valid signature, `TRUST=network-claimed`; it is not flagged sensitive unless its content triggers that;
-- list your agents' names, with each agent's one-line summary of what it's working on unless you turn that off (see [Swarm summary lines](#swarm-summary-lines)), and look up one agent's registration details and public signing key;
-- ask whether a given agent is running on this machine, and since when.
+- send a message into any of your agents' conversations, with files if the message carries a valid signature. The message is marked `DELIVERY=lan` and, unless it carries a valid signature, `TRUST=network-claimed`; it is not flagged sensitive unless its content triggers that;
+- list your agents' names, with each agent's state and, unless you turn that off (see [Swarm summary lines](#swarm-summary-lines)), its one-line summary of what it's working on, and look up one agent's registration details and public signing key;
+- ask whether a given agent is running on this machine, and since when;
+- send a request for a [remote operation](#remote-operations). The key only gets the request to the door: the operation runs only if the request is signed by an agent key this machine has pinned. A request with just the `lan_key` is refused.
 
 Answers from peers aren't authenticated either: a device that pretends to be a peer and claims to be running one of your agents can keep that agent from starting here, or stop it.
 
@@ -72,6 +75,24 @@ Your devices see this computer go offline at once when you quit AgentMux, sign o
 The [Swarm](/subagent-watcher/) shows agents running in this computer's other AgentMux instances (other channels) and on LAN peers, each with its status. By default it also shows each agent's one-line summary of what it is working on. Your signed-in devices see the same lines, over the cloud and on the local network.
 
 The summaries go out through the same route as your agents' names, so anyone on your network who has the `lan_key` can read them. To share status only, turn off **Settings ▸ Paired devices ▸ Share what my agents are working on** (`swarm:sharesummaries`).
+
+## Remote operations
+
+With LAN discovery on, an agent can do on another machine what it can do on its own, without a person's agent over there having to read a message and act. It names the machine in a `host` argument of the [`Agents`, `Tasks`, `Identity` and `App` tools](/internals/muxapi/#acting-on-another-machine): start, open or stop an agent there, set its seat or environment, file a task on its board or read it, list or switch its accounts and start a sign-in, read its version, health and logs, and ask it to reclaim its pane-history store.
+
+Your AgentMux signs each request with the asking agent's own key, and the other machine carries the operation out itself. The other machine decides, with its own rules:
+
+- **Who may ask.** Only an agent whose key this machine has pinned, on a request meant for this machine and sent within the last minute. The broadcast `lan_key` never authorizes one.
+- **How far it is trusted.** Reading a version or the health report needs only the pinned key. Anything that changes something, or reads personal data (account emails, the task board, Global Memory entries, logs), also needs this machine to trust the install the agent runs on: it has pinned a key from that install for an agent, or both machines are signed in to the same MuxBus Cloud account and the account lists that install. A peer this machine has only seen for the first time is refused with a message that says to approve it.
+- **The same rules as a local call.** What is sensitive on this machine goes through its super agent and its countdown, shown on this machine's screen. An agent stopped from afar gets the same keep-running window its user would get for a local stop.
+- **A record on both machines.** Each machine writes an audit row under `agent@machine`, never the operator: `remote.request` on the asking machine, `remote.<operation>` here, with how the request was proven and how it ended. Requests refused before their signature checked out leave one row a minute per address. They show in the [Audit](/audit/) pane.
+- **An off switch.** Set `"network:remote_ops": false` in `settings.json` and this machine refuses every typed request. It is on by default, and applies without a restart.
+
+Remote operations travel over the LAN only: a peer has to be found by LAN discovery, on both machines.
+
+## Messages between machines
+
+A message sent to an agent on another machine on your network arrives as `DELIVERY=lan`, marked `TRUST=lan-verified` when the sender's signature checks out. A verified message can carry files (up to 50 MB each and 100 MB in all). If the agent it is for is signed out or out of quota, a verified message is held on the receiving machine for up to 24 hours, with its files, and delivered with its original trust when the agent can work, as a message from that machine's own agents would be; see [Durable hold](/internals/jekt-protocol/#44-durable-hold). A message that isn't verified is refused instead, with a reason the sender can read. The answer to `Message` `send` says which happened.
 
 ## Windows Firewall
 

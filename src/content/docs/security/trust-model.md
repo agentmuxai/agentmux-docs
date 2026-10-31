@@ -25,7 +25,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 | CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker, adopting or releasing an agent's earlier memory folders (confirmed in a host window), and the host's registration for UI automation. |
 | Agent → server, UI automation | The agent's own signing key (`AGENTMUX_JEKT_KEY`) proves which pane the agent may automate. |
 | Other instances on this machine | Each other's auth keys, read from registry files under `~/.agentmux/` (mode `0600` on Unix). |
-| LAN peers | The `lan_key`, which opens four routes: three for messaging and one that says whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. See [Network exposure](/security/network-exposure/). |
+| LAN peers | The `lan_key`, which opens a short list of routes: messaging, agent names and states, and whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. A request for a [remote operation](#remote-operations-on-another-machine) must also be signed by a pinned agent key. See [Network exposure](/security/network-exposure/). |
 
 ## The auth key is in every pane
 
@@ -83,6 +83,19 @@ An agent (its UID) runs in at most one place at a time, so two copies don't driv
 - **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay (`/agents/lease`, keyed by agent name) before it pulls the agent's messages, and renews it every 20 seconds. While another instance holds the lease, the relay answers this instance's pulls with 409 and the local copy is stopped (`crates/srv/src/muxbus/wan_lease.rs`).
 
 This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
+
+## Remote operations on another machine
+
+With LAN discovery on, an agent can ask another machine to do something there, for example to start an agent, list its accounts or file a task (the `host` argument of the MuxAPI tools; see [Remote operations](/lan-discovery/#remote-operations)). The receiving machine decides:
+
+- **The signature is the authority, not the `lan_key`.** The asking machine signs the request with the agent's own key. The receiver checks that the key is the one it pinned for that agent's name, that the request names this machine, is less than a minute old, was not seen before and was signed after this AgentMux started. Anything else is refused and not downgraded to a prompt.
+- **Proof grows with the stakes.** A read of the version or health goes on the pinned key. A change, or a read of personal data (account emails, the task board, Global Memory entries, logs), also needs a certificate from an install this machine trusts: one it has pinned a key from, or one the signed-in MuxBus Cloud account lists as live and not revoked. A peer only seen for the first time is refused.
+- **Same rules as a local call.** The operation runs the code a local call runs, as that agent, never as the operator. What is sensitive on the receiving machine still goes through its super agent and the countdown with a veto.
+- **Nothing the request says is run or shown as an instruction.** Its text is never given to one of the receiver's agents; the banner and the audit row are built from the structured fields.
+- **Recorded on both machines** under `agent@machine`, in the [Audit](/audit/) pane. Requests refused before they are proven leave one row a minute for each address.
+- **An off switch per machine:** `"network:remote_ops": false` in `settings.json` refuses every one.
+
+A device on the LAN can't use this without an agent key this machine has pinned. A machine that pinned a key for an attacker's device on first sight (mDNS discovery is unauthenticated) has trusted that key for reads; changes still need a certificate from an install it trusts.
 
 ## Who each action is recorded as
 

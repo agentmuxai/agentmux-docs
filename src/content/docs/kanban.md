@@ -25,13 +25,22 @@ Clicking an agent on a card, in the drawer or in the strip of agents shows that 
 
 ## Columns
 
+The columns follow a piece of work from request to shipped.
+
 | Column | What is in it |
 |---|---|
 | **Backlog** | Tasks waiting to be started, grouped by the agent each is for, then **Anyone**. Within a group, in the order the agent will take them. A task on hold is marked **on hold**; one that starts after another unfinished task shows **after #12** |
+| **In Research** | A spec or research task being worked on |
+| **Spec'd** | A task whose spec or research was accepted and that nobody has started. Same groups as the Backlog |
 | **In progress** | Tasks an agent holds and is working on or idle with. Agents working without a task show here too, as dashed **untracked** cards |
-| **Needs you** | Tasks you have to act on. The card's first line says why: `asks: …` (the agent asked you a question), `question waiting in its pane`, `agent errored`, `agent stopped`, `agent closed`, or `failed after 3 attempts` |
-| **Review** | Tasks handed in and waiting for you. The header shows how many and how long the oldest has waited |
-| **Done** | Tasks finished or cancelled in the last 7 days, newest first |
+| **Needs you** | Tasks you have to act on. The card's first line says why: `asks: …` (the agent asked you a question), `question waiting in its pane`, `waiting on you`, `agent errored`, `agent stopped`, `agent closed`, `needs sign-in`, `out of quota until …`, or `failed after 3 attempts` |
+| **Review** | Work in review: a task whose pull request is open, or one handed in for your OK. The header shows how many and how long the oldest has waited, split by spec and build |
+| **Merged** | Finished work: the pull request merged, or the agent completed the task. Cancelled tasks sit under it in a folded **Cancelled** group |
+| **Released** | Merged work that a release has shipped |
+
+A task's kind decides some of this. A task of kind `spec` or `research` is a document for you to approve: it sits in **In Research** while it is worked on, goes to **Review**, and when you accept it the tasks that start after it move from **Backlog** to **Spec'd**. A build card shows a **spec #12** pill with the spec's state, and a spec card a **build #14** pill with what accepting it unlocks (its **Accept spec** button says so). Any other task goes from Backlog to In progress, Review, Merged and Released. An agent files a feature as that pair in one call with `Tasks` `enqueue` and `first: "spec"` or `"research"`.
+
+AgentMux notices when a task's pull request merges, and, from the repository's public releases, when a release ships it. Finished tasks stay on the board for 7 days after they last changed; a release counts as a change. A private repository's tasks reach **Merged** when their agent completes them and never reach **Released**. In a narrow pane the board is one list, **Needs you** first, with **Merged** and **Released** folded.
 
 **Collapse a column** with the control in its header: it folds to a thin strip with the column's name written down it and its count, held tasks and the age of its oldest task. Click the strip to open the column again. The choice is kept with the pane, so it survives a restart.
 
@@ -52,6 +61,20 @@ Agents use the `Tasks` MCP tool. Its actions:
 | `release` | Hands it back with a reason; it uses one of the task's attempts |
 | `hold`, `unhold` | Puts a waiting task on hold, so no one takes it, or takes it off hold, with an optional reason. Any agent can do either, on any waiting task, including one you put on hold; the task's history names who did it. An agent working on a task can put it back on hold to wait on something outside its control, without using up an attempt |
 | `heartbeat`, `list` | Extend the lease (not needed while the agent's session is alive); read the queue |
+| `accept`, `send_back` | Decide a task in Review. Any agent may, not only you; the history records the agent that did it and says so when it was the agent's own work. You can reopen an acceptance for a week |
+| `edit`, `move`, `start`, `answer`, `cancel`, `reopen`, `retry`, `take_back`, `reassign` | The Kanban's other moves, made by an agent: change a task, put it on another agent's backlog or on hold, start it on a running agent, answer a question, cancel it, send an accepted task back to Review, try a failed one again, take a task back from its holder, or give it to someone else. Each is recorded as the agent, never as you, and a message one sends arrives as the agent's |
+
+With `host`, `enqueue` files a task on the Kanban of another machine on your network, and `list` reads that machine's board. See [Acting on another machine](/internals/muxapi/#acting-on-another-machine). The task appears on that machine's board like any other, filed by the agent.
+
+A task for an agent at its usage limit or signed out is filed as usual; the answer says the agent can't work now and that the task waits.
+
+### Screenshots and recordings
+
+A task that changes the UI carries media: agents attach screenshots or a short recording with `Tasks` `update` or `submit` (`files`, with a caption each), and the card shows thumbnails. Handing such a task in for your review is refused without media, unless the agent says why it has none (`no_media_reason`). The drawer's **Media** section lists every file, newest attempt first, and has a **Changes the UI** box you can tick or clear.
+
+### Quota mode
+
+When plan limits run short, an agent (or you, through an agent) can set the fleet's quota mode to `tight` with `Message` `quota_mode`. One bulletin tells every agent. While it is tight, an unnamed `Tasks` `claim` takes only tasks aimed at the claimer and tasks at or above a minimum priority (1 by default); claiming a task by its number still works. `off` lifts it. The settings behind it are `fleet:quota_mode` and `fleet:quota_min_priority` in `settings.json`.
 
 ### Requests filed for later
 
@@ -63,13 +86,13 @@ With reminders on, an agent that goes idle for 2 minutes with tasks waiting for 
 
 Click a card to open its drawer: the prompt, what you asked, the checklist, the result, what it starts after, and the **History** of every move, with who made it and when. Its buttons depend on the column:
 
-- **Backlog:** pick an agent and **Start** (the prompt goes to that agent as your message; one written by an agent is quoted with its author named), **Hold** or **Release hold**, **Give to anyone**.
+- **Backlog** and **Spec'd:** pick an agent and **Start** (the prompt goes to that agent as your message; one written by an agent is quoted with its author named), **Hold** or **Release hold**, **Give to anyone**.
 - **Needs you:** type **Your answer** and **Answer**.
-- **Review:** **Accept**, or **Send back** with what to fix. Only you can accept: an agent can hand work in but can't accept its own.
+- **Review:** **Accept** (**Accept spec** on a spec), or **Send back** with what to fix. A task an agent accepted shows **Reopen**, which puts it back in Review.
 - **Failed:** **Try again**.
-- **Open** the agent that holds it (the button names it), and **Cancel task** from any column but Done.
+- **Open** the agent that holds it (the button names it), and **Cancel task** from any column but Merged and Released. Cancelling a spec also cancels the builds waiting on it, or puts them on hold if you clear the box.
 
-You can also drag a Backlog card onto another agent's backlog group to give it to that agent, or onto an agent's chip in the strip above the board to start it there.
+You can also drag a Backlog or Spec'd card onto another agent's backlog group to give it to that agent, or onto an agent's chip in the strip above the board to start it there.
 
 The toolbar above the board has a search box (title, `#number`, agent or repository), a repository filter when there is more than one, **Lanes** (one row of columns per repository, those with unfinished work first), **Untracked** (show or hide agents working without a task), **New task** and **Refresh**. Once an agent has a [seat](/first-agent/#seats), the toolbar also has a **Reports to** filter, and hovering over a card's owner shows the owner's seat. **New task** takes a title, an optional prompt, the tasks it starts after (`#12`), who it is for, and **On hold**.
 
@@ -88,6 +111,8 @@ These are `settings.json` keys. `kanban:reminders` also has a switch in the Kanb
 | `kanban:reminders` | off | `true` turns on the idle reminder for every agent |
 | `kanban:closeonmerge` | on | `false` stops accepting a reviewed task when its PR merges |
 | `kanban:reviewlimit` | none | A whole number: past it, the Review header turns amber. Nothing is blocked |
+| `fleet:quota_mode` | `off` | `tight` limits what an unnamed `Tasks` `claim` takes (see [Quota mode](#quota-mode)); `Message` `quota_mode` sets it |
+| `fleet:quota_min_priority` | `1` | While quota mode is `tight`, the lowest priority an unnamed claim takes |
 
 An agent pane whose block meta has `kanban:continue: false` gets no reminder, and finishing a task doesn't name its next one.
 

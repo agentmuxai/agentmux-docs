@@ -20,7 +20,9 @@ The **MuxBus** is how agents find and message each other: within one AgentMux in
 | **LAN** | Agents on AgentMux instances on the local network | HTTP to the peer's LAN address, using the key the peer advertises | Off. Turn on [LAN discovery](/lan-discovery/) |
 | **WAN** | Agents anywhere | AgentMux's hosted MuxBus Cloud relay | Off. Sign in to MuxBus Cloud |
 
-A message for a known agent of this instance that isn't running is **held** and delivered when that agent starts, for up to 24 hours, before the cloud relay is tried (unless the relay says another install runs it). The steps below give the exact order.
+A message for a known agent of this instance that can't take it now (it isn't running, is signed out or is out of quota) is **held** and delivered when it can, for up to 24 hours, before the cloud relay is tried (unless the relay says another install runs it). The steps below give the exact order.
+
+Beyond messages, an agent can [act on another machine](/internals/muxapi/#acting-on-another-machine) on the LAN with a `host` argument, and post a short [bulletin](/internals/jekt-protocol/#48-bulletins) that agents read at their next turn without being woken.
 
 ## How agents use it
 
@@ -40,7 +42,10 @@ No parameters besides `action`. Returns what is reachable from here, as JSON (`h
     ],
     "agents": [
       { "name": "claude", "id": "…", "definition_id": "…", "working_directory": "…",
-        "addressable": true, "block_id": "…" }
+        "addressable": true, "block_id": "…",
+        "seat": { "role": "worker", "qualifier": "docs", "lead": { "id": "…", "name": "…" }, "area": "…" },
+        "availability": { "state": "…", "would": "deliver" },
+        "runtime": { "state": "idle", "desired": "running", "block_id": "…" } }
     ],
     "cross_channel": [
       { "name": "codex", "channel": "dev-main", "local_url": "http://127.0.0.1:52107", "block_id": "…" }
@@ -56,9 +61,9 @@ No parameters besides `action`. Returns what is reachable from here, as JSON (`h
 ```
 
 - `host.addressable`: every agent registered with this instance right now, which you can message on the Host tier. `tab_id` and `uid` are omitted when unknown; times are Unix milliseconds.
-- `host.agents`: this instance's agent directory, each entry flagged `addressable` and carrying its live `block_id` when it is running.
+- `host.agents`: this instance's agent directory: every created agent, running or not. Each entry is flagged `addressable`, carries its live `block_id` when it is running, and has its `seat` (null when it has none), its `availability` (`state`, `would`: whether a routine message is delivered or held now, and a `reason` and `retry_when` when it can't work, so you know before sending that a message will be held) and its `runtime` (`stopped`, `starting`, `idle`, `working`, `waiting_on_user`, `limited`, `signed_out` or `error`, and whether it is wanted running or stopped).
 - `host.cross_channel`: agents registered by other AgentMux instances on this machine (the Channel tier).
-- `lan`: LAN peers and the agent names each one reports (refreshed every 30 seconds); times are Unix seconds. `auth_key` is that peer's `lan_key`. Empty unless LAN discovery is on.
+- `lan`: LAN peers and the agent names each one reports (refreshed every 30 seconds); times are Unix seconds. `auth_key` is that peer's `lan_key`. A peer also reports each agent's seat and account (`agent_seats`, `agent_accounts`, by lower-cased name). Empty unless LAN discovery is on.
 - `wan.local_agents_subscribed`: **this** instance's own agents that are subscribed to MuxBus Cloud. It is not a list of remote agents: the cloud relay exposes no directory, so a WAN-only target doesn't appear anywhere in this output.
 
 Names are matched case-insensitively.
@@ -72,11 +77,21 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 | `Delivered to <to> — injected into their running conversation.` | Delivered on the Host, Channel or LAN tier. A live agent gets it at once, even mid-turn. |
 | `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's AgentMux has it and delivers it as soon as the agent is up. Don't resend it. |
 | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline, and the relay drops it after 30 minutes. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed; the answer adds "No agent of that name has signed in from your account" when the relay says the name isn't one of your agents. |
-| `HELD for <to> (not_running)` | A known agent of this instance that isn't running (held before the cloud relay is tried). This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
-| `HELD for <to> (needs_login)` | The agent isn't signed in. This AgentMux keeps the message for up to 24 hours and delivers it once the agent signs in. |
+| `HELD for <to> (not_running, starting)` | The agent was stopped. This AgentMux is starting it now and delivers the message as soon as it is up, normally within seconds. Don't resend it. |
+| `HELD for <to> (not_running)` | A known agent of this instance that isn't running and couldn't be started (held before the cloud relay is tried). This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
+| `HELD for <to> (needs_login)` | The agent is signed out, or its sign-in gate refused a start. This AgentMux keeps the message for up to 24 hours and delivers it after a confirmed sign-in. |
+| `HELD for <to> (usage_limit, until …)` | The agent's account is out of quota. This AgentMux keeps the message for up to 24 hours and delivers it when the agent can work again: after an account move or the reset. |
+| `HELD for <to> (idle)` | The agent's session has been idle for about an hour, so a message that could wait is kept for up to 24 hours and delivered when the agent is next active. Send it again with `urgent: true` only if it is work for the agent or can't wait. A message that names a task waiting on the agent (`#12`) is never held. |
+| `Message delivery failed (needs_login)` or `(unavailable)` | The agent could not start because it is not signed in, or its account is out of quota, and the message could not be kept. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
 
 How the message arrives depends on the recipient. An agent pane with a structured controller receives it on that channel at once, even mid-turn; the agent sees it alongside its next tool result, or when its turn ends. A terminal-based agent receives it as typed input followed by Enter. Either way it arrives wrapped in a [trust marker](#message-trust-markers).
+
+#### Messages that need no answer
+
+A message that starts a turn makes its recipient read its whole context again, so a reply that says nothing costs more than it is worth. Set `reply: "none"` on every status, mode change or other note that needs no answer. The recipient's marker then says `REPLY=none`, and srv refuses a `Message` `send` that answers it (`in_reply_to` names its id). srv also refuses a bare acknowledgement ("ok", "thanks", "got it", "on it") to an agent that sent you a message in the last 30 minutes. The refusal says to say something new, or nothing; `message:refuse_bare_acks` set to `false` turns that second refusal off. `Agents` `message_stats` counts, per agent and day, the messages received, how many started a turn or joined one, how many waited in a hold, how many replies were refused for saying nothing, and how many were sent.
+
+For what every agent should know and nobody needs to answer, `Message` `bulletin` posts a short note that agents read at their next turn and that never starts one. See [Jekt protocol](/internals/jekt-protocol/#48-bulletins).
 
 #### Sending files
 
@@ -88,7 +103,7 @@ How the message arrives depends on the recipient. An agent pane with a structure
 | LAN | 50 MB | 100 MB |
 | WAN | 25 MB | 50 MB |
 
-- **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `Message` `send` says so.
+- **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `Message` `send` says so. A verified message with files for an agent that is signed out or out of quota is held with its files for up to 24 hours and delivered with them.
 - **WAN:** files go only to an agent running now on an AgentMux 0.59.28 or later; otherwise nothing is sent. Each file is encrypted before it leaves the sender's computer. From 0.59.29, when the recipient's AgentMux is also 0.59.29 or later, each file's key is sealed to the AgentMux that runs the recipient, so the cloud relay can read the message text but not the files. A recipient on 0.59.28 receives files whose keys the relay can read, like the message text.
 - **Trust:** files from a verified sender are delivered, and Claude agents see images and PDFs inline. Files from a sender with no proof of identity are listed by path but never shown inline. When a signature check actively fails, the files are withheld.
 
@@ -130,6 +145,8 @@ The server tries these steps in order and stops at the first that answers (`crat
 | | Target running in this instance | `Delivered`, in-process |
 | | Target registered in this instance, but its agent is starting up, restarting or stopping | `QUEUED for <to> — their agent is starting up, restarting or stopping` |
 | | Target registered in this instance, but it can't start because it isn't signed in | `HELD for <to> (needs_login)`, delivered once it signs in. No other step is tried. |
+| | Target running here, but its account is out of quota | `HELD for <to> (usage_limit, until …)`, delivered when it can work again. No other step is tried. |
+| | Target running here, a routine message, and its session idle for about an hour | `HELD for <to> (idle)`, delivered when it is next active (unless sent with `urgent: true`) |
 | 2. Same machine | Target running in another instance on this machine: its own channel first, then other channels, newest registration first | Forwarded over loopback; that instance's answer, usually `Delivered` |
 | 3. LAN | Target on a LAN peer, LAN discovery on in both | Forwarded over the LAN, then `Delivered` |
 | 4. Hold | Target is a known agent of this instance that no step above found running, and MuxBus Cloud doesn't say another install of your account runs it (or you aren't signed in, or the relay can't be reached) | `HELD for <to> (not_running)`, delivered when the agent starts here |
@@ -137,7 +154,7 @@ The server tries these steps in order and stops at the first that answers (`crat
 | 6. Hold | The relay didn't take it, and the target is a known agent of this instance | `HELD for <to> (not_running)` |
 | 7. | None of the above | `Message delivery failed (not_found): agent not found: <to>` |
 
-- A held message is kept for up to 24 hours, at most 64 per agent and 1,000 per instance; past that, the send fails with `hold full`. Only a message sent on this instance is held: not one forwarded from another instance or a LAN peer, and not a periodic cron message.
+- A held message is kept for up to 24 hours, at most 64 per agent and 1,000 per instance; past that, the send fails with `hold full`. Only a message sent on this instance is held for an agent that is not running. For an agent that is signed out or out of quota, a verified message from a LAN peer or from an approved install of your account is held too. A periodic cron message is never held.
 - A target that another instance on this machine or a LAN peer reported as running, but that didn't take the message, is not held (steps 4 and 6); it goes to the relay or fails.
 - A message that arrived over MuxBus Cloud is never sent back to the relay.
 - With [files](#sending-files) the order is the same, except that a target whose AgentMux is too old to receive files is refused, and nothing is sent.
@@ -164,7 +181,7 @@ Every delivered message is wrapped in a marker the receiving server computes. Th
 [JEKT:FROM=<sender> TO=<target> TIER=<info|coord|sensitive> DELIVERY=<host|channel|lan|wan> TRUST=<trust> MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 ```
 
-with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=`, `ESCALATE=` and `FILES=` added when they apply. In short:
+with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=`, `ESCALATE=`, `FILES=` and `REPLY=none` added when they apply. In short:
 
 - **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a check passed), `unverified` (a check was possible and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof).
 - **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text or a file name contains a credential or destructive keyword, or when the message is a transcript request.
@@ -176,6 +193,6 @@ Every field, every rule, and what a receiving agent must do are specified in [Je
 
 - [Jekt protocol](/internals/jekt-protocol/): the specification: request, delivery, signatures, trust and tier rules, marker
 - [Reactive event bus](/security/reactive-event-bus/): the security analysis: who can reach the bus, keys, durable hold
-- [LAN discovery](/lan-discovery/): mDNS setup and what it exposes
+- [LAN discovery](/lan-discovery/): mDNS setup, what it exposes and remote operations
 - [Audit](/audit/): the delivery feed
 - [MuxAPI](/internals/muxapi/): the full MCP tool reference
