@@ -24,7 +24,7 @@ The feed shows recent entries from the message handler's audit log, most recent 
 
 - every [jekt](/glossary/#jekt) delivery, from any tier, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
 - agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `Stop` `agents`, and `Stop` `pane` calls in which an agent closed a pane that holds no agent;
-- agents quitting themselves (`/quit`, `/exit` or `Stop` `self`), including a self-quit that has to wait for your 15-second override;
+- agents shut down or quitting themselves (`/shutdown`, `/quit`, `/exit`, **Shut down** in My Agents or a pane's menu, or `Stop` `self`), including a self-quit that has to wait for your 15-second override;
 - the 30-second override window that an agent's `Stop` `agents` or its `Stop` `pane` opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user);
 - [remote operations](/lan-discovery/#remote-operations): `remote.request` rows for the requests an agent here sent to another machine, and `remote.<operation>` rows for the typed requests another machine's agent sent here, under `agent@machine` with how the request was proven and how it ended (done, refused with its reason, or failed);
 - agent registrations: a row when an agent **registered**, **unregistered**, or was **swept** (its pane was gone), with the block it was, and the block or agent it replaced if registering displaced one.

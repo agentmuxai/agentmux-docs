@@ -36,7 +36,7 @@ Double-click the heading (or press `F2` on it) to rename the workspace.
 
 ### Closing a window keeps it
 
-Closing a window (its close button, ☰ → **Exit**, the palette's **Close Window**) doesn't remove it from the workspace. Its agents and shells stop, its tabs and panes are kept, and it stays in the list as a closed window. **Reopen** opens it where it was, with the same panes, and its agents resume their conversations. Closed windows are kept until you remove them.
+Closing a window (its close button, ☰ → **Exit**, the palette's **Close Window**) doesn't remove it from the workspace. Its agents keep running with no window, its shells and other panes stop, and it stays in the list as a closed window ("2 agents keep running without a window"). **Reopen** opens it where it was, with the same panes, and its agents are back in their tabs, mid-turn or idle. Closed windows are kept until you remove them. See [Closing and shutting down](/closing-and-shutting-down/).
 
 Two closes don't make a closed window:
 
@@ -51,7 +51,7 @@ To remove a closed window without reopening it, right-click its row and choose *
 
 ### When an agent is working
 
-Closing a window while an agent in it is mid-turn asks first: "Korp is working. Close this window?", "This stops 1 agent. The window stays in Default Workspace, and you can reopen it from the version panel." For the last window it says "AgentMux closes; the window stays in Default Workspace and opens again at the next launch." instead.
+By default, closing a window doesn't stop its agents, so it doesn't ask. It asks first only when the close would stop an agent that is mid-turn: closing the last window, or any close with `agents:always_available` turned off. The question is "Korp is working. Close this window?", "This stops 1 agent. The window stays in Default Workspace, and you can reopen it from the version panel." For the last window it says "AgentMux closes; the window stays in Default Workspace and opens again at the next launch." instead.
 
 Tick **Don't ask again**, or turn off **Warn before closing a window with working agents** in [Settings → Window & Panes](/settings/#window--panes) (`window:confirmcloseworking`), to close without asking. A close the operating system starts (`Alt+F4`, the taskbar) and the tray's **Quit** don't ask.
 
