@@ -247,6 +247,17 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `kanban:reminders` | boolean | `false` | Remind an idle agent of the tasks waiting in its Kanban backlog: after two minutes idle, one short note naming them, once each time it goes idle (Settings ▸ Advanced ▸ **Remind idle agents of their backlog**, or the Kanban's toolbar). |
 | `files:icons` | string | `"system"` | Which icons the Files pane shows: `"system"` is the picture the operating system shows for each type, `"app"` is AgentMux's own monochrome glyphs. Where the system has none, the glyph shows. |
 
+## Messaging and fleet settings
+
+Keys in `settings.json` for how agents message each other and share work. None has a control in the Settings pane.
+
+| Key | Type | Default | What it does |
+|---|---|---|---|
+| `message:refuse_bare_acks` | boolean | `true` | Refuse a bare acknowledgement ("got it", "thanks"; at most 24 characters) sent to an agent that wrote to the sender in the last 30 minutes, or as a reply to a message marked `reply: none`, so an acknowledgement doesn't start a turn on the other side. `false` turns the check off. |
+| `jekt:cold_hold_minutes` | integer | `55` | Minutes of quiet after which an agent's session counts as cold. A message that can wait is held for such an agent and delivered when it is next active, instead of starting a turn that pays for its whole context again. An urgent message, or one that names a task waiting on the agent, goes through. `0` turns the hold off. |
+| `fleet:quota_mode` | `"off"` or `"tight"` | `"off"` | While `"tight"`, a `Tasks` `claim` with no id takes only a task aimed at the claimer or one whose priority is at least `fleet:quota_min_priority`; a claim by id still works. Changing the mode posts a bulletin to the agents. Set it with `Message` action `quota_mode`. |
+| `fleet:quota_min_priority` | integer | `1` | The lowest priority an unnamed `Tasks` `claim` takes while `fleet:quota_mode` is `"tight"`. |
+
 ## Job Caps
 
 The spending caps every [job](/jobs/#caps) starts with. They have no control in Settings: set them in `settings.json`. A job can set lower figures of its own in its editor; only you raise one above these.

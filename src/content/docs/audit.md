@@ -15,7 +15,6 @@ The Audit widget (icon: `list-check`) is **not pinned** to the widget bar by def
 
 - Click **more** at the end of the widget bar and choose **Audit**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open Audit** in the command palette (`open:audit`).
-- Right-click a pane header → **Replace With...** → **Audit**.
 
 A tab holds one Audit: choosing it again brings back the one already open. Audit was for a while a section of the Warden pane: see [Warden](/warden/). An old Warden pane, or an old pin for the whole Warden, opens the Audit.
 

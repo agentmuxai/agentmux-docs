@@ -15,7 +15,6 @@ The History widget (icon: `clock-rotate-left`) is **not pinned** to the widget b
 
 - Click **more** at the end of the widget bar and choose **History**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open History** in the command palette (`open:history`).
-- Right-click a pane header → **Replace With...** → **History**.
 
 A tab holds one History: choosing it again brings back the one already open instead of opening a second. A segmented control along the top switches between the three views. The History pane was for a while a section of the Warden pane: see [Warden](/warden/).
 

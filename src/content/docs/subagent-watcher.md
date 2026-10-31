@@ -25,7 +25,6 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 - Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@swarm`).
 - Command palette (`Ctrl+P`): **Open Swarm**.
 - Click **+** on any pane's tab strip and pick **Swarm** to add it as a tab in that pane.
-- Right-click a pane header → **Replace With...** → **Swarm** replaces that pane with Swarm.
 - Click the agent count in the status bar (see below).
 - In an agent pane, click a subagent or workflow dispatch card (it reads **View in Swarm →**; `Enter` or `Space` also work). Each click opens a new Swarm pane (`frontend/app/view/agent/components/tool-renderers/DispatchCard.tsx`).
 
