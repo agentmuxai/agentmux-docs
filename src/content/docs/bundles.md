@@ -55,7 +55,7 @@ The list is kept per [channel](/glossary/#channel), like the agent's own bundle.
 
 A bundle keeps a sequence of **session zones** — one per agent-anchored conversation thread. When you re-launch the same bundle, the agent defaults to **continuing the most recent session** rather than starting fresh: previous turns load into the new pane, the agent's context carries over, and you pick up mid-thread.
 
-If you want a brand-new conversation instead, the Launch modal's **Recent sessions** tab lets you pick a specific older session to re-attach to (or click + to start a fresh zone). The default is "continue most recent" because that matches the workflow people actually have — close a pane, reopen, keep going.
+If you want a brand-new conversation instead, use **Start a new session** on the agent's card, which archives the current one. The default is "continue most recent" because that matches the workflow people actually have — close a pane, reopen, keep going.
 
 Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too.
 
