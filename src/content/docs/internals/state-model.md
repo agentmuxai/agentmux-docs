@@ -30,7 +30,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 ### 1.2 localTreeStateAtom
 
 ```typescript
-// layoutModel.ts:436-442
+// layoutModel.ts:437-443
 this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
     rootNode: undefined,
     focusedNodeId: undefined,
@@ -72,7 +72,7 @@ The getter `focusedNodeId` (`layoutModel.ts:739-741`) simply returns `this.focus
 The reactive memo `focusedNode` (`layoutModel.ts:532-542`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
-// layoutModel.ts:531-541
+// layoutModel.ts:532-542
 this.focusedNode = createMemo(() => {
     const ephemeralNode = this.ephemeralNode();
     const treeState = this.localTreeStateAtom();
@@ -117,7 +117,7 @@ User click / keyboard nav
 Every `NodeModel` carries an `isFocused` accessor (`frontend/layout/lib/types.ts:466`). It is created as a `createMemo` inside `model.runInModelRoot()` so it outlives component lifecycles:
 
 ```typescript
-// layoutNodeModels.ts:130-133
+// layoutNodeModels.ts:131-134
 isFocused: createMemo(() => {
     const treeState = model.localTreeStateAtom();
     return treeState.focusedNodeId === nodeid;
@@ -345,7 +345,7 @@ Priority 3 (lowest / fallback): theme accent
 The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1187-1196`):
 
 ```typescript
-// blockframe.tsx:1185-1194
+// blockframe.tsx:1187-1196
 const blockAgentColor = createMemo(() => {
     if (!props.preview && paneTabCapability(blockData()?.meta?.view, "hueBorder")) {
         const isLightTheme = isLightThemeActive();
@@ -615,10 +615,10 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:437` | line 436 |
-| focusedNodeId getter | `layoutModel.ts:739` | line 738 |
-| focusedNode memo | `layoutModel.ts:532` | line 531 |
-| FocusNode reducer arm | `layoutModel.ts:636` | line 635 |
+| localTreeStateAtom init | `layoutModel.ts:437` | line 437 |
+| focusedNodeId getter | `layoutModel.ts:739` | line 739 |
+| focusedNode memo | `layoutModel.ts:532` | line 532 |
+| FocusNode reducer arm | `layoutModel.ts:636` | line 636 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
 | isFocused memo (per-node) | `layoutNodeModels.ts:131` | `frontend/layout/lib/layoutNodeModels.ts` |
 | Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts:76` | `frontend/layout/lib/layoutIntentActions.ts` |
