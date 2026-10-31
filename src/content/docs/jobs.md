@@ -58,7 +58,7 @@ Click a row to open it. Its history lists each run with **When**, **Run**, **Too
 
 ## Caps
 
-Every job has spending caps, on by default and low. The defaults are $5 per run, $20 per job per day and $50 per account per day, and 24 messages to other agents a day. A run starts only if the caps leave room for its whole per-run cap, and one that reaches its cap is stopped. You can raise a cap for one job in its editor, which says when you are above the default.
+Every job has spending caps, on by default and low. The defaults are $5 per run, $20 per job per day and $50 per account per day, and 24 messages to other agents a day. A run starts only if the caps leave room for its whole per-run cap, and one that reaches its cap is stopped. You can raise a cap for one job in its editor, which says when you are above the default. The defaults themselves are `settings.json` keys, listed under [Job Caps](/settings/#job-caps).
 
 ## When a job fails
 

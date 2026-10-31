@@ -15,7 +15,7 @@ Connectors is a regular pane (icon: `plug`), opened from the widget bar like any
 
 | Section | What it manages |
 |---|---|
-| **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account card says how many agents use it. |
+| **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google (Gmail, Calendar and Drive), AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account card says how many agents use it. |
 | **MCP servers** | The MCP server catalog: global servers plus any agent-private ones |
 | **Remotes** | The SSH hosts and WSL distributions AgentMux can open terminals, files and agents on. See [Remotes](#remotes). |
 
@@ -46,7 +46,8 @@ The Accounts section shows every service AgentMux can connect to. Each entry dis
 Click any service tile to connect or manage credentials:
 
 - **OAuth providers** (Claude, Codex, Gemini, GitHub Copilot) — clicking **Connect** opens a PKCE or Device Flow browser login. The resulting token is stored in a per-account credential dir under `~/.agentmux/shared/identities/<account_id>/<provider>/` (never plaintext via AgentMux). Tokens are validated against the live service on load — an expired token shows a ⚠ badge.
-- **GitHub** — **Connect GitHub** needs an **AgentMux Cloud sign-in**. It uses AgentMux's own GitHub App through AgentMux Cloud, which is where the GitHub tokens your agents use come from. Without a sign-in, the Connect button is replaced by **Sign in to AgentMux Cloud to connect GitHub**, a note that GitHub tokens for your agents come from AgentMux Cloud, and the sign-in choices: **Continue with Google**, **Continue with Apple** or email (the same sign-in as the **AgentMux** tile and Settings). When you are signed in, the status turns connected and **Connect** comes back. If you save an OAuth app of your own for GitHub in the tile's form, Connect uses that instead and needs no sign-in.
+- **GitHub** — **Connect GitHub** needs an **AgentMux Cloud sign-in**. It uses AgentMux's own GitHub App through AgentMux Cloud, which is where the GitHub tokens your agents use come from. Without a sign-in, the Connect button is replaced by **Sign in to AgentMux Cloud to connect GitHub**, a note that GitHub tokens for your agents come from AgentMux Cloud, and the sign-in choices: **Continue with Google**, **Continue with Apple** or email (the same sign-in as the **AgentMux** tile and Settings). When you are signed in, the status turns connected and **Connect** comes back. If you save an OAuth app of your own for GitHub in the tile's form, Connect uses that instead and needs no sign-in. See [A connected GitHub account](#a-connected-github-account).
+- **Google** — a PKCE browser login with an OAuth client of your own. See [Google: Calendar, Drive and Gmail](#google-calendar-drive-and-gmail).
 - **API key providers** — clicking **Connect** opens an inline key entry field. The key is validated against the service before it's saved and stored in the provider's auth-config dir with restricted permissions.
 
 **+ Add** opens the Add Account form instead: a name, the provider and kind, a display name, where the secret is kept (the OS keychain is recommended), and **Validate & Save** or **Save without validating**.
@@ -55,6 +56,28 @@ Click any service tile to connect or manage credentials:
 
 See [Auth flows](/auth/) for the full per-provider table and credential storage model.
 
+### A connected GitHub account
+
+Open the account's details to see its **GitHub sign-in**: **Connected as** `@login (id …)`, the **Client**, and what GitHub **Allowed**. A GitHub account connected through AgentMux Cloud refreshes its token on its own, and AgentMux ends the grant when you remove the account. If you revoke AgentMux on GitHub, the account shows **Reconnect needed** and a **Reconnect** button; AgentMux notices when you open the details. An account made with an OAuth app of your own, or while signed out of AgentMux Cloud, uses GitHub's device flow, and its token isn't refreshed: it asks you to connect again when it expires.
+
+With GitHub connected, agents push and open pull requests on the repositories where the AgentMux GitHub App is installed, as the App's bot, with a short-lived token for that one repository. Their pushes go through a secret scan that `git push --no-verify` can't skip, their commits name you as co-author and carry an `Agent:` trailer, and their pull requests carry your GitHub id. Changing CI workflow files needs a per-agent opt-in.
+
+### Google: Calendar, Drive and Gmail
+
+Click the **Google** tile and **Connect with OAuth**. The sign-in runs in your browser with an OAuth client you make once in the Google Cloud console: an OAuth client ID of type **Desktop app**, with the consent screen set to External, or Internal for your Workspace organization. Paste its client ID and secret into the form. AgentMux keeps them in your OS keychain, so you do this once, and the form shows **Using your saved client** afterwards, with **Use a different client** and **Forget this client**. The form's **Client type** is **Your own client** or **Workspace internal**. If your organization blocks the app, the account says **Blocked by your organization**.
+
+The account's details list its **Services**. Each one is **On**, **Partly granted** or **Off**, and **Turn on** asks Google for that service's permissions only:
+
+| Service | What agents you allow can do |
+|---|---|
+| **Calendar** | Read your calendars, events and free/busy times. |
+| **Drive** | Read the files you pick for them in Google's file picker (**Give agents files from Drive…**) and the files AgentMux makes. Never the rest of your Drive. |
+| **Gmail** | Search and read your mail: threads, messages and labels. Attachments are listed by name, type and size, never downloaded. |
+
+Gmail needs your own client, or your organization's internal one: Google reviews apps that read mail, and AgentMux's own client hasn't been through that. Under Gmail, **Drafts, labels and sending** is a separate consent (**Allow drafts, labels and sending**) that lets agents you allow to write draft mail, put labels on threads and take them off. They can't send or delete on their own: to **send** a draft, or to **move a thread to the trash**, the agent has to ask, and a window shows you the mail as it will go. Nothing happens until you approve it. The request waits up to two minutes, and fails if you say no, don't answer, or the draft changes after you approve.
+
+Under **Agents** the details list the agents bound to the account, with a control for each service: **Off**, **Read**, and for Gmail **Read and write**. An agent sees a `Calendar`, `Drive` or `Gmail` tool only for a service you gave it. Mail, events and file text are written by other people, so the tools mark them as untrusted and the agent is told never to follow instructions found in them. **Activity** at the bottom lists what each agent did with the account: the action and the thread, draft or event ids, never the mail.
+
 ### Changing which account an agent uses
 
 Connectors doesn't bind accounts to agents. An agent's account is changed from the agent: click the login email in its composer strip and choose an account, or **Sign in with another account…**. The menu lists every signed-in account of the agent's provider, with its quota state. See [Identity & Accounts → Changing an agent's account](/identity/#changing-an-agents-account).
@@ -62,6 +85,10 @@ Connectors doesn't bind accounts to agents. An agent's account is changed from t
 What Connectors shows is the other direction. A card reads "Used by N agents", and an open account lists those agents by name. Accounts that share a provider and an email are numbered (`user@example.com ·2`) so they can be told apart here and in the agent's menu.
 
 Right-click an account card for **Copy account ID**, **Fail over to this account** and **Delete account…**. **Fail over to this account** is ticked unless you have marked the account "never fail over to this": an agent that hits its usage limit is never moved onto a marked account by itself. See [Identity & Accounts → When an agent hits its usage limit](/identity/#when-an-agent-hits-its-usage-limit). The item is offered for accounts of the providers that run agents.
+
+### Failing over to another account
+
+When an agent reaches its usage limit, AgentMux moves it after its turn to another signed-in account of the same provider that has quota, and tells the agent and its lead (`agent:accountfailover`, on by default). It never picks a signed-out account. To keep an account out of this, right-click it and clear **Fail over to this account**. The item shows only for an account that agents run on.
 
 ### Credential storage
 

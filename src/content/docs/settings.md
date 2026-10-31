@@ -12,7 +12,7 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is a **pane view** with ten tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
+Settings is a **pane view** with eleven tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Agents and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
 
 - Click **Settings** in the widget bar. It is pinned by default.
 - Press `Ctrl+,` (`⌘,` on macOS).
@@ -43,7 +43,7 @@ The default theme and opacity for windows without their own, the startup splash 
 
 ### Window & Panes
 
-Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, whether the mouse side buttons walk back and forward through the panes you selected, whether closing a tab asks first, and **Warn before closing a window with working agents** (see [Workspaces](/workspaces/#when-an-agent-is-working)).
+Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, whether the mouse side buttons select the previous or next pane (**Mouse side buttons select the previous / next pane**), **Show the status bar**, whether closing a tab asks first, and **Warn before closing a window with working agents** (see [Workspaces](/workspaces/#when-an-agent-is-working)).
 
 ![Settings, Window & Panes tab](../../assets/screenshots/settings/settings-window-panes.png)
 
@@ -87,7 +87,7 @@ Notification sounds and their volume, whether to stay quiet for a pane you're al
 
 ### Notifications & Tray
 
-Desktop notifications: when to notify, and for which events (an agent has a question, finished, stopped with an error or unexpectedly, a message needs your review, signed out of MuxBus); alerts while notifications are paused, quiet hours, the taskbar badge, the agent's summary line, how much of a question a notification shows, and a test notification; and the system tray: the tray icon, staying in the tray after the last window closes, and starting at login. See [Desktop notification settings](#desktop-notification-settings) and [App Settings](#app-settings).
+Desktop notifications: when to notify, and for which events (an agent has a question, finished, stopped with an error or unexpectedly, a message needs your review, signed out of MuxBus, agents out of quota or signed out, a job failed, a Vault entry is expiring); alerts while notifications are paused, quiet hours, the taskbar badge, the agent's summary line, how much of a question a notification shows, and a test notification; and the system tray: the tray icon, staying in the tray after the last window closes, and starting at login. See [Desktop notification settings](#desktop-notification-settings) and [App Settings](#app-settings).
 
 ![Settings, Notifications & Tray tab](../../assets/screenshots/settings/settings-notifications-tray.png)
 
@@ -115,9 +115,13 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ![Settings, Widgets tab](../../assets/screenshots/settings/settings-widgets.png)
 
+### Agents
+
+**Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`).
+
 ### Advanced
 
-Power-user settings: WebGL terminal rendering, the agent pane's auto-answer timeout, overlap notes between agents, the CPU and memory limits of container agents, the Sysinfo sample interval and history, drag and drop, and environment variables for every shell.
+Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
 
 ![Settings, Advanced tab](../../assets/screenshots/settings/settings-advanced.png)
 
@@ -156,6 +160,7 @@ A key you don't set uses the default shown below. "Unset" in the Default column 
 | `term:predictiveecho:thresholdms` | number | `0` | Only predict when rolling p50 round-trip ≥ this value (ms). `0` = always predict once armed. |
 | `term:agentmaxruntimehours` | number | `0` | Max runtime for an agent pane in hours (`0` = unlimited) |
 | `term:agentidletimeoutmins` | number | `0` | Minutes of PTY silence before the watchdog stops an idle agent pane (`0` = unlimited) |
+| `term:storedoutputmb` | integer | `50` | The most output, in megabytes, a terminal pane keeps on disk. Older output is dropped and the pane says so once. `0` removes the limit. Agent transcripts aren't affected. |
 
 ## Browser Settings
 
@@ -184,9 +189,11 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
 | `window:magnifiedblockblursecondarypx` | integer | `0` | Backdrop blur, in pixels, applied to the other panes behind it |
 | `window:keepinactivetabslaidout` | boolean | `true` | Keep window tabs you aren't looking at laid out, so switching back to one has nothing to catch up on. `false` skips their layout while hidden. |
+| `window:prewarmagenttabs` | boolean | `false` | Draw the agent transcripts of window tabs you haven't opened yet while the window is idle, one pane at a time, so the first visit shows the whole tab at once. Uses more memory, and pauses under memory pressure. |
 | `window:autorecycle` | boolean | `true` | Reload a window that has been idle for 10 minutes when its page uses much more memory than it did after loading (over 600 MB and twice its size after load), to give that memory back. Drafts, scroll positions and layout are kept, and it waits while anything would be lost. `false`: reload only on request (**Reload Window (Free Memory)** in the command palette). See [Windows, tabs, panes and renderers](/internals/renderers/#what-gives-memory-back). |
 | `window:confirmcloseworking` | boolean | `true` | Ask before closing a window, or switching [workspace](/workspaces/), while an agent in it is mid-turn (Settings: **Warn before closing a window with working agents**). Closing stops its agents; the window stays in the workspace, to reopen from the instance panel. The warning's **Don't ask again** turns it off. |
 | `mouse:sidebuttons` | boolean | `true` | The mouse Back and Forward side buttons re-select the pane you had selected before or after, in any tab (Settings: **Mouse side buttons select the previous / next pane**). `Ctrl` + a side button is the page's own back / forward over a browser pane. Off: the page keeps its own history on these buttons. See [Pane selection history](/pane-types/#pane-selection-history). |
+| `window:showstatusbar` | boolean | `true` | Show the status bar along the bottom of the window (Settings: **Show the status bar**). It comes back by itself while the backend is down. **Toggle Status Bar** in the command palette flips it. |
 
 ## App Settings
 
@@ -201,6 +208,8 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `app:showtray` | boolean | `true` | Show the AgentMux icon in the system tray (menu bar on macOS). Applies at the next launch. See [System tray](/installation/#system-tray). |
 | `app:runinbackground` | boolean | `false` | Keep AgentMux running in the tray after its last window closes, instead of quitting. Also shows the tray icon. Applies at the next launch. |
 | `app:startatlogin` | boolean | `false` | Start AgentMux in the tray, without a window, when you log in. Applies immediately; the tray menu has the same switch. |
+| `app:devmode` | boolean | unset | Show the developer-only parts of the UI: DevTools in the menu, Inspect Element and View Page Source in right-click menus, the DevTools port in the host popover and the block ID option (Settings ▸ Advanced ▸ **Dev mode**). Unset: off in the installed app, on in a `task dev` or debug build. Takes effect at once in every window. |
+| `launcher:recent` | array of strings | unset | The widgets you opened last, newest first (at most 12). The Shortcuts pane shows those tiles first. Kept by AgentMux; you don't need to edit it. |
 
 ## Agent Settings
 
@@ -210,18 +219,77 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agents:idle_stop_minutes` | number | `60` | With `agents:always_available` on, minutes an agent with no pane may be idle before it is stopped (a message starts it again). `0`: never. |
 | `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once (the default was `12` in 0.60.5). A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
 | `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. `0`: off. |
+| `agents:start_per_minute` | integer | `5` | The most agent starts one sender (an agent, or a job) may make in any 60 seconds, so two agents can't start each other in a loop. A refusal names the limit. `0`: no limit. |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
 | `agent:container_memory` | number or `auto` | `auto` | Megabytes of memory each [container agent](/container-agents/#cpu-and-memory-limits) may use, unless the agent has its own limit. `auto`: half of what Docker has (at least 2 GB; the developer image asks for 16 GB), never more than Docker has. `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' memory**. |
 | `agent:container_cpus` | number or `auto` | `auto` | CPUs each container agent may use, unless the agent has its own limit. `auto`: all but a quarter of what Docker has (at least one). `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' CPUs**. |
+| `agent:climessaging` | boolean | `false` | Leave Claude Code's own cross-session messaging on. Off by default: AgentMux agents message each other through jekt. |
+| `agent:accountfailover` | boolean | `true` | When an agent reaches its usage limit, move it after its turn to another signed-in account of the same provider that has quota, and tell the agent and its lead. A signed-out account, or one you marked never to fail over to (right-click it in Connectors), is never picked. |
+| `agent:compactat` | integer | `600000` | The context size, in tokens, at which Claude agents compact by themselves (Settings ▸ Advanced ▸ **Compact agents at**, shown in thousands). `0` leaves Claude Code's own point. Takes effect when each agent next starts. |
+| `agent:compacthints` | boolean | `true` | At the end of a turn whose context is at least `agent:compacthintat` tokens, give the agent one note suggesting it compact itself. Once per crossing. |
+| `agent:compacthintat` | integer | `400000` | The context size, in tokens, from which that note suggests compacting. Keep it below `agent:compactat`. |
+| `agent:freshhintat` | integer | `150000` | The context size, in tokens, from which a turn that finished a Kanban task gets a note suggesting a fresh session if the next work is unrelated. |
+| `agent:subagentmodel` | string | `"sonnet"` | The model Claude agents' general-purpose sub-agents run on: `sonnet`, `haiku`, `opus`, a model ID, or `inherit` for the agent's own. A sub-agent that names its own model still wins. Takes effect when each agent next starts. |
+| `agent:exploremodel` | string | `"haiku"` | The model Claude agents' Explore sub-agents run on: `haiku`, `sonnet`, `opus`, a model ID, or `inherit` for Claude Code's built-in. Takes effect when each agent next starts. |
+| `agent:container_memory` | integer or `"auto"` | `"auto"` | The memory limit, in MB, of every container agent that has none of its own. `"auto"` is half of what Docker has (at least 2 GB). `0`: no limit. A change reaches running containers at the agent's next turn, without a restart. |
+| `agent:container_cpus` | number or `"auto"` | `"auto"` | The CPU limit of every container agent that has none of its own. `"auto"` is all but a quarter of the CPUs Docker has (at least one). `0`: no limit. A change reaches running containers at the agent's next turn. |
+| `agent:retryonreconnect` | boolean | `true` | When a turn failed because the model API couldn't be reached, retry it once by itself when the API answers again, if no tool ran in it, you started it and you haven't typed in that pane since. `false`: only offer a Retry button. |
+| `agent:inputhistory:max` | integer | `10000` | How many messages you sent each agent are kept for ArrowUp and Ctrl+R in its composer. `0` keeps none from now on. Kept on this computer only. |
+| `agent:outdatedidsnotice` | boolean | `true` | Tell you once at startup when some agents have an id an older build chained, pointing to Settings ▸ Agents. Turned off when you dismiss it. |
+| `agent:transcriptframes` | boolean | `true` | Compress the finished parts of agent transcripts in the global transcript store (about 6 times smaller). Only parts received over a day ago and at least 8 MiB from a transcript's end. Nothing you read changes. |
+| `agent:transcriptdeltas` | boolean | `true` | With `agent:transcriptframes` on, also store each streamed reply's text once instead of once per streaming line. |
+| `agent:transcriptsinglecopy` | boolean | `false` | Write a defined agent's transcript to its own zone in the global transcript store only, not also to the pane's own store, which halves what AgentMux writes to disk while agents run. Off until it has been through a trial period. |
 | `agent:overlapnotes` | boolean | `true` | When an agent edits a file that another agent on this computer has uncommitted, or edited in the last two hours (same repository and path, in any clone), AgentMux sends the editing agent a short `[AgentMux]` note naming the other agent, so it can message them first. At most one note per other agent and file every two hours, and three per agent every ten minutes. |
 | `agent:accountfailover` | boolean | `true` | When an agent hits its usage limit, AgentMux moves it, after its turn, to another signed-in account of the same provider that has quota, and tells the agent and its lead in one note. It never picks a signed-out account or one marked "never fail over" (right-click an account in Connectors → Accounts and untick **Fail over to this account**). `false` turns it off. See [Identity & Accounts](/identity/#when-an-agent-hits-its-usage-limit). |
 | `agent:mcpselfheal` | boolean | `true` | When an agent's AgentMux tools (its MCP server) don't connect, AgentMux reconnects them twice, then restarts the agent once without the shell prefix (the conversation continues), and otherwise tells the agent and shows it in the pane. `false`: only show and tell, with no automatic repair. |
 | `agent:livefeed` | boolean | `true` | Agent panes keep the turn in flight plus about 1 MB of finished turns; older turns move to the pane's History tab, so long conversations don't slow the pane down. Applies to Claude, Codex, Kimi and Gemini agents. `false` keeps every turn in the pane and pages older ones in as you scroll up. Takes effect when a pane is next opened. |
 | `agent:livefeedturns` | integer | unset | With `agent:livefeed` on, the most finished turns an agent pane keeps before older ones move to the History tab. Unset: no turn limit, only the 1 MB one. Takes effect when a pane is next opened. |
 | `agent:turnscopedtail` | boolean | `true` | Agent panes keep only the turn in flight (and anything still running) always on the page; older messages are virtualized. `false` keeps the last 50 messages on the page. Takes effect when a pane is next opened. |
-| `agent:onewayflow` | boolean | `true` | While an agent pane follows the conversation, text only moves up: nothing overshoots and scrolls back. `false` restores the earlier glide. Takes effect when a pane is next opened. |
 | `agent:view` | string or object | `"full"` | What agent panes show. A preset name (`"full"`, `"standard"` or `"replies"`) or an object with any of `thinking`, `tools` and `jekts` (`"auto"`, `"expanded"`, `"collapsed"` or `"hidden"`), `notes` (`"shown"` or `"hidden"`) and `context` (`"auto"` or `"hidden"`); a missing or unknown switch takes Full's value. A pane that has its own view ignores it. Set from a pane's View popover with **Make this the default**. See [Choosing what the pane shows](/agent-pane-messages/#choosing-what-the-pane-shows). |
 | `markdown:streamtailinplace` | boolean | `true` | While a message streams, update its last, still-open block (a code block, paragraph, list item or table cell) in place instead of rebuilding it on every update. |
+| `kanban:reminders` | boolean | `false` | Remind an idle agent of the tasks waiting in its Kanban backlog: after two minutes idle, one short note naming them, once each time it goes idle (Settings ▸ Advanced ▸ **Remind idle agents of their backlog**, or the Kanban's toolbar). |
+| `files:icons` | string | `"system"` | Which icons the Files pane shows: `"system"` is the picture the operating system shows for each type, `"app"` is AgentMux's own monochrome glyphs. Where the system has none, the glyph shows. |
+
+## Job Caps
+
+The spending caps every [job](/jobs/#caps) starts with. They have no control in Settings: set them in `settings.json`. A job can set lower figures of its own in its editor; only you raise one above these.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `jobs:cap:runusd` | number | `5` | The most one job run may spend, in US dollars. A run that reaches it is stopped. |
+| `jobs:cap:jobdayusd` | number | `20` | The most one job may spend in a day, in US dollars. A day ends at your local midnight. A run starts only if the day's spend plus the run's cap still fits; later runs that day are skipped. |
+| `jobs:cap:accountdayusd` | number | `50` | The most all job runs on one account may spend in a day, in US dollars. Interactive work isn't counted. |
+| `jobs:cap:messagesday` | integer | `24` | The most messages one job may send in a day to an agent other than its owner. Further fires that day are skipped. |
+
+## Desktop Settings
+
+For the `Desktop` tool, which lets an agent look at and control native desktop apps (Windows only for now).
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `desktop:enabled` | boolean | `false` | Let agents use the Desktop tool. Even when on, an agent can use an app only after you allow it, for a while or for its session, and you can stop it at any time. Every action is logged. Web browsers, password managers and AgentMux itself are refused. |
+| `desktop:blocklist` | array of strings | `[]` | App names the tool must never control, added to the built-in list. An entry matches an app's name exactly (`notepad`) or any part of a window's title (`bank`). |
+| `desktop:allowlist` | array of strings | `[]` | App names to take off the built-in blocklist, for example a browser you want an agent to control. AgentMux itself can't be taken off. |
+| `desktop:grantminutes` | integer | `30` | How many minutes **Allow for a while** lasts when you allow an agent to control an app (1 to 1440). |
+
+## Supervisor Settings
+
+For the [Swarm](/subagent-watcher/) Supervisor, which continues an agent's work in **Steady** or **Drive** mode. They are in the Swarm's Supervisor settings as well.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `supervisor:enabled` | boolean | `false` | The master switch. Off: nothing is judged or continued, and a pane can't be set to Steady or Drive. |
+| `supervisor:steady:continuations` | integer | `5` | Steady: how many continuations in a row it sends before it hands the agent back to you (1 to 100). |
+| `supervisor:steady:minutes` | integer | `0` | Steady: stop after this many minutes from a run's first continuation. `0`: no time cap. |
+| `supervisor:drive:continuations` | integer | `15` | Drive: how many continuations in a row it sends before it hands the agent back to you (1 to 100). |
+| `supervisor:drive:minutes` | integer | `120` | Drive: stop after this many minutes from a run's first continuation. `0`: no time cap. |
+| `supervisor:noprogress` | integer | `2` | Stop after this many continued turns in a row that used no tool, in either mode (1 to 10). |
+| `supervisor:cooldown` | integer | `30` | Seconds it waits between a turn's end and its continuation (0 to 600). |
+| `supervisor:hourly` | integer | `30` | The most continuations it sends across all panes in a rolling hour. `0`: no cap. |
+| `supervisor:notify:needsyou` | boolean | `true` | Send an OS notice when it stops because the agent needs you. |
+| `supervisor:notify:limit` | boolean | `true` | Send an OS notice when it stops at a limit. |
+| `supervisor:notify:failed` | boolean | `true` | Send an OS notice when it couldn't continue. |
+| `supervisor:notify:done` | boolean | `true` | Send an OS notice when it finds the work done. |
 
 ## Files pane settings
 
@@ -272,6 +340,7 @@ These drive the local Sysinfo pane. Nothing is sent off your computer. See [Syst
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `network:lan_discovery` | boolean | `false` | Advertise this instance + browse for peer AgentMux instances via mDNS. Off by default — on Windows, flipping it on triggers the firewall prompt for UDP 5353. See [LAN discovery](/lan-discovery/) for the toggle in the HostPopover (preferred over editing this file directly, since the UI flips the daemon live without a restart). |
+| `network:remote_ops` | boolean | `true` | Carry out typed requests from agents on other proven machines on your network (moving accounts, reading a version or health, starting and stopping agents). `false` refuses every one. |
 
 ## Paired Devices and Cloud Settings
 
@@ -318,6 +387,9 @@ See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see)
 | `notify:os:agentcrashed` | boolean | `true` | Notify when an agent stops unexpectedly (auth expired, usage limit, crash). Stops you make yourself never notify. |
 | `notify:os:messageneedsreview` | boolean | `true` | Notify when an agent receives a message that needs your review before it acts. The notification never contains the message. |
 | `notify:os:cloudsignedout` | boolean | `true` | Notify once when this AgentMux is signed out of MuxBus and agents stop getting messages from other computers and GitHub |
+| `notify:os:accountunavailable` | boolean | `true` | Notify once per account when its agents reach a weekly usage limit or need you to sign in again. The notification never names the account. |
+| `notify:os:jobfailed` | boolean | `true` | Notify once when a [job](/jobs/) starts failing: one notification per streak, not per run. |
+| `notify:os:vaultexpiring` | boolean | `true` | Notify when a [Vault](/vault/) entry's expiry date is 14 days away, 3 days away and on the day, once each. The notification names the entry by its label, never its value. |
 | `notify:os:summary` | boolean | `true` | Show the agent's current session summary as a small line under its notifications |
 | `notify:os:preview` | string | `"redacted"` | How much of an agent's question the notification shows: `"redacted"`, `"full"` or `"none"`. Credential and destructive keywords always replace it with a generic message. |
 | `notify:pause:until` | integer | `0` | Time until which notifications are paused, in epoch milliseconds. Set from the tray icon's menu; `0` means not paused. |

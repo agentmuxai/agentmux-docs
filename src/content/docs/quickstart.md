@@ -39,7 +39,7 @@ Your windows, with their tabs and panes, are your **Default Workspace**. AgentMu
 
 ## 3. Create your first agent
 
-In the Agent pane, under **New Agent**, click a harness card, for example **Claude**. Each card is a harness, the CLI that runs the agent. A panel opens under the card with the steps below; it shows only the ones that apply.
+In the Agent pane, under **New Agent**, click a harness card, for example **Claude**. Each card is a harness, the CLI that runs the agent. A **Free** tag means the harness has a way to use it at no cost, and a **Local** tag that it can use a model on your computer; hover a tag for the details, and use the **Free**, **Local** and **Installed** chips above the cards to narrow the list. A panel opens under the card with the steps below; it shows only the ones that apply.
 
 1. **Install the CLI.** If the harness's CLI isn't installed yet, its card shows **Click to install**, and the panel starts with the install. Click **Install now**. It needs an internet connection, and Node.js and npm (Claude Code also needs Git). If they're missing, the panel lists them first with an install option; click **Check again** once they're installed.
 2. **Fill in the new agent's fields.** Give it a **Name**, for example Reviewer. For **Runtime**, choose **Native (runs on this computer)**; the Claude template preselects the container runtime when Docker is running. Leave **Bundles** empty for now. There's no account field: the agent takes your first Claude account, or signs in when it starts if you have none. Click **Create and start**.
@@ -48,6 +48,8 @@ In the Agent pane, under **New Agent**, click a harness card, for example **Clau
 The agent then starts in the pane. Type a message and press `Enter` to send it; `Shift + Enter` adds a new line. You'll see the agent's reply stream in, each tool call as it runs, and diffs of the files it edits. Press `Esc` in an empty message box to interrupt a running turn. Start a message with `!` to run a shell command in the agent's working directory instead. Type `/quit` (or `/exit`) to end the agent and close its tab; the conversation is kept.
 
 ![A finished turn: the test run, the agent's summary, and the turn's time, tokens and cost](../../assets/screenshots/agent/agent-conversation.png)
+
+To start without paying, open the card of Antigravity, GitHub Copilot CLI, Grok Build, OpenCode, Kilo Code CLI or Cline CLI: a **Use *name* for free** guide links its sign-up page and lists the next steps (see [Using a provider with a free sign-in](/first-agent/#using-a-provider-with-a-free-sign-in)).
 
 See [First Agent Setup](/first-agent/) for the details of every step.
 

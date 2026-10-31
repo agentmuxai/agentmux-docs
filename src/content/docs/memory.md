@@ -119,9 +119,11 @@ A rule that only matters for one kind of task belongs in a skill. A rule that mu
 
 ### Which agents a skill reaches
 
-**AgentMux comes with no skills.** A new install lists none, and AgentMux adds none for you. The starter skills that earlier versions added are removed, unless you edited, renamed or bound one.
+**AgentMux comes with one skill**, `disk-cleanup`: measure what AgentMux and builds leave on the disk first, say what is safe to remove, and ask before deleting anything. It is added once, reaches every agent, and is never overwritten: your edits stay, and a delete is final. You can switch off its reach as for any skill, below. The starter skills that earlier versions added are removed, unless you edited, renamed or bound one.
 
-**A global skill reaches only the agents it is bound to**, directly or through a [bundle](/bundles/) that includes it. A skill bound to nobody reaches nobody: it stays in the catalog and no agent sees it. Binding or unbinding takes effect at the agent's next launch. AgentMux then writes the skills the agent is bound to into its files: for a Claude Code agent a slash command (`.claude/commands/<trigger>.md`) or an Agent Skill (`.claude/skills/<name>/SKILL.md`), for the other providers a list in the startup file. An agent can also keep skills of its own that only it sees.
+**A global skill reaches the agents it is bound to**, directly or through a [bundle](/bundles/) that includes it, and the agents its **reach** covers. A skill bound to nobody, with no reach, reaches nobody: it stays in the catalog and no agent sees it. Binding or unbinding takes effect at the agent's next launch.
+
+**Reach** is set per skill, under the skill's name in **Memory → Skills**, with two switches: **Every agent gets it (the ones to come too)** gives the skill to every agent without a bind, and **New agents get it** gives it only to the agents created from then on. A skill you add starts with **New agents get it** on. An agent can opt out of a skill that reaches every agent or new agents (below) without losing it for the others. AgentMux then writes the skills the agent is bound to into its files: for a Claude Code agent a slash command (`.claude/commands/<trigger>.md`) or an Agent Skill (`.claude/skills/<name>/SKILL.md`), for the other providers a list in the startup file. An agent can also keep skills of its own that only it sees.
 
 ### Add your own
 
@@ -134,6 +136,20 @@ A skill's page says "Used by N agents" and lists them, each with **Unbind**.
 ![Memory → Skills: a skill opened: its description, format and content, "Used by 0 agents", and Bind to agent](../../assets/screenshots/memory/memory-skills.png)
 
 ![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
+
+### Agents and skills
+
+**Agents and skills** at the top of **Memory → Skills** opens a grid with one row per agent and one column per skill. Each cell says how that agent gets that skill:
+
+| Cell | Meaning | Click |
+|---|---|---|
+| **Bound** | You bound the skill to the agent. | **Unbind** |
+| **Via bundle** | One of the agent's bundles includes it. | Change it in the bundle. |
+| **Every agent** or **New agents** | The skill's reach covers the agent. | **Opt out**: the agent no longer gets it. Other agents keep it. |
+| **Opted out** | The agent opted out of a skill that reaches it. | **Opt back in** |
+| empty | The agent doesn't get the skill. | **Bind** |
+
+A change reaches an agent's files at its next launch. An agent whose skills can't be read is left out of the grid.
 
 ### Import a skill
 
