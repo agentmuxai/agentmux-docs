@@ -32,6 +32,7 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Move tab left | ⇧⌘PgUp | Ctrl+Alt+Shift+PgUp |
 | Move tab right | ⇧⌘PgDn | Ctrl+Alt+Shift+PgDn |
 | Rename tab | F2 | F2 |
+| New Incognito tab (in a browser pane) | ⇧⌘N | Ctrl+Shift+N |
 
 ## Panes
 
@@ -41,14 +42,14 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | New agent pane | ⇧⌘A | Ctrl+Shift+A |
 | Split right | ⌘D | Ctrl+Shift+D |
 | Split below | ⇧⌘D | Ctrl+Alt+Shift+D |
-| Split in a direction | ⌃⇧S then ↑/↓/←/→ | Ctrl+Shift+S then ↑/↓/←/→ |
+| Split in a direction | ⌃⇧S then ↓ (below) or → (right) | Ctrl+Shift+S then ↓ (below) or → (right) |
 | Close pane | ⌘W | Ctrl+Shift+W |
 | Maximize pane | ⌘M | Ctrl+Shift+M |
 | Focus pane by direction | ⌃⇧↑/↓/←/→ | Ctrl+Shift+↑/↓/←/→ |
 | Next pane | F6 | F6 |
 | Previous pane | ⇧F6 | Shift+F6 |
 | Focus pane 1–9 | ⌃⇧1–9 | Ctrl+Shift+1–9 |
-| Swap pane with neighbour | ⌃⌥⇧↑/↓/←/→ | Ctrl+Alt+Shift+↑/↓/←/→ |
+| Swap pane with neighbour | ⌃⌥⇧↑/↓/←/→ | Ctrl+Alt+Shift+↑/↓/←/→ (Linux: Ctrl+Shift+S then Shift+↑/↓/←/→) |
 | Resize pane | ⌃⌥⌘↑/↓/←/→ | Alt+Shift+↑/↓/←/→ |
 | Refocus pane | ⌘I | — |
 | Focus the message box | ⌘L | Ctrl+L |

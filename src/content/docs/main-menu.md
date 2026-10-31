@@ -22,7 +22,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Opacity** | — | Submenu of preset levels (35% – 100%). It changes only this window, on Windows, macOS and Linux. It is the same value as this window's slider in the status bar's Instance Panel, so each follows the other. See [Window appearance](/window-appearance/). |
 | **Workspaces** | — | Submenu: **New Workspace…**, **Open Workspace** › (every workspace, the open one checked), **Import…**, **Export…**, **Rename workspace…** and **Delete workspace…**. A workspace is the set of windows you work in, saved as you go; opening another one closes this one first. **Export…** writes it to a `*.agentmux-workspace.json` file; **Import…** opens one, or a `*.agentmux-layout.json` file from **Save layout…** in earlier versions, as a new workspace. See [Workspaces](/workspaces/). |
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
-| **DevTools** | — | Toggles Chromium DevTools. |
+| **DevTools** | — | Toggles Chromium DevTools. It appears only while [Dev mode](/settings/#app-settings) is on (`app:devmode`; **Toggle Dev Mode** in the command palette switches it). |
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window. Other windows stay open, and this one stays in the workspace as a closed window you can reopen from the status bar's instance panel. Closing the last window quits AgentMux. It asks first when an agent in the window is working. See [Closing a window keeps it](/workspaces/#closing-a-window-keeps-it). |
 
@@ -52,16 +52,18 @@ Registered commands are grouped by category:
 
 | Category | Commands |
 |----------|----------|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain |
-| **Split** | Split Right, Split Left, Split Down, Split Up |
-| **Window** | New Window, Close Window, Minimize Window, Toggle Maximize |
-| **Workspace** | New Workspace…, Open Workspace…, Rename Workspace…, Export Workspace…, Import Workspace… |
+| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Kanban, Open Vault, Open History, Open Audit, Open Jobs, Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain. Open Tower, Kanban, Vault, History, Audit, Jobs, Help and Swarm bring back the pane that is already open; New Tower, New Kanban, New Help and New Swarm always open another. |
+| **Split** | Split Right, Split Down |
+| **Window** | New Window, Close Window, Minimize Window, Toggle Maximize, Reload Window (Free Memory), Hibernate Hidden Browser Panes, Wake Sleeping Browser Panes, Restart Backend, Open Settings File |
+| **Workspace** | New Workspace…, Open Workspace…, Rename Workspace…, Delete Workspace…, Export Workspace…, Import Workspace… |
 | **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
-| **Pane** | Close Pane, Toggle Magnify, Focus Pane Right / Left / Up / Down |
-| **Dev** | Toggle DevTools, Restart Backend, Open Settings File |
-| **View** | Command Palette, Zoom In, Zoom Out, Actual Size |
-| **App** | Connectors, Memory, Settings |
+| **Pane** | Close Pane, Toggle Magnify, Back to Previous Pane, Forward to Next Pane, Focus Pane Right / Left / Up / Down, Redock floating pane |
+| **View** | Command Palette, Toggle Status Bar, Toggle Dev Mode, Zoom In, Zoom Out, Actual Size |
+| **App** | Connectors, Memory, Settings, Pause all agent browsing, Resume agent browsing (only the one that applies shows) |
+| **Dev** | Toggle DevTools (only while Dev mode is on) |
 | **Help** | Online Docs |
+
+After the commands the palette lists your agents, found by name, seat or state. Choosing one brings its pane forward, in whichever tab or window it is, or opens it if it has none.
 
 Searching for "accounts", "mcp" or "remotes" also finds **Connectors**, and "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
 

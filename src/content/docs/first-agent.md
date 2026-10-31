@@ -75,14 +75,29 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 
 - A filter bar and sort control.
 - **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. See [My Agents](#my-agents) for what each row shows and what its menu does.
-- **New Agent**: one card per harness. Each card is a template.
+- **New Agent**: one card per harness. Each card is a template. Some cards carry **Free** and **Local** tags, and chips above the cards filter them (see below).
 
 ![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
+
+### Free and Local tags
+
+A **Free** tag on a card means the harness has a way to use it at no cost: Gemini CLI (with a free AI Studio key), Antigravity, GitHub Copilot CLI, Kilo Code CLI, Cline CLI, OpenCode and Grok Build. A **Local** tag means the CLI's own documentation describes using a model that runs on this computer, through Ollama or LM Studio for example. Hover a tag for its tooltip:
+
+- **Free** gives the lead ("Free with a Google sign-in"), the limits the vendor states, up to two catches (for example that free usage may be used to improve models, or that the lineup rotates), and when AgentMux last checked the vendor's page.
+- **Local** says how the CLI points at a local model, any catch, and whether AgentMux has run it against a local model itself ("Works in AgentMux's own test with *model*", or "Documented by the CLI, not tested by AgentMux").
+
+The tags repeat what the vendors' pages say on the day it was read, and free offers change fast. A claim not checked for 30 days says "checked *N* days ago, may have changed". After 90 days the Free tag turns grey and says "Not re-checked since *date*".
+
+The chips **Free**, **Local** and **Installed** above the cards narrow the grid to the cards that have that tag, or whose CLI is installed. Select more than one to keep only the cards that pass all of them. A chip's count is how many cards you would see with it selected, and a line says "*N* of *M* shown" when a filter is on. The filters aren't remembered between visits, and they wait while a card's panel is open. **Clear filters** appears when none match.
+
+### Using a provider with a free sign-in
+
+For Antigravity, GitHub Copilot CLI, Grok Build, OpenCode, Kilo Code CLI and Cline CLI, the panel under the card starts with a guide, **Use *name* for free**, when you have no account for that provider: what is free and its limits, **Open the sign-up page** (which opens in your browser, not in a pane), the steps to follow after it, up to two catches, and when the information was checked. It goes away once you have an account for the provider, or, for Antigravity, once its own check says you are signed in. Grok Build, OpenCode, Kilo Code CLI and Cline CLI have no sign-in check AgentMux can run, so the guide stays until you have an account for them. Gemini CLI's free route is an API key, which has no guide.
 
 Clicking a card opens a panel under it, pushing the cards below it down; click the card again, or press `Esc`, to close it. The panel shows only the steps that apply: the prerequisites and the install above, then the new agent's fields. It makes a new, independent agent and leaves the template unchanged, and what you type is kept if you open another card and come back. Fields, top to bottom:
 
 1. **Name**: required, and empty to start with. Name it for its job, like Reviewer or Docs writer. Names must be unique among your agents (ignoring case).
-2. **Runtime**: **Native (runs on this computer)** or **Container (runs in Docker)**. See [Native and container agents](#native-and-container-agents).
+2. **Runtime**: **Native (runs on this computer)** or **Container (runs in Docker)**. The form remembers the one you chose last and explains the difference under the list. See [Native and container agents](#native-and-container-agents).
 3. **Container image**: shown only when the runtime is Container. **Standard (the agent and its tools)** or **Developer (also builds software)**. See [Choosing the image](/container-agents/#choosing-the-image).
 4. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
 5. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
@@ -260,7 +275,7 @@ The first turn of a container agent can take minutes: the pane shows a **Prepari
 
 ## Skills
 
-Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with none: you add them in [Memory → Skills](/memory/#skills) (**+ New skill**), and a skill reaches **only the agents it is bound to**, so bind it there, from the skill's page. There are two kinds:
+Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with one, `disk-cleanup`, and you add the rest in [Memory → Skills](/memory/#skills) (**+ New skill**). A skill reaches the agents it is bound to and the agents its reach covers: every agent, or only agents created from then on, which is where a new skill starts. The **Agents and skills** grid there shows how each agent gets each skill, and lets you bind, unbind or opt one agent out. There are two kinds:
 
 | Kind | Description |
 |------|-------------|
@@ -288,7 +303,7 @@ Seats are labels. Setting or changing one never renames an agent and never moves
 
 ### Setting a seat
 
-You set a seat from the UI, in two ways:
+You set a seat from the UI:
 
 - In the agent's pane: right-click the pane and choose **Seat…**.
 - In **My Agents**: the row's menu → **Seat…**. It opens the same editor over the picker, so the agent doesn't have to be open.
@@ -319,7 +334,7 @@ Click **Preview**. Each agent, and each lead, is matched by uid or by exact name
 - **The pane header**: hovering over an agent's tab shows its seat in the tooltip: "Leader · product — reports to the operator — roadmap, specs".
 - **[Swarm](/subagent-watcher/)**: the role badge after each agent's name. Once an agent there has a seat, a **Group by** control appears above the list, with **None** and **Lead**. With **Lead**, the agents that report to you are listed under **The operator**, each followed by its own reports, one step in. Agents whose lead has no pane open are grouped under that lead's name, agents with no seat under **No seat**, and agents of other AgentMux instances that report no seat under **Other instances**. A LAN computer's agents that report a seat are grouped by their lead like the rest, within their own machine and channel. Each Swarm pane remembers its choice (`frontend/app/view/swarm/swarm-seat-groups.ts`).
 - **[Kanban](/kanban/)**: hovering over a card's owner shows the owner's seat. Once an agent has a seat, the toolbar has a **Reports to** filter: anyone, the operator, or one lead. It keeps the tasks whose owner (the agent holding the task, or else the one it waits for) reports to that lead. The lead's own tasks aren't included (`frontend/app/view/kanban/kanban-seats.tsx`).
-- **Agents can set seats too.** The `Agents` tool's `set_seat` sets or clears the seats of agents on this computer in one call, checked together and written all or none, and recorded under the caller's name. A seat's lead can be given as `Name@host` for an agent on another computer on your LAN (`AgentY@narko`): the name has to be in the LAN list, and `Agents` `list` and the Swarm show it that way. A lead on another computer set this way is kept when you edit the seat's other fields in the UI.
+- **Agents can set seats too.** The `Agents` tool's `set_seat` sets or clears the seats of agents on this computer in one call, checked together and written all or none, and recorded under the caller's name. A seat's lead can be given as `Name@host` for an agent on another computer on your LAN (`Reviewer@laptop`): the name has to be in the LAN list, and `Agents` `list` and the Swarm show it that way. A lead on another computer set this way is kept when you edit the seat's other fields in the UI.
 - **MuxAPI**: in the `Agents` tool's `list`, each entry in `host.agents` has a `seat`: `{role, qualifier, lead: {id, name}, area}`, or `null` when it has none. A `lead` of `null` means the agent reports to you. Agents on LAN peers have theirs in the `lan` entry's `agent_seats`. This is how a leader finds out who reports to it. See [MuxAPI → Agents](/internals/muxapi/#agents).
 
 ### Spawned workers
