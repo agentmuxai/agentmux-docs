@@ -59,7 +59,18 @@ On an isolated channel, the Global section shows a banner when another scope has
 
 Everything in Global Memory is delivered whole, to every agent, every time. For instructions an agent needs only now and then, use a [skill](#skills) instead.
 
-Agents can read and change Global Memory with the `Memory` MCP tool and `scope: "global"`, using its `list`, `read`, `write`, `remove`, `history`, `diff` and `revert` actions.
+Agents can read and change Global Memory with the `Memory` MCP tool and `scope: "global"`, using its `list`, `read`, `write`, `reach`, `remove`, `history`, `diff` and `revert` actions.
+
+### Global Memory across machines
+
+Each entry has a **reach**: `fleet` or `machine`. A `fleet` entry is sent to every other machine on your network that this one has proven (see [LAN discovery](/lan-discovery/#remote-operations)) and kept in step; a `machine` entry stays here. A new entry is `fleet`, whether you add it in this pane or an agent writes it. The entries that existed before reach was added are `machine`, because they may differ between your machines on purpose; an agent can flip one with the `Memory` tool's `reach` action. This pane doesn't show an entry's reach; `Memory` `list` does.
+
+- **Last write wins.** The machine that saves an entry stamps the time, and every machine keeps that time, so they all agree on it. The newer write wins; on a tie the one with the larger content hash does. Each machine keeps its own history of the entry (**Memory → Global**, an entry's versions), so an overwritten version can be reverted.
+- **A removal is a write too.** An entry removed on one machine and edited later on another comes back.
+- **A machine that was offline catches up** the next time it is found: peers compare what they hold and send what the other lacks or has older. A peer is also compared again every ten minutes, to heal a lost send.
+- **What travels:** the entry's name, description and instructions (including the per-provider instructions) and its context files. Skills, provider, model, position in the list and MCP servers belong to a machine and stay put.
+- **What doesn't:** AgentMux's own system entries never leave or enter. A fleet write for an entry that is `machine` here is skipped, so a machine keeps what its owner kept.
+- **Needs a trusted machine.** Fleet sync uses [remote operations](/internals/muxapi/#acting-on-another-machine): both machines need LAN discovery on, and the receiving one must trust the sender's install. Setting `"network:remote_ops": false` on a machine stops it taking part.
 
 ## Personal
 

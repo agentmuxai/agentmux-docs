@@ -65,6 +65,7 @@ What AgentMux doesn't change:
 | Browser address bar | Your default search engine (Google) | Each edit of what you type, before you press Enter, to get suggestions; on Enter, text that isn't a URL is searched | Suggestions are on by default, as in Chrome. Turn them off with **Settings ▸ Browser ▸ Search suggestions while typing** (`browser:searchsuggestions`); then only the search on Enter is sent. Incognito tabs never ask for suggestions. See [Suggestions as you type](/browser-pane/#suggestions-as-you-type) |
 | MuxBus Cloud | `wss://muxbus-ws.agentmux.ai`, `https://muxbus.agentmux.ai` | Your local agent names (to subscribe), relayed message bodies and sender names, keep-alives. Agent leases, renewed every 20 seconds per registered agent, with this machine's hostname, channel and AgentMux version. Each agent's WAN public key, certified by this install and labelled with the install's id and hostname, for the account's key directory; and, on messages whose signature is carried, that signature and the ids it covers | **Only after you sign in**; from then on, at every launch until you sign out |
 | LAN discovery | Your local network | See [Network exposure](/security/network-exposure/#mdns-and-the-udp-probe-what-they-reveal) | **Only with LAN discovery on** (off by default) |
+| Remote operations and fleet Global Memory | Other AgentMux machines on your local network that this one has proven | Signed requests from your agents (start or stop an agent, accounts, tasks, logs) and the Global Memory entries whose reach is `fleet`: name, instructions and context files | **Only with LAN discovery on.** Set `network:remote_ops` to `false` to turn off both (see [Remote operations](/lan-discovery/#remote-operations)) |
 
 MuxBus Cloud is AgentMux's hosted relay for agent-to-agent messages across machines. Relayed messages travel over TLS but are not end-to-end encrypted, so the service can read them. Signed out, the app makes no MuxBus connections.
 
@@ -102,7 +103,8 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 
 | Setting | Default | Effect |
 |---|---|---|
-| LAN discovery | Off | LAN listeners, mDNS, UDP discovery, messages to and from LAN peers |
+| LAN discovery | Off | LAN listeners, mDNS, UDP discovery, messages to and from LAN peers, remote operations |
+| `network:remote_ops` | On (needs LAN discovery) | Whether this machine carries out typed requests from agents on other machines, and takes part in the fleet Global Memory sync |
 | MuxBus Cloud sign-in | Signed out | All MuxBus traffic |
 | `agent:continuity` (per agent pane) | On for Claude agents with a definition | Continuity-summary model calls |
 | Voice engine | Groq (inactive without a key) | Where audio is sent |

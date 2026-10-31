@@ -24,9 +24,10 @@ A tab holds one Audit: choosing it again brings back the one already open. Audit
 The feed shows recent entries from the message handler's audit log, most recent first (`frontend/app/view/warden-audit/`):
 
 - every [jekt](/glossary/#jekt) delivery, from any tier, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
-- agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `Stop` `agents`, and `Stop` `pane` calls in which one agent closed another's pane;
+- agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `Stop` `agents`, and `Stop` `pane` calls in which an agent closed a pane that holds no agent;
 - agents quitting themselves (`/quit`, `/exit` or `Stop` `self`), including a self-quit that has to wait for your 15-second override;
-- the 15-second override window that an agent's `Stop` `agents` or its `Stop` `pane` on another agent's pane opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user);
+- the 30-second override window that an agent's `Stop` `agents` or its `Stop` `pane` opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user);
+- [remote operations](/lan-discovery/#remote-operations): `remote.request` rows for the requests an agent here sent to another machine, and `remote.<operation>` rows for the typed requests another machine's agent sent here, under `agent@machine` with how the request was proven and how it ended (done, refused with its reason, or failed);
 - agent registrations: a row when an agent **registered**, **unregistered**, or was **swept** (its pane was gone), with the block it was, and the block or agent it replaced if registering displaced one.
 
 Each row shows the time, `sender → recipient` (or the agent and what happened to it), the status, a size in bytes and the reason. Rows for stops, pane closes and quits don't name the action; tell them apart by the reason text. Their byte size is the length of the internal action name, not of a message. A stop from the Swarm toolbar shows `—` as the sender.

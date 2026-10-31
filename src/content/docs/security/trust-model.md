@@ -25,7 +25,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 | CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker, adopting or releasing an agent's earlier memory folders (confirmed in a host window), and the host's registration for UI automation. |
 | Agent → server, UI automation | The agent's own signing key (`AGENTMUX_JEKT_KEY`) proves which pane the agent may automate. |
 | Other instances on this machine | Each other's auth keys, read from registry files under `~/.agentmux/` (mode `0600` on Unix). |
-| LAN peers | The `lan_key`, which opens four routes: three for messaging and one that says whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. See [Network exposure](/security/network-exposure/). |
+| LAN peers | The `lan_key`, which opens a short list of routes: messaging, agent names and states, and whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. A request for a [remote operation](#remote-operations-on-another-machine) must also be signed by a pinned agent key. See [Network exposure](/security/network-exposure/). |
 
 ## The auth key is in every pane
 
@@ -84,6 +84,19 @@ An agent (its UID) runs in at most one place at a time, so two copies don't driv
 
 This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
 
+## Remote operations on another machine
+
+With LAN discovery on, an agent can ask another machine to do something there, for example to start an agent, list its accounts or file a task (the `host` argument of the MuxAPI tools; see [Remote operations](/lan-discovery/#remote-operations)). The receiving machine decides:
+
+- **The signature is the authority, not the `lan_key`.** The asking machine signs the request with the agent's own key. The receiver checks that the key is the one it pinned for that agent's name, that the request names this machine, is less than a minute old, was not seen before and was signed after this AgentMux started. Anything else is refused and not downgraded to a prompt.
+- **Proof grows with the stakes.** A read of the version or health goes on the pinned key. A change, or a read of personal data (account emails, the task board, Global Memory entries, logs), also needs a certificate from an install this machine trusts: one it has pinned a key from, or one the signed-in MuxBus Cloud account lists as live and not revoked. A peer only seen for the first time is refused.
+- **Same rules as a local call.** The operation runs the code a local call runs, as that agent, never as the operator. What is sensitive on the receiving machine still goes through its super agent and the countdown with a veto.
+- **Nothing the request says is run or shown as an instruction.** Its text is never given to one of the receiver's agents; the banner and the audit row are built from the structured fields.
+- **Recorded on both machines** under `agent@machine`, in the [Audit](/audit/) pane. Requests refused before they are proven leave one row a minute for each address.
+- **An off switch per machine:** `"network:remote_ops": false` in `settings.json` refuses every one.
+
+A device on the LAN can't use this without an agent key this machine has pinned. A machine that pinned a key for an attacker's device on first sight (mDNS discovery is unauthenticated) has trusted that key for reads; changes still need a certificate from an install it trusts.
+
 ## Who each action is recorded as
 
 Every state-changing call on the RPC channel (the WebSocket the UI and agents use) leaves one line in the audit log, `GET /agentmux/reactive/audit` and the audit file: who made it, the command, the agent or pane it acted on, the identifier it acted on (an account id, a widget id, a path), and whether it was done or refused. Who made it comes from the connection, never from anything in the request:
@@ -102,8 +115,8 @@ These MCP tools act beyond the calling agent's own pane:
 
 | Tool | Scope | Guard |
 |---|---|---|
-| `Stop` `pane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted, but another agent's pane closes only after a 15-second window in which you can keep it (a banner in the pane and an OS notification). |
-| `Stop` `agents` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get the same 15-second window. |
+| `Stop` `pane` | A pane that holds no agent, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. A pane that holds an agent is refused, with a pointer to `Stop` `agents`. Otherwise the target is not restricted, but the pane closes only after a 30-second window in which you can keep it. |
+| `Stop` `agents` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get a 30-second window in which you can keep them. |
 | `UI` `window` | Any window owned by your OS user: other AgentMux instances, and **other applications such as your browser or password manager** | Windows owned by other OS users are refused. Every call is appended to a local audit log, `capture-window-audit.log`. |
 | `UI` `windows` | Lists AgentMux windows; with `include_foreign`, other applications' windows and titles too | Audited the same way |
 | `Message` `send` | Any agent's conversation | Sender identity is labelled; see [Reactive event bus](/security/reactive-event-bus/) |
@@ -111,7 +124,7 @@ These MCP tools act beyond the calling agent's own pane:
 
 `UI` `screenshot`, `click` and `query` and the `Browser` tool act on the caller's own pane, or on a browser pane the caller opened itself (`Browser` `open`, then that pane's id as `pane`). The server takes the caller from its signature and drives a pane only if that caller opened it: the record of who opened which pane is written only after checking the opener's signed identity, and ends when the user takes the pane over or closes it (`crates/srv/src/server/browser_owner.rs`). The caller's own pane needs no id. `Stop` `self` likewise acts only on the caller, which ends the caller's own session. It skips the 15-second window only when the user's own message started the current turn and asked for the quit (`crates/srv/src/server/app_api/pane.rs`).
 
-The 15-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
+The 30-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
 
 ## What AgentMux protects against
 
@@ -166,7 +179,7 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `crates/srv/src/server/agent_handlers/input.rs` (`carry_agent_uid_env`) — agent UID and token
 - `crates/srv/src/server/caller.rs`, `crates/srv/src/backend/storage/agent_tokens.rs` — attribution
 - `crates/srv/src/server/ui_handlers.rs` (`verified_block_id`), `crates/srv/src/server/app_api/pane.rs` (`handle_close_pane`, `handle_quit_self`) — own-pane checks
-- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 15-second override window
+- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 30-second override window
 - `crates/srv/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv/src/muxbus/wan_lease.rs` — one live instance per agent
 - `crates/mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
 - `crates/srv/src/server/service/credential.rs`, `crates/srv/src/server/service/memory_adopt.rs` — host-only services

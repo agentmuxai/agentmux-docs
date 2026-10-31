@@ -26,7 +26,12 @@ Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview
 - Command palette (`Ctrl+P`): **Open Swarm**.
 - Click **+** on any pane's tab strip and pick **Swarm** to add it as a tab in that pane.
 - Right-click a pane header → **Replace With...** → **Swarm** replaces that pane with Swarm.
+- Click the agent count in the status bar (see below).
 - In an agent pane, click a subagent or workflow dispatch card (it reads **View in Swarm →**; `Enter` or `Space` also work). Each click opens a new Swarm pane (`frontend/app/view/agent/components/tool-renderers/DispatchCard.tsx`).
+
+**The status bar counts your agents.** While at least one agent runs, the status bar shows **N running**, and, when some are waiting on an answer from you, **N waiting on you** in the warning colour. An agent counts as running when it has a process, with or without a pane, so closing a pane doesn't remove it from the count. Click the count to open the Swarm.
+
+**The command palette lists your agents.** Type an agent's name, its seat or its state (for example `limited`) in the palette (`Ctrl+P`); choosing one brings its pane forward, in whichever tab or window it is, or opens it if it has no pane.
 
 With no agent panes open, Swarm shows **No active agent panes** and "Start an agent session to see it here.", with any agents of other instances below it. The fleet toolbar only appears once there is at least one agent, here or on another instance.
 
@@ -77,8 +82,9 @@ An agent row shows:
 | Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one. Hover over it for the whole seat. |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
-| Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **idle** (green) otherwise |
-| Activity line | A one-line summary of what the agent is doing, when available |
+| Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **question** while it waits for your answer, with a countdown when the question has a timeout; **idle** (green) otherwise. An agent that can't start a turn shows **Out of quota** (with the time the limit lifts, when the provider gave one) or **Signed out** in its place, so a resting agent and a stuck one don't look alike |
+| Activity line | A one-line summary of what the agent is doing, when available. An agent that can't work reads **Out of quota until …** or **Needs sign-in**; one with a question or approval parked for you reads as waiting on you, even with no pane showing it |
+| Notes | **Holding the build slot · 12 min · cargo test** while the agent holds this computer's build slot, so other builds wait for it; **Running … · 12 min** while one tool call runs long; **2 held** for messages typed while its model API was out. Information only |
 | Current tool | The tool the agent is running right now, while it is working |
 | Supervisor chip | Claude agents only: the [Supervisor](#supervisor) mode and what it is doing. Click to change it. |
 
@@ -171,6 +177,8 @@ Closing an agent's pane doesn't stop it (see [Agents keep running without a pane
 
 If srv refuses a start (the limit of running agents, a sign-in or a usage limit), the reason shows under the row. A stopped agent has no Supervisor, selection or activity: those appear once it runs.
 
+An agent also starts when a message, a Job or a Kanban task is sent to it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)); a message to an agent that is stopped says it is being started and delivered, not that it is held. The state each agent is in, whether or not it has a pane, is `stopped`, `starting`, `idle`, `working`, `waiting_on_user`, `limited`, `signed_out` or `error`; the status bar's count, My Agents and the palette read the same states.
+
 ## Agents on other instances
 
 After this instance's own agents, Swarm lists the agents of other AgentMux instances (`frontend/app/view/swarm/swarm-remote.ts`, `frontend/app/view/swarm/swarm-view.tsx`, `RemoteAgentRows`; backend `crates/srv/src/backend/swarm_remote.rs`):
@@ -196,6 +204,8 @@ An instance that hasn't been heard from for 60 seconds is shown as stale: its ro
 With **Group by: Lead**, an agent that reports a seat sits under its lead, matched by name among the agents of the same machine and channel, so a worker follows a lead on its own machine. A lead that machine couldn't name heads a group called "an agent on another machine". Agents that report no seat, and this machine's other channels, stay under **Other instances**.
 
 Clicking one of these rows doesn't focus the agent: its pane is in another instance. They can be selected for a [Broadcast](#fleet-toolbar), and agents on this machine's other channels for a Stop too.
+
+What you can't do from a row, an agent can do with the `host` argument of its tools: start, open or stop an agent on a LAN peer, set its seat or environment, file a task on its [Kanban](/kanban/), list or switch its accounts. See [Remote operations](/lan-discovery/#remote-operations). A seat's lead can be an agent on another machine (`Name@host`, for example `Lead@laptop`); with **Group by: Lead** such a worker sits under that lead.
 
 ## Copy menus
 
@@ -226,7 +236,7 @@ The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swa
 
 **Broadcast** sends the same message to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs:574-588`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
 
-**Stop** opens a dialog titled "Stop N agents?" (or "Stop 1 agent?") listing the selected panes' block IDs, with a **Stop {N}** button. With 5 or more agents selected you can tick **Staged rollout** to stop them in batches (**Batch size**, default 3) and abort if a batch's failure rate exceeds a percentage (default 50). Stopping ends each agent's CLI process; the pane stays open. Because you are the one stopping them, the agents stop right away, without the 15-second override window an agent-initiated stop gets (see below). The selection is cleared afterwards. If an agent belongs to another AgentMux instance on the same machine (for example, a different channel), the stop is forwarded to that instance. Agents on LAN peers can't be stopped from here yet. Every stop is recorded in the [Audit](/audit/) feed.
+**Stop** opens a dialog titled "Stop N agents?" (or "Stop 1 agent?") listing the selected panes' block IDs, with a **Stop {N}** button. With 5 or more agents selected you can tick **Staged rollout** to stop them in batches (**Batch size**, default 3) and abort if a batch's failure rate exceeds a percentage (default 50). Stopping ends each agent's CLI process; the pane stays open. Because you are the one stopping them, the agents stop right away, without the 30-second override window an agent-initiated stop gets (see below). The selection is cleared afterwards. If an agent belongs to another AgentMux instance on the same machine (for example, a different channel), the stop is forwarded to that instance. Agents on LAN peers can't be stopped from here yet. Every stop is recorded in the [Audit](/audit/) feed.
 
 After either action, the result panel shows a summary such as "Broadcast — 3 succeeded, 1 failed" or "Bulk stop — 3 succeeded, 1 failed" (with "— staged rollout aborted early" if that happened), and one row per agent with its error, if any. Dismiss it with **×**.
 
@@ -236,7 +246,7 @@ Agents can do the same through MuxAPI (`crates/mcp/src/tool_schemas.rs`; backend
 
 - **`Agents` `list`** lists every agent reachable from the calling agent, with the IDs the other two calls expect.
 - **`Message` `broadcast`** sends one message to many targets. Each message is signed and delivered exactly like `Message` `send`, so it reaches agents on this machine by block ID and agents on LAN peers or the cloud relay by name. Large broadcasts go out in chunks of 10, about a second apart.
-- **`Stop` `agents`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 15-second override window, all in parallel, so the call takes at least 15 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
+- **`Stop` `agents`** stops agent panes by block ID, on this instance or another instance on the same machine. Each target running on this instance first gets its user's 30-second override window, all in parallel, so the call takes at least 30 seconds; a target the user chooses to keep running is reported as kept and failed. The optional staged rollout applies only to the other targets (`crates/srv/src/sagas/pending_shutdown.rs`).
 
 See [MuxAPI](/internals/muxapi/) for the full tool reference.
 

@@ -10,7 +10,7 @@ This page is for IT teams, network admins and security reviewers who need to kno
 | Listener | Process | Bind | Protocol | Authentication | When |
 |---|---|---|---|---|---|
 | AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ephemeral ports | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
-| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP | Only four LAN-peer routes, each taking the `lan_key` or the auth key. Public: `GET /`, `/health`, `/webhook/whatsapp` | LAN discovery on (default **off**) |
+| AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP | Only a short list of LAN-peer routes, each taking the `lan_key` or the auth key; a request for a remote operation also needs a valid signature. Public: `GET /`, `/health`, `/webhook/whatsapp` | LAN discovery on (default **off**) |
 | mDNS | `agentmux-srv` | UDP 5353, multicast | mDNS / DNS-SD | None | LAN discovery on |
 | UDP discovery responder | `agentmux-srv` | `0.0.0.0:47891` UDP | JSON | None; answers only private, link-local and loopback source addresses | LAN discovery on |
 | Dev proxy | `agentmux-srv` | `127.0.0.1:8090` | HTTP reverse proxy | None | Always (skipped if the port is taken) |
@@ -47,10 +47,10 @@ When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two p
 These listeners serve **only the routes LAN peers need** (`build_routers_with` in `crates/srv/src/server/mod.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
 
 - anyone can call `GET /` and `/health` (the version) and the WhatsApp webhook;
-- anyone holding the `lan_key` can call four routes: send a jekt, look up one agent, list agent names, and ask whether an agent UID is running here (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus));
+- anyone holding the `lan_key` can call a short list of routes: send a jekt (with files), look up one agent, list agent names and states, ask whether an agent UID is running here, and post a signed [remote operation](/lan-discovery/#remote-operations) (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus)). The remote-operation route does nothing for the `lan_key` alone: it carries out a request only when it is signed by an agent key this machine has pinned;
 - nothing else. Every other route, `/ws` included, returns 404 on a LAN listener, even with the full auth key, and the LAN listeners never serve the frontend.
 
-The mobile-pairing QR code in the host popover (**Show QR code**) still contains the full auth key, together with this machine's LAN address and port. Over the network the key reaches only the four routes above, but on this machine it gives full control until AgentMux restarts, so don't show the code where others can see it.
+The mobile-pairing QR code in the host popover (**Show QR code**) still contains the full auth key, together with this machine's LAN address and port. Over the network the key reaches only the routes above, but on this machine it gives full control until AgentMux restarts, so don't show the code where others can see it.
 
 The `lan_key` is sent in cleartext to anyone on the local network (next section). Turn LAN discovery on only on networks you trust, and restrict the listeners with your host firewall to the peers or subnet you expect.
 

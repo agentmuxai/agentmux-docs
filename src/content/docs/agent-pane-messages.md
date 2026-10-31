@@ -96,11 +96,11 @@ A jekt is shown as a bubble, not as the raw message. Its header line shows the d
 - **Tier**: `info`, `coord` or `sensitive`. A `sensitive` jekt has an error-coloured bar and is open by default.
 - **Delivery**: how it reached the agent: `host` (this computer), `channel` (another AgentMux on this computer), `lan` or `wan` (the cloud relay).
 
-Open it for the message, its attachments, and the details: who it is from and to, its message id, how far the sender is trusted (`host-verified`, `channel-verified`, `lan-verified`, `wan-verified`, `self-declared`, `unverified` or `network-claimed`), its priority and time, and how long it was held if the agent was not running. **Raw payload** shows the marker block exactly as the agent received it. See [Interagent communication](/internals/interagent-comms/) and the [trust model](/security/trust-model/).
+Open it for the message, its attachments, and the details: who it is from and to, its message id, how far the sender is trusted (`host-verified`, `channel-verified`, `lan-verified`, `wan-verified`, `self-declared`, `unverified` or `network-claimed`), its priority and time, and how long it was held if the agent could not take it (it was stopped, signed out, out of quota or idle). A jekt whose sender asked for no answer carries `REPLY=none` in its marker; a reply to it is refused. **Raw payload** shows the marker block exactly as the agent received it. See [Interagent communication](/internals/interagent-comms/) and the [trust model](/security/trust-model/).
 
 ### System notes
 
-A system note starts with `[AgentMux] ` and states a fact about AgentMux itself. They arrive appended to a message, and AgentMux splits them into their own rows. The notes AgentMux writes today are about cloud delivery:
+A system note starts with `[AgentMux] ` and states a fact about AgentMux itself. AgentMux's own notes do not start a turn: it holds them and attaches them after the next message the agent's pane receives (yours, a jekt, a broadcast or a scheduled prompt), or joins them to the turn in flight, and AgentMux splits them into their own rows. A pane holds at most eight at a time, the oldest dropped first. A note the agent must have at once, such as a worker's report to its lead, is delivered as input. The notes about cloud delivery are:
 
 - **Paused**: "Cloud messages are paused since 14:22 (reason). Review and CI notices won't arrive; check your PRs directly until they resume."
 - **Outage**: the same, once it is over: "Cloud messages were paused 14:22–16:31 …".
@@ -109,6 +109,8 @@ A system note starts with `[AgentMux] ` and states a fact about AgentMux itself.
 - **Late delivery**: a message that reached the agent more than two minutes after it was sent starts with "(sent 14:30, delivered 14:41)"; the row shows it as a small note on the message.
 
 Notes about another agent working on the same file ("Agent4 also has uncommitted changes in …") use the same `[AgentMux]` marker and show as system notes too.
+
+The turns Claude Code writes itself are shown as notes as well, not in your message style: a background command's or Monitor's notice, a system reminder, a local command's output and a hook's output. A turn counts only when it is nothing but those blocks; a message of yours that mentions one stays yours.
 
 ### CLI notices
 

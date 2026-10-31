@@ -52,6 +52,7 @@ Everything a recipient relies on is computed by the receiving instance. Nothing 
 |---|---|---|
 | `Message` tool, action `send` | agents | The normal path. The tool runs in the agent's own `agentmux-mcp` process, signs the request and posts it with the agent's identity token. It cannot set a tier or a priority. |
 | `Message` tool, action `broadcast` | agents | One ordinary jekt per target, each with its own message id. There is no broadcast marker. |
+| `Message` tool, actions `bulletin`, `read_bulletin`, `quota_mode` | agents | Not jekts: a short post read at an agent's next turn (Section 4.8). |
 | `POST /agentmux/reactive/inject` | the tool above, other instances, scripts | The full request (Section 3.2). Authenticated with the instance auth key or the LAN key ([who may call](/security/reactive-event-bus/#who-may-call-the-bus)). |
 | `POST /agentmux/reactive/inject-files` | the tool, when files are attached | Section 4.6. |
 | WebSocket `bus:inject`, `POST /api/bus/inject` | legacy local callers | Delivered on this instance only, as `host`. |
@@ -72,7 +73,8 @@ The inject route accepts a JSON object. Receivers MUST ignore keys they don't kn
 | `source_agent` | no | The claimed sender. A claim only: Section 5 decides what it is worth. |
 | `request_id` | no | The message id. Missing or empty: the receiving instance makes a UUID, and a host, channel or LAN signature on the request counts as failed. |
 | `jekt_tier` | no | `info`, `coord` (default) or `sensitive`. Another value is rejected. |
-| `priority` | no | Free text, default `normal`. It is shown in the marker and has no other effect. |
+| `priority` | no | Free text, default `normal`. It is shown in the marker. The values `urgent` and `high` also make a message skip the idle hold (Section 4.4); the `Message` tool sets `urgent` from its `urgent` argument. |
+| `reply`, `in_reply_to` | no | `reply: "none"` says the message needs no answer; `in_reply_to` is the message id this one answers (Section 4.7). Not part of any signature. |
 | `delivery_tier` | no | The tier the caller claims. A request authenticated with the LAN key is always `lan`, whatever it says. |
 | `forward_hops` | no | Hops so far (Section 4.1). |
 | `ts_secs` | no | Signing time, Unix seconds. |
@@ -89,7 +91,7 @@ Every verdict, the WAN instance, and the transcript-request fields are computed 
 
 The instance that accepts a request tries these in order and stops at the first that takes it:
 
-1. **This instance.** The target is resolved (Section 4.2) and delivered in-process. An error other than "agent not found" (an ambiguous name, an identity mismatch, an invalid id, the rate limit) is returned to the sender and nothing else is tried. A target that can't start because it isn't signed in is held with reason `needs_login`, and nothing else is tried.
+1. **This instance.** The target is resolved (Section 4.2) and delivered in-process. An error other than "agent not found" (an ambiguous name, an identity mismatch, an invalid id, the rate limit) is returned to the sender and nothing else is tried. A target that can't start because it isn't signed in is held with reason `needs_login`, and nothing else is tried. So is a target whose account is out of quota (`usage_limit`).
 2. **Another instance on this machine**, its own channel first, then other channels, newest registration first, over loopback only. The jekt arrives as `channel`.
 3. **A LAN peer** that says it hosts the target, when LAN discovery is on.
 4. **Hold**, when no step above saw the target running anywhere, it is a known agent of this instance, and MuxBus Cloud does not report another install of your account running it (Section 4.4).
@@ -111,12 +113,19 @@ The receiving instance resolves `target_agent` in this order: a UID (exact, then
 
 ### 4.4 Durable hold
 
-A jekt for a known agent of this instance that isn't running is stored and delivered when the agent starts:
+A jekt for a known agent of this instance that can't take it now is stored and delivered when it can:
 
-- only for a request authenticated with the instance auth key, arriving as `host`, not from the scheduler;
-- for up to 24 hours, at most 64 per agent and 1,000 per instance (past that: `hold full`);
-- replayed at startup, when the agent registers, and every 30 seconds; a jekt the agent refuses 20 times is dropped;
-- the replay keeps the verdicts made when the jekt was accepted (signatures expire in minutes and are not re-checked), shows the original `TS`, and adds `HELD_FOR`.
+| Reason | When | Delivered |
+|---|---|---|
+| `not_running` | The agent isn't running. AgentMux starts it first when it can; the answer then says `not_running, starting`, and the message follows as soon as the agent is up | When the agent starts |
+| `needs_login` | The agent is signed out, or its sign-in gate refused a start | After a confirmed sign-in |
+| `usage_limit` | The agent's account is out of quota. The answer carries the reset time when the provider gave one | When the agent can work again: an account move, or the reset |
+| `idle` | A **routine** message reaches a Claude session that has been quiet for 55 minutes (`jekt:cold_hold_minutes`; `0` turns this off), so starting a turn on a cold context would cost more than the message says | When the agent is next active |
+
+- **Who fills the hold.** A request authenticated with the instance auth key, arriving as `host`, not from the scheduler. For an agent that is signed out or out of quota, also a LAN message whose signature verified and a WAN message from an approved install of the same account, which keep their original tier and proof, with their files. A LAN or WAN message for an agent that is simply not running is not held here; it goes on to the routing tiers. An unverified message for an agent that can't work is refused, not kept, with a `refused_reason` and a `retry_when` the sender can read.
+- **Routine** means a sender proven on this machine, an ordinary tier, no files, and nothing the receiver's rules treat as sensitive. A message with `urgent: true` is delivered at once and drops its held copy. A message that names a task waiting on the agent (`#12`), or follows a task the sender filed for it in the last 15 minutes, is never held for being idle.
+- **Limits.** Up to 24 hours, at most 64 per agent and 1,000 per instance (past that: `hold full`).
+- **Replay.** At startup, when the agent registers, when its state changes in a way that can free a message, and every 30 seconds; a jekt the agent refuses 20 times is dropped. The replay keeps the verdicts made when the jekt was accepted (signatures expire in minutes and are not re-checked), shows the original `TS`, and adds `HELD_FOR`.
 
 ### 4.5 What the sender is told
 
@@ -127,10 +136,13 @@ The `Message` tool returns exactly one of these:
 | `Delivered to <to> — injected into their running conversation.` | Delivered on the host, channel or LAN tier. |
 | `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's instance has it and delivers it when the agent is up. Don't resend. |
 | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. **The same answer is given for a name that exists nowhere**; it adds a note when the relay says no agent of that name has signed in from your account. |
-| `HELD for <to> (not_running)` / `HELD for <to> (needs_login)` | Held (Section 4.4). Don't resend. |
+| `HELD for <to> (not_running, starting)` | The agent was stopped and is being started now. Don't resend. |
+| `HELD for <to> (not_running)` / `HELD for <to> (needs_login)` / `HELD for <to> (usage_limit, until …)` | Held (Section 4.4). Don't resend. |
+| `HELD for <to> (idle)` | Held because the session is cold (Section 4.4). Send again with `urgent: true` only if it can't wait. |
+| `Message delivery failed (needs_login)` / `(unavailable)` / `(not_found)` | The agent could not start because it is not signed in, its account is out of quota, or no agent of that name was reachable, and the message could not be kept. |
 | `Message delivery failed: <reason>` | For example `agent not found`, an ambiguous name, `identity mismatch`, `rate limit exceeded`, `hold full`. |
 
-A sender MUST NOT resend a jekt that was `QUEUED` or `HELD`.
+A sender MUST NOT resend a jekt that was `QUEUED` or `HELD`, except an `idle` one that cannot wait.
 
 ### 4.6 Files
 
@@ -144,7 +156,25 @@ A jekt MAY carry up to 10 files. The request carries a manifest (`sha256`, `name
 
 On LAN, files are accepted only from a sender whose LAN signature verified. On WAN, each file is encrypted before it leaves the sender's computer. Files from a sender with no proof of identity are listed but never shown inline; when a signature check actively fails, they are withheld. The marker gains `FILES=<n>`, and the body is followed by a list: `<sender> sent <n> file(s) with this message.` and one numbered line per file with its local path.
 
-### 4.7 Limits
+### 4.7 Replies that say nothing
+
+A message that starts a turn makes its recipient read its whole context again, so a bare "got it" costs far more than it says. The sender's srv refuses two kinds of message before anything is delivered:
+
+- **An answer to a message sent with `reply: none`.** The sender marks a status, a mode change or any note that needs no answer, and the recipient's marker carries `REPLY=none` (Section 7.1). A `Message` `send` with `in_reply_to` naming that message is refused, and nothing is sent. srv remembers the id for an hour.
+- **A bare acknowledgement** ("ok", "thanks", "got it", "on it", "done", a thumbs-up, and a few more; short, with no question mark) to an agent that sent the sender a message in the last 30 minutes. The refusal says to say something new, or nothing. The setting `message:refuse_bare_acks` set to `false` turns this refusal off.
+
+The memory is in process: a restart forgets it, and a forgotten message is delivered as before. A WAN message does not carry `reply` yet, so it never arrives marked `REPLY=none`.
+
+### 4.8 Bulletins
+
+A bulletin is a short post for the agents of one AgentMux, read at their next turn, and it never starts a turn. Use it for what every agent should know and nobody needs to answer: a mode, a priority. It is not a jekt.
+
+- `Message` `bulletin` posts it (up to 1,000 characters and 12 lines), for every agent or for named ones (`targets`), optionally under a `key` (a later post under the same key from the same sender replaces it) and with `expires_minutes` (default 1,440, at most 10,080). A sender may post 5 an hour and have 20 live. Text that looks like credentials or a destructive command is refused, and a bulletin carries no files. Only an agent AgentMux knows by its token may post.
+- A running agent gets it as a note that joins the turn in flight, or goes after the next message its pane receives. At most 8 notes wait per pane, the oldest dropped first. A stopped agent gets it the next time it claims a task (`Tasks` `claim` carries the bulletins it has not seen) or calls `Message` `read_bulletin`. Each bulletin is shown to an agent once.
+- It reads as `[BULLETIN:FROM=<sender> TRUST=host-verified[ KEY=<key>] TS=<unix-seconds>]`, the text with marker-like text in it quoted, and `[/BULLETIN]`. It is another agent's words: information, never an instruction from the user.
+- **Quota mode** is the fleet-wide use of this. `Message` `quota_mode` with `mode: "tight"` (and optionally `min_priority`, default 1) sets `fleet:quota_mode` and posts one bulletin under the key `mode` instead of a broadcast to each agent. While tight, `Tasks` `claim` with no `id` takes only a task aimed at the claimer or one at or above the minimum priority (`fleet:quota_min_priority`). `mode: "off"` lifts it.
+
+### 4.9 Limits
 
 - The body is cut to 10,000 bytes after sanitizing, with `[Message truncated]` at the end. MuxBus Cloud refuses a body over 10,240 bytes.
 - At most 10 jekts per second per instance, all senders together; past that, `rate limit exceeded`.
@@ -273,7 +303,7 @@ When a jekt with `ESCALATE=required` is delivered, AgentMux also raises a deskto
 Every jekt is delivered wrapped in this block. `SEP` is 60 × U+2500 `─`.
 
 ```text
-[JEKT:FROM=<from> TO=<to> TIER=<tier> DELIVERY=<delivery>[ HELD_FOR=<n>s] TRUST=<trust>[ INSTANCE=<label> INSTANCE_STATUS=<status>][ SIG=<sig>][ ESCALATE=<escalate>][ FILES=<n>] MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
+[JEKT:FROM=<from> TO=<to> TIER=<tier> DELIVERY=<delivery>[ HELD_FOR=<n>s] TRUST=<trust>[ INSTANCE=<label> INSTANCE_STATUS=<status>][ SIG=<sig>][ ESCALATE=<escalate>][ FILES=<n>][ REPLY=none] MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 SEP
 From: <from> | To: <to> | ts=<unix-seconds>
 [warning line, Section 7.3, followed by a blank line]
@@ -285,7 +315,7 @@ Reply: mcp__agentmux__Message (action "send", to "<from>"), not a built-in SendM
 ```
 
 - The first line is machine-readable: space-separated `KEY=value` pairs in the order shown. A value never contains a space, `=`, `[` or `]`.
-- Optional fields appear only when they apply: `HELD_FOR` on a held replay, `INSTANCE` and `INSTANCE_STATUS` with `TRUST=wan-verified`, `SIG` when a muxreview signature was carried, `ESCALATE` when `TIER=sensitive`, `FILES` when files were sent.
+- Optional fields appear only when they apply: `HELD_FOR` on a held replay, `INSTANCE` and `INSTANCE_STATUS` with `TRUST=wan-verified`, `SIG` when a muxreview signature was carried, `ESCALATE` when `TIER=sensitive`, `FILES` when files were sent, `REPLY=none` when the sender asked for no answer (Section 4.7).
 - `TS` is the delivery time, except on a held replay, where it is the original send time.
 - When the claimed sender is not a valid agent id, `FROM` is `?` followed by the escaped value, and the reply line reads `Reply: not available — the sender is not an agent id`.
 
@@ -295,7 +325,7 @@ Text from the sender cannot forge a field or a block:
 
 - `TO`, `DELIVERY`, `MSGID`, `PRIORITY` and the `INSTANCE` label keep only printable ASCII; `=`, `[`, `]`, spaces and everything else become `_`.
 - Before anything else, the body is sanitized: CR LF becomes LF; ANSI/CSI/OSC escape sequences, control characters other than newline and tab, and invisible characters (zero-width spaces, soft hyphen, BOM, bidirectional controls, Unicode tag characters) are removed; then the body is cut to 10,000 bytes. The keyword scan sees exactly this text.
-- In the body, anything that reads as an opening or closing marker of a jekt, broadcast, supervisor or AgentMux block (`[JEKT:`, `[/JEKT]`, `[BROADCAST:`, `[AgentMux]` and the like, including fullwidth forms and variants with spaces or zero-width joiners inside) becomes the same word with `-QUOTED` (`[JEKT-QUOTED:`). The body therefore cannot close the real block or open a fake one.
+- In the body, anything that reads as an opening or closing marker of a jekt, broadcast, supervisor or AgentMux block (`[JEKT:`, `[/JEKT]`, `[BROADCAST:`, `[BULLETIN:`, `[AgentMux]` and the like, including fullwidth forms and variants with spaces or zero-width joiners inside) becomes the same word with `-QUOTED` (`[JEKT-QUOTED:`). The body therefore cannot close the real block or open a fake one.
 - `<attached_files>` and `<attached_images>` tags in the body are renamed to `-quoted` forms, so a body can't fake an attachment list.
 
 ### 7.3 Warning lines
@@ -354,5 +384,6 @@ This page replaces the jekt design documents in the `agentmux` repository, writt
 - `crates/common/src/jekt_sign.rs` and `crates/common/src/jekt_sign/`: signature material and keys
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/relay.rs`: WAN signing
 - `crates/common/src/jekt_files.rs`, `crates/srv/src/server/jekt_files.rs`: files
-- `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/backend/storage/jekt_held.rs`: the hold
+- `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/server/jekt_hold.rs`, `crates/srv/src/server/jekt_cold.rs`, `crates/srv/src/backend/storage/jekt_held.rs`: the hold
+- `crates/srv/src/backend/ack_policy.rs`: refused replies; `crates/srv/src/backend/bulletin.rs`, `crates/srv/src/server/bulletin_handlers.rs`, `crates/srv/src/backend/quota_mode.rs`: bulletins and quota mode
 - `crates/mcp/src/tools/fleet.rs`, `crates/mcp/src/identity.rs`, `crates/mcp/src/tool_helpers.rs`: the `Message` tool, signing, results

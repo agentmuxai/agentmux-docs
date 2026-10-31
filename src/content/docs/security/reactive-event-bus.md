@@ -55,6 +55,9 @@ All routes live on the local AgentMux server (`agentmux-srv`). See [Network expo
 | Route | Accepted credential | Purpose |
 |---|---|---|
 | `POST /agentmux/reactive/inject` | Full auth key **or** `lan_key` | Deliver a jekt |
+| `POST /agentmux/reactive/inject-files` | Full auth key **or** `lan_key` | Deliver a jekt with its files after it |
+| `POST /agentmux/remote/op` | `lan_key` **and** a valid signature | Carry out a signed [remote operation](/security/trust-model/#remote-operations-on-another-machine) from an agent on a proven machine. The `lan_key` alone is refused |
+| `GET /agentmux/fleet`, `/agentmux/fleet/events` | Full auth key **or** `lan_key` | The agents' names and states as a snapshot and a stream, for the mobile app and other peers |
 | `GET /agentmux/reactive/agent?id=<name>` | Full auth key **or** `lan_key` | Look up one agent's registration and LAN public key |
 | `GET /agentmux/reactive/agent-names` | Full auth key **or** `lan_key` | List the names of this instance's registered agents |
 | `GET /agentmux/agent/holding?uid=<uid>` | Full auth key **or** `lan_key` | Say whether an agent UID is running on this machine: since when, in which channel and version. Used by LAN peers for [one live instance per agent](/security/trust-model/#one-live-instance-per-agent) |
@@ -69,10 +72,10 @@ The auth checks are `auth_middleware` and `lan_or_full_auth_middleware` in `crat
 
 **The full auth key** is the per-launch key every terminal pane and agent process receives as `AGENTMUX_AUTH_KEY`. Holding it is equivalent to being the AgentMux UI. See the [trust model](/security/trust-model/).
 
-**The `lan_key`** is a second per-launch key (two random UUIDs). An instance with LAN discovery on broadcasts it in cleartext in its mDNS record and in replies to UDP discovery probes, so **anyone on the local network can obtain it**. It opens only the four routes above. With it, a device on your LAN can:
+**The `lan_key`** is a second per-launch key (two random UUIDs). An instance with LAN discovery on broadcasts it in cleartext in its mDNS record and in replies to UDP discovery probes, so **anyone on the local network can obtain it**. It opens only the LAN-peer routes above. With it, a device on your LAN can:
 
 - send a jekt to any agent on the instance. The message always arrives as `DELIVERY=lan`, whatever the request body claims;
-- list the names of the instance's registered agents, and read one agent's registration: agent id, block id, tab id, UID, registration times, and its LAN public key;
+- list the names and states of the instance's registered agents, and read one agent's registration: agent id, block id, tab id, UID, registration times, and its LAN public key;
 - ask whether a given agent UID is running on the machine, and since when, in which channel and version;
 - cause the instance to route a message it doesn't host onward, the same way a local send would: to other instances on the machine, to other LAN peers, and to MuxBus Cloud if the instance is signed in.
 
