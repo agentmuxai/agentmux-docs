@@ -83,9 +83,10 @@ Clicking a card opens a panel under it, pushing the cards below it down; click t
 
 1. **Name**: required, and empty to start with. Name it for its job, like Reviewer or Docs writer. Names must be unique among your agents (ignoring case).
 2. **Runtime**: **Native (runs on this computer)** or **Container (runs in Docker)**. See [Native and container agents](#native-and-container-agents).
-3. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
-4. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
-5. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
+3. **Container image**: shown only when the runtime is Container. **Standard (the agent and its tools)** or **Developer (also builds software)**. See [Choosing the image](/container-agents/#choosing-the-image).
+4. **Model**: shown only for Claude Code and Codex CLI, the harnesses AgentMux passes a `--model` flag to. You can change it later from the pane's runtime picker.
+5. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
+6. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
 
 There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the agent's **Stash → Accounts**. If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
 
@@ -211,22 +212,13 @@ Rows with an explanation or captured CLI output also have **Details**, and every
 
 **Native agents** run the CLI directly on your computer, with access to your files, environment and credentials.
 
-**Container agents** run each turn inside a Docker container that only sees the agent's workspace. Only Claude Code has a container image today (`ghcr.io/agentmuxai/agent-claude:latest`); every other harness is Native-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
+**Container agents** run each turn inside a Docker container that sees only the agent's workspace and its Personal Memory. Only Claude Code has a container runtime today; every other harness is Native-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
 
-The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent.
+The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent. For a container agent the panel also asks for a **Container image**: **Standard**, or **Developer**, which adds a build toolchain.
 
-### Starting a container agent
+The first turn of a container agent can take minutes: the pane shows a **Preparing…** line while the image is downloaded, the container started and the agent CLI installed.
 
-The first turn of a container agent can take minutes: the image is downloaded, the container started and the agent CLI installed. The pane shows a **Preparing…** line above the message box while that happens, with where it is ("Downloading the agent image… 42%", "Starting the container…", then "Installing Claude Code …"). It is a status line, not a turn: it has no timer, and what you type isn't queued behind it. When the container is up and nothing is on its way to it, the pane says "Ready: send a message to start".
-
-### What a container agent can do with panes and dev servers
-
-- **Dev servers survive a container recreate.** A container is recreated when AgentMux upgrades or the agent image updates, which ends any process in it. An agent that registers its dev server with the command that starts it (`RegisterDevServer` with `command`, and `dir` if it isn't `/workspace`) has AgentMux start the server and keep it up: when the container next runs a turn and nothing is listening, AgentMux runs the command again and registers the route with the container's new address, so `http://<project>-<agent>.localhost:8090` keeps working. A registration without a command lasts only as long as the container. See [`RegisterDevServer`](/internals/muxapi/#registerdevserver).
-- **Editor and media panes open a read-only snapshot.** When a container agent shows you a file from its workspace (`Pane` `open`, view `editor` or `media`), AgentMux copies the file out of the workspace and opens the pane on the copy: its title says `(read-only snapshot, <time>)`, it does not change when the agent changes the file, and the agent is told to open it again to refresh. A snapshot is capped (10 MB for an editor, 50 MB for a media file) and removed when its pane closes. A folder, a terminal, a pane on another machine and a path outside the workspace can't be opened this way.
-- **Widgets built in the workspace.** A container agent can install a widget it built under `/workspace`; each file is checked as it is copied out. You still approve the install, exactly as for any widget. See [Widgets](/widgets/).
-- **File watchers poll on Docker Desktop.** Where the workspace is a file-sharing mount that sends no change events (Docker Desktop on Windows and macOS), AgentMux sets the usual file-watcher variables (`CHOKIDAR_USEPOLLING`, `CHOKIDAR_INTERVAL` and `WATCHPACK_POLLING`) so a dev server's hot reload sees the agent's edits. On Linux a bind mount reports changes and nothing is set. A variable the agent's environment already sets is left alone.
-- **Its own browser sign-ins.** A browser pane a container agent opens browses in a fresh Incognito jar of its own by default, never your Personal profile, and the answer says which one the pane got. See [Profiles and Incognito](/browser-pane/#profiles-and-incognito).
-- **Git and `gh`.** Commits made in the container end with `Agent: <name>@<host>`, git trusts every clone in the container, and `gh auth status` says how `gh` is signed in. The image also has `pip`, `venv` and `core.autocrlf=input`.
+[Container agents](/container-agents/) covers the images, CPU and memory limits, build caches, git and GitHub, and what a container agent can and can't do.
 
 ## Skills
 

@@ -452,7 +452,7 @@ it (streaming bash runner via `agent.run-command`).
 **SECURITY:** Do not log this value. It authenticates all WebSocket
 connections to the srv instance for the lifetime of that srv process.
 
-**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts only on the agent routes (messaging, work queue, the agent's own memory, self-quit) and refuses everywhere else (`crates/srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/container_routes.rs`). See [Trust model](/security/trust-model/#container-agents).
 
 ---
 

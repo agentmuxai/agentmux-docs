@@ -91,7 +91,7 @@ The new agent's fields, in the panel that opens under a template card in the age
 ┌────────────────────────────────────────────────┐
 │ New Claude Code agent                           │
 │  Name:      [my-agent_________]                 │
-│  Runtime:   (•) host   ( ) container            │
+│  Runtime:   [▼ Native (runs on this computer) ] │
 │  Model:     [▼ opus ]                           │
 │  Bundles:   Reviewer                 ↑ ↓ ✕      │
 │             [▼ Add another bundle… ]            │

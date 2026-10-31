@@ -111,7 +111,7 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ### Advanced
 
-Power-user settings: WebGL terminal rendering, the agent pane's auto-answer timeout, overlap notes between agents, the Sysinfo sample interval and history, drag and drop, and environment variables for every shell.
+Power-user settings: WebGL terminal rendering, the agent pane's auto-answer timeout, overlap notes between agents, the CPU and memory limits of container agents, the Sysinfo sample interval and history, drag and drop, and environment variables for every shell.
 
 ![Settings, Advanced tab](../../assets/screenshots/settings/settings-advanced.png)
 
@@ -204,6 +204,8 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 | `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once (the default was `12` in 0.60.5). A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
 | `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. `0`: off. |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
+| `agent:container_memory` | number or `auto` | `auto` | Megabytes of memory each [container agent](/container-agents/#cpu-and-memory-limits) may use, unless the agent has its own limit. `auto`: half of what Docker has (at least 2 GB; the developer image asks for 16 GB), never more than Docker has. `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' memory**. |
+| `agent:container_cpus` | number or `auto` | `auto` | CPUs each container agent may use, unless the agent has its own limit. `auto`: all but a quarter of what Docker has (at least one). `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' CPUs**. |
 | `agent:overlapnotes` | boolean | `true` | When an agent edits a file that another agent on this computer has uncommitted, or edited in the last two hours (same repository and path, in any clone), AgentMux sends the editing agent a short `[AgentMux]` note naming the other agent, so it can message them first. At most one note per other agent and file every two hours, and three per agent every ten minutes. |
 | `agent:mcpselfheal` | boolean | `true` | When an agent's AgentMux tools (its MCP server) don't connect, AgentMux reconnects them twice, then restarts the agent once without the shell prefix (the conversation continues), and otherwise tells the agent and shows it in the pane. `false`: only show and tell, with no automatic repair. |
 | `agent:livefeed` | boolean | `true` | Agent panes keep the turn in flight plus about 1 MB of finished turns; older turns move to the pane's History tab, so long conversations don't slow the pane down. Applies to Claude, Codex, Kimi and Gemini agents. `false` keeps every turn in the pane and pages older ones in as you scroll up. Takes effect when a pane is next opened. |
