@@ -87,6 +87,7 @@ export default defineConfig({
 							items: [
 								{ label: 'The window', slug: 'window' },
 								{ label: 'Workspaces', slug: 'workspaces' },
+                                                            { label: 'Closing and shutting down', slug: 'closing-and-shutting-down' },
 								{ label: 'Pane Types', slug: 'pane-types' },
 								{ label: 'What the agent pane shows', slug: 'agent-pane-messages' },
 								{ label: 'Container agents', slug: 'container-agents' },

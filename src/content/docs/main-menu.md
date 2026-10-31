@@ -24,7 +24,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
 | **DevTools** | — | Toggles Chromium DevTools. It appears only while [Dev mode](/settings/#app-settings) is on (`app:devmode`; **Toggle Dev Mode** in the command palette switches it). |
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
-| **Exit** | — | Closes the current window. Other windows stay open, and this one stays in the workspace as a closed window you can reopen from the status bar's instance panel. Closing the last window quits AgentMux. It asks first when an agent in the window is working. See [Closing a window keeps it](/workspaces/#closing-a-window-keeps-it). |
+| **Exit** | — | Closes the current window. Other windows stay open, and this one stays in the workspace as a closed window you can reopen from the status bar's instance panel. Closing the last window quits AgentMux. Its agents keep running; it asks first only when closing would stop a working agent (the last window, or `agents:always_available` turned off). See [Closing a window keeps it](/workspaces/#closing-a-window-keeps-it). |
 
 **New Window** appears only where AgentMux can open several windows, and **Opacity** only where windows can be see-through (`frontend/app/window/hamburger-menu.tsx`).
 
