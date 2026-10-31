@@ -66,7 +66,7 @@ The docs still describe the app before those changes:
 | `getting-started.md` | Widget list order; no **Identity** field (the account is the provider's first, changed later from the Stash); the **Bundles** field |
 | `quickstart.md` | The widget order; the Create step (no Identity; **Bundles** starts empty); "Choose the bundle as Memory" → "add it under Bundles" |
 | `first-agent.md` | Fields 5–6 → one **Bundles** field; the account sentence; "(vanilla CLI)" → an empty list; Knowledge → Memory links; the bundle MCP sentence made accurate (§4) |
-| `installation.md` | Widget bar default order (Agent, Swarm, Memory, Hangar, Connectors, Terminal, Editor, Browser, Messengers, Sysinfo, Help; **more**: Drone, Warden, Media, Toolchain, Remotes, Settings); hamburger list (Layouts has Save and Open layout…; Memory) |
+| `installation.md` | Widget bar default order (Agent, Swarm, Memory, Files, Connectors, Terminal, Editor, Browser, Messengers, Sysinfo, Help; **more**: Drone, Warden, Media, Toolchain, Remotes, Settings); hamburger list (Layouts has Save and Open layout…; Memory) |
 | `pane-types.md` | Widget order; the table row (Memory, `brain`, `memory`); "Memory (native/'Brain')", Bundles and Skills rows; the Stash list (Bundles tab, `AgentBundlesTab`); `view: "memory"` sentence |
 | `connectors.md` | Tabs along the top, not a rail; Knowledge → Memory; the Stash tab list |
 | `warden.md` | Tabs along the top, not a rail |

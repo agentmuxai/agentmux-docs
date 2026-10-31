@@ -40,7 +40,7 @@ Supervisor and Broadcast show the same list of agents, with one selection: a box
 
 In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 
-1. The [fleet toolbar](#fleet-toolbar).
+1. The controls, in a compartment of their own apart from the list (in the Supervisor and Broadcast sections): the Supervisor's settings, or Broadcast's message box, and the [fleet toolbar](#fleet-toolbar). Broadcast's box sits above the list.
 2. A result panel, shown only after a fleet action.
 3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
 4. The [filter bar](#filtering-the-list), shown when the list has agents.

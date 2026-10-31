@@ -13,7 +13,7 @@ An AgentMux window has three parts: the **top bar**, the **panes** of the curren
 
 ## Top bar
 
-![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Hangar, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 From left to right:
 
@@ -21,6 +21,8 @@ From left to right:
 - **Window tabs:** each tab holds its own layout of panes. **New Tab** (`Ctrl+Shift+T` / `⌘T`) adds one; drag a tab below the tab bar to [tear it off](/pane-types/#tab-tear-off) into a new window.
 - **Widget bar:** one icon per pinned widget; click one to open it. Widgets that aren't pinned are under **more** at the end of the bar. Right-click a pinned icon to unpin it.
 - **Window buttons:** minimize, maximize and close.
+
+The main window reopens where you left it, and maximized if it was, after a quit, a crash or an upgrade, on Windows, macOS and Linux. A window saved on a display that has since been unplugged isn't placed there. On Linux under native Wayland only the size and the maximized state come back, because the compositor decides where windows go.
 
 ### The widget bar's More list
 

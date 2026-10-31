@@ -52,7 +52,7 @@ Registered commands are grouped by category:
 
 | Category | Commands |
 |----------|----------|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Hangar (Files), Open Remotes, Open Toolchain |
+| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain |
 | **Split** | Split Right, Split Left, Split Down, Split Up |
 | **Window** | New Window, Close Window, Minimize Window, Toggle Maximize |
 | **Workspace** | New Workspace…, Open Workspace…, Rename Workspace…, Export Workspace…, Import Workspace… |

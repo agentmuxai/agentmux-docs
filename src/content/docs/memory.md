@@ -134,7 +134,21 @@ A skill's page says "Used by N agents" and lists them, each with **Unbind**.
 
 ![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
 
-To bring in skills someone else wrote, use **Memory → Bundles → Import Bundle** with an [ABF](/abf/) file. The review before the import shows **each skill's full text**, so you can read what an agent would be told to follow. A skill too long to show in full is marked "Not fully shown" and starts unticked: tick it to import the whole skill. An imported skill is bound only to the bundle it came in, so it reaches only the agents that take that bundle.
+### Import a skill
+
+To bring in a skill someone else wrote, click **Import a skill…** at the top of **Memory → Skills**. Choose where it is under **From**:
+
+- **A folder on this computer**: a folder with a `SKILL.md`, or a folder of skills.
+- **A git repository (https)**: an `https://` address such as `https://github.com/owner/skills.git`, and optionally a branch or tag (the default branch if empty).
+- **A SKILL.md at an https address**: one file.
+
+Click **Read**. Reading a source writes nothing. AgentMux lists every skill it found, with its name, its description and its **whole text**, so you read what an agent would be told to follow before anything is added. Each shows **New**, **Differs from the catalog** (with a diff of what would change) or **Already up to date**. Tick the ones to bring in and click **Import**.
+
+- **An imported skill starts bound to nobody.** It isn't given to any agent, including new ones, until you [bind it](#add-your-own).
+- **Only https.** A `file://` or other kind of git address is refused, symlinks aren't followed, a file over 256 KB is left out, and a source yields at most 100 skills. A note on the list says what was left out.
+- **Check for changes** on an imported skill, under its text, reads its source again and shows a diff against what you have. Nothing changes until you approve it.
+
+To bring in a whole set of skills at once, use **Memory → Bundles → Import Bundle** with an [ABF](/abf/) file. The review before the import shows **each skill's full text**, so you can read what an agent would be told to follow. A skill too long to show in full is marked "Not fully shown" and starts unticked: tick it to import the whole skill. An imported skill is bound only to the bundle it came in, so it reaches only the agents that take that bundle.
 
 Agents manage skills with the `skill.*` commands; see [MuxAPI](/internals/muxapi/#skill) for the RPC reference.
 

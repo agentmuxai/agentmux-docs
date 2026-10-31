@@ -89,7 +89,7 @@ An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can
 
 ## Remotes
 
-The hosts AgentMux can open terminals, file browsers and agents on: the SSH hosts in your `~/.ssh/config`, hosts you've connected to, and on Windows your WSL distributions (`frontend/app/view/remotes/remotes-view.tsx`). Besides the Connectors tab, it's reached from **Manage remotes…** in a pane's connection picker and in Hangar's Places sidebar, and from **Remote settings…** in the header menu of a pane running on a remote, which opens it with that host's row expanded.
+The hosts AgentMux can open terminals, file browsers and agents on: the SSH hosts in your `~/.ssh/config`, hosts you've connected to, and on Windows your WSL distributions (`frontend/app/view/remotes/remotes-view.tsx`). Besides the Connectors tab, it's reached from **Manage remotes…** in a pane's connection picker and in the Places sidebar of the Files pane, and from **Remote settings…** in the header menu of a pane running on a remote, which opens it with that host's row expanded.
 
 ![Connectors → Remotes when it first opens](../../assets/screenshots/widgets/widget-remotes-small.png)
 
@@ -102,7 +102,7 @@ The hosts AgentMux can open terminals, file browsers and agents on: the SSH host
 
 An SSH terminal can be **durable**: its shell keeps running on the host, inside AgentMux's small helper there, so a dropped link, your computer sleeping or an AgentMux restart reconnects to the same shell instead of ending it.
 
-Durable terminals need the helper on the host. The first terminal you open on a host without it asks first, in a separate AgentMux window: **Install AgentMux's helper on *host*?** The helper is about 500 KB, goes in `~/.agentmux-remote` on that machine and needs no root. It also lets [Hangar](/pane-types/#hangar) browse the host's files.
+Durable terminals need the helper on the host. The first terminal you open on a host without it asks first, in a separate AgentMux window: **Install AgentMux's helper on *host*?** The helper is about 500 KB, goes in `~/.agentmux-remote` on that machine and needs no root. It also lets [Files](/pane-types/#files) browse the host's files.
 
 - **Install** installs it, and the terminal is durable.
 - **Not now** opens a plain SSH terminal, as before. AgentMux doesn't ask again for that host until it restarts.

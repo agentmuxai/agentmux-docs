@@ -37,7 +37,7 @@ Install AgentMux from its [Microsoft Store listing](https://apps.microsoft.com/d
 
 ### Moving off the Microsoft Store build
 
-Most Store installs just update. The exception: a release can name an oldest version it upgrades from (its upgrade floor), and AgentMux's **Maintenance** panel says so when your version is older: "This version is older than vX upgrades from". The Store only installs the latest version, so it can't take you through the older version first, and AgentMux doesn't offer the Store update for that install. A GitHub installer run beside the Store copy wouldn't replace it either. So you move to the GitHub build first:
+Most Store installs just update. The exception: a release can name an oldest version it upgrades from (its upgrade floor), and AgentMux's **Maintenance** panel says so when your version is older: "This version is older than vX upgrades from". The Store only installs the latest version, so it can't take you through the older version first, and AgentMux doesn't offer the Store update for that install. A GitHub installer run beside the Store copy wouldn't replace it either. The Maintenance panel then says what to do and has a **How to move off the Store build** button that opens this section. So you move to the GitHub build first:
 
 1. Quit AgentMux (**Quit AgentMux** in its tray icon's menu).
 2. Uninstall the Store copy: **Settings → Apps → Installed apps → AgentMux → Uninstall**. Your settings and agents are kept under `%USERPROFILE%\.agentmux\`, outside the Store package.
@@ -161,9 +161,9 @@ The first window opens a starter layout of three panes:
 
 New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`). Your windows make up **Default Workspace**, which AgentMux saves as you work and reopens at the next launch. See [Workspaces](/workspaces/).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Hangar**, **Browser**, **Settings** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Audit, Toolchain and Tower. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Audit, Toolchain and Tower. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
-![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Hangar, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
 

@@ -63,11 +63,11 @@ git submodule update --init --recursive   # one-time, makes src/agentmux availab
 npm run build:full                         # build:typedoc + build:rust-docs + build
 node scripts/check-links.mjs               # every link and #anchor; a failure stops the deploy before upload
 
-# 1. Sync non-HTML assets first (new CSS/JS available before old ones are removed)
-aws s3 sync dist/ s3://<docs-bucket>/ --delete --exclude "*.html"
-# 2. Force-upload all HTML files (bypasses mtime comparison — normalize-mtimes sets
-#    a fixed epoch so s3 sync skips HTML when only the CSS hash inside it changes)
-aws s3 cp dist/ s3://<docs-bucket>/ --recursive --exclude "*" --include "*.html"
+# 1. Sync non-HTML assets first, without --delete (new CSS/JS is there before anything is removed)
+aws s3 sync dist/ s3://<docs-bucket>/ --exclude "*.html"
+# 2. Upload the HTML whose content changed (MD5 against the object's ETag), then delete every
+#    key dist/ no longer has, HTML included. Add --dry-run to see the counts and change nothing.
+node scripts/publish-html.mjs --bucket <docs-bucket>
 
 # 3. Invalidate CF and wait for full propagation before reporting success
 INVAL=$(aws cloudfront create-invalidation --distribution-id <distribution-id> --paths "/*" --query 'Invalidation.Id' --output text)
@@ -78,13 +78,20 @@ curl -s "https://docs.agentmux.ai/user-guide/" | grep -o 'href="[^"]*common[^"]*
 aws s3 ls s3://<docs-bucket>/_astro/ | grep common
 ```
 
-**Why the two-step sync:** `normalize-mtimes.mjs` sets all dist file mtimes to a fixed
+**Why HTML has its own step:** `normalize-mtimes.mjs` sets all dist file mtimes to a fixed
 epoch so unchanged files aren't re-uploaded. But when the CSS bundle hash changes, the
 HTML files referencing it have the same byte length and the same mtime → `s3 sync` skips
 them. The old CSS gets deleted but the stale HTML stays → CF serves HTML that references
-a missing CSS file → site unstyled. Always force-upload HTML separately.
+a missing CSS file → site unstyled. So HTML never goes through `s3 sync`:
+`scripts/publish-html.mjs` compares content, so a deploy uploads only the pages that
+changed (it used to re-upload all of them, about 15k PUTs, every time). It also deletes
+the keys `dist/` no longer has, HTML included, after the new HTML is up: stale rustdoc and
+typedoc pages used to pile up in the bucket and stay reachable. It refuses to delete when
+`dist/` looks broken (too few files, no `index.html` / `user-guide/index.html`, or the plan would delete more than half the bucket,
+which means a section such as the Rust reference is missing; `--allow-large-delete` overrides). Its
+unit tests run in the PR check (`node --test scripts/publish-html.test.mjs`).
 
-**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths the `--delete` sync just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
+**`build:full` is required for production.** Plain `npm run build` skips the typedoc and rustdoc generation steps, which means `/api/typescript/` and `/api/rust/` would be served as fallback indices that link to crate paths that the publish step's delete pass just removed. Use `build:full` so the dist tree includes the generated reference content. The CI workflow always uses `build:full`; only fall back to plain `build` for local style/structure iteration (see Build section below).
 
 `build:full` requires:
 - `cargo` on `PATH` (rustup minimal toolchain is enough).
