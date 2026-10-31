@@ -52,7 +52,7 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Resize pane | ⌃⌥⌘↑/↓/←/→ | Alt+Shift+↑/↓/←/→ |
 | Refocus pane | ⌘I | — |
 | Focus the message box | ⌘L | Ctrl+L |
-| Replace pane with launcher | ⌃⇧K | Ctrl+Shift+K |
+| Replace pane with Shortcuts | ⌃⇧K | Ctrl+Shift+K |
 | Change connection | ⇧⌘G | Ctrl+Shift+G |
 
 ## Find & zoom
@@ -64,6 +64,8 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Zoom out | ⌘-, ⌘Num- | Ctrl+-, Ctrl+Num- |
 | Reset zoom | ⌘0, ⌘Num0 | Ctrl+0, Ctrl+Num0 |
 | Reset zoom on all panes | ⇧⌘0 | Ctrl+Shift+0 |
+
+The keys zoom the focused pane. `Ctrl`+scroll (`⌘`+scroll on macOS) zooms the pane under the pointer, and over the title bar, status bar or a pane header it zooms AgentMux's own interface instead. `Ctrl+Shift`+scroll steps every pane in the window together. In the Editor, the Terminal and the Agent pane, a zoom keeps the text under the pointer where it is (from the keys, the text under the last pointer position, or the pane's centre). A Browser pane's page has its own per-site zoom ([Browser pane](/browser-pane/#zoom)). See [Zoom system](/internals/zoom/).
 
 ## Terminal
 
@@ -94,6 +96,7 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Save as (scratch documents) | ⇧⌘S | Ctrl+Shift+S |
 | Find and replace | ⌘F | Ctrl+F |
 | Toggle markdown preview | ⇧⌘V | Ctrl+Shift+V |
+| Switch between the file tree and the editor | ⇧⌘E | Ctrl+Shift+E |
 
 ## Files
 
@@ -179,6 +182,8 @@ The pane also has these keys of its own (`browser_pane_shortcut_for`):
 | Reload | `⌘R` | `Ctrl+R` |
 | Back | `⌥←` | `Alt+←` |
 | Forward | `⌥→` | `Alt+→` |
+| Home page | `⌥Home` | `Alt+Home` |
+| New Incognito tab | `⌘⇧N` | `Ctrl+Shift+N` |
 
 In the address bar, `Enter` opens the address. Text that isn't an address is searched on Google.
 
