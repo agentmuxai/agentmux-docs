@@ -28,7 +28,7 @@ The main window reopens where you left it, and maximized if it was, after a quit
 
 Hover **more** (or click it) to list the widgets that aren't pinned to the bar. Click one to open it.
 
-![The More list open under the widget bar, listing the widgets that aren't pinned: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Warden, Vault, Toolchain and Tower](../../assets/screenshots/chrome/chrome-more-dropdown.png)
+![The More list open under the widget bar, listing the widgets that aren't pinned: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit](../../assets/screenshots/chrome/chrome-more-dropdown.png)
 
 ### A tab's menu
 

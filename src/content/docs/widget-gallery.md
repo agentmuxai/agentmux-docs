@@ -63,11 +63,9 @@ A visual automation builder: drag Variables, Agent, API, Condition and Response 
 
 ![The Drone widget when it first opens](../../assets/screenshots/widgets/widget-drone-small.png)
 
-## Warden
+## Vault, History and Audit
 
-Monitor and control agents on this host, on your LAN and over the internet, with an audit log. See [Warden](/warden/).
-
-![The Warden widget when it first opens](../../assets/screenshots/widgets/widget-warden-small.png)
+Three panes for overseeing agents, each in the widget bar's **more** menu. The [Vault](/vault/) keeps your secrets, which agents use by name without seeing them. [History](/history/) is every agent's kept conversation, and [Audit](/audit/) is the record of messages between agents and of what agents did with your secrets. They replace the Warden pane: see [Warden](/warden/).
 
 ## Sysinfo
 
