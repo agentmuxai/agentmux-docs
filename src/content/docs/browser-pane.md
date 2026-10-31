@@ -1,6 +1,6 @@
 ---
 title: "Browser pane"
-description: A Chromium browser embedded in an AgentMux pane through CEF — not an iframe — with address-bar suggestions, profiles and Incognito tabs, bookmarks, a Home page, per-pane camera and microphone grants, and HTTP sign-in prompts.
+description: A Chromium browser embedded in an AgentMux pane through CEF — not an iframe — with address-bar suggestions, profiles and Incognito tabs, bookmarks, a Home page, per-site page zoom, downloads, per-pane camera and microphone grants, HTTP sign-in prompts, and the controls you keep over an agent that drives the pane.
 ---
 
 :::caution[Alpha Software]
@@ -16,15 +16,16 @@ How it is embedded depends on the platform:
 
 Some things differ from a normal browser tab:
 
-- Links that open in a new tab (`target="_blank"`) load in the same pane.
-- Popups to other web sites open in your system browser, except sign-in popups (see [Sign-in popups](#sign-in-popups)).
+- A link that opens a new tab (`target="_blank"`) opens as a **pane tab in the same pane** when you click it and it stays on the page's own site. A link to another site loads in the current tab. See [New windows and popups](#new-windows-and-popups).
+- Popups to other web sites open in your system browser, except sign-in popups and popups from the page's own site (see the same section).
 - The pane won't navigate to `file:` URLs or other schemes that would hand off to the operating system.
+- A browser pane can't be made narrower than 250 px.
 
 ## Opening a browser pane
 
 - Click **Browser** in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@browser`); if you've unpinned it, click **more** at the end of the widget bar and choose **Browser**.
 - Click **+** on any pane's tab strip and pick **Browser** to open it as a tab in that pane.
-- Right-click a pane header → **Replace With...** → **Browser** replaces that pane.
+- Press `Ctrl+Shift+K` (`⌃⇧K` on macOS) to replace the focused pane with a [Shortcuts pane](/pane-types/#the-shortcuts-pane), then choose **Browser**.
 - From an AgentMux terminal: `muxsh web <url>` opens the URL in a browser pane split to the right of the terminal (`--split left|down|up` to change that, `--floating` for a floating window, `--title` to name it). The URL is completed the same way as in the address bar, and the new pane is focused with the keyboard in the page unless you pass `--no-focus` (`crates/srv/src/backend/shellintegration/muxsh.mjs`).
 - From MuxAPI: `pane.open` with `view: "browser"` and a `url`, which is required for this view.
 
@@ -39,12 +40,13 @@ A new browser pane opens its configured URL if it has one, otherwise your Home p
 | Control | Action |
 |---|---|
 | ← / → | Back / Forward. Disabled when there's nowhere to go. |
-| ↻ | Reload |
+| ↻ | Reload. While a page is loading it becomes ✕ (**Stop loading**), and a press stops the load. |
 | Home (house icon) | Opens your Home page. Right-click it for **Set this page as Home**. |
+| Address bar | Enter a URL or search terms ("Enter URL or search..."). `Enter` loads it; there is no Go button. |
 | Bookmark icon | Opens the [bookmarks menu](#bookmarks-and-home-page) |
-| Address bar | Enter a URL or search terms ("Enter URL or search...") |
-| → (Go) | Load the address-bar value |
 | Profile button | Shows who the tab is browsing as, and opens a new tab as someone else. See [Profiles and Incognito](#profiles-and-incognito). |
+
+The bookmark and profile buttons sit at the right end, bookmarks just left of profile. In a pane narrower than about 390 px the buttons stay in one row and the address bar takes a full-width row under them. `Ctrl`+scroll over the toolbar zooms AgentMux's own interface, not the page (see [Zoom](#zoom)).
 
 Clicking into the address bar selects the whole address, as in Chrome, so typing replaces it. A second click places the cursor, and a drag selects just what you drag over.
 
@@ -62,7 +64,7 @@ Asking your search engine for suggestions sends it what you type before you pres
 
 If suggestions aren't available, the address bar keeps anything starting with `http://`, `https://` or `about:`. Otherwise, if what you typed contains a dot and no spaces, `https://` is added in front. Anything else is sent to Google search.
 
-The pane title follows the page title, and shows the host name while a page is loading. The pane icon is the site's favicon, or a globe when the site has none.
+The pane title follows the page title, and shows the host name while a page is loading. The pane icon, and the icon on the pane's tab, is the site's favicon. A generic globe stands in when the site has none, or when its icon fails to load, so the slot is never blank. After the first paint, a small loading mark shows in the top-right corner of the page while it loads.
 
 ## Keyboard shortcuts
 
@@ -81,7 +83,15 @@ These shortcuts are handled by AgentMux itself (`crates/cef/src/client/handlers.
 
 A new browser pane that opens as the selected pane puts the keyboard straight into the page as soon as the page is created, unless you have already clicked into its address bar. Clicking in the page gives it the keyboard; clicking AgentMux's own interface takes it back. On macOS, typing into a browser pane works this way since AgentMux 0.57.5.
 
-**Zoom:** on Windows, `Ctrl`+scroll zooms just that browser pane (50%–200%); the zoom lasts until the pane is closed or moved. On macOS and Linux, `Ctrl`+scroll uses Chromium's own page zoom, which applies to every pane showing the same site.
+## Zoom
+
+`Ctrl`+scroll over the page is Chromium's per-site page zoom, as in Chrome:
+
+- The zoom belongs to the site (its host) and the profile. Every pane on that site in that profile shares it, and a page opens at its zoom with no flash at 100% on each navigation.
+- It is kept with the profile, so Personal and your own profiles keep it across a restart. An Incognito tab forgets it when it closes.
+- On Windows a step is 5%, between 50% and 200%. On macOS and Linux Chromium's own steps apply.
+
+`Ctrl`+scroll over the toolbar or the pane header zooms AgentMux's own interface instead (see [Zoom system](/internals/zoom/)). AgentMux doesn't take the keyboard zoom keys (`Ctrl+=`, `Ctrl+-`, `Ctrl+0`) from a focused page. The Browser pane is the one pane that doesn't use AgentMux's own pane zoom.
 
 ## Bookmarks and Home page
 
@@ -101,12 +111,13 @@ Every browser tab browses as one identity, which never changes. The **Profile** 
 
 - **Open new Incognito tab** (`Ctrl+Shift+N`, `Cmd+Shift+N` on macOS);
 - **Personal**, and each profile you created;
-- **New profile…** and **Manage profiles…**.
+- **New profile…**, which asks for a name and a colour in a dialog that covers only this pane, so the rest of AgentMux stays usable while it is open;
+- **Manage profiles…**, which opens **Settings ▸ Browser** in the window you clicked in.
 
 Choosing an entry opens a **new tab in the same pane**, at the current page (or your Home page), as that identity. The tab you were on stays as it was.
 
 - **Personal** is the identity every tab starts with: your saved sign-ins.
-- **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**, with a name and a colour. A new profile opens at your Home page, since it is signed in nowhere. Manage them in **Settings ▸ Browser**.
+- **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**. A new profile opens at your Home page, since it is signed in nowhere. Rename, recolour, delete and allow agents to use them in **Settings ▸ Browser**.
 - **An agent's browser pane** (`Browser` `open`) browses as your Personal profile by default for an agent on your computer, and in a fresh Incognito jar for a container agent. The answer to `open` says which one the pane got, and its `profile` argument picks another.
 - **An Incognito tab** has its own cookie jar, separate from your normal browsing and from every other Incognito tab. Nothing is saved, and it's gone when the tab closes.
 
@@ -137,18 +148,35 @@ When a saved credential matches a later request, AgentMux asks before using it, 
 
 There is no screen for listing or deleting saved credentials.
 
-## Sign-in popups
+## New windows and popups
 
-When a page opens a sign-in popup, AgentMux opens a real popup window only when both of these are true (`crates/cef/src/client/lifecycle.rs`, `on_before_popup`):
+What a page gets when it asks for a new window depends on what it asked for. A new window is only opened inside AgentMux when you caused it with a click or key press, it is an `http` or `https` page, and either it is on the same site as the page that opened it or an agent owns the pane. A pane may have at most 8 popup windows and 8 popup panes open at once (`crates/common/src/popup_rules.rs`, `crates/cef/src/client/popup_route.rs`).
 
-- the popup's host is a known sign-in provider, such as Google, GitHub, Microsoft, Apple, Okta or Auth0;
-- its URL looks like an OAuth authorization request.
+| The page asks for | If it is allowed | If not |
+|---|---|---|
+| A new tab (`target="_blank"`, `window.open(url)`, a middle-click) | Opens as a **pane tab in the same pane** | The link loads in the current tab |
+| A new window (shift-click, some `window.open` calls) | Opens as a browser pane beside this one | Opens in your system browser |
+| A popup (`window.open` with a size or `popup` features) | Opens as a real popup window | Opens in your system browser |
 
-The popup shares the pane's cookies and session, so the page's sign-in completes normally, and closing the popup closes only the popup. Other popups to web sites open in your system browser; any other popup is blocked.
+A sign-in popup is always a real popup window, even when it is on another site. It must be a popup, go to a known sign-in provider such as Google, GitHub, Microsoft, Apple, Okta or Auth0, and its URL must look like an OAuth authorization request. The popup shares the pane's cookies and session, so the page's sign-in completes normally, and closing the popup closes only the popup.
+
+A popup window is listed in a strip under the toolbar ("Popup window: *address*") with **Show** and **Close**. A page on this computer (a local dev server) can open a new window only to its own address, and never to one of AgentMux's own. In a pane an agent limited to some sites, a popup to another site waits for your **Allow** in the pane.
 
 ## Load failures
 
 If a page hasn't loaded after 20 seconds, the pane stops waiting and shows an error page in the style of Chrome's "This site can't be reached", with a **Retry** button. Redirects don't reset the 20-second limit. Other load failures (DNS, TLS, blocked requests) use the same error page. The pane never retries on its own. The address bar keeps showing the address that failed, and that is the address the pane saves, so a restored pane tries the same page again.
+
+## Downloads
+
+A download starts the operating system's **Save As** dialog, named after the file, in the folder you saved to last (the Downloads folder the first time). The page never chooses where a file goes. Cancel the dialog and nothing is saved.
+
+Once you save, a strip under the toolbar lists the download (`crates/cef/src/client/downloads.rs`, `frontend/app/view/browser/download-strip.tsx`):
+
+- while it runs, its name and progress, with **Cancel**;
+- when it is saved, the word "saved" and **Show in folder**, which reveals the file in your file manager;
+- if it fails, the reason in words. Nothing is retried; the page's link is still there.
+
+A finished line folds away after about 20 seconds, and **Hide** removes any line that has ended. A page that starts many downloads at once gets one line saying the extras were ignored. The strip is part of AgentMux's pane, outside the page, so a page can't imitate it.
 
 ## Context menu
 
@@ -157,10 +185,11 @@ Right-clicking inside a page shows AgentMux's menu instead of Chromium's (`front
 1. **Back**, **Forward**, **Reload**
 2. **Cut**, **Copy**, **Paste**, when you right-click a selection or a text field
 3. **Copy Link Address**, over a link
-4. **Print**, **View Page Source**, **Inspect Element**
-5. The standard pane items: **Copy**, **Split Up/Down/Left/Right**, **Replace With...**, **Magnify Pane**, **Close Pane**, and a second **Inspect Element**
+4. **Print**
+5. **View Page Source** and **Inspect Element**, only with **Dev mode** on (**Settings ▸ Advanced**; on by default in a development build, off in the installed app)
+6. The standard pane items: **Copy**, **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has other panes), **Close Pane**, and, with Dev mode on, a second **Inspect Element**
 
-The first **Inspect Element** opens Chromium DevTools for the page at the element you clicked. The second, from the standard pane items, inspects AgentMux's own interface instead. **View Page Source** shows the source in the same pane, as a normal history entry.
+With Dev mode on, the first **Inspect Element** opens Chromium DevTools for the page at the element you clicked. The second, from the standard pane items, inspects AgentMux's own interface instead. **View Page Source** shows the source in the same pane, as a normal history entry.
 
 If the menu can't be shown, you get Chromium's native menu instead.
 
@@ -175,11 +204,60 @@ When you drag a pane, a pane tab or a window tab over a browser pane, the page i
 
 ## What a pane keeps
 
-Only the current URL is saved with the pane. Switching to another window tab and back keeps the page as it was. So does switching between pane tabs in the same pane: a browser tab stays loaded while another tab is showing, keeping its scroll position, form input, zoom and history (`frontend/app/view/browser/browser.tsx`, `lifecycle: "keepAlive"`). Moving a browser pane to another window creates a fresh browser at the saved URL, so the page reloads and its back/forward history, scroll position, zoom and camera/microphone grants are lost.
+Only the current URL is saved with the pane. Switching to another window tab and back keeps the page as it was. So does switching between pane tabs in the same pane: a browser tab stays loaded while another tab is showing, keeping its scroll position, form input and history (`frontend/app/view/browser/browser.tsx`, `lifecycle: "keepAlive"`). Moving a browser pane to another window creates a fresh browser at the saved URL, so the page reloads and its back/forward history, scroll position and camera/microphone grants are lost. Its [zoom](#zoom) isn't: that belongs to the site and the profile.
+
+A pane that stays out of sight for a while (30 minutes by default) goes to sleep to free its memory, and loads again when you are about to look at it. Panes an agent is using never sleep. See **Hibernate hidden browser panes** in [Browser settings](/settings/#browser-settings).
 
 ## Driving the browser from an agent
 
-Agents can control a browser pane with the `Browser` MCP tool: navigate, back, forward, reload, run JavaScript in the page, type into and focus elements, and read which element has focus. They work on the calling agent's own pane when it is a browser pane, and on a browser pane the agent opened itself (`Browser` `open`), never on one it didn't open or that the user took over. These actions drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
+Agents control a browser pane with the `Browser` MCP tool. It works on a browser pane the agent opened itself (`Browser` `open`) and on the agent's own pane when that is a browser pane, never on a pane the agent didn't open or one you took over. An agent reads a page as a snapshot, an accessibility tree with a reference on each element it can act on, and acts by reference: click, fill, select, check, upload files, navigate, wait for text. These actions drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
+
+### The strip over a driven pane
+
+A pane an agent drives shows a strip under the toolbar: **Driven by** the agent's name, and **Limited to N sites** when the agent opened it for some sites only. Its buttons:
+
+| Button | What it does |
+|---|---|
+| **Log (n)** | Lists what the agent did here, newest first: each action, how it went (allowed, approved, auto-approved, declined, refused) and the page. It works while the pane is paused, and stays after you take over. |
+| **Pause** / **Resume** | Holds the agent's actions in this pane until you resume. Auto-approve's clock stops too. |
+| **Auto-approve** | Lets the agent's clicks go through without asking, for a while. See below. |
+| **Take over** | Ends the agent's control of this pane; its next action here fails. |
+
+### Asking you, and Auto-approve
+
+- **Hand-offs.** For a sign-in, a two-factor code, a CAPTCHA, payment details or any field marked secret, the agent hands the pane to you. A banner says what it needs; click **Done** when you have finished.
+- **Committing clicks.** A click that submits a form or is named like Submit, Send, Pay, Delete or Confirm waits for you in the pane. The banner shows what the agent wants to do, the form's fields and where they go, with **Approve** and **Cancel**.
+- **Auto-approve.** For a run of clicks you have asked for, choose **Auto-approve** in the strip, then **15 min**, **1 hour** or **4 hours** and **Turn on auto-approve**. Only a pointer click turns it on. For that time, on the sites the pane shows, the agent's clicks that submit, delete or send go through without asking, and so does the page's own "Are you sure?" that follows one. It still can't type passwords or codes or run scripts, and payments still ask. The strip turns red and reads **Auto-approve on** with the time left; **Stop auto-approve** ends it. If the page leaves the granted sites, auto-approve pauses until it returns.
+- **The agent can ask.** An agent can ask you to turn auto-approve on, with a reason, for 15, 60 or 240 minutes. The banner offers **Allow auto-approve**, **Always for *agent* on this site** and **No**.
+
+### Standing powers
+
+**Always for *agent* on this site** keeps the grant. It adds a row to **Settings ▸ Browser ▸ Agents on sites**, and from then on that agent's requests for that site are granted at once, with no banner. The strip says "always, until you revoke it in Settings" instead of a time left. **Pause** and **Take over** still work in the pane; **Revoke** in Settings ends the row itself.
+
+**Agents on sites** lists each row with the agent, the site, when you granted it, and its powers: **Committing clicks** (always on) and, as a checkbox, **Terminal: type and run commands**. **Revoke** ends a row at once, and a call in flight stops. To add one, choose an agent, type a site such as `shell.example.com`, tick **Terminal** if you want it, and click **Allow**. Under **Consoles, with the terminal**, **Google Cloud Shell** and **Azure Cloud Shell** add the sites those consoles use for the agent you chose. Only your own window writes these rows (or your answer **Always** on a request); no agent can.
+
+### Web terminals
+
+With the **Terminal** power on a site, an agent can type into a web terminal there, such as Google Cloud Shell, and read what it prints (`Browser` `terminal`). It types real keys, one at a time, and presses Enter after each line, with no question per line, so nobody checks each command: you can read every line in the pane's Log, and **Pause** and **Take over** end it at once. It works only on a site that has the grant, and only with terminals built on xterm.js. AgentMux refuses text that looks like a credential, and refuses to type anything while the terminal is asking for a password or a code, which stay yours to type. Between lines it waits about 2.6 seconds and reads the screen for such a prompt, so a prompt that appears later (an `ssh` to a slow host, say) can still get the next line typed into it: run commands like that yourself. What the terminal prints goes back to the agent only and is not written to the Log.
+
+### Secrets on a page
+
+A card, bank or ID number, a security code or a one-time code a page prints, and the value of a field for one, are hidden from everything the agent reads, shown as `[card number hidden]` or `[code hidden]`. A secret a page shows only once, such as a new client secret next to a Copy button, is hidden from the agent's snapshots and screenshots too, including when the page splits it over highlighted text. The agent sees a placeholder, and can use `Browser` `capture` to save it straight into the [Vault](/vault/): it gets the new entry's id, never the value, and the entry keeps the page's address. With `download`, the agent names the button that downloads a file shown once, such as a GitHub App's private key; AgentMux clicks it and keeps the file's text in the Vault as a note without writing it to disk. Saving a new entry asks nobody, since nothing leaves the Vault; replacing an existing entry's value asks you each time.
+
+### Uploading files, forms and frames
+
+- **Uploads.** `set_files` puts files into a file input, and also works on the button or label that opens a page's file chooser (a hidden input, or one the page makes on click). A snapshot lists hidden file inputs as `file input (hidden)`. Up to 10 files and 25 MB in all, from the agent's own workspace, and every upload is logged.
+- **Frames.** A snapshot waits briefly for iframes that are still loading, so a step that loads inside a frame isn't read as empty. References inside a frame look like `f1e3`. In a pane limited to some sites, frames from other sites show their contents with no references.
+
+### Pause all agent browsing
+
+An emergency stop for every pane an agent drives. While it is on, each of those panes refuses every call the agent makes, and the clocks of Auto-approve grants stand still. Turn it on or off with:
+
+- the **Pause all agent browsing** switch in **Settings ▸ Browser**;
+- **Pause all agent browsing** and **Resume agent browsing** in the command palette;
+- the status bar, which shows **Agent browsing paused by you. Resume** while it is on, and resumes with one click.
+
+It stays on after a restart until you turn it off. A pane's strip reads "Paused for every pane" while it is on, and **Resume** there turns it off for every pane. No agent can turn it on or off.
 
 ## Internals
 

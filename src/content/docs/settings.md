@@ -43,15 +43,21 @@ The default theme and opacity for windows without their own, the startup splash 
 
 ### Window & Panes
 
-Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, whether closing a tab asks first, and **Warn before closing a window with working agents** (see [Workspaces](/workspaces/#when-an-agent-is-working)).
+Pane block ids in headers (a debugging aid), the view a new tab or pane opens with, the numbered overlay for jumping to a pane, whether the mouse side buttons walk back and forward through the panes you selected, whether closing a tab asks first, and **Warn before closing a window with working agents** (see [Workspaces](/workspaces/#when-an-agent-is-working)).
 
 ![Settings, Window & Panes tab](../../assets/screenshots/settings/settings-window-panes.png)
 
 ### Browser
 
-Browser profiles: each keeps its own sign-ins, cookies and site data, so one site can be open as two accounts side by side. **Personal** is the profile every tab starts with and can't be removed; add others by name. An agent can browse as a profile only if you allow it for that profile. See [Browser pane](/browser-pane/#profiles-and-incognito).
-
 **Search suggestions while typing** (`browser:searchsuggestions`, on by default): the address bar also asks your search engine for suggestions as you type, as Chrome does, which sends it what you type before you press Enter. Turn it off to keep suggestions to this computer (your history and the addresses you typed). Incognito tabs never ask, as in Chrome. See [Suggestions as you type](/browser-pane/#suggestions-as-you-type).
+
+**Hibernate hidden browser panes** (with **Minutes hidden before it sleeps** and **Sites that never sleep**): a browser pane out of sight for a while frees its memory and loads again when you are about to look at it. See [Browser settings](#browser-settings).
+
+**Browser profiles**: each keeps its own sign-ins, cookies and site data, so one site can be open as two accounts side by side. **Personal** is the profile every tab starts with and can't be removed; add others by name. For each profile you can rename it, pick its colour, delete it, and switch on **Agents may use it**: an agent can browse as a profile only if you allow it. See [Browser pane](/browser-pane/#profiles-and-incognito).
+
+**Pause all agent browsing**: an emergency stop. While it is on, every browser pane an agent drives refuses every call the agent makes, and the clocks of Auto-approve grants stand still. It stays on after a restart until you turn it off here, in the status bar or from the command palette. See [Pause all agent browsing](/browser-pane/#pause-all-agent-browsing).
+
+**Agents on sites**: the standing powers you have given an agent on a site, from an **Always** answer to its auto-approve request or added here. Each row has **Revoke**, a **Terminal** checkbox for running commands in a web terminal there, and the agent and site it covers. Under it, add a row with an agent, a site and **Allow**, or use the **Google Cloud Shell** and **Azure Cloud Shell** presets. See [Standing powers](/browser-pane/#standing-powers).
 
 ![Settings, Browser tab: the browser profiles](../../assets/screenshots/settings/settings-browser.png)
 
@@ -160,7 +166,7 @@ A key you don't set uses the default shown below. "Unset" in the Default column 
 | `browser:hibernateafter` | number | `30` | Minutes a browser pane is hidden before it hibernates. Sooner when the computer is low on memory: 5 minutes, then 1. |
 | `browser:keepawakesites` | array | `[]` | Sites whose browser panes never hibernate, by host (`example.com`) or origin (`https://example.com`). |
 
-Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
+Browser profiles, the standing powers you give agents on sites and **Pause all agent browsing** are managed in Settings ▸ Browser, not in `settings.json`.
 
 ## Window Settings
 
@@ -180,6 +186,7 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 | `window:keepinactivetabslaidout` | boolean | `true` | Keep window tabs you aren't looking at laid out, so switching back to one has nothing to catch up on. `false` skips their layout while hidden. |
 | `window:autorecycle` | boolean | `true` | Reload a window that has been idle for 10 minutes when its page uses much more memory than it did after loading (over 600 MB and twice its size after load), to give that memory back. Drafts, scroll positions and layout are kept, and it waits while anything would be lost. `false`: reload only on request (**Reload Window (Free Memory)** in the command palette). See [Windows, tabs, panes and renderers](/internals/renderers/#what-gives-memory-back). |
 | `window:confirmcloseworking` | boolean | `true` | Ask before closing a window, or switching [workspace](/workspaces/), while an agent in it is mid-turn (Settings: **Warn before closing a window with working agents**). Closing stops its agents; the window stays in the workspace, to reopen from the instance panel. The warning's **Don't ask again** turns it off. |
+| `mouse:sidebuttons` | boolean | `true` | The mouse Back and Forward side buttons re-select the pane you had selected before or after, in any tab (Settings: **Mouse side buttons select the previous / next pane**). `Ctrl` + a side button is the page's own back / forward over a browser pane. Off: the page keeps its own history on these buttons. See [Pane selection history](/pane-types/#pane-selection-history). |
 
 ## App Settings
 
@@ -214,6 +221,12 @@ Browser profiles are managed in Settings ▸ Browser, not in `settings.json`.
 | `agent:onewayflow` | boolean | `true` | While an agent pane follows the conversation, text only moves up: nothing overshoots and scrolls back. `false` restores the earlier glide. Takes effect when a pane is next opened. |
 | `agent:view` | string or object | `"full"` | What agent panes show. A preset name (`"full"`, `"standard"` or `"replies"`) or an object with any of `thinking`, `tools` and `jekts` (`"auto"`, `"expanded"`, `"collapsed"` or `"hidden"`), `notes` (`"shown"` or `"hidden"`) and `context` (`"auto"` or `"hidden"`); a missing or unknown switch takes Full's value. A pane that has its own view ignores it. Set from a pane's View popover with **Make this the default**. See [Choosing what the pane shows](/agent-pane-messages/#choosing-what-the-pane-shows). |
 | `markdown:streamtailinplace` | boolean | `true` | While a message streams, update its last, still-open block (a code block, paragraph, list item or table cell) in place instead of rebuilding it on every update. |
+
+## Files pane settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `files:icons` | string | `"system"` | What file and folder icons the [Files pane](/pane-types/#files) shows. `"system"`: the icons the operating system shows for each file type, as its own file manager does (Windows; elsewhere the built-in icons stay). `"app"`: always AgentMux's built-in icons. |
 
 ## File drop and attachment settings
 

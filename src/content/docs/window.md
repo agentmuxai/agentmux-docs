@@ -44,7 +44,13 @@ A tab's close button (×) asks first, because the tab's panes close with it. Tic
 
 ## Panes
 
-Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
+Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Minimizing a pane in a split puts its tabs into a neighbouring pane as background tabs (hold `Shift` to keep a header chip instead); right-click the tab's pill and choose **Open in Its Own Pane** to bring it back. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
+
+The mouse's Back and Forward side buttons re-select the panes you had selected before and after, in any tab (see [Pane selection history](/pane-types/#pane-selection-history)).
+
+**Hover tooltips** show once the pointer has rested on a button, pill or truncated label for 40 ms, and at once when you move along a row of them. Labels that used to be the browser's slow native hover text use the same tooltip.
+
+**Zoom.** `Ctrl`+scroll over a pane zooms that pane; over the title bar, the status bar or a pane header it zooms the interface itself, which starts again at 100% when AgentMux restarts. `Ctrl+Shift`+scroll zooms every pane in the window. See [Keybindings](/keybindings/#find--zoom) and [Zoom system](/internals/zoom/).
 
 ## Status bar
 

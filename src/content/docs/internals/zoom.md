@@ -1,30 +1,33 @@
 ---
 title: Zoom system
-description: How `Ctrl+/-/0` and `Ctrl+Scroll` route to per-pane and chrome zoom — the universal framework in `frontend/app/store/zoom.ts`, how it persists (live block meta plus a durable per-agent layer), and how new view types opt in.
+description: How `Ctrl+/-/0`, `Ctrl+Scroll` and `Ctrl+Shift+Scroll` route to per-pane, all-panes and chrome zoom — the universal framework in `frontend/app/store/zoom.ts`, how a zoom keeps the text under the pointer, how it persists (live block meta plus a durable per-agent layer), and how new view types opt in.
 ---
 
-AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and one mouse input (`Ctrl+Wheel`) flow through it. Per-pane zoom lives on block meta (`term:zoom`); for **agent** panes it is additionally mirrored into a durable per-agent store so the zoom survives the block (see [Persistence](#persistence)). Chrome zoom is in-memory only (see the table below).
+AgentMux has **one** zoom framework, used by every pane type that supports zooming. Three keyboard inputs (`Ctrl+/-/0`) and two mouse inputs (`Ctrl+Wheel`, and `Ctrl+Shift+Wheel` for every pane in the window) flow through it. Per-pane zoom lives on block meta (`term:zoom`); for **agent** panes it is additionally mirrored into a durable per-agent store so the zoom survives the block (see [Persistence](#persistence)). Chrome zoom is kept per window until the app restarts (see the table below). The one pane that doesn't use this framework is the Browser pane, whose page has Chromium's own per-site zoom ([Browser pane](/browser-pane/#zoom)).
 
 ## Two zooms
 
 | Mode | Scope | Persistence | Mechanism |
 |---|---|---|---|
 | **Per-pane** | One block (agent panes: also persisted **per-agent**) | `term:zoom` on block meta — the live value; for agent panes also mirrored into a durable per-agent `ui:zoom` content blob (see [Persistence](#persistence)) | Terminal panes: `term.options.fontSize = base * zoom`. Other view types: CSS `zoom` on the view root. |
-| **Chrome** | Whole window | In-memory only — `chromeZoomAtom` + `--zoomfactor` on `:root`; reset on reload (`initChromeZoom()` reapplies `DEFAULT_ZOOM`, `loadZoom()` is a no-op today) | Title bar + status bar use `calc(... * var(--zoomfactor))` for their dimensions and fonts. |
+| **Chrome** | Whole window | `chromeZoomAtom` + `--zoomfactor` on `:root`, kept in the window's `sessionStorage` (`agentmux:chrome-zoom`), so a reload of the window (a recycle, a version-skew reload) keeps it and a restart of AgentMux starts at 100% | Title bar, status bar, pane headers and the browser toolbar use `calc(... * var(--zoomfactor))` for their dimensions and fonts. |
 
-Per-pane is what users hit by default (zoom in/out adjusts the focused pane). Chrome zoom fires when the cursor is over the title bar / status bar / pane header during `Ctrl+Wheel`.
+Per-pane is what users hit by default (zoom in/out adjusts the focused pane). Chrome zoom fires when the cursor is over the title bar / status bar / pane header / browser toolbar during `Ctrl+Wheel`. Both are clamped to 50%–200%.
 
 ## Input routing
 
-Three files own the input plumbing:
+Four files own the input plumbing:
 
 - [`frontend/app/store/zoom.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.ts) — the store. Exports `zoomIn`, `zoomOut`, `zoomReset`, `zoomBlockIn`, `zoomBlockOut`, `chromeZoomIn/Out/Reset`, plus the `zoomIndicatorVisibleAtom` / `zoomIndicatorTextAtom` signals the indicator overlay reads. One file serves every platform.
 - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) — `Ctrl+/-/0` and `Cmd+/-/0` bindings call `zoomIn() / zoomOut() / zoomReset()`. Those resolve the focused block via `getFocusedBlockId()` and route to `zoomBlockIn/Out` for that block.
-- [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) — `Ctrl+Wheel` listener at window scope. If the cursor is over chrome (`.window-header` / `.status-bar` / `.block-frame-default-header`), routes to `chromeZoomIn/Out`; otherwise probes `target.closest("[data-blockid]")` and routes to `zoomBlockIn/Out`.
+- [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) — the `Ctrl+Wheel` listener at window scope. If the cursor is over chrome, routes to `chromeZoomIn/Out`; otherwise probes `target.closest("[data-blockid]")` and routes to `zoomBlockIn/Out`, passing the pointer. A second listener takes `Ctrl+Shift+Wheel`: over chrome it is the same chrome step, elsewhere it steps every zoomable pane in the window together (`zoomAllPanesIn/Out`), each from its own level, with one "All panes: …" indicator. `Ctrl+Shift+0` (`view:zoom:resetAll`) puts them all back to 100%.
+- [`frontend/app/store/chrome-zoom-target.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/chrome-zoom-target.ts) — `isOverChrome`, the one test both listeners use. An element's `data-zoom-scope` (`chrome` or `content`) says which zoom it is drawn at, and the nearest one wins; without one, `.window-header`, `.status-bar` and `.block-frame-default-header` count as chrome. A pane whose content zooms but whose own controls follow chrome zoom marks them: the browser toolbar is `chrome`, the Editor's PDF pages are `content`.
 
 The **per-pane path** converges on `setBlockZoom(blockId, factor)` which writes `term:zoom` on the block's meta via `SetMeta` RPC. Other components read it back through their block atom.
 
-The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the `--zoomfactor` CSS variable in memory; it does NOT write block meta. Don't look for chrome zoom under `term:zoom` — it lives in the atom, scoped to the running renderer, and resets on reload.
+The **chrome path** (`chromeZoomIn/Out`) updates `chromeZoomAtom`, the `--zoomfactor` CSS variable and the window's `sessionStorage`; it does NOT write block meta. Don't look for chrome zoom under `term:zoom` — it lives in the atom, scoped to the window, and starts again at 100% when AgentMux restarts.
+
+A pane shows the level it just asked for before the backend has stored it. `setBlockZoom` holds the new level locally (`frontend/app/store/pane-zoom-local.ts`) until the `SetMeta` write settles, plus 1.5 s for its update to reach the cache, or drops it at once if the write is refused. Views read `paneZoom(blockId, meta)`, not `meta["term:zoom"]` directly, so a second wheel tick sent before the first came back steps from the right level.
 
 ## How to make a view type zoomable
 
@@ -59,13 +62,27 @@ The **chrome path** (`chromeZoomIn/Out/Reset`) updates `chromeZoomAtom` and the 
      </div>
      ```
 
-4. **DO NOT** attach your own `Ctrl+/-/0` or `Ctrl+Wheel` handlers. The universal framework already covers them. Duplicate handlers compete with the universal flow (different step sizes, capture-phase `stopPropagation` pre-empting the indicator, two writes to the same meta key) and break zoom for that pane.
+4. **DO NOT** attach your own `Ctrl+/-/0` or `Ctrl+Wheel` handlers, with one exception. The universal framework already covers them. The exception is content that handles the wheel itself and would stop it before the window listener sees it, such as xterm.js and CodeMirror: call `usePaneZoomWheel` (`frontend/app/store/zoom.ts`) on the view's root, which listens in the capture phase and takes plain `Ctrl+Wheel` through the same `zoomBlockByWheel` step (and leaves `Ctrl+Shift+Wheel` to the all-panes listener). Duplicate handlers compete with the universal flow (different step sizes, capture-phase `stopPropagation` pre-empting the indicator, two writes to the same meta key) and break zoom for that pane.
 
    This bit the agent pane in an early refactor. The agent-view component had inline `Ctrl+Wheel` and `Ctrl+/-/0` handlers attached in capture phase on the root, while the universal handlers fired through `keymodel.ts` and `app.tsx`. Result: each input either no-op'd or stepped twice. Deleting the inline handlers fixed it.
 
 ## Indicator overlay
 
-`zoomindicator.tsx` reads `zoomIndicatorVisibleAtom` + `zoomIndicatorTextAtom` and renders a transient pill with the current percentage. The store's `showZoomIndicator(text)` helper flips visibility on, schedules a 1.5s timeout to hide it, and replaces any pending timeout. Both per-pane and chrome zoom calls into it (`"Chrome 110%"` vs `"110%"`) so the user always sees what they just changed.
+`zoomindicator.tsx` reads `zoomIndicatorVisibleAtom` + `zoomIndicatorTextAtom` and renders a transient pill with the current percentage. The store's `showZoomIndicator(text)` helper flips visibility on, schedules a 1.5s timeout to hide it, and replaces any pending timeout. Per-pane, all-panes and chrome zoom all call into it (`"110%"`, `"All panes: 110%"` or `"All panes: 90%–120%"`, and `"Chrome 110%"`) so the user always sees what they just changed.
+
+## Keeping what is under the pointer
+
+A zoom keeps the text under the pointer where it is, so the part you are reading doesn't jump away. The Agent pane, the Terminal and the Editor opt in with `useZoomAnchor` (`frontend/app/store/zoom-anchor.ts`) and an adapter that knows how that pane finds, and puts back, the thing under a point:
+
+1. Just before a step changes a pane's zoom, the store calls `captureZoomAnchor(blockId, point)`. `point` is the pointer for the wheel, or, for the keys, the last pointer position (`lastPointer()`), which counts only if it is over the pane; otherwise the capture uses the pane's centre. The adapter notes what is there: a text position in a row for the Agent pane, a buffer line for the Terminal, a document position for the Editor.
+2. After the zoom lands and the layout changes, the hook restores it, and again on the next frames while the pane measures itself, until two passes in a row agree, ten frames pass, you scroll yourself, or the pane is following its latest output (then there is nothing to hold).
+3. Steps within 200 ms of one another with the pointer in the same place (a run of wheel ticks) share the first capture, so the held point doesn't drift by each step's rounding. A capture older than 2 s is discarded, so a pane whose zoom didn't change (a terminal whose font size rounds to the same size) never restores a stale point later.
+
+`frontend/app/store/zoom-anchor-dom.ts` has the helpers the adapters share: finding the text under a point and the rectangle of a character.
+
+### Panes whose content zooms on its own
+
+Some panes have content that takes the pane's zoom while the pane's own controls follow chrome zoom. The Editor showing a PDF is one (`frontend/app/view/editor/viewers/content-zoom.ts`): its `term:zoom` is a multiple of the width that fits the pane, pdf.js draws the pages again at the new scale, the point under the pointer is held as a page and a fraction of it (`frontend/app/view/editor/viewers/pdf/pdf-zoom.ts`), and the tab strip, viewer bar and file tree are drawn at `chromeZoomAtom`. Its pages are `data-zoom-scope="content"`, and the rest of the Editor is `chrome`, so a wheel over the pages zooms the PDF and a wheel over the tabs zooms the app.
 
 ## Persistence
 

@@ -31,7 +31,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
 | **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. |
-| **Browser** | globe | `browser` | Embedded native `CefBrowserView` |
+| **Browser** | globe | `browser` | A real Chromium browser in a pane, with profiles, Incognito tabs, downloads and controls over agents that drive it — see [Browser pane](/browser-pane/) |
 | **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
@@ -75,7 +75,7 @@ Features:
 
 - Real PTY with full ANSI support
 - Configurable font family and size
-- Per-pane zoom level (`Ctrl+/-` and `Ctrl+Scroll`)
+- Per-pane zoom level (`Ctrl+/-` and `Ctrl+Scroll`) that keeps the text under the pointer where it is; see [Zoom system](/internals/zoom/)
 - Shell-integration env block (`AGENTMUX_BLOCKID`, `AGENTMUX_LOG_DIR`, `AGENTMUX_AGENT_ID`, …) with helper functions like `muxlog`
 - Remote connections (SSH)
 - [Voice input](#voice-input) — dictate commands into the PTY via the mic button in the pane header
@@ -116,18 +116,17 @@ Dropping files from your file manager onto a terminal pane **copies** them into 
 
 ## Browser
 
-The browser pane embeds a native [CefBrowserView](https://bitbucket.org/chromiumembedded/cef/) at the OS-window level. It is **not** an iframe — the pane HWND sits as a child window of the AgentMux frame, which is why links, popups, and DRM content all work like a regular Chromium tab.
+The browser pane embeds a native [CefBrowserView](https://bitbucket.org/chromiumembedded/cef/) at the OS-window level. It is **not** an iframe — the pane HWND sits as a child window of the AgentMux frame, which is why links, popups, and DRM content all work like a regular Chromium tab. The [Browser pane](/browser-pane/) page covers what you see and use: the toolbar, profiles and Incognito, downloads, zoom, and what you can allow or stop when an agent drives a page.
 
 | Control | Action |
 |---|---|
-| ← / → / ⟳ | Back / Forward / Reload |
-| Address bar | Enter URL or search query — defaults to a search if it doesn't parse as a URL |
-| Go | Navigate to the address-bar value |
+| ← / → / ↻ | Back / Forward / Reload (↻ becomes ✕, **Stop loading**, while a page loads) |
+| Address bar | Enter URL or search query — defaults to a search if it doesn't parse as a URL; `Enter` loads it |
 
 Header state syncs from the backend's `browser-pane-nav-state` event:
 
 - **Title** — updates as the page loads
-- **Favicon** — fetched from the page; falls back to the `globe` icon
+- **Favicon** — fetched from the page; a generic `globe` icon stands in when the site has none or its icon fails to load
 - **History** — back/forward enabled state, per-pane
 
 When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/internals/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary — this is the same pattern the [debugging](/internals/debugging/#reducer-dispatch-ring) page describes.)
@@ -147,7 +146,7 @@ If you need to drive the browser pane from an agent or saga, those are the comma
 
 ### Default URL
 
-Blank-spawned browser panes default to `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly. (Spec: `SPEC_BROWSER_PANE_DEFAULT_URL_AND_POPUP_2026_04_21.md`.)
+A new browser pane opens its configured URL, otherwise your Home page, otherwise `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly. (Spec: `SPEC_BROWSER_PANE_DEFAULT_URL_AND_POPUP_2026_04_21.md`.)
 
 ### Address-bar focus + click handoff
 
@@ -176,7 +175,7 @@ Languages currently get syntax highlighting via lazy-loaded extensions: TypeScri
 
 ### File tree
 
-The tree column appears on the left, **expanded by default**, with three "roots" — your `$HOME` (auto-expanded so you don't have to drill in) plus every other drive (Windows) or mount (macOS `/Volumes`, Linux `/mnt` and `/media`, plus `/` itself). The drive that hosts `$HOME` is de-duplicated so it doesn't appear twice — UNIX `/` is the exception, always shown so you can reach `/etc`, `/opt`, etc.
+The tree column appears on the left with three "roots" — your `$HOME` (auto-expanded so you don't have to drill in) plus every other drive (Windows) or mount (macOS `/Volumes`, Linux `/mnt` and `/media`, plus `/` itself). The drive that hosts `$HOME` is de-duplicated so it doesn't appear twice — UNIX `/` is the exception, always shown so you can reach `/etc`, `/opt`, etc.
 
 | Interaction | Behavior |
 |---|---|
@@ -187,20 +186,23 @@ The tree column appears on the left, **expanded by default**, with three "roots"
 | Hover the divider between tree and editor | Cursor flips to col-resize; drag to resize the tree column |
 | Symlinked rows | Followed automatically (matches VS Code), marked with a `↗` overlay |
 
+An Editor **opened on a file starts with its tree collapsed**, however you opened it (from the Files pane, a link, an agent, the command palette) and whatever the file is: code, Markdown, an image or a PDF. An Editor opened with no file keeps the tree open, so you can pick one. Open or hide the tree yourself and the pane keeps your choice; a pane that began with no file stays open when you open a file in it later. A split of an Editor opens empty, with the tree setting of the pane you split. An Editor on an SSH host has no tree.
+
 The tree column **width is persisted per pane** in pane metadata (`editor:tree_width`, default 240 px, range 150–600). The full tree's expand state is in-memory (collapsing a folder keeps its children cached so re-expand is instant).
 
-### Pane icon doubles as the tree toggle
+### Hiding and showing the tree
 
-The editor pane's header icon is the file-tree expand/collapse button. Click it to hide the entire tree column and give CodeMirror the full pane width; click again to bring it back. The glyph flips with state — `folder-tree` when the tree is open, `folder` when collapsed — and the tooltip mirrors that ("Hide file tree" / "Show file tree"). The preference is **per pane** — `editor:tree_expanded` in block meta — so two editor panes in the same window can keep independent layouts (one tree-open for browsing, one full-width for diffs).
+The tree's toolbar has a **Hide file tree** button (the double-left arrows) that gives CodeMirror the full pane width. While the tree is hidden, a **Show file tree** button leads the document tabs at the top of the pane. The choice is **per pane** — `editor:tree_expanded` in block meta — so two editor panes in the same window can keep independent layouts (one tree-open for browsing, one full-width for diffs). `Ctrl+Shift+E` (`⇧⌘E`) moves between the tree and the editor.
 
 The pane **title shows the complete file path**, not just the basename, with a trailing `*` for unsaved changes. When several editor panes are open on similarly-named files (e.g. two `index.ts` in different directories), the title makes it unambiguous which one you're actually editing.
 
 ### Toolbar
 
-Three small square buttons at the top of the tree, each with an **instant tooltip on hover** (zero delay — pure CSS reveal):
+Small square buttons at the top of the tree, each with a tooltip that shows 40 ms after the pointer rests on it (at once when you move along the row from one to the next):
 
 | Button | Type | Behavior |
 |---|---|---|
+| « | action | **Hide file tree** (see above) |
 | 👁 / 👁‍🗨 | toggle | Show / hide hidden files. Off by default — dotfiles, `node_modules`, `.DS_Store`, `Thumbs.db`, `$RECYCLE.BIN` are filtered out. Persisted per pane as `editor:show_hidden` |
 | ⊟ | action | Collapse all folders to the top-level roots |
 | 🔄 | action | Re-fetch every currently expanded folder. Preserves expansion state. There's no background watcher; this is the explicit refresh path |
@@ -217,7 +219,7 @@ The editor detects and handles non-UTF-8 files automatically — Windows-1252 `.
 
 ### Markdown preview
 
-With a `.md` file open, press `Ctrl+Shift+V` (`Cmd+Shift+V`) to toggle a rendered preview pane alongside the editor. The preview re-renders on each save. Press the shortcut again to collapse it.
+A Markdown file opens as a rendered preview. A **Preview / Source / Split** control above it switches between the preview, the editor and both side by side, and `Ctrl+Shift+V` (`Cmd+Shift+V`) toggles between preview and source. The preview re-renders on each save. The mode is kept per document tab.
 
 ### Find / Replace
 
@@ -293,6 +295,16 @@ The Editor keeps its open files, text or [media](#media), as **document tabs** i
 
 A new pane made this way is an Editor on the same connection, holding just that tab. A tab that is being saved stays where it is.
 
+#### Merging Editor panes
+
+Two Editors can sit in one pane as [pane tabs](#pane-tabs), each with its own document tabs. When that happens, they merge into one Editor:
+
+- When you drop an Editor's pane tab onto another pane that holds an Editor, the arriving Editor's document tabs join the destination's with their unsaved text, and its pane tab goes. Hold `Alt` while you drop to keep the two separate.
+- Picking **Editor** from the **+** menu of a pane that already holds an Editor on this computer adds a new, empty document tab to that Editor instead of a second Editor.
+- A pane that holds two Editors no drop reached (from a saved layout, or a move an agent made) has **Merge document tabs** in the right-click menu of its pane tab.
+
+Only Editors on the same connection merge, since a path means nothing on another host. An Editor that can't merge, for example because one of its tabs is being saved, is left as it is, with a message when there is something to say.
+
 ## Files
 
 The Files pane is a file browser (`frontend/app/view/files/files-view.tsx`). It opens on your home folder, or on the folder in its `files:path` setting, and on a remote host's files when you choose **Browse files** in [Connectors → Remotes](/connectors/#remotes). The pane title is the folder's name.
@@ -301,7 +313,7 @@ The Files pane is a file browser (`frontend/app/view/files/files-view.tsx`). It 
 
 - **Toolbar:** Back, Forward and Up; a breadcrumb you can click, or double-click (or press `Ctrl+L`) to type a path; **Filter** (`Ctrl+F` or `/`); new folder; show or hide hidden files; refresh; and toggles for the Places sidebar, a list or thumbnail view, and the preview panel.
 - **Places** (left): your home and common folders, drives, WSL distributions, remote hosts (with **Manage remotes…**), and your agents' folders, each in the agent's colour.
-- **The list:** sortable Name, Modified, Size and Kind columns, or a thumbnail grid. In a git repository each row shows its status letter, and a dot marks a file an agent changed (its tooltip names the agent).
+- **The list:** sortable Name, Modified, Size and Kind columns, or a thumbnail grid. On Windows, each file and folder shows the icon Windows Explorer shows for its type; set `files:icons` to `app` to keep AgentMux's own ([Files pane settings](/settings/#files-pane-settings)). In a git repository each row shows its status letter, and a dot marks a file an agent changed (its tooltip names the agent).
 - **Preview** (`Space`, or the eye button): images, highlighted code, rendered Markdown, and cards for folders, audio, video and other files.
 - **Right-click a row** to open it (here, in a new tab, in the Editor, or with the default app), open a terminal there, reveal it in your file manager, **Mention in agent** or **Attach to** an agent, cut, copy or copy its path, rename (`F2`), move it to the Trash or delete it permanently. Right-click empty space for a new folder or file, paste, and the folder's own actions.
 - **Copying and moving:** cut, copy and paste, or drag files. When a name already exists, the Files pane asks: **Keep both**, **Skip**, **Replace** or stop, with **Do this for every conflict**.
@@ -319,6 +331,8 @@ There is no separate Media pane any more. Images, audio and video open in the [E
 |---|---|---|
 | **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
 | **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls. Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
+
+**Zooming a PDF** (`Ctrl`+scroll, `Ctrl`+`+` / `-` / `0`) zooms the pages, not the whole pane: 100% is the width that fits the pane, the pages are drawn again at the new size so they stay sharp, and the point under the pointer stays under it. The zoom is saved with the pane. The Editor's tabs, toolbar and file tree stay at the app's own zoom, and `Ctrl`+scroll over them zooms the app (see [Zoom system](/internals/zoom/)). In the text editor, zoom scales the whole pane, tabs and tree included.
 
 A viewer reloads when its file changes on disk. To open one of these files, open it in the Editor as you would any file, or drop it on an Editor pane (see [Dropping files onto panes](#dropping-files-onto-panes)).
 
@@ -613,6 +627,8 @@ Inspired by [cmux](https://github.com/manaflow-ai/cmux)'s
 [GitHub: SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN_2026_09_17.md)
 for the full design rationale.
 
+A pane tab's own menu (right-click its pill, in a pane with more than one tab) has **Open in Its Own Pane**, which takes that tab out into a pane of its own beside this one, to the right of a row or below a column. A pane that holds two Editors has **Merge document tabs** there too (see [Document tabs](#document-tabs)).
+
 ### Splitting
 
 | Action | macOS | Windows / Linux |
@@ -635,15 +651,17 @@ A Shortcuts pane is a grid of tiles, one for every pane type and every installed
 
 ### The pane menu
 
-Right-click a pane's header for its menu: **Copy**, the four splits, **Magnify Pane**, **Close Pane**, **Inspect Element** (opens DevTools on the pane), and **Pane Color**.
+Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane that takes typed input), **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**. To split up or left, use the keys under [Splitting](#splitting).
 
 ![A pane's right-click menu: Copy, Split Up, Split Down, Split Left, Split Right, Magnify Pane, Close Pane, Inspect Element and Pane Color](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
 
 **Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
 
-**Minimizing a pane next to a minimized pane of the same split merges its tabs into that pane**, with a landing animation on the tabs that arrive, instead of adding another minimized pane. The target is the nearest minimized pane before it (above or to the left) in the split, else the nearest after. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore. There is no undo: drag a tab out of the merged pane to separate it again. Minimized panes also count as hidden, so a row of them costs little.
+**Minimizing a pane merges its tabs into a neighbour.** When you minimize a pane in a split, its tabs join a minimized pane next to it, if there is one: the nearest one before it (above or to the left) with no expanded pane in between, else the nearest after it, with a landing animation on the tabs that arrive. In a row, minimized panes stacked over the same pane count as next to each other. If there is none, the tabs join the nearest expanded pane, after it (to the right or below) else before it, as background tabs; if that neighbour is itself a split, the pane nearest to the one you minimized takes them. Either way the minimized pane's own space goes to the others, and the pane you minimized is gone as a pane. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore, and not a locked pane, a floating pane or the last expanded one.
 
-The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A minimized pane shrinks to a chip the size of its header, in its place in the layout. A maximized pane can be minimized directly: it goes back to its slot as a header chip.
+To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, right-click its tab pill and choose **Open in Its Own Pane**, or drag the pill out; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
+
+The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
 
 ![The Agent pane maximized to fill its tab](../../assets/screenshots/chrome/chrome-pane-maximized.png)
 
@@ -658,6 +676,11 @@ The header's buttons, from left to right, are **Minimize** (when the tab has mor
 | Resize: move a border | `Alt+Shift+Arrow` (`⌃⌥⌘Arrow`) |
 | Close pane | `⌘W` / `Ctrl+Shift+W` |
 | Magnify pane | `⌘M` / `Ctrl+Shift+M` |
+| Previous / next selected pane | Mouse Back / Forward side buttons |
+
+#### Pane selection history
+
+Each window remembers the panes you selected, in any tab. The mouse's Back and Forward side buttons walk through that list: Back selects the pane you had selected before (switching to its tab, with its highlight and caret), Forward the one after. A pane you moved to another tab is found there. A press does nothing while a menu or dialog is open, or with `Shift`, `Alt` or the left button held. Over a browser pane, `Ctrl` + a side button is the page's own back or forward. The list is kept in memory, so it starts empty when AgentMux does. Turn the buttons off with **Settings ▸ Window & Panes ▸ Mouse side buttons select the previous / next pane** (`mouse:sidebuttons`); the page then keeps its own history on those buttons.
 
 ### Drag and Drop
 
@@ -666,6 +689,8 @@ Rearrange panes by dragging their headers. You can:
 - Reorder panes within a tab
 - Move panes across tabs
 - Drag panes between windows (cross-window drag supported on all platforms)
+
+Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. A pane with two or more tabs can place one of its own tabs this way. Several selected tabs always join the pane under the pointer.
 
 ### Dropping files onto panes
 
