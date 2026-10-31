@@ -30,7 +30,7 @@
   <!-- Layer: Frontend (top, consumer) — blue -->
   <rect class="bb" x="30" y="30" width="820" height="84" rx="8"/>
   <text class="t"  x="440" y="59"  text-anchor="middle">Frontend (renderer / SolidJS) — consumer</text>
-  <text class="s"  x="440" y="80"  text-anchor="middle">per-process atoms · 9 slices (reducer migration in flight)</text>
+  <text class="s"  x="440" y="80"  text-anchor="middle">per-process atoms · 9 slices</text>
   <text class="cb" x="440" y="101" text-anchor="middle">CEF JS bridge ▲ events</text>
 
   <!-- Arrow up: Host → Frontend -->
