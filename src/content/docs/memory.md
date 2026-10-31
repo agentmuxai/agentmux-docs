@@ -144,7 +144,9 @@ A rule that only matters for one kind of task belongs in a skill. A rule that mu
 
 A skill's page says "Used by N agents" and lists them, each with **Unbind**.
 
-![Memory → Skills: a skill opened: its description, format and content, "Used by 0 agents", and Bind to agent](../../assets/screenshots/memory/memory-skills.png)
+The section lists each skill with who it reaches (**All agents** for `disk-cleanup`, the one skill AgentMux ships), and ends with **+ New skill**, **Import a skill…** and **Agents and skills**.
+
+![Memory → Skills: the skill list with its reach tag, and + New skill, Import a skill… and Agents and skills below it](../../assets/screenshots/memory/memory-skills.png)
 
 ![A new skill: Name, Format, Trigger, Description and Content](../../assets/screenshots/memory/memory-skill-new.png)
 

@@ -59,7 +59,7 @@ Pane block ids in headers (a debugging aid), the view a new tab or pane opens wi
 
 **Agents on sites**: the standing powers you have given an agent on a site, from an **Always** answer to its auto-approve request or added here. Each row has **Revoke**, a **Terminal** checkbox for running commands in a web terminal there, and the agent and site it covers. Under it, add a row with an agent, a site and **Allow**, or use the **Google Cloud Shell** and **Azure Cloud Shell** presets. See [Standing powers](/browser-pane/#standing-powers).
 
-![Settings, Browser tab: the browser profiles](../../assets/screenshots/settings/settings-browser.png)
+![Settings, Browser tab: browser profiles, Pause all agent browsing and Agents on sites](../../assets/screenshots/settings/settings-browser.png)
 
 ### Terminal
 
@@ -123,7 +123,7 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
 
-![Settings, Advanced tab](../../assets/screenshots/settings/settings-advanced.png)
+![Settings, Advanced tab: the agent panes group, with the compaction and container limit settings](../../assets/screenshots/settings/settings-advanced.png)
 
 ## Settings File Location
 

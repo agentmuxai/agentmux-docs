@@ -77,7 +77,7 @@ Open an Agent pane. The starter layout already has one; you can also click **Age
 - **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. See [My Agents](#my-agents) for what each row shows and what its menu does.
 - **New Agent**: one card per harness. Each card is a template. Some cards carry **Free** and **Local** tags, and chips above the cards filter them (see below).
 
-![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
+![The agent picker with no agents yet: the New Agent cards, each with its Free and Local tags, and the Free, Local and Installed chips above them](../../assets/screenshots/agent/agent-picker.png)
 
 ### Free and Local tags
 
@@ -284,7 +284,7 @@ Skills are reusable procedures an agent follows when they are relevant; only a s
 
 See [Skills](/memory/#skills) for when to use a skill instead of Global Memory, and how binding works:
 
-![Memory → Skills: a skill opened, with who uses it and Bind to agent](../../assets/screenshots/memory/memory-skills.png)
+![Memory → Skills: the skill list, with + New skill, Import a skill… and Agents and skills](../../assets/screenshots/memory/memory-skills.png)
 
 AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
 
