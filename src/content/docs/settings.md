@@ -299,7 +299,7 @@ See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see)
 | `notify:sound:agent.waiting.for.input` | boolean | `true` | A looping tone while an agent waits for you: a question, a tool permission, a browser hand-off or approval, an SSH consent or a widget install. Quiet while you're looking at that pane. |
 | `notify:sounds:waiting:volume` | number | `0.25` | Volume of the waiting tone, 0 to 1, under the master volume |
 | `notify:waiting:browser` | boolean | `true` | Include browser hand-offs and approvals in the waiting tone, the tab flash and the notification |
-| `notify:sound:agent.shutdown.pending` | boolean | `true` | A falling chime when something other than you asks to shut an agent down and you have 15 seconds to keep it running |
+| `notify:sound:agent.shutdown.pending` | boolean | `true` | A falling chime when something other than you asks to shut an agent down and you have 15 seconds (30 when another agent stops it) to keep it running |
 | `notify:tooltones:enabled` | boolean | `true` | A quiet tone for every agent tool call |
 | `notify:tooltones:volume` | number | `0.25` | Volume of tool-call tones, 0 to 1, under the master volume |
 | `notify:tooltones:scope` | string | `"all"` | Which panes play tool-call tones: `"all"`, or `"focused"` (only the focused pane in the focused window) |
