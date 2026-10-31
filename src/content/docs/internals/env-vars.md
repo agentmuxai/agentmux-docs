@@ -58,7 +58,7 @@ focused-border colour, pane title, and jekt auto-registration.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:649` on `agent.open`; `agent_config.rs:231` for MCP env injection |
+| **Who sets it** | srv shell controller (`shell.rs`) from block `cmd:env` metadata (never from global settings `cmd_env`); `crates/srv/src/server/app_api/agent_open.rs:604` on `agent.open`; `agent_config.rs:231` for MCP env injection |
 | **Who reads it** | PTY shell process; shell integration scripts (`bash.sh:60`, `pwsh.ps1:37`, `zsh.sh:60`) encode it into OSC 16162;E on every prompt; `shell.rs` reads it to decide jekt auto-registration |
 | **Example value** | `AgentX`, `Aria`, `Terminal` |
 | **Lifetime** | Set once at pane spawn; persists for the lifetime of the PTY session |
@@ -292,7 +292,7 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Test harness only |
-| **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:680`, `crates/srv/src/registry/paths.rs:144` |
+| **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:699`, `crates/srv/src/registry/paths.rs:144` |
 | **Purpose** | Replaces `~/.agentmux` root with a temp directory so tests don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
@@ -333,7 +333,7 @@ pane's environment unless you know exactly what you are doing.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:314`) from channel resolution; also a user override for `Installed`/`Portable` modes |
-| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:673` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
+| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:742` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
 | **Example** | `stable`, `beta`, `local-main`, `experiment` |
 | **Constraints** | Max 64 chars; cannot be `shared`, `snapshots`, `dev`, `versions`, `channels`, `runtime`; `default` maps to `stable` |
 
@@ -377,7 +377,7 @@ sanitized value is empty, mode falls through to `Installed`.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv shell controller (`shell.rs`), `shellexec.rs:360`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
-| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:157` reads it from env as a fallback |
+| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh:101`, `pwsh.ps1:72`); `crates/srv/src/bootstrap/stores.rs:160` reads it from env as a fallback |
 | **Example** | `0.44.1` |
 
 Available in every PTY pane shell session. Required by `muxlog` to
@@ -421,7 +421,7 @@ Child processes inside panes also see some of them (LOCAL_URL, BLOCKID).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv after binding its HTTP listener (`crates/srv/src/bootstrap/network.rs:102`): `std::env::set_var("AGENTMUX_LOCAL_URL", &local_web_url)` |
-| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:81`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
+| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:100`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
 | **Example** | `http://127.0.0.1:49312` |
 | **Lifetime** | Set once per srv startup; changes only when srv restarts |
 
@@ -440,7 +440,7 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:457`); sets it on both srv and host |
-| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:574`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:82` for WPS publish |
+| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:574`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:101` for WPS publish |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv actively removes this from its own process environment
@@ -468,7 +468,7 @@ These three vars form the launcher-managed srv hand-off. When all three
 are present, the host skips `spawn_backend()` and connects to the
 launcher-owned srv instead. If `AGENTMUX_BACKEND_WS` is set but empty or
 malformed, the host hard-fails rather than silently spawning a second srv
-(`crates/cef/src/lib.rs:839-845`).
+(`crates/cef/src/lib.rs:840-846`).
 
 **PITFALL:** Dev builds launched from inside an agent pane inherit these
 vars from the parent. The host uses `launcher_is_genuine_parent()` (checks
@@ -484,7 +484,7 @@ host to the parent's srv.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`srv_spawner.rs:491`) passes it to srv; launcher also advertises it to itself via env for re-use |
-| **Who reads it** | srv (`crates/srv/src/bootstrap/plumbing.rs:271`): if set, opens a named-pipe IPC server for launcher ↔ srv control channel; CEF host `srv_ipc.rs:62` to connect its IPC bridge |
+| **Who reads it** | srv (`crates/srv/src/bootstrap/plumbing.rs:275`): if set, opens a named-pipe IPC server for launcher ↔ srv control channel; CEF host `srv_ipc.rs:62` to connect its IPC bridge |
 | **Example** | `\\.\pipe\agentmux-srv-3f9a8c1d` (Windows) / `/tmp/agentmux-srv-3f9a8c1d.sock` (Unix) |
 
 Absent in `task dev` mode (no launcher in the loop). The presence of this

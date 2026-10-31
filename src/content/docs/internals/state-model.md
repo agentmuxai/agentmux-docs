@@ -23,9 +23,9 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 
 ### 1.1 LayoutModel — Class Overview
 
-`LayoutModel` (`frontend/layout/lib/layoutModel.ts:100`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
+`LayoutModel` (`frontend/layout/lib/layoutModel.ts:101`) is the per-tab class that owns the entire tile-layout state at runtime. One instance is created per tab and cached in `layoutModelMap`. The class holds both the runtime tree and all reactive accessors; the rendering component (`TileLayout`) is a pure consumer.
 
-**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:418`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
+**Key invariant:** `LayoutModel` lives in its own `createRoot` scope (`layoutModel.ts:419`). All memos — including the `isFocused` memo on every `NodeModel` — are created under this root and survive component mount/unmount cycles during tab switching. Without this root, the `isFocused` memo dies when `TileLayout` unmounts and the focus border freezes. (Bug analysis: `docs/specs/focus-border-tab-switch-bug.md`.)
 
 ### 1.2 localTreeStateAtom
 
@@ -40,7 +40,7 @@ this.localTreeStateAtom = createSignalAtom<LayoutTreeState>({
 });
 ```
 
-`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:105`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
+`localTreeStateAtom` is a SolidJS `SignalAtom<LayoutTreeState>` (`layoutModel.ts:106`). It is the **in-memory runtime source of truth** for the layout tree during a session. It is distinct from the persisted MuxObject (`muxObjectAtom`, which points at `LayoutState` in the backend store).
 
 The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 
@@ -52,9 +52,9 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts:282-288`):
 | `leafOrder` | `LeafOrderEntry[]?` | Ordered leaf list (top-left to bottom-right) |
 | `pendingBackendActions` | `LayoutActionData[]` | Queued backend-to-frontend layout mutations |
 
-**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:611`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:694`).
+**Write path:** all mutations flow through `treeReducer()` (`layoutModel.ts:612`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`layoutModel.ts:695`).
 
-**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`layoutModel.ts:628-634`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
+**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`layoutModel.ts:629-635`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -67,9 +67,9 @@ model.focusedNode (memo)        ← reactive accessor → LayoutNode
 
 `focusedNodeIdStack` (`layoutModel.ts:278,542`) is a plain `string[]` on the model. It tracks focus history so that when the currently focused node is deleted, focus falls back to the previous node rather than going to `leafOrder[0]`.
 
-The getter `focusedNodeId` (`layoutModel.ts:738-740`) simply returns `this.focusedNodeIdStack[0]`.
+The getter `focusedNodeId` (`layoutModel.ts:739-741`) simply returns `this.focusedNodeIdStack[0]`.
 
-The reactive memo `focusedNode` (`layoutModel.ts:531-541`) re-derives from `localTreeStateAtom` on every change:
+The reactive memo `focusedNode` (`layoutModel.ts:532-542`) re-derives from `localTreeStateAtom` on every change:
 
 ```typescript
 // layoutModel.ts:531-541
@@ -102,7 +102,7 @@ User click / keyboard nav
   → NodeModel.isFocused() returns true for the new node
 ```
 
-`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:683-693`). Like every tree edit it is queued for srv, as a `view` intent: no tree change, just the focused and magnified node (`frontend/layout/lib/layoutIntentActions.ts:128-130`).
+`FocusNode` is special: it skips `updateTree()` (no topology change) but it still updates `focusedNodeIdStack` inline (`layoutModel.ts:684-694`). Like every tree edit it is queued for srv, as a `view` intent: no tree change, just the focused and magnified node (`frontend/layout/lib/layoutIntentActions.ts:128-130`).
 
 ### 1.5 validateFocusedNode — Bootstrap and Stack Reconciliation
 
@@ -114,7 +114,7 @@ User click / keyboard nav
 
 ### 1.6 isFocused — Per-Node Derivation
 
-Every `NodeModel` carries an `isFocused` accessor (`frontend/layout/lib/types.ts:459`). It is created as a `createMemo` inside `model.runInModelRoot()` so it outlives component lifecycles:
+Every `NodeModel` carries an `isFocused` accessor (`frontend/layout/lib/types.ts:466`). It is created as a `createMemo` inside `model.runInModelRoot()` so it outlives component lifecycles:
 
 ```typescript
 // layoutNodeModels.ts:130-133
@@ -187,7 +187,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 
 <img src="/diagrams/state-model-turnphase.svg" alt="TurnPhase state machine: Idle → Submitting → Streaming → Interrupting, each with arrows to terminal Done (steel-blue) or Disconnected. Purple arrows show timeout/error transitions: SubmitTimeoutElapsed (30s), StreamStalled (60s), InterruptTimeoutElapsed (5s)." style="max-width:100%" />
 
-**Selectors** (`types.ts:592-638`):
+**Selectors** (`types.ts:581-627`):
 
 | Selector | Returns true when |
 |---|---|
@@ -195,7 +195,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1347-1399`):
+**Watchdog constants** (`types.ts:1342-1394`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -312,7 +312,7 @@ The master status (`MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`) still lists 
 | Phase | What | Status at the pin |
 |---|---|---|
 | 5 | Reducer arms calling pure helpers | ✅ shipped, including `LayoutApplyIntent` (`crates/srv/src/reducer/layout/intent.rs:26`) |
-| 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv/src/persist_subscriber.rs:213-258`) |
+| 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv/src/persist_subscriber.rs:216-261`) |
 | 7 | Migrate legacy `rootnode` writers off wcore-direct | ✅ for every edit a window makes; srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs:54-61`). One direct write is left: the default layout a first launch seeds before the reducer has loaded. |
 
 `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` records the same, phase by phase. This retired the SRV-02 dual write path (see §6 below).
@@ -342,7 +342,7 @@ Priority 3 (lowest / fallback): theme accent
 
 ### 4.2 Resolution Code Path
 
-The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1185-1194`):
+The memo that performs the resolution is `blockAgentColor` in `BlockFrame_Default_Component` (`blockframe.tsx:1187-1196`):
 
 ```typescript
 // blockframe.tsx:1185-1194
@@ -358,7 +358,7 @@ const blockAgentColor = createMemo(() => {
 });
 ```
 
-The result is injected as a CSS custom property (`blockframe.tsx:1379`):
+The result is injected as a CSS custom property (`blockframe.tsx:1382`):
 
 ```
 --block-agent-color: <color> | "transparent"
@@ -382,7 +382,7 @@ In `block.scss`:
 }
 ```
 
-The `has-agent-color` class is added when `blockAgentColor()` is truthy (`blockframe.tsx:1360`). `block-focused` comes from `NodeModel.isFocused()` which tracks `localTreeStateAtom().focusedNodeId` (see §1.6).
+The `has-agent-color` class is added when `blockAgentColor()` is truthy (`blockframe.tsx:1363`). `block-focused` comes from `NodeModel.isFocused()` which tracks `localTreeStateAtom().focusedNodeId` (see §1.6).
 
 ### 4.4 isUsableFocusRingColor — The Luminance Gate
 
@@ -401,7 +401,7 @@ export function isUsableFocusRingColor(color: string | null | undefined): boolea
 
 ### 4.5 Tab Color System
 
-Tabs no longer get a color automatically at creation; a user picks one from the 14-color `TAB_COLORS` palette (`frontend/app/tab/tab.tsx:33-48`):
+Tabs no longer get a color automatically at creation; a user picks one from the 14-color `TAB_COLORS` palette (`frontend/app/tab/tab.tsx:34-49`):
 
 | Name | Hex |
 |---|---|
@@ -420,7 +420,7 @@ Tabs no longer get a color automatically at creation; a user picks one from the 
 | Pink | `#c02b75` |
 | Rose | `#c42742` |
 
-Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:724`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
+Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:736`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
 ### 4.6 The 2026-06-12 Border Fix
 
@@ -457,7 +457,7 @@ Each `MuxObjectValue` holds a SolidJS signal pair (`getData` / `setData`) wrappi
 | `loadAndPinMuxObject<T>(oref)` | Pin (refCount++) + return the fetch promise |
 | `reloadMuxObject<T>(oref)` | Force re-fetch from backend |
 
-Cache eviction: `cleanMuxObjectCache()` runs every 30 s and removes entries with `refCount === 0` and `holdTime < now` (`mos.ts:384-394`).
+Cache eviction: `cleanMuxObjectCache()` runs every 30 s and removes entries with `refCount === 0` and `holdTime < now` (`mos.ts:427-437`).
 
 ### 5.3 How LayoutState is Persisted
 
@@ -476,12 +476,12 @@ export function getLayoutStateAtomFromTab(tabAccessor: () => Tab): () => LayoutS
 
 It has no setter: the row changes only through srv. A layout edit travels the other way, as a *layout intent* (`frontend/layout/lib/layoutIntents.ts`, `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` §4):
 
-1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`layoutModel.ts:628-634`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts:76-134`).
+1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`layoutModel.ts:629-635`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts:76-134`).
 2. **Send in order.** `flushLayoutOutbox` sends the outbox one item at a time (`layoutIntents.ts:51-69`). Each intent goes as `LayoutApplyIntentCommand` (`layout.applyIntent`), with the focused and magnified node as they are when it leaves. A failed send is tried up to three times, and a resend of the same action id is a no-op on srv (`layoutIntents.ts:71-96`). Pane-tab commands (activate, close or move a tab in a pane) go through the same queue with `queueLayoutCommand` (`layoutIntents.ts:41-44`, called by `sendStackCommand`, `layoutPersistence.ts:369-389`).
 3. **srv applies and stores it.** `apply_layout_intent` (`crates/srv/src/server/service/layout_intents.rs:29-72`) dispatches `Command::LayoutApplyIntent` while it holds the reducer lock. The reducer arm (`crates/srv/src/reducer/layout/intent.rs:26-117`) applies the intent to a copy of the tab's tree, normalizes it, takes the focused and magnified node from the request, and emits `LayoutTreeReplaced`, `FocusedNodeChanged` and `MagnifiedNodeChanged` for what changed. `apply_layout_intent` writes those events to SQLite before it lets go of the lock, so rows are written in the order intents are applied. A failed write puts the tab back as the row has it (`layout_intents.rs:60-65`). A refused intent changes nothing and answers `applied: false`.
 4. **Show what srv stored.** When the model is quiet (nothing queued or sending, no drag or resize preview) and the row includes every intent it sent (`layoutVersionFloor`), `reconcileWithStoredLayout` compares the stored tree with the local one. If they differ, srv refused an edit or computed it differently, and the stored tree replaces the local one. Focus stays the frontend's while its pane exists (`layoutIntents.ts:126-155`).
 
-Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `layout_intents.rs:136`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `layoutPersistence.ts:82-113`). The queue keeps the latest 32 actions; a window that missed one shows srv's stored tree anyway (`crates/srv/src/persist_subscriber/layout_queue.rs:8-16`).
+Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `layout_intents.rs:136`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `layoutPersistence.ts:82-113`). The queue keeps the latest 32 actions, and an action older than 10 minutes is dropped; a window that missed one shows srv's stored tree anyway (`crates/srv/src/persist_subscriber/layout_queue.rs:9-16`).
 
 *Removed:* `LayoutModel.persistToBackend()` used to copy the whole tree back to the row with a debounced `UpdateObject`. It is gone, and srv now refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs:54-61`).
 
@@ -530,14 +530,14 @@ The dual path is gone. `persistToBackend()` no longer exists, srv refuses a whol
 
 | Writer | Fields | When |
 |---|---|---|
-| `apply_layout_tree_replaced` (`crates/srv/src/persist_subscriber.rs:711-779`) | `rootnode`. Also clears focus or magnify when the tree empties or a delete removed that node, and writes every column when a seeding `LayoutSetTree` carries them | `LayoutTreeReplaced`, `LayoutNodeDeleted` |
-| `apply_focused_node_changed` (`crates/srv/src/persist_subscriber.rs:639-659`) | `focusednodeid` | `FocusedNodeChanged` |
-| `apply_magnified_node_changed` (`crates/srv/src/persist_subscriber.rs:664-684`) | `magnifiednodeid` | `MagnifiedNodeChanged` |
-| `apply_layout_backend_actions_queued` (`crates/srv/src/persist_subscriber/layout_queue.rs:26-56`) | `pendingbackendactions`, appended | `LayoutBackendActionsQueued` |
+| `apply_layout_tree_replaced` (`crates/srv/src/persist_subscriber.rs:699-767`) | `rootnode`. Also clears focus or magnify when the tree empties or a delete removed that node, and writes every column when a seeding `LayoutSetTree` carries them | `LayoutTreeReplaced`, `LayoutNodeDeleted` |
+| `apply_focused_node_changed` (`crates/srv/src/persist_subscriber.rs:627-647`) | `focusednodeid` | `FocusedNodeChanged` |
+| `apply_magnified_node_changed` (`crates/srv/src/persist_subscriber.rs:652-672`) | `magnifiednodeid` | `MagnifiedNodeChanged` |
+| `apply_layout_backend_actions_queued` (`crates/srv/src/persist_subscriber/layout_queue.rs:51-84`) | `pendingbackendactions`, appended | `LayoutBackendActionsQueued` |
 | `resync_tab` (`crates/srv/src/persist_subscriber/resync.rs:113-151`) | `rootnode`, focus and magnify, from the reducer's own state | The event bus lagged and dropped events |
 | `write_default_three_pane_layout` (`crates/srv/src/backend/wcore/mod.rs:173-190`) | The whole row | A first launch, before the reducer has loaded |
 
-`apply_focused_node_changed` is still how a focus change reaches `focusednodeid`, but it is now the only way. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it. The function's doc comment (`persist_subscriber.rs:632-638`) still says the other fields "stay on their existing wcore-direct path until Option B lands". That is out of date: the tree arrives on `LayoutTreeReplaced`.
+`apply_focused_node_changed` is still how a focus change reaches `focusednodeid`, but it is now the only way. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it. The function's doc comment (`persist_subscriber.rs:620-626`) still says the other fields "stay on their existing wcore-direct path until Option B lands". That is out of date: the tree arrives on `LayoutTreeReplaced`.
 
 ```
 User clicks pane
@@ -549,7 +549,7 @@ User clicks pane
     → MOS update reaches the window; nothing to correct
 ```
 
-Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv/src/persist_subscriber.rs:4-19`, `persist_subscriber.rs:764-771`).
+Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv/src/persist_subscriber.rs:4-19`, `persist_subscriber.rs:752-759`).
 
 ### 6.3 What Is Left of the Old Concerns
 
@@ -615,12 +615,12 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Concern | Primary File | Location |
 |---|---|---|
 | LayoutModel class | `layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `layoutModel.ts:436` | line 436 |
-| focusedNodeId getter | `layoutModel.ts:738` | line 738 |
-| focusedNode memo | `layoutModel.ts:531` | line 531 |
-| FocusNode reducer arm | `layoutModel.ts:635` | line 635 |
+| localTreeStateAtom init | `layoutModel.ts:437` | line 436 |
+| focusedNodeId getter | `layoutModel.ts:739` | line 738 |
+| focusedNode memo | `layoutModel.ts:532` | line 531 |
+| FocusNode reducer arm | `layoutModel.ts:636` | line 635 |
 | validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts:34` | `frontend/layout/lib/layoutFocus.ts` |
-| isFocused memo (per-node) | `layoutNodeModels.ts:130` | `frontend/layout/lib/layoutNodeModels.ts` |
+| isFocused memo (per-node) | `layoutNodeModels.ts:131` | `frontend/layout/lib/layoutNodeModels.ts` |
 | Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts:76` | `frontend/layout/lib/layoutIntentActions.ts` |
 | Intent outbox, send, compare with srv's tree | `frontend/layout/lib/layoutIntents.ts:51` | `frontend/layout/lib/layoutIntents.ts` |
 | srv: apply and store an intent | `crates/srv/src/server/service/layout_intents.rs:29` | `crates/srv/src/server/service/layout_intents.rs` |
@@ -631,10 +631,10 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | AgentDocumentState types | `frontend/app/store/agent-document/types.ts` | `frontend/app/store/agent-document/types.ts` |
 | BrowserPaneState types | `frontend/app/store/browser-pane-state/types.ts` | `frontend/app/store/browser-pane-state/types.ts` |
 | EditorPaneState / reducer | `editor-pane-state-store.ts` | `frontend/app/store/editor-pane-state-store.ts` |
-| blockAgentColor memo | `blockframe.tsx:1185` | `frontend/app/block/blockframe.tsx` |
+| blockAgentColor memo | `blockframe.tsx:1187` | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `autotitle.ts:170` | `frontend/app/block/autotitle.ts` |
 | block-focused CSS (border) | `block.scss:271` | `frontend/app/block/block.scss` |
-| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs:639` | `crates/srv/src/persist_subscriber.rs` |
+| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs:627` | `crates/srv/src/persist_subscriber.rs` |
 | Strong layout authority (design, status) | `specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` | `docs/specs/` |
 | Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
 | Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md:7` | `docs/specs/` |

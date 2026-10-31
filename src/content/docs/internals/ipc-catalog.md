@@ -256,7 +256,7 @@ Srv events dispatched as:
 window.__agentmux_srv_event(<JSON Event>)
 ```
 
-Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:885-1571`).
+Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:897-1596`).
 
 ### Purpose
 
@@ -278,7 +278,7 @@ Dev mode (`task dev` without launcher, or host invoked directly): `AGENTMUX_LAUN
 
 ### Authentication
 
-None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `crates/cef/src/lib.rs:749-762`).
+None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `crates/cef/src/lib.rs:750-763`).
 
 ### Wire Format
 
@@ -361,7 +361,7 @@ All `agentmux_common::ipc::Event` variants propagated. Key ones:
 - **Windows:** Win32 named pipe. Path in env var `AGENTMUX_SRV_PIPE_PATH` (set by launcher's `srv_spawner.rs`).
 - **Unix:** Unix domain socket (same env var).
 
-Activated only when `AGENTMUX_SRV_PIPE_PATH` is set. Dev builds (`is_dev_build_exe`) short-circuit to None (`crates/cef/src/lib.rs:788-792`).
+Activated only when `AGENTMUX_SRV_PIPE_PATH` is set. Dev builds (`is_dev_build_exe`) short-circuit to None (`crates/cef/src/lib.rs:789-793`).
 
 ### Authentication
 
@@ -527,7 +527,7 @@ All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-proce
 
 ## 10. Channel H: OSC 16162 — Terminal Shell Integration Escape Sequences
 
-**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:147-239`, `frontend/app/view/term/termwrap.ts:231-232`
+**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:147-239`, `frontend/app/view/term/termwrap.ts:232-233`
 
 ### Transport
 
@@ -582,7 +582,7 @@ Chromium DevTools Protocol over HTTP and WebSocket:
 - Intercept network traffic
 - Modify DOM
 
-**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs:1069-1079`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
+**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs:1070-1080`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
 
 ### Internal Use
 
@@ -727,7 +727,7 @@ This section maps the sweep findings to the specific code locations documented a
 
 | Finding | Location | Impact | Mitigation status |
 |---------|----------|--------|-------------------|
-| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs:1305-1308` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
+| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs:1306-1309` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
 | **`ipc_token` leaks via renderer URL query** | Frontend's load-time URL (not in scope of this sweep's source read; reported by sweep) | Token in browser history, `Referer`, process arguments | Not mitigated in code seen |
 | **`authkey.dev` leaks both tokens (dev mode)** | `dev_authfile.rs:32-50`; written when `AGENTMUX_DEV=1` | Full API access with both `ipc_token` and `auth_key` | File is chmod 0600 / owner DACL. Dev-only. |
 | **`get_auth_key` IPC command returns srv auth key** | `ipc.rs:203-207` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
@@ -738,7 +738,7 @@ This section maps the sweep findings to the specific code locations documented a
 | **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:94` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs:51-55`); host has not. |
 | **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `crates/srv/src/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
-| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1069-1079` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
+| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1070-1080` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
 | **WS authkey in query string** | `crates/srv/src/server/auth.rs:80-90` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
 | **`AGENTMUX_AGENT_COLOR` no value validation** | `shell.rs:365-375`; `termosc.ts:266-271` | Shell profile can inject arbitrary CSS color value into block meta → UI rendering with unvalidated color value. Root cause of Win11 focus-border regression. | No validation added as of 0.44.1. |
 
