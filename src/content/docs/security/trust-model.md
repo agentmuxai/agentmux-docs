@@ -115,8 +115,8 @@ These MCP tools act beyond the calling agent's own pane:
 
 | Tool | Scope | Guard |
 |---|---|---|
-| `Stop` `pane` | Any pane, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. The target is not restricted, but another agent's pane closes only after a 15-second window in which you can keep it (a banner in the pane and an OS notification). |
-| `Stop` `agents` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get the same 15-second window. |
+| `Stop` `pane` | A pane that holds no agent, by block id | The caller proves its own identity with its signing key and is recorded in the audit log. A pane that holds an agent is refused, with a pointer to `Stop` `agents`. Otherwise the target is not restricted, but the pane closes only after a 30-second window in which you can keep it. |
+| `Stop` `agents` | Any agents, by block id | The auth key; the caller's signature is optional and only names it in the banner and audit log. Targets running on this instance get a 30-second window in which you can keep them. |
 | `UI` `window` | Any window owned by your OS user: other AgentMux instances, and **other applications such as your browser or password manager** | Windows owned by other OS users are refused. Every call is appended to a local audit log, `capture-window-audit.log`. |
 | `UI` `windows` | Lists AgentMux windows; with `include_foreign`, other applications' windows and titles too | Audited the same way |
 | `Message` `send` | Any agent's conversation | Sender identity is labelled; see [Reactive event bus](/security/reactive-event-bus/) |
@@ -124,7 +124,7 @@ These MCP tools act beyond the calling agent's own pane:
 
 `UI` `screenshot`, `click` and `query` and the `Browser` tool act on the caller's own pane, or on a browser pane the caller opened itself (`Browser` `open`, then that pane's id as `pane`). The server takes the caller from its signature and drives a pane only if that caller opened it: the record of who opened which pane is written only after checking the opener's signed identity, and ends when the user takes the pane over or closes it (`crates/srv/src/server/browser_owner.rs`). The caller's own pane needs no id. `Stop` `self` likewise acts only on the caller, which ends the caller's own session. It skips the 15-second window only when the user's own message started the current turn and asked for the quit (`crates/srv/src/server/app_api/pane.rs`).
 
-The 15-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
+The 30-second window is a safeguard on the routes these MCP tools use, not a limit on the auth key: the same key reaches the UI's own stop command (`fleet.bulk-stop` over the RPC channel), which acts at once.
 
 ## What AgentMux protects against
 
@@ -179,7 +179,7 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `crates/srv/src/server/agent_handlers/input.rs` (`carry_agent_uid_env`) — agent UID and token
 - `crates/srv/src/server/caller.rs`, `crates/srv/src/backend/storage/agent_tokens.rs` — attribution
 - `crates/srv/src/server/ui_handlers.rs` (`verified_block_id`), `crates/srv/src/server/app_api/pane.rs` (`handle_close_pane`, `handle_quit_self`) — own-pane checks
-- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 15-second override window
+- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 30-second override window
 - `crates/srv/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv/src/muxbus/wan_lease.rs` — one live instance per agent
 - `crates/mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
 - `crates/srv/src/server/service/credential.rs`, `crates/srv/src/server/service/memory_adopt.rs` — host-only services
