@@ -131,7 +131,7 @@ The Add Account form:
 
 Each account shows a status dot: green (valid), red (expired or invalid), amber (checking) or grey (unknown). For Claude Code, Codex CLI and OpenClaw accounts, the status is refreshed from the account's credential file each time AgentMux starts a bound agent's CLI.
 
-To bind an account to an agent, right-click it and choose **Bind to Agent**, or use the **Accounts** tab of the agent's **Stash**. When an agent bound to one of these accounts starts, AgentMux sets that account's key in the agent's environment:
+An agent's account is chosen from the agent: click the login email in its composer strip (see [Identity & Accounts](/identity/#changing-an-agents-account)). When an agent bound to one of these accounts starts, AgentMux sets that account's key in the agent's environment:
 
 | Account | Environment variables |
 |---|---|

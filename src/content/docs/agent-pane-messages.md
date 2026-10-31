@@ -156,11 +156,11 @@ Each failure row has a title, a short explanation (with the exit code or signal,
 
 | Failure | Icon | Button |
 |---|---|---|
-| Sign-in rejected (401) | 🔐 | **Log in** or **Login Again**, **Login via terminal**, and **Bind account** (or **Bind: <name>** when one signed-in account fits) |
+| Sign-in rejected (401) | 🔐 | **Log in** or **Login Again**, **Login via terminal**, and **Use account…** (or **Use <name>** when one signed-in account fits; **Connectors → Accounts** when none does) |
 | Rate limited (429) | ⏱ | **Retry now**, with a countdown: AgentMux retries by itself |
 | Overloaded (529) | 🌀 | **Retry now**, with a countdown |
 | Network | 🌐 | **Retry now**, with a countdown |
-| Usage limit | 🚫 | **Accounts (switch / upgrade)** |
+| Usage limit | 🚫 | **Accounts (switch / upgrade)**. AgentMux also moves the agent to an account with quota by itself when its turn ends (see [Identity & Accounts](/identity/#when-an-agent-hits-its-usage-limit)) |
 | Context window full | 📏 | **New session**: resuming would fail again |
 | Turn limit (`--max-turns`) reached | 🔁 | **Continue** |
 | Killed (out of memory, or stopped from outside) | ⛔ | **Retry** |

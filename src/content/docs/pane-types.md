@@ -55,15 +55,15 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | Per-agent: **Stash** icon (`toolbox`) → **Accounts** tab (read-only). App-wide: **Connectors** → **Accounts**. View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
-| **Global and Personal Memory** | Per-agent: **Stash** icon → **Personal Memory** tab (the agent's own notes, not the Bundle editor — see below). App-wide: **Memory** → **Global** and **Personal**. |
-| **Bundles** | App-wide: **Memory** → **Bundles**. Per-agent, the **Stash** icon → **Bundles** tab picks which bundles the agent starts with, in order; no per-agent tab edits bundles. |
-| **MCP Servers** | Per-agent: **Stash** icon → **MCP Servers** tab. App-wide: **Connectors** → **MCP servers**. |
-| **Skills** | Per-agent: **Stash** icon → **Skills** tab. App-wide: **Memory** → **Skills**. |
+| **Identity** | App-wide: **Connectors** → **Accounts**. An agent's own account is the login email in its composer strip (see [Composer strip](#composer-strip)). View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Global and Personal Memory** | App-wide: **Memory** → **Global** and **Personal**. For one agent, right-click its pane and choose **Personal memory** to open Memory → Personal on that agent. These are notes, not the Bundle editor. |
+| **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents row menu or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
+| **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
+| **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
 | **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx:16`) — see [Media](#media). |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
-The **Stash** icon (`toolbox`) replaced the older two-icon pane-header design (a separate Memory/Brain icon plus an Identity/id-card icon) — see [Subsections](#subsections) below.
+The agent pane's header has no button for these. What belongs to one agent is reached from [Subsections](#subsections) below.
 
 ## Terminal
 
@@ -364,7 +364,7 @@ The agent pane is the first-class resident unit of AgentMux. Each agent gets a s
 
 An agent that runs in a Docker container shows a **CONTAINER** tag by the model selector; see [Container agents](/container-agents/).
 
-Agent panes are configured through [Bundles](/bundles/), picked when the agent is created; the Stash's **Bundles** tab changes them for an existing agent (see Subsections below).
+Agent panes are configured through [Bundles](/bundles/), picked when the agent is created; **Bundles…** changes them for an existing agent (see Subsections below).
 
 ### Activity indicator
 
@@ -422,7 +422,9 @@ After each completed turn, if the composer is still empty, AgentMux may show a d
 
 Mode, Model, and Effort (Claude panes only) render as pill-shaped **drop-up** controls in the composer strip — click one to open a small popup above it rather than a native dropdown; changes apply on the agent's next turn. The **Shell** button (formerly labeled "Log") toggles the resizable details drawer described below.
 
-The strip also shows the account the agent is signed in as. When you have another signed-in account for the same provider, and the agent isn't in the middle of a turn, click it and pick **Switch to &lt;email&gt;** to move the agent to that account. Switching restarts the agent (`frontend/app/view/agent/components/AgentComposerStrip.tsx`).
+The strip also shows the account the agent uses, as its login email (shortened to 22 characters; hover for the whole address). Click it to change the agent's account. The menu lists every signed-in account of the agent's provider, with the current one checked and a note beside an account that is out of quota ("out of quota until Sun 7:00 PM"). Choose one to move the agent to it. A signed-out agent's menu also has **Log in**, and a Claude agent's has **Sign in with another account…**, which adds an account and moves the agent to it. Accounts that share a provider and an email are numbered (`user@example.com ·2`). A container agent's strip has the same menu, even before an account is linked.
+
+If the agent is idle, it switches at once and restarts, keeping its session. If a turn is running, the switch waits: the chip reads `you@example.com → other@example.com`, and the agent moves when the turn ends. Choosing the account it is already on cancels a queued switch. See [Identity & Accounts](/identity/#changing-an-agents-account) (`frontend/app/view/agent/components/AgentComposerStrip.tsx`).
 
 ### Attaching files
 
@@ -463,23 +465,24 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 ### Subsections
 
-The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer. "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
+The agent pane has no drawer of its own. What belongs to one agent is reached from the agent's **My Agents** row and from the pane's right-click menu, and the rest lives in the app-wide panes.
 
-<figure class="docs-clip">
-<video controls loop muted playsinline preload="metadata" width="800" height="586" poster="/recordings/stash-tour-poster.webp" aria-describedby="clip-stash-tour"><source src="/recordings/stash-tour.mp4" type="video/mp4" /></video>
-<figcaption id="clip-stash-tour">A 20-second clip with no sound: opening the Stash from an agent pane's header, then each of its tabs in turn: Accounts, Personal Memory, MCP Servers, Skills, Bundles, Registration and Devices.</figcaption>
-</figure>
+**The pane's right-click menu** has **Agent History**, **Quick Fork** and **View…**. For an agent with a saved definition it adds **Seat…**, **Bundles…** and **Personal memory**, and a container agent also has **Container limits…**. A quick-launch pane, which has no saved agent, has none of these, and neither does an agent's History tab.
 
-- **Accounts** — the accounts linked to this agent, read-only except for a Claude **Connect** / **Re-login**. Renders `AgentIdentityLinksPanel`. New links come from signing in, the failure row's **Use account…**, the composer's account chip, or Connectors → Accounts; see [Identity](/identity/).
-- **Seat** — this agent's role, lead and area, which only you set; also **Import roster…** to seat several agents at once. Renders `AgentSeatPanel`. See [Seats](/first-agent/#seats).
-- **Personal Memory** — this agent's own memory notes, not a Bundle editor. Renders `AgentNativeMemoryModal`, the same browser as Memory → Personal. See [Memory → Personal](/memory/#personal).
-- **MCP Servers** — this agent's accessible MCP servers (bind/unbind globals, manage private ones). Renders `AgentMcpModal`.
-- **Skills** — this agent's accessible skills, same shape as MCP Servers. Renders `AgentSkillsModal`.
-- **Bundles** — the bundles this agent starts with, in order, its own bundle first; saved on each change. Renders `AgentBundlesTab`. See [An agent's bundles](/bundles/#an-agents-bundles).
-- **Registration** — this agent's live message-delivery status: its local registration, any other instance or channel on this host claiming the same identity, and recent deliveries rejected by the identity-mismatch guard.
-- **Devices** — **Hide from paired devices**: a hidden agent is left out of what a paired device (the mobile app) lists and can't be watched from one. Saved as soon as it changes. Renders `AgentDevicesPanel`.
+**My Agents** (the agent picker): each row's menu (the chevron at the right of the row) has **Rename**, **Duplicate**, **View History**, **Seat…**, **Bundles…**, **Environment…** and **Delete**. See [My Agents](/first-agent/#my-agents).
 
-Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). The `view: "identity"` registration exists so `pane.open` RPC and right-click menus can still reach that view, but the primary path is the Stash.
+| What | Where |
+|---|---|
+| **Seat** (role, lead and area, and **Import roster…**) | **Seat…**, from the row menu or the pane's right-click menu. See [Seats](/first-agent/#seats). |
+| **Bundles** the agent starts with, in order, its own bundle first | **Bundles…**, from either menu; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
+| **Environment** variables it starts with | **Environment…** in the row menu. See [Environment variables](/first-agent/#environment-variables). |
+| **Personal Memory** | **Personal memory** in the pane's right-click menu opens [Memory → Personal](/memory/#personal) on this agent. There you can browse its files, see history and diffs, revert, and add a **New file** or **Create MEMORY.md**. |
+| **Account** | The login email in the composer strip (see [Composer strip](#composer-strip)). Which agents use an account is in [Connectors → Accounts](/connectors/#accounts). |
+| **MCP servers** and **Skills** | Each server's page in [Connectors → MCP servers](/connectors/#mcp-servers) and each skill's page in [Memory → Skills](/memory/#skills) list the agents it is bound to, each with **Unbind**, and bind another with **Bind to agent**. |
+| **Message-delivery registration** | A badge on the agent's row in the [Swarm](/subagent-watcher/#registration-badge), only when something is wrong. |
+| **Hiding an agent from paired devices** | **Settings ▸ Paired devices ▸ Hidden from devices**. See [Paired devices](/lan-discovery/#what-a-paired-device-can-see). |
+
+Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). The `view: "identity"` registration exists so `pane.open` RPC and right-click menus can still reach that view, but nothing in the app opens it.
 
 ## Swarm
 

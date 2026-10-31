@@ -59,7 +59,7 @@ A device paired with this computer (the AgentMux mobile app) watches it, read-on
 - **Agents' live feeds.** A feed keeps following an agent after it restarts in another pane, and shows lines that another pane or another AgentMux instance adds to the agent's conversation.
 - **Terminals, only if you allow it.** Turn on **Share terminals with paired devices** (`viewer:shareterminals`) and a paired device can watch this computer's terminals, read-only and live. It's off by default, because terminals often show passwords and keys. Turning it off closes any terminal a device is watching.
 
-An agent you hide from paired devices (the **Devices** tab of its [Stash](/pane-types/#subsections), **Hide from paired devices**) is left out of the list and can't be watched. Its shell stays hidden too, even with terminal sharing on.
+An agent you hide from paired devices is left out of the list and can't be watched. Its shell stays hidden too, even with terminal sharing on. Hide an agent in **Settings ▸ Paired devices ▸ Hidden from devices**: choose it under **Choose an agent…** and click **Add agent**; **Remove** shows it again.
 
 ### Publish this computer to my devices
 
