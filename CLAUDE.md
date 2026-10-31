@@ -145,6 +145,19 @@ aws s3 ls s3://<docs-bucket>/_astro/ | grep css
 # Hashes must match. If not: HTML wasn't uploaded — run the force-upload step again.
 ```
 
+## Weekly drift pass (Mondays)
+
+The docs describe the app as it is today. Each Monday one agent compares them with the week's changes to agentmux `main` and fixes the drift in one PR. The comparison is the same one every time, so any agent can run it.
+
+1. **Find the window.** The last pass is the last commit that moved the `src/agentmux` pin (`git log -1 --format=%cs -- src/agentmux`). Fetch agentmux and note its `main` commit and the version in its `VERSION_HISTORY.md`.
+2. **List what merged.** `VERSION_HISTORY.md` entries above the pin's version are the hint; the merged PRs and their changesets are the source: `gh-agent pr list --repo agentmuxai/agentmux --state merged --search "merged:>=<last pass date>" --limit 200 --json number,title,files`. Keep what a user or an agent can see or call: panes, menus, settings, keys, tools and their actions, commands, defaults, limits, removed features and renames. Skip internal work (refactors, CI, tests, UI-kit changes with no visible effect).
+3. **Check each one against the docs.** `rg -n -i "<the term>" src/content` for the feature's name, its old name, its setting key and its tool action. Then read the code, not the changelog line, for the exact labels, defaults and behaviour. Sort each into: *undocumented*, *wrong* (the page says something the code no longer does), or *removed* (the page describes something that is gone: delete it and every link to it).
+4. **Move the pin.** In `src/agentmux` check out the `main` commit you compared against, then `git add src/agentmux`. The build checks every source link (`frontend/app/...` in backticks) at the pin, so a cited file that no longer exists fails it: fix or drop the citation.
+5. **Write the fix.** One PR for the week's drift, titled `docs: the week's drift (<first version>–<last version>)`. Follow the pages' own style (second person, present tense, the labels exactly as the app spells them). Screenshots that are now wrong are retaken from the released app, never from a dev build. A changeset, `npm run build` and `node scripts/check-links.mjs` before you push.
+6. **Say what is left.** End the PR body with a short list of what is still undocumented or unverified and why. Merge on approval, then send the requester one line: the PR and that list.
+
+Public repo rules apply to everything above: describe the product's behaviour only. No private repository contents, secret-store details, cloud resource names, account ids or incident data.
+
 ## Changesets (required on every PR)
 
 Every PR adds a changeset: `scripts/changeset.sh <patch|minor|major> "<one-line summary>"`, then commit the file it writes to `.changesets/`. The `changeset` CI check fails without one; a PR that genuinely needs no entry gets the `no-changeset` label. See `.changesets/README.md`.
