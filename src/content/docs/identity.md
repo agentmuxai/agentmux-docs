@@ -35,26 +35,39 @@ The OAuth invariant: a successful OAuth flow **always** lands bound to an Accoun
 
 ## How Identity is reached
 
-Identity is **not a widget-bar entry.** Two paths reach it:
+Identity is **not a widget-bar entry** and an agent pane has no accounts tab. Two places show it:
 
-**Per-agent (read-only):**
-1. Open an Agent pane (pinned in the widget bar).
-2. Click the **Stash** icon (`toolbox`) in the pane header — this single icon replaced the older separate Memory-icon/Identity-icon pair.
-3. Switch to the **Accounts** tab — a Provider/Account/Status table of this agent's direct account links (`AgentIdentityLinksPanel`). It's read-only, with one exception: for a Claude agent, its Claude row (or the empty table, if it has no Claude link) offers **Connect** / **Re-login**, the in-pane way to fix a missing or broken Claude binding.
+- **Connectors → Accounts** is the app-wide manager. Click **Connectors** in the widget bar (pinned by default), or run **Connectors** from the command palette. The pane opens on its **Accounts** section, where you create, edit and delete accounts. Each account card says "Used by N agents", and an open account lists those agents by name. There is no standalone "Identities" section: Connectors is scoped to shared, reusable resources.
+- **The composer strip** of each agent pane shows the account that agent uses, as a login email, and changes it. See [Changing an agent's account](#changing-an-agents-account).
 
-**App-wide manager (Connectors pane):**
-1. Click **Connectors** in the widget bar (pinned by default), or run **Connectors** from the command palette.
-2. The pane opens on its **Accounts** section — create, edit, and delete Accounts. There is no standalone "Identities" section: Connectors is scoped to shared, reusable resources, and per-agent bindings live on the agent pane instead.
+An account row's right-click menu has **Copy account ID**, **Fail over to this account** (see [below](#when-an-agent-hits-its-usage-limit)) and, after a separator, **Delete account…**. There is no menu item that binds an account to an agent: you change an agent's account from the agent.
 
-New account↔agent links are created in several places:
+The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but nothing in the app opens that view.
 
-- **When the agent is created or first signs in.** A new agent takes its provider's first account; signing in from the agent pane (**Log in**) saves the login as an account and binds it. See [At launch](#at-launch).
-- **The agent pane's failure row**, when the agent can't sign in: **Use &lt;account&gt;** (one candidate) or **Use account…** (several, which opens a picker).
-- **The account chip in the composer strip**, which switches a working agent to another of your accounts for its provider (this restarts the agent).
-- **The "Bind to Agent" right-click menu** on an account row in Connectors → Accounts. It lists the channel's compatible agents, marked with which one is already bound to this account (checkmark) and which is bound to a *different* account for the same provider ("bound: work-claude"); clicking an agent creates or rebinds the link. See [Connectors → Binding an account to an agent](/connectors/#binding-an-account-to-an-agent) for the full mechanics (candidate filtering, live-apply on a running agent, etc.).
-- **Stash → Accounts → Connect / Re-login**, for Claude only (above).
+## Changing an agent's account
 
-The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but the primary paths are the two above.
+A new agent takes its provider's first account, and signing in from the agent pane (**Log in**) saves the login as an account and links it. See [At launch](#at-launch). After that, an agent's account is changed from its composer strip, whether or not an account is linked yet.
+
+1. Click the login email in the strip (**Account** or **Not logged in** when there is none). The menu lists every signed-in account of the agent's provider, with the current one checked and, beside an account that is out of quota, "out of quota until …" or "needs you to sign in again".
+2. Choose an account. A signed-out agent's menu also has **Log in**, and a Claude agent's menu has **Sign in with another account…**, which signs a new account in and then moves the agent to it.
+
+If the agent is idle, it moves at once: its pane restarts on the new account and resumes the session. If a turn is running, the switch waits for the turn to end, and the chip shows `current → new` meanwhile. Choosing the account the agent is already on cancels a queued switch. A notice says what happened ("Switching to *name* after this turn").
+
+Several accounts can share a provider and an email, for example two Claude logins. They are numbered in the menu, the cards and the pane: `user@example.com ·2`. The number stays with the account for its life, so deleting `·1` leaves `·2` as it is.
+
+The same switch is available to agents through the `Identity` tool's `switch` action (see [MuxAPI → Identity](/internals/muxapi/#identity)). A container agent's strip has the same menu.
+
+Other places that change an account use the same switch: the failure row's **Use account…** (or **Use *name*** when there is one candidate), and the Swarm's strip for an account whose agents ran out of quota, which moves them together.
+
+## When an agent hits its usage limit
+
+When an agent's turn fails on its usage limit, AgentMux moves it to another signed-in account of the same provider that has quota, once its turn is over. It tells the agent and its lead in one note. It never picks:
+
+- an account that is signed out, or that another agent has just found out of quota;
+- an account marked **never fail over**: right-click the account in Connectors → Accounts and untick **Fail over to this account**. The mark is kept per account and can be set for accounts of the providers that run agents;
+- an account of another provider.
+
+If no account qualifies, the agent stays on its account, the pane shows the usage-limit row, and a message sent to it is held and delivered once the limit resets. Set `agent:accountfailover` to `false` in [settings](/settings/#agent-settings) to turn automatic moves off. It is on by default.
 
 ## At launch
 
@@ -67,7 +80,7 @@ Each time the agent's process is spawned, AgentMux:
 3. Computes the per-provider env vars (`GH_TOKEN`, `AWS_PROFILE`, …) the agent's CLI needs.
 4. Spawns the agent process with those env vars set.
 
-To change an agent's account later, click the account chip in its composer strip and pick another, or use **Bind to Agent** in Connectors → Accounts.
+To change an agent's account later, click the login email in its composer strip and pick another (see [Changing an agent's account](#changing-an-agents-account)).
 
 Earlier versions had a Launch Agent dialog with one account dropdown per provider and an inline [Pre-Launch Auth panel](/auth/#pre-launch-oauth-panel). Nothing in the current agent picker opens it.
 
@@ -95,5 +108,5 @@ Accounts and their agent bindings live in two SQLite tables (not the per-channel
 - [Bundles](/bundles/) — the other half of agent composition (instructions + context files)
 - [First Agent Setup](/first-agent/) — provider login flows
 - [Auth flows](/auth/) — per-provider auth-dir isolation, and the conditional isolated-auth-by-channel default
-- [Connectors](/connectors/#binding-an-account-to-an-agent) — the "Bind to Agent" context menu, the second path to creating an account↔agent link
+- [Connectors](/connectors/#accounts) — the Accounts section, where you add, edit and delete accounts
 - [Pane Types](/pane-types/) — where Identity surfaces in the UI

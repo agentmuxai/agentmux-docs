@@ -74,7 +74,7 @@ The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gem
 Open an Agent pane. The starter layout already has one; you can also click **Agent** in the widget bar, or run **Open Agent** from the command palette (`Ctrl + P`). An empty Agent pane shows the **agent picker**:
 
 - A filter bar and sort control.
-- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. If it's already open in another pane, choose **Open new session** (forks the conversation into a new agent) or **Switch to existing**. Each row's menu has **Rename**, **Duplicate**, **View History**, **Seat…** (see [Seats](#seats)) and **Delete**.
+- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. See [My Agents](#my-agents) for what each row shows and what its menu does.
 - **New Agent**: one card per harness. Each card is a template.
 
 ![The agent picker: three agents under My Agents, each with its account and last message, and the New Agent cards below](../../assets/screenshots/agent/agent-picker.png)
@@ -88,13 +88,51 @@ Clicking a card opens a panel under it, pushing the cards below it down; click t
 5. **Model Vendor / Custom Endpoint**: shown only for Claude Code. It redirects the harness to another API endpoint through `ANTHROPIC_BASE_URL`. Leave it blank to use the default.
 6. **Bundles**: the [bundles](#bundles) the agent starts with, in order. It starts empty. **Add a bundle…** adds one; each has **Move up**, **Move down** and **Remove**. The order matters: when two bundles name the same skill, the first wins.
 
-There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the agent's **Stash → Accounts**. If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
+There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the login email in the agent's composer strip (see [Changing an agent's account](/identity/#changing-an-agents-account)). If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
 
 ![The panel under the Claude Code card: Name, Runtime, Model, Model Vendor / Custom Endpoint and Bundles, with Cancel and Create and start](../../assets/screenshots/agent/agent-create.png)
 
 Click **Create and start** (or press `Enter`). The agent is created and launched in the pane.
 
 The model lists are built into AgentMux. For Claude Code only, AgentMux also asks Anthropic's models API for the current models at startup and updates the list. It needs a token for that: a Claude Code login in the shared folder `~/.agentmux/shared/providers/claude/`, or the `CLAUDE_CODE_OAUTH_TOKEN` environment variable. A login saved as an account in Connectors → Accounts isn't used for this. Without a token, the built-in list stays.
+
+## My Agents
+
+**My Agents** lists every agent you have created, whether or not it is open. Each row shows:
+
+- The agent's name, with its provider's logo.
+- Its **runtime state** as a chip: **stopped**, **starting**, **idle**, **working** (red, as in the [Swarm](/subagent-watcher/)), **waiting on you**, **limited**, **signed out** or **error**. Hover over a **limited** or **signed out** chip for why ("Out of usage until it resets", "Signed out: sign in to continue").
+- A dot when the agent is shown in a pane; hover over it to see where.
+- A **no pane** tag, a dashed border and no dot when the agent is running but no pane shows it (see [Agents keep running without a pane](#agents-keep-running-without-a-pane)).
+- A **NATIVE** or **CONTAINER** tag, and a role badge if the agent has a [seat](#seats).
+- Its account, or "No auth", and under it "reports to …" when it has a seat, a preview of its last message and how many messages it holds.
+- When it was last active, last launched and created.
+
+**Click a row** to open the agent in this pane. If the agent is already open in another pane, a prompt says where ("*Name* is already open in another pane.") and offers **Fork…** and **Switch to existing**. If it is running with no pane, the prompt says "*Name* is running with no pane." and offers **Open it**, which attaches this pane to the running agent, and **Fork…**. **Fork…** suggests a name for the copy ("Name for new session:"); click **Start** to open a fork of the conversation as a new agent. The prompt's close button is at its top right; a click outside it, or `Esc`, dismisses it.
+
+The filter bar narrows the list, and **Sort** orders it: **Recently used** (the default), **Name (A–Z)** or **Type**.
+
+The **status bar** shows how many agents are running and how many of those wait on you ("3 running", "1 waiting on you"), next to a robot icon. An agent counts as running in every state except stopped and error, so one that is out of quota or signed out still counts. Click it to open the [Swarm](/subagent-watcher/). It is hidden while no agent runs.
+
+### The row menu
+
+The chevron at the right of a row opens its menu:
+
+| Item | What it does |
+|---|---|
+| **Rename** | Renames the agent. |
+| **Duplicate** | Makes a copy: the same prompt as **Fork…**. |
+| **View History** | Opens the agent's whole recorded conversation, read-only. See [History](/history/#agents). |
+| **Seat…** | Opens the seat editor. See [Seats](#seats). |
+| **Bundles…** | Picks the bundles the agent starts with, in order. See [An agent's bundles](/bundles/#an-agents-bundles). |
+| **Environment…** | Edits the agent's extra environment variables (below). |
+| **Delete** | Deletes the agent, after asking. |
+
+The pane's own right-click menu has **Seat…**, **Bundles…** and **Personal memory** for the agent in that pane. See [Pane types → Subsections](/pane-types/#subsections).
+
+### Environment variables
+
+**Environment…** opens "The extra environment variables *name* starts with". Write one `NAME=VALUE` per line; a line starting with `#` is a comment. Click **Save**; it applies at the agent's next launch. A line that isn't valid (no `NAME=`, or a name with characters other than letters, digits and underscores) is listed under **Ignored at launch** with the reason. Names starting `AGENTMUX_` are reserved and AgentMux may override them. **Revert** discards unsaved edits. A container agent's environment can be edited the same way. An agent can read and change a definition's environment too, with the `Agents` tool's `env_get` and `env_set`.
 
 ## Sign in
 
@@ -197,7 +235,7 @@ AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows 
 |---|---|
 | Not signed in, no account linked, or credentials rejected | **Log in** (**Login Again** after a turn has run), **Login via terminal**, **Connectors → Accounts** or **Use account…** |
 | Rate limited, API overloaded, network error | Retries automatically after about 5, 15, 30, 60 and then 120 seconds, then waits for you. **Retry now** at any time. |
-| Usage limit reached | **Accounts (switch / upgrade)**, which opens Connectors → Accounts. Retrying won't help until the limit resets. |
+| Usage limit reached | **Accounts (switch / upgrade)**, which opens Connectors → Accounts. Retrying won't help until the limit resets. Unless you turned it off, AgentMux moves the agent to another signed-in account with quota by itself once its turn ends: see [Moving to another account when a limit is hit](/identity/#when-an-agent-hits-its-usage-limit). |
 | Context window exceeded | **New session** |
 | Hit the turn limit | **Continue** |
 | CLI couldn't start | **Provider setup** |
@@ -222,7 +260,7 @@ The first turn of a container agent can take minutes: the pane shows a **Prepari
 
 ## Skills
 
-Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with none: you add them in [Memory → Skills](/memory/#skills) (**+ New skill**), and a skill reaches **only the agents it is bound to**, so bind it there or from the **Skills** tab of the **Stash** (the button in an agent's pane header). There are two kinds:
+Skills are reusable procedures an agent follows when they are relevant; only a skill's name and description are in its context until it uses one. AgentMux comes with none: you add them in [Memory → Skills](/memory/#skills) (**+ New skill**), and a skill reaches **only the agents it is bound to**, so bind it there, from the skill's page. There are two kinds:
 
 | Kind | Description |
 |------|-------------|
@@ -241,7 +279,7 @@ An agent's **seat** says where it sits in your team: what kind of agent it is, w
 
 | Part | What it is |
 |---|---|
-| **Role** | **Leader**, **Worker**, **Specialist**, **Platform tester** or **Analyst**. Required. |
+| **Role** | **Leader**, **Worker**, **Specialist**, **Platform tester**, **Analyst** or **Super agent**. Required. Only one agent can be the **Super agent**: the one that reviews sensitive operations. Giving the role to another agent moves it, and the first goes back to the role it had. |
 | **Qualifier** | Optional, up to 40 characters, shown after the role: "Leader · product". |
 | **Reports to** | The agent's **lead**: another agent on this computer, or the operator (you). An agent can't be its own lead, and following the leads up must end at you. |
 | **Area** | Optional, one line of up to 120 characters: what the agent owns, such as "user docs, changelog". |
@@ -252,16 +290,16 @@ Seats are labels. Setting or changing one never renames an agent and never moves
 
 You set a seat from the UI, in two ways:
 
-- In the agent's pane: **Stash** → **Seat**.
+- In the agent's pane: right-click the pane and choose **Seat…**.
 - In **My Agents**: the row's menu → **Seat…**. It opens the same editor over the picker, so the agent doesn't have to be open.
 
-Choose a **Role**, fill in the other fields if you want them, and click **Save**. **Clear** removes the seat.
+The editor says "*name*'s seat: its role, whom it reports to and what it owns. Only you set it; agents read it." Choose a **Role**, fill in **Qualifier**, **Reports to** and **Area** if you want them, and click **Save**. **Clear** removes the seat.
 
-The seat is kept on the agent's shared definition, so every AgentMux channel and version on this computer shows the same one. An agent that exists only in one channel, with no shared definition, can't have a seat; the tab says so.
+The seat is kept on the agent's shared definition, so every AgentMux channel and version on this computer shows the same one. An agent that exists only in one channel, with no shared definition, can't have a seat; the editor says so.
 
 ### Importing a roster
 
-To seat several agents at once, click **Import roster…** at the bottom of the Seat tab and paste a JSON object that maps each agent, by name or uid, to its seat:
+To seat several agents at once, click **Import roster…** at the bottom of the seat editor and paste a JSON object that maps each agent, by name or uid, to its seat:
 
 ```json
 {
@@ -286,7 +324,7 @@ Click **Preview**. Each agent, and each lead, is matched by uid or by exact name
 
 ### Spawned workers
 
-An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A leader's workers open together in a tab of their own, named `<Leader> team`, in the leader's workspace. The tab is made the first time and reused after, so a leader that lives in your main tab doesn't fill it with workers. A parked leader's workers open in the tab the leader was parked from (or where its workers already are), not in the tab you are looking at. If the team tab can't be made, the workers open in the leader's tab as before. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's Seat tab marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
+An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A leader's workers open together in a tab of their own, named `<Leader> team`, in the leader's workspace. The tab is made the first time and reused after, so a leader that lives in your main tab doesn't fill it with workers. A parked leader's workers open in the tab the leader was parked from (or where its workers already are), not in the tab you are looking at. If the team tab can't be made, the workers open in the leader's tab as before. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's seat editor marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
 
 ### Agents on other computers
 

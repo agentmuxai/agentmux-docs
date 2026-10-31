@@ -15,13 +15,13 @@ Connectors is a regular pane (icon: `plug`), opened from the widget bar like any
 
 | Section | What it manages |
 |---|---|
-| **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account can be bound to agents. |
+| **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account card says how many agents use it. |
 | **MCP servers** | The MCP server catalog: global servers plus any agent-private ones |
 | **Remotes** | The SSH hosts and WSL distributions AgentMux can open terminals, files and agents on. See [Remotes](#remotes). |
 
 Connectors opens on **Accounts**. The pane title names the section, for example "Connectors · Accounts". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
 
-An agent's own linked accounts and MCP servers are shown in its [Stash](#per-agent-the-stash).
+The agents that use an account or a server are listed on its card or page here. An agent's own account is changed from its composer strip: see [Changing which account an agent uses](#changing-which-account-an-agent-uses).
 
 ## Opening Connectors
 
@@ -32,7 +32,6 @@ An agent's own linked accounts and MCP servers are shown in its [Stash](#per-age
 Links elsewhere in the app open Connectors on the right section:
 
 - An agent pane that can't sign in shows **Connectors → Accounts** in its error row, and **Accounts (switch / upgrade)** when a usage limit is reached. See [First Agent Setup → Sign in](/first-agent/#sign-in).
-- In an agent's Stash, the **MCP Servers** tab's **Browse all in Connectors →** button and its **edit it there** link open **MCP servers**.
 
 AgentMux moves panes saved under an earlier name, once, the first time it starts after updating: an Armory pane (the earlier pane that held both Connectors and Memory) becomes Connectors for Accounts and MCP servers and Memory for the rest, and a Remotes pane becomes **Connectors → Remotes**. A layout file that uses the old names opens the same way.
 
@@ -56,15 +55,13 @@ Click any service tile to connect or manage credentials:
 
 See [Auth flows](/auth/) for the full per-provider table and credential storage model.
 
-### Binding an account to an agent
+### Changing which account an agent uses
 
-Right-click an account row for a **"Bind to Agent"** context menu — a second path to link an account to an agent, alongside connecting from the agent's own launch flow. The submenu lists the current channel's user-owned agents, with live binding annotations so multi-account disambiguation stays legible at a glance:
+Connectors doesn't bind accounts to agents. An agent's account is changed from the agent: click the login email in its composer strip and choose an account, or **Sign in with another account…**. The menu lists every signed-in account of the agent's provider, with its quota state. See [Identity & Accounts → Changing an agent's account](/identity/#changing-an-agents-account).
 
-- A checkmark on an agent already bound to **this** account.
-- A sublabel showing the currently-bound account's name when it's a *different* account ("bound: work-claude"), or "no account bound".
-- Agents with an open pane sort first with a running indicator; non-running agents are still bindable.
+What Connectors shows is the other direction. A card reads "Used by N agents", and an open account lists those agents by name. Accounts that share a provider and an email are numbered (`user@example.com ·2`) so they can be told apart here and in the agent's menu.
 
-For CLI-OAuth accounts (Claude, Codex, Gemini, OpenClaw), only agents whose provider matches the account's are offered. For service accounts (GitHub, AWS, etc.), every agent is a candidate. Clicking an agent binds the account to it — if that agent already has a different account bound for the same provider, the click rebinds it (the link is a one-per-provider upsert, same as [Identity's direct links](/identity/)). If the target agent has an open pane, the new credentials apply live (a forced, session-preserving respawn) rather than waiting for the next manual restart.
+Right-click an account card for **Copy account ID**, **Fail over to this account** and **Delete account…**. **Fail over to this account** is ticked unless you have marked the account "never fail over to this": an agent that hits its usage limit is never moved onto a marked account by itself. See [Identity & Accounts → When an agent hits its usage limit](/identity/#when-an-agent-hits-its-usage-limit). The item is offered for accounts of the providers that run agents.
 
 ### Credential storage
 
@@ -72,7 +69,7 @@ Ambient provider credentials (used by agents with no Account explicitly bound) a
 
 ### Relationship to Identities
 
-The Accounts section is the **credential store**. To see which accounts a given agent is linked to, open that agent's Stash → **Accounts** tab. See [Identity & Accounts](/identity/) for how agents and accounts are linked.
+The Accounts section is the **credential store**. To see which agents use an account, open its card. See [Identity & Accounts](/identity/) for how agents and accounts are linked.
 
 ## MCP servers
 
@@ -81,7 +78,7 @@ The catalog of MCP Server primitives available to agents:
 - **Global servers** — visible to and bindable by any agent. Created/edited here via the catalog (`mcp.catalog.upsert`/`mcp.catalog.delete`).
 - **Private servers** — created by a specific agent (`mcp.upsert`), visible only to that agent until bound elsewhere.
 
-An agent's own MCP Servers tab (Stash → MCP Servers) lists what that agent can see and lets it bind/unbind global servers or manage its own private ones. A [bundle](/bundles/) can also include MCP servers. See [MuxAPI](/internals/muxapi/#mcp) for the full RPC reference.
+Open a server to see who gets it. **All agents** gives it to every agent at launch, and **Containers too** extends that to container agents. **Bound to** lists the agents it is bound to, each with **Unbind**, and **Bind to agent** binds another. A server reaches an agent when that agent next starts. A [bundle](/bundles/) can also include MCP servers. See [MuxAPI](/internals/muxapi/#mcp) for the full RPC reference.
 
 ![Connectors → MCP servers: the servers AgentMux comes with, how many agents use each, + Browse catalog and + New MCP server](../../assets/screenshots/memory/connectors-mcp.png)
 
@@ -123,15 +120,6 @@ The settings:
 ### Remote terminals in the tab strip
 
 A terminal on a remote machine names the remote in its pane tab: the nickname you gave it here, or else the host name, with the remote's icon. A Sysinfo pane on a remote reads "CPU · *host*". The CPU and memory badge of an SSH or WSL terminal shows the remote shell's own figures, measured on that machine.
-
-## Per-agent: the Stash
-
-Some sections have a per-agent equivalent reached from inside an agent pane:
-
-1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Seat · Environment · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices**. Each tab is scoped to that agent rather than the app-wide catalog.
-
-**Accounts** and **MCP Servers** are the per-agent side of Connectors; **Personal Memory**, **Skills** and **Bundles** are the per-agent side of [Memory](/memory/#per-agent-the-stash). The Registration tab shows the agent's message-delivery registration, and Devices has **Hide from paired devices**, which leaves the agent out of what a paired device (the mobile app) lists and can watch.
 
 ## See also
 

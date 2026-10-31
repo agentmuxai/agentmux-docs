@@ -7,7 +7,7 @@ description: Reusable packages of an agent's instructions, MCP servers, memory a
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from its Stash. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
+A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** row menu or its pane's right-click menu. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
 
 :::note[Earlier names]
 Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [MuxAPI](/internals/muxapi/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
@@ -35,13 +35,12 @@ An agent starts with an ordered list of bundles:
 1. **Its own bundle** comes first, always. AgentMux creates it with the agent (named "&lt;agent&gt; — ABF") to hold what's bound to just that agent, and it can't be removed from the list. See [every agent gets its own ABF](/abf/#every-agent-gets-its-own-abf).
 2. **The bundles you pick** follow, in the order you put them.
 
-You pick them in three places, all with the same control: each picked bundle has **Move up**, **Move down** and **Remove**, and **Add a bundle…** lists the rest.
+You pick them in these places, all with the same control: each picked bundle has **Move up**, **Move down** and **Remove**, and **Add a bundle…** lists the rest.
 
 | Where | When it's saved |
 |---|---|
 | The new-agent panel's **Bundles** field | When you click **Create and start**. It starts empty. |
-| The launch modal's **Bundles** row | When you click **Launch**, if you changed it. A bundle isn't required to launch. |
-| **Stash → Bundles** in the agent pane | On each change. |
+| **Bundles…** in the agent's **My Agents** row menu, or in its pane's right-click menu | On each change. |
 
 **At launch,** in list order:
 
@@ -49,8 +48,6 @@ You pick them in three places, all with the same control: each picked bundle has
 - **Skills** from every bundle in the list are added to the agent's own. When two bundles name the same skill, the first one wins.
 - **MCP servers** from the bundles are added when the agent is opened through MuxAPI (`agent.open`). The Launch button in the agent pane doesn't add a bundle's MCP servers yet.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
-
-The Stash's **Startup** tab, which picked one bundle to send as the agent's first message, became the **Bundles** tab. A bundle picked there is moved into the list the first time the list is read.
 
 The list is kept per [channel](/glossary/#channel), like the agent's own bundle. Deleting a bundle takes it out of this channel's lists.
 
@@ -73,10 +70,10 @@ Bundles are managed **app-wide only**:
 
 ![Editing a bundle: name, description, the provider it's suggested for, instructions, and instructions for Codex that replace the bundle's own](../../assets/screenshots/memory/memory-bundle-edit.png)
 
-In an agent pane, **Stash** → **Bundles** picks which bundles that agent starts with; it links to **Memory → Bundles** but doesn't edit bundles itself.
+**Bundles…** (in an agent's **My Agents** row menu, or in the right-click menu of its pane) picks which bundles that agent starts with, and links to **Memory → Bundles**, but doesn't edit bundles itself.
 
 :::caution[Bundles are not Personal Memory]
-An agent pane's **Stash** → **Personal Memory** tab, and the **Global** and **Personal** sections of [Memory](/memory/), do **not** open the Bundle editor described on this page. They open **Global Memory** and **Personal Memory**, different primitives covered on the [Memory](/memory/#personal) page.
+The **Global** and **Personal** sections of [Memory](/memory/), and the **Personal memory** item in an agent pane's right-click menu, do **not** open the Bundle editor described on this page. They open **Global Memory** and **Personal Memory**, different primitives covered on the [Memory](/memory/#personal) page.
 :::
 
 ## Native memory
@@ -100,7 +97,7 @@ The new agent's fields, in the panel that opens under a template card in the age
 └────────────────────────────────────────────────┘
 ```
 
-It has no account field: the agent takes the provider's first account, which you can change later from **Stash → Accounts**. The launch modal for an existing agent has an **Identity** (account) row, which is required, and the same **Bundles** row, with the agent's own bundle shown first.
+It has no account field: the agent takes the provider's first account, which you can change later from the login email in its composer strip.
 
 ## Persistence
 

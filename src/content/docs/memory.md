@@ -35,8 +35,7 @@ This pane was called **Knowledge**, and before that its sections were tabs of th
 
 Links elsewhere in the app open Memory on the right section:
 
-- In an agent's Stash, the **Skills** tab's **Browse all in Memory →** button and its **edit it there** link open **Skills**.
-- The Stash's **Bundles** tab links to **Memory → Bundles**.
+- An agent pane's right-click menu has **Personal memory**, which opens **Personal** on that agent. Its **Bundles…** dialog links to **Memory → Bundles**.
 
 An Armory pane (the earlier pane that held both Connectors and Memory) is moved to the matching new pane: Memory, Skills and Bundles to Memory, the rest to Connectors.
 
@@ -66,7 +65,7 @@ Agents can read and change Global Memory with the `Memory` MCP tool and `scope: 
 
 <a id="native-memory"></a>**Personal Memory** is the set of free-form `.md` files an agent reads and writes about itself: notes, running context, anything it wants to keep between turns. It is a different thing from a [bundle](/bundles/): a bundle is a reusable *definition* you give an agent; Personal Memory is a scratchpad an already-running agent keeps for itself. ("Native memory" is the name of its storage in the code; earlier releases labelled it "Brain".)
 
-This section is the app-wide view of every agent's Personal Memory. Pick an agent, then a file, to see its content, history and diffs, and to revert to an earlier version. Per agent, the same memory is reached from the agent pane's **Stash → Personal Memory** tab.
+This section is the app-wide view of every agent's Personal Memory. Pick an agent, then a file, to see its content, history and diffs, and to revert to an earlier version. From an agent's pane, right-click and choose **Personal memory** to open this section on that agent.
 
 ![Memory → Personal: a card per agent with how many memory files it has, a filter and Has memories](../../assets/screenshots/memory/memory-personal.png)
 
@@ -81,7 +80,9 @@ Adopting and releasing are confirmed in a separate AgentMux window ("Adopt earli
 
 An **Unverified folder** badge next to the agent's name means AgentMux found the folder from the agent's settings rather than from the agent's own launch; it is read-only until the agent launches.
 
-The Stash tab, this section, and an agent acting on itself all go through the same primitive:
+On an agent's files, **New file** asks for a **File name** (letters, numbers, `-` and `_`; `.md` is added) and creates an empty file; it won't overwrite one that exists. **Create MEMORY.md** appears when the folder has no `MEMORY.md` index and starts one ("Starts the index Claude loads every session"). Both wait, with a note, until the agent has launched if its folder is still unverified.
+
+This section and an agent acting on itself go through the same primitive:
 
 | Surface | Commands |
 |---|---|
@@ -126,7 +127,7 @@ A rule that only matters for one kind of task belongs in a skill. A rule that mu
 
 1. Open **Memory → Skills** and click **+ New skill**.
 2. Fill in **Name** (required), **Format**, **Trigger** (slash commands only), **Description** and **Content**. The two formats are **Slash command (/trigger)**, which you or the agent run by typing the trigger, and **Agent Skill (SKILL.md)**, a beta format the agent picks up by its description, with no trigger. Write the description as *when to use the skill*: it is all the agent sees until it uses it.
-3. **Bind it**, or no agent will have it. Open the skill, choose an agent under **Bind to agent** and click **Bind**. Or open the agent's [Stash](#per-agent-the-stash) → **Skills** tab and click **Bind** there. Or add the skill to a [bundle](/bundles/) and give the bundle to the agents that should have it.
+3. **Bind it**, or no agent will have it. Open the skill, choose an agent under **Bind to agent** and click **Bind**. Or add the skill to a [bundle](/bundles/) and give the bundle to the agents that should have it.
 
 A skill's page says "Used by N agents" and lists them, each with **Unbind**.
 
@@ -158,18 +159,14 @@ The app-wide view of all bundles. A bundle packages instructions, MCP servers, m
 
 ![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
-Bundles are created and edited here only. An agent's **Stash → Bundles** tab picks which bundles that agent starts with; it doesn't create or edit them.
+Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** row menu or its pane's right-click menu) picks which bundles that agent starts with; it doesn't create or edit them.
 
-## Per-agent: the Stash
+## Per agent
 
-Some sections have a per-agent equivalent reached from inside an agent pane:
+Memory is app-wide, and each of its sections has a way in for one agent:
 
-1. Open any Agent pane → click the **Stash** icon (`toolbox`) in the pane header.
-2. A drawer opens under the pane header with tabs: **Accounts · Seat · Environment · Personal Memory · MCP Servers · Skills · Bundles · Registration · Devices**. Each tab is scoped to that agent rather than the app-wide catalog.
-
-**Personal Memory**, **Skills** and **Bundles** are the per-agent side of Memory; **Accounts** and **MCP Servers** are the per-agent side of [Connectors](/connectors/#per-agent-the-stash).
-
-You can also unbind where the thing is managed, without opening the agent: a skill's page in **Memory → Skills** lists its agents with **Unbind**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) and an account's **Used by** list in [Connectors](/connectors/#accounts) do.
+- **Personal Memory**: right-click an agent's pane and choose **Personal memory**. Memory opens on **Personal** with that agent selected.
+- **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** row menu or its pane's right-click menu, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
 
 ## Portable bundles (beta spec)
 
