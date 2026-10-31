@@ -445,7 +445,7 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 ### Subsections
 
-The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer (`frontend/app/view/agent/components/AgentStashModal.tsx`). "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
+The agent pane has a single **Stash** icon (`toolbox`) in the pane header — it replaced the older two-icon design (a separate Memory/Brain icon and Identity/id-card icon) — opening a tabbed drawer. "Stash" is the per-agent counterpart of the app-wide [Connectors](/connectors/) and [Memory](/memory/) panes:
 
 <figure class="docs-clip">
 <video controls loop muted playsinline preload="metadata" width="800" height="586" poster="/recordings/stash-tour-poster.webp" aria-describedby="clip-stash-tour"><source src="/recordings/stash-tour.mp4" type="video/mp4" /></video>
