@@ -55,7 +55,7 @@ If the agent is idle, it moves at once: its pane restarts on the new account and
 
 Several accounts can share a provider and an email, for example two Claude logins. They are numbered in the menu, the cards and the pane: `user@example.com ·2`. The number stays with the account for its life, so deleting `·1` leaves `·2` as it is.
 
-The same switch is available to agents through the `Identity` tool's `switch` action (see [MuxAPI → Identity](/internals/muxapi/#identity)). A container agent's strip has the same menu.
+The same switch is available to agents through the `Identity` tool (see [MuxAPI → Identity](/internals/muxapi/#identity)). Its `accounts` action with `scope: machine` lists every signed-in account on this computer with a stable id (the same on every computer for one provider account), its quota (`ok`, `limited` or `signed_out`) and the agents on it. `switch` takes that id, an email when only one account of it has quota, or `any with quota`, and `agent: all limited` moves every limited agent at once. A container agent's strip has the same menu.
 
 Other places that change an account use the same switch: the failure row's **Use account…** (or **Use *name*** when there is one candidate), and the Swarm's strip for an account whose agents ran out of quota, which moves them together.
 
@@ -68,6 +68,14 @@ When an agent's turn fails on its usage limit, AgentMux moves it to another sign
 - an account of another provider.
 
 If no account qualifies, the agent stays on its account, the pane shows the usage-limit row, and a message sent to it is held and delivered once the limit resets. Set `agent:accountfailover` to `false` in [settings](/settings/#agent-settings) to turn automatic moves off. It is on by default.
+
+## When a login expires
+
+When a login's sign-in has expired or been refused, AgentMux moves its agents by itself, once their turn is over. It looks first for another valid login of the same account, then for another signed-in account of the same provider that can run. It never picks an account marked **never fail over**. An agent whose turn stopped on the expired login is told that its last step may not have finished and to check `git status` and its pull request before it carries on. You are told once which login needs signing in again, and the [Swarm's account strip](/subagent-watcher/#account-strip) shows a row for it with **Sign in again**, which opens **Connectors → Accounts**. `agent:accountfailover` set to `false` turns the automatic moves off.
+
+## Adding an account on another machine
+
+An agent can start a sign-in on another machine of yours (`Identity` `signin` with `host`) for Claude or Codex. The sign-in runs there and the credentials stay there. On the machine you are using, a notice stays on screen until you close it: "Sign *machine* in to *Claude*" (or *Codex*), with an **Open** button that opens the provider's page in your browser. For Codex the notice also gives a one-time code to enter on that page. When you finish, the account is added on that machine. The other machine must trust the agent's install.
 
 ## At launch
 

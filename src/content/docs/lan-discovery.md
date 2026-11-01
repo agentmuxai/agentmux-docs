@@ -103,7 +103,7 @@ The summaries go out through the same route as your agents' names, so anyone on 
 
 ## Remote operations
 
-With LAN discovery on, an agent can do on another machine what it can do on its own, without a person's agent over there having to read a message and act. It names the machine in a `host` argument of the [`Agents`, `Tasks`, `Identity` and `App` tools](/internals/muxapi/#acting-on-another-machine): start, open or stop an agent there, set its seat or environment, file a task on its board or read it, list or switch its accounts and start a sign-in, read its version, health and logs, and ask it to reclaim its pane-history store.
+With LAN discovery on, an agent can do on another machine what it can do on its own, without a person's agent over there having to read a message and act. It names the machine in a `host` argument of the [`Agents`, `Tasks`, `Identity` and `App` tools](/internals/muxapi/#acting-on-another-machine): start, open or stop an agent there, set its seat or environment, file a task on its board or read it, list or switch its accounts and start a sign-in, read its version, health and logs, ask it to reclaim its pane-history store, ask it to upgrade itself, see what AgentMux has filled on its disk (free space, the largest build folders, older versions), and ask it to clear its idle build folders. An upgrade and a cleanup are filed there as sensitive requests: its super agent decides, and the person at that machine can veto the countdown.
 
 Your AgentMux signs each request with the asking agent's own key, and the other machine carries the operation out itself. The other machine decides, with its own rules:
 

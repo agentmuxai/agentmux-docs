@@ -36,7 +36,7 @@ Nothing here is deleted by AgentMux. The record is kept forever.
 
 ## Typed
 
-**Typed** shows what you typed to an agent, newest first, with the time. Choose the agent from the list, and type in **Search what was typed** to find a message. **Clear…** then **Forget everything typed to** the agent removes the lot. Forgotten entries show under **Recently forgotten** and can be restored for a while, then they are gone.
+**Typed** shows what you typed to an agent, newest first, with the time. Choose the agent from the list, and type in **Search what was typed** to find a message. **Clear…** then **Forget everything typed to** the agent removes the lot. Forgotten entries show under **Recently forgotten**, with who forgot them. **Restore** brings them back for 7 days; after that they are gone.
 
 What was typed to an agent is kept with the agent, up to the limit set by `agent:inputhistory:max`, and goes when the agent is deleted.
 
@@ -46,6 +46,8 @@ What was typed to an agent is kept with the agent, up to the limit set by `agent
 
 - **Pane history compression** (setting `agent:transcriptframes`) says how much transcript is stored compressed, and the ratio.
 - **Reclaim** appears when the shared history store has a large amount of free space inside it (at least 1 GB, and at least a fifth of the file). Choose **Reclaim at next start** and AgentMux gives that space back to the disk the next time it starts. **Don't reclaim** cancels it.
+
+If the shared history store is found damaged, AgentMux tells you once. The next time AgentMux starts with no other AgentMux running, it rebuilds the store from the rows that can still be read, and puts back the conversations of agents whose rows were lost from their saved copies. The damaged file is kept next to the new one and is never deleted.
 
 **Retention** on that view says what is kept: agent history is kept forever and AgentMux deletes none of it on its own. Claude Code keeps its own session files, and AgentMux sets that cleanup to 36,500 days unless your Claude config already sets another value. Conversations archived by **New conversation** and inactive panes' archived transcripts are never pruned. The record of messages between agents is written to disk and kept (see [Audit](/audit/)).
 

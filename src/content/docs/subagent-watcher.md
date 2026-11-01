@@ -1,13 +1,13 @@
 ---
 title: "Swarm"
-description: The Swarm pane shows every agent on this AgentMux instance, with or without a pane, as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, then the agents of other AgentMux instances on this machine and your local network, plus a fleet toolbar for broadcasting to or stopping several agents at once, and the Supervisor that keeps agents working until they are done or need you.
+description: The Swarm pane shows every agent on this AgentMux instance, with or without a pane, as a tree, with its subagents, workflows, shells, cron jobs, background commands and todo list, then the agents of other AgentMux instances on this machine and your local network, plus a Broadcast section for sending one message to several agents, a fleet toolbar for stopping several agents or setting their Supervisor mode, and the Supervisor that keeps agents working until they are done or need you.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Swarm** pane is the overview of what your agents are doing right now. It lists every agent on this AgentMux instance, with or without a pane, as a tree: under each running agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands, and agents that aren't running are listed under [Stopped agents](#stopped-agents). Below them it lists the [agents of other AgentMux instances](#agents-on-other-instances) on this machine and your local network. A fleet toolbar at the top lets you send one message to several agents, or stop them, in one action.
+The **Swarm** pane is the overview of what your agents are doing right now. It lists every agent on this AgentMux instance, with or without a pane, as a tree: under each running agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands, and agents that aren't running are listed under [Stopped agents](#stopped-agents). Below them it lists the [agents of other AgentMux instances](#agents-on-other-instances) on this machine and your local network. Select agents with the checkboxes, then send one message to all of them from the [Broadcast](#broadcast) section, or stop them or set their [Supervisor](#supervisor) mode from the [fleet toolbar](#fleet-toolbar) in the Supervisor section.
 
 ![The Swarm widget when it first opens, with no agents running](../../assets/screenshots/widgets/widget-swarm-small.png)
 
@@ -38,14 +38,21 @@ With no agent panes open, Swarm shows **No active agent panes** and "Start an ag
 
 The Swarm has two sections, as tabs along the top (icons only when the pane is narrow): **Supervisor** (the default) and **Broadcast**. The selected one is saved with the pane, under `swarm:section` in its settings, and the pane's title follows it: **Swarm · Broadcast**.
 
-Supervisor and Broadcast show the same list of agents, with one selection: a box you tick in one is still ticked in the other. Supervisor shows full rows and Broadcast compact ones. The work agents are doing is on the [Kanban](/kanban/), a pane of its own: the chip of the task an agent is on, on its row, opens the Kanban with that task shown.
+Supervisor and Broadcast show the same list of agents, with one selection: a box you tick in one is still ticked in the other. Supervisor shows full rows and Broadcast compact ones. The Supervisor section has the Supervisor's [switch and settings](#turning-it-on) and the [fleet toolbar](#fleet-toolbar)'s Stop and Supervisor buttons. The Broadcast section has the [message box](#broadcast). The work agents are doing is on the [Kanban](/kanban/), a pane of its own: the chip of the task an agent is on, on its row, opens the Kanban with that task shown.
+
+## Account strip
+
+At the top of the Swarm, above its sections, a strip lists each account whose agents are out of quota or signed out. A row reads, for example, "Account Work: out of quota until Sun 7:00 PM · Naki-2, Loap-3 · holding #163, #140": the account, why, the agents on it and the [Kanban](/kanban/) tasks they hold. It is gone when nothing is wrong.
+
+- **Move these agents to another signed-in account** asks which account (the first signed-in one is preselected). Choose **Move**: the idle agents move at once, and an agent in a turn moves when the turn ends. The strip says what moved. If there is no other signed-in account to move them to, the row says so.
+- **Sign in again** is on the row for a login that expired once AgentMux has moved its agents off it (see [Identity & Accounts](/identity/#when-a-login-expires)). It opens **Connectors → Accounts**.
 
 ## Layout
 
 In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
 
 1. The controls, in a compartment of their own apart from the list (in the Supervisor and Broadcast sections): the Supervisor's settings, or Broadcast's message box, and the [fleet toolbar](#fleet-toolbar). Broadcast's box sits above the list.
-2. A result panel, shown only after a fleet action.
+2. A result panel, shown after a fleet action. In the Broadcast section it appears only when a send failed.
 3. A **Clear completed (N)** button, shown only when there are finished rows to dismiss.
 4. The [filter bar](#filtering-the-list), shown when the list has agents.
 5. A **Group by** control (**None** or **Lead**), shown once an agent here has a [seat](/first-agent/#seats). **Lead** groups the agents by whom they report to, including [agents on other instances](#agents-on-other-instances) that report a seat.
@@ -125,7 +132,7 @@ Background jobs the agent started with the `Terminal` MCP tool (`run` with `back
 
 ### Cron
 
-Cron jobs the agent created: name, cron expression, when it last fired, fire count and an **Active** or **Paused** badge. Read-only.
+Cron jobs the agent created: name, cron expression, when it last fired, fire count and an **Active** or **Paused** badge. Read-only. When a fire reached no agent, the row also reads **missed N · agent not running** (or **missed N · no target**, or **missed N · not delivered**), with N the number of fires missed.
 
 ### Running
 
@@ -203,7 +210,7 @@ An instance that hasn't been heard from for 60 seconds is shown as stale: its ro
 
 With **Group by: Lead**, an agent that reports a seat sits under its lead, matched by name among the agents of the same machine and channel, so a worker follows a lead on its own machine. A lead that machine couldn't name heads a group called "an agent on another machine". Agents that report no seat, and this machine's other channels, stay under **Other instances**.
 
-Clicking one of these rows doesn't focus the agent: its pane is in another instance. They can be selected for a [Broadcast](#fleet-toolbar), and agents on this machine's other channels for a Stop too.
+Clicking one of these rows doesn't focus the agent: its pane is in another instance. They can be selected for a [Broadcast](#broadcast), and agents on this machine's other channels for a Stop too.
 
 What you can't do from a row, an agent can do with the `host` argument of its tools: start, open or stop an agent on a LAN peer, set its seat or environment, file a task on its [Kanban](/kanban/), list or switch its accounts. See [Remote operations](/lan-discovery/#remote-operations). A seat's lead can be an agent on another machine (`Name@host`, for example `Lead@laptop`); with **Group by: Lead** such a worker sits under that lead.
 
@@ -222,23 +229,30 @@ Right-click a row for a menu of values to copy (`frontend/app/view/swarm/swarm-v
 | Running | **Copy command** |
 | Background | **Copy description** |
 
+## Broadcast
+
+The **Broadcast** section has its own message box above the list. Select agents, type, then click **Send to N** or press `Ctrl+Enter` (`⌘Enter` on macOS). `Enter` starts a new line. With nothing selected the box reads "Select agents to message…", and **Send to N** stays off until there is text and at least one agent that can be reached. Under the button, the box says how many selected agents it can't reach and why, and how many are "hidden by the filter, not included". If the send fails as a whole, your text is put back in the box.
+
+The last ten broadcasts are listed under the box, newest first, each with its age and "N sent · N delivered" (and "· N failed"). Hover a row for the full text. The draft and this list are kept while the pane is open, so switching to the Supervisor section and back loses neither; a restart clears them.
+
+A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs:574-588`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+
 ## Fleet toolbar
 
 The toolbar acts on the agents whose checkboxes you tick (`frontend/app/view/swarm/swarm-fleet-toolbar.tsx`). There is no separate scope picker: the toolbar sees the agents Swarm lists, this instance's and those of [other instances](#agents-on-other-instances) that aren't stale. With agents on LAN peers selected, the count adds "· N on other machines". When some selected agents can't be reached by an action, the toolbar says how many and why, for example "1 of 3 can't be stopped: stopping an agent on another machine isn't supported yet" (`frontend/app/view/swarm/swarm-fleet-targets.ts`).
 
 | Control | What it does |
 |---|---|
-| **Select all** / **Select none** | Ticks or clears every agent, or, [with a filter on](#filtering-the-list), every agent shown (**Select all N shown**). The toolbar shows **{N} selected**. |
-| **Broadcast** | Opens an inline box ("Message to send to {N} agents…") with **Send** and **Cancel**. `Enter` sends, `Esc` cancels. The Stop button is hidden while the box is open. |
-| **Stop {N}** | Stops the selected agents, after a confirmation dialog. |
-| **Supervisor** | Sets the [Supervisor](#supervisor) mode (Off, Steady or Drive) for the selected agents of this AgentMux, with no confirmation step. |
-| **Clear** | Clears the selection. |
+| **Select all** / **Select none** | Ticks or clears every agent, or, [with a filter on](#filtering-the-list), every agent shown (**Select all N shown**). The toolbar shows **{N} selected**. Shown in both sections. |
+| **Stop {N}** | Stops the selected agents, after a confirmation dialog. Supervisor section only. |
+| **Supervisor** | Sets the [Supervisor](#supervisor) mode (Off, Steady or Drive) for the selected agents of this AgentMux, with no confirmation step. Supervisor section only. |
+| **Clear** | Clears the selection. Shown in both sections. |
 
-**Broadcast** sends the same message to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs:574-588`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+To message the selected agents, use the [Broadcast](#broadcast) section.
 
 **Stop** opens a dialog titled "Stop N agents?" (or "Stop 1 agent?") listing the selected panes' block IDs, with a **Stop {N}** button. With 5 or more agents selected you can tick **Staged rollout** to stop them in batches (**Batch size**, default 3) and abort if a batch's failure rate exceeds a percentage (default 50). Stopping ends each agent's CLI process; the pane stays open. Because you are the one stopping them, the agents stop right away, without the 30-second override window an agent-initiated stop gets (see below). The selection is cleared afterwards. If an agent belongs to another AgentMux instance on the same machine (for example, a different channel), the stop is forwarded to that instance. Agents on LAN peers can't be stopped from here yet. Every stop is recorded in the [Audit](/audit/) feed.
 
-After either action, the result panel shows a summary such as "Broadcast — 3 succeeded, 1 failed" or "Bulk stop — 3 succeeded, 1 failed" (with "— staged rollout aborted early" if that happened), and one row per agent with its error, if any. Dismiss it with **×**.
+After a stop or a Supervisor change, the result panel shows a summary such as "Bulk stop — 3 succeeded, 1 failed" (with "— staged rollout aborted early" if that happened), and one row per agent with its error, if any. Dismiss it with **×**. In the Broadcast section the panel appears only when a send failed; a clean send shows in the list of recent broadcasts under the message box.
 
 ### From an agent
 
@@ -256,7 +270,9 @@ The **Supervisor** keeps an agent working until it is done or needs you. Agents 
 
 ### Turning it on
 
-The Supervisor is set per agent, and every agent starts **Off**. Each Claude agent's row has a Supervisor chip (a shield icon). Click it and pick a mode:
+The Supervisor is **off** until you turn it on. At the top of the Supervisor section a **Supervisor** switch reads **Supervisor: off** or **Supervisor: on** (the setting is `supervisor:enabled`, off by default), with a **Settings** button next to it for the [limits and notices](#limits). While the switch is off, nothing is judged or continued, and **Steady** and **Drive** are greyed out in the mode menus with the reason "Switched off. Turn the Supervisor on in the Swarm's Supervisor settings." **Off** is always available. A pane that was supervised before the switch existed starts at **Off**; turning the switch on does not bring that back.
+
+With the switch on, the mode is set per agent, and every agent starts **Off**. Each Claude agent's row has a Supervisor chip (a shield icon). Click it and pick a mode:
 
 | Mode | What the menu says |
 |---|---|
@@ -264,7 +280,7 @@ The Supervisor is set per agent, and every agent starts **Off**. Each Claude age
 | **Steady** | "Keep it going when it stops only to check in. Pause for real questions." |
 | **Drive** | "Keep it going through open questions on its own best judgement. Pause for what only you can provide." |
 
-To set several agents at once, tick their rows and use the fleet toolbar's **Supervisor** button, which offers the same three modes (for example "Supervisor: Drive for 3 agents"). There is no confirmation step; the result panel reports each agent, as for Broadcast and Stop.
+To set several agents at once, tick their rows and use the fleet toolbar's **Supervisor** button in the Supervisor section, which offers the same three modes (for example "Supervisor: Drive for 3 agents"). There is no confirmation step; the result panel reports each agent, as for Broadcast and Stop.
 
 - **Claude agents only.** Other providers' rows have no chip. If AgentMux can't supervise a pane, the chip's tooltip says "the Supervisor works with Claude agents only for now".
 - **This AgentMux's own agents only.** Each AgentMux supervises its own agents, so the toolbar leaves out selected agents of another instance.
@@ -290,6 +306,8 @@ The judge follows the mode:
 - **Drive** also continues through open questions the agent can research or decide itself, and suggests a next step. It pauses only for what only you can provide: a credential, a sign-in, a payment, or a product decision with no sensible default.
 - **In both modes**, done needs evidence in the conversation: tests passing, a pull request opened or merged, the result shown. A bare claim is not enough: Drive asks the agent to show the evidence, and Steady pauses for you. A turn that ends by asking you to approve, choose or decide something is never done.
 - **In both modes**, a risky, irreversible or outward-facing next step pauses for you, even when the agent proposes it: deleting data, force-pushing, deploying, spending money, publishing, or messaging people outside the team. When the judge is unsure whether to continue, it pauses.
+
+After a verdict of **continue**, the Supervisor waits before it sends the continuation: 30 seconds by default (`supervisor:cooldown`). A turn that starts in that time (your message, a jekt, a job) or a Stop cancels it. While it waits, the chip shows **waiting** and its reason reads "Continuing after a 30 s wait: …". If AgentMux restarts during the wait, the reason reads "Not continued: AgentMux restarted." and nothing is sent.
 
 The judge runs on the agent's own CLI and sign-in, and has 90 seconds per verdict. A call that fails or times out is tried once more, while the turn is still the latest and the agent still idle. If there is still no usable answer, nothing is sent and you get the ordinary "finished" notification: the Supervisor never continues on a guess. If the agent starts a new turn while the judge is working (you reply, or a message arrives), that judgement is dropped.
 
@@ -322,6 +340,10 @@ In Steady the instruction is "Continue the task you were already doing. Ask the 
 
 Reaching a limit pauses the agent for you, with the reason, for example "5 continuations in a row; over to you." A message you send, typed in the pane or broadcast from Swarm, starts a new run and resets the counts, and so does changing the mode. A message from another agent doesn't.
 
+The Supervisor also keeps a **fleet budget**: at most 30 continuations an hour across all agents (`supervisor:hourly`). At the cap the agent pauses with "Fleet budget reached: N continuations in the last hour (the cap is 30). It can continue again in about M min."
+
+The table shows the defaults. Change them with **Settings** next to the **Supervisor** switch, or with the `supervisor:*` keys in [Supervisor Settings](/settings/#supervisor-settings). The panel sets the continuations and minutes for Steady and Drive, the number of continued turns in a row without a tool, the wait before continuing, the fleet budget (0 for no cap), and four switches for the notifications: when it needs you, when it hits a limit, when it couldn't continue and when it finds the work done. The same panel opens from the **Swarm Supervisor** entry in Settings search. The rows and the decision list show every stop whatever the notification switches say.
+
 The Supervisor never:
 
 - answers an `AskUserQuestion` or approves a permission prompt;
@@ -331,13 +353,13 @@ The Supervisor never:
 
 ### Watching and stopping it
 
-- **The chip** shows the mode and what the Supervisor is doing: **judging**, **waiting** (for background work), the count so far such as **3/15**, and, while the agent is idle, **paused** or **done**. A paused chip is highlighted. Hover it for the mode, what the mode does and the last reason.
+- **The chip** shows the mode and what the Supervisor is doing: **judging**, **waiting** (for background work, or for the wait before a continuation), the count so far such as **3/15**, and, while the agent is idle, **paused** or **done**. A paused chip is highlighted. Hover it for the mode, what the mode does and the last reason.
 - **The row's line** reads **Needs you:** and the reason while a paused agent is idle, and the row ranks like one with a pending question. When the agent starts a turn again, the pause is over.
 - **The Supervisor group**, first under an expanded row, lists the last 10 decisions, newest first: the time, what it did (**continued**, **paused**, **done**, **waiting**, **no verdict**, **set**, **stopped by you**) and the reason. They are kept in the pane's metadata (`supervisor:state`), so they survive a restart of AgentMux's server. The group is hidden while the mode is Off.
 - **Notifications:** when it pauses, you get a notification that the agent needs you, "Supervisor paused:" and the reason. When the judge finds the work done, or can't judge, you get the usual "finished" notification. A continuation, and a turn you stopped, send none. A supervised agent never gets the generic "finished" notification on top of these.
 - **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
 
-To turn it off, set the chip, or the toolbar for a selection, to **Off**. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
+To turn it off for one agent, or for a selection with the toolbar, set the mode to **Off**; to turn it off for every agent, switch **Supervisor** off. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
 
 ## Tokens and cost per agent
 
