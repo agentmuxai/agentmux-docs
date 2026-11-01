@@ -114,6 +114,16 @@ The window list is headed by the workspace's name and how many windows it has ("
 - **Open windows** (● this window, ○ the others): click one to focus it, double-click (or `F2`) to rename it. Each has an opacity slider and **Remove from workspace**, which closes the window and deletes its tabs and panes (disabled on the only open window).
 - **Closed windows**, greyed (◌), with when they closed: click one, or its **Reopen** button, to open it where it was, its agents resuming. Right-click one for **Remove from workspace**.
 
+#### Maintenance and updating
+
+The **Maintenance** part of the panel shows whether a newer release is out. Nothing checks on its own: **Check for update** (or **Check again**) asks. When one is out, the row reads "v*x* is out" with **What's new** (the release notes) and **Download**. The Microsoft Store build updates through the Store instead, which gets each release after GitHub does. When your version is older than the oldest one a release upgrades from, the row says to install that version first.
+
+After **Download** the row shows the progress ("Downloading v*x*… 40%", then "Unpacking"), then "v*x* is ready" with **Show folder** or **Show installer** (AgentMux shows the file, it never runs it) and **Upgrade & restart**. A failed download says why, with **Try again** and **Release page**.
+
+**Upgrade & restart** doesn't interrupt an agent. The row reads "Waiting for 3 agents to finish…" and keeps waiting for as long as it takes, reading the count again each time; an agent whose process has ended doesn't count. It lists what the restart would also stop, such as commands agents left running. **Restart now** skips the wait, and **Cancel** stops the upgrade. When the agents are done, the launcher asks you in a dialog: "Restarting: answer the AgentMux dialog (No cancels)". Your agents resume after the restart, and an agent whose turn was cut off is told to carry on.
+
+An agent can ask for an upgrade through the `App` tool, on this computer or, with `host`, on another one on your network. It goes to the super agent as a sensitive request, and the person at that computer sees a banner with a countdown that they can veto (see [Interagent communication](/internals/interagent-comms/) and [MuxAPI](/internals/muxapi/)).
+
 Closing a window keeps it in the workspace as a closed window (see [Workspaces](/workspaces/#windows-in-a-workspace)). See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
 
 ![The instance panel: version, channel, commit, CEF, runtime and build time; the Default Workspace's 3 windows, Window 1 (this window) and Window 2 open, each with its opacity slider and trash button, and a closed window, greyed, with when it closed and Reopen; floating panes; maintenance with Check for update; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
