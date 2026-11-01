@@ -252,7 +252,7 @@ To message the selected agents, use the [Broadcast](#broadcast) section.
 
 **Stop** opens a dialog titled "Stop N agents?" (or "Stop 1 agent?") listing the selected panes' block IDs, with a **Stop {N}** button. With 5 or more agents selected you can tick **Staged rollout** to stop them in batches (**Batch size**, default 3) and abort if a batch's failure rate exceeds a percentage (default 50). Stopping ends each agent's CLI process; the pane stays open. Because you are the one stopping them, the agents stop right away, without the 30-second override window an agent-initiated stop gets (see below). The selection is cleared afterwards. If an agent belongs to another AgentMux instance on the same machine (for example, a different channel), the stop is forwarded to that instance. Agents on LAN peers can't be stopped from here yet. Every stop is recorded in the [Audit](/audit/) feed.
 
-After a stop or a Supervisor change (and, in the Supervisor section, after a broadcast), the result panel shows a summary such as "Bulk stop — 3 succeeded, 1 failed" (with "— staged rollout aborted early" if that happened), and one row per agent with its error, if any. Dismiss it with **×**. In the Broadcast section the panel appears only when a send failed; a clean send shows in the list of recent broadcasts under the message box.
+After a stop or a Supervisor change, the result panel shows a summary such as "Bulk stop — 3 succeeded, 1 failed" (with "— staged rollout aborted early" if that happened), and one row per agent with its error, if any. Dismiss it with **×**. In the Broadcast section the panel appears only when a send failed; a clean send shows in the list of recent broadcasts under the message box.
 
 ### From an agent
 
