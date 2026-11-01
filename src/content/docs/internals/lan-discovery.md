@@ -175,5 +175,5 @@ Design documents in the main repository (designs, not a description of current b
 
 - [LAN discovery (user guide)](/lan-discovery/) — turning it on, what it exposes
 - [Network exposure](/security/network-exposure/) — every listener
-- [Warden](/warden/#the-network-pill) — the network pill's LAN peers
+- [LAN discovery](/lan-discovery/#the-network-pill) — the network pill's LAN peers
 - [Interagent communication](/internals/interagent-comms/) — how messages use LAN peers

@@ -16,7 +16,7 @@ The **Warden** pane no longer exists. Each of its sections became a pane of its 
 | **Audit** | The [Audit](/audit/) pane |
 | **Jobs** | The [Jobs](/jobs/) pane (**Open Jobs** in the command palette) |
 | **Host** | The [Swarm](/subagent-watcher/#registration-badge): a badge on an agent's row and **Stop receiving messages** in its menu |
-| **LAN** | The status bar's [network pill](#the-network-pill) |
+| **LAN** | The status bar's [network pill](/lan-discovery/#the-network-pill) |
 | **Ambient** | The status bar's [token pill](#the-token-pill) |
 | **Internet** | Gone. It was a placeholder. The cloud relay is the network pill's **MuxBus Cloud** block |
 | **Kanban** | The [Kanban](/kanban/) pane |
@@ -35,16 +35,7 @@ Nothing you saved breaks:
 
 ## The network pill
 
-The pill in the status bar that shows this computer's hostname (the host popover) is where the LAN section went. With [LAN discovery](/lan-discovery/) on, each AgentMux instance found on your network is a row in the popover. Click a row to expand it:
-
-| Row | What |
-|---|---|
-| **Address** | The peer's IP address and port |
-| **Runs** | Its operating system and channel |
-| **Agents** | How many agents it has, with **Show in Swarm** |
-| **Last seen** | How long ago the peer was last seen |
-
-A peer whose agent sent a message that was refused because its key changed has a warning on its row, with **Review in Settings › Devices › Pinned senders**. Accepting a new key stays in Settings, beside its explanation. The pill doesn't change the peer's trust by itself, and there is still no control to send to or quarantine a peer from it: agents send with the `Message` tool.
+The pill in the status bar that shows this computer's hostname is where the LAN section went. It is described in [LAN discovery](/lan-discovery/#the-network-pill): its states, and a row for each peer found.
 
 ## The token pill
 

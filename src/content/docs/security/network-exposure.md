@@ -50,7 +50,7 @@ These listeners serve **only the routes LAN peers need** (`build_routers_with` i
 - anyone holding the `lan_key` can call a short list of routes: send a jekt (with files), look up one agent, list agent names and states, ask whether an agent UID is running here, and post a signed [remote operation](/lan-discovery/#remote-operations) (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus)). The remote-operation route does nothing for the `lan_key` alone: it carries out a request only when it is signed by an agent key this machine has pinned;
 - nothing else. Every other route, `/ws` included, returns 404 on a LAN listener, even with the full auth key, and the LAN listeners never serve the frontend.
 
-The mobile-pairing QR code in the host popover (**Show QR code**) still contains the full auth key, together with this machine's LAN address and port. Over the network the key reaches only the routes above, but on this machine it gives full control until AgentMux restarts, so don't show the code where others can see it.
+The mobile-pairing QR code in the host popover (**Pair a device**) holds a one-time code and the fingerprint of this computer's certificate, not the auth key. The code works once, for two minutes, and a paired device can watch this computer's agents read-only, so show it only to your own devices. See [Pairing the mobile app](/lan-discovery/#pairing-the-mobile-app).
 
 The `lan_key` is sent in cleartext to anyone on the local network (next section). Turn LAN discovery on only on networks you trust, and restrict the listeners with your host firewall to the peers or subnet you expect.
 
