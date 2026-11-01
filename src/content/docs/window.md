@@ -56,7 +56,7 @@ The mouse's Back and Forward side buttons re-select the panes you had selected b
 
 ## Status bar
 
-![The status bar: uptime, CPU, memory, page file, disk, network and disk activity, graphics mode, token usage, host name and version](../../assets/screenshots/chrome/chrome-status-bar.png)
+![The status bar: uptime, CPU, memory, disk, network and disk activity, graphics mode, history size, token usage, host name and version](../../assets/screenshots/chrome/chrome-status-bar.png)
 
 From left to right:
 
@@ -139,7 +139,7 @@ An agent can ask for an upgrade through the `App` tool, on this computer or, wit
 
 Closing a window keeps it in the workspace as a closed window (see [Workspaces](/workspaces/#windows-in-a-workspace)). See [Window appearance](/window-appearance/) for the opacity slider and [Report issues](/report-issues/) for what to copy into a bug report.
 
-![The instance panel: version, channel, commit, CEF, runtime and build time; the Default Workspace's 3 windows, Window 1 (this window) and Window 2 open, each with its opacity slider and trash button, and a closed window, greyed, with when it closed and Reopen; floating panes; maintenance with Check for update; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
+![The instance panel: version, channel, commit, CEF, runtime and build time; the Default Workspace's one window, Window 1 (this window), with its opacity slider and trash button; floating panes; maintenance with Check for update; and Open another window](../../assets/screenshots/chrome/chrome-status-instance.png)
 
 ## See also
 
