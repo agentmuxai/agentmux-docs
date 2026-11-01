@@ -46,7 +46,7 @@ Press `Ctrl+Shift+P` (Windows/Linux) or `⇧⌘P` (macOS) from anywhere to open 
 
 ![The command palette before typing: a search box and the list of commands, each with its category and shortcut](../../assets/screenshots/chrome/chrome-command-palette.png)
 
-![The command palette filtered by "split": Split Down, Split Left, Split Right and Split Up](../../assets/screenshots/chrome/chrome-command-palette-filtered.png)
+![The command palette filtered by "split": Split Down and Split Right](../../assets/screenshots/chrome/chrome-command-palette-filtered.png)
 
 Registered commands are grouped by category:
 

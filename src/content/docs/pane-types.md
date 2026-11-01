@@ -494,7 +494,7 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 ## Swarm
 
-The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network. Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection, and a fleet toolbar sends one message to several agents, stops them or sets their Supervisor mode. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
+The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network. Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection: select agents, then send one message to all of them from **Broadcast**, or stop them or set their Supervisor mode from **Supervisor**. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
 
 ![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 
@@ -623,6 +623,8 @@ to it, all inside one pane.
 
 When a pane has more tabs than fit, the mouse wheel over the strip scrolls it 10 px per notch, and selecting a pane scrolls its selected tab flush left, the way selecting the tab does.
 
+On an agent's tab pill, a line along the top shows what the agent is doing: a bar moving along it while the agent works, a still solid line while it waits for your answer, and a dashed line while it is signed out. Nothing shows when it is idle or out of quota. A collapsed pane shows no border animation, only its pills' lines.
+
 ![A pane's + menu: one entry per widget type, from Agent to Settings](../../assets/screenshots/chrome/chrome-pane-add-menu.png)
 
 This is a different axis from the top-bar/`Cmd+N` actions above and from
@@ -648,7 +650,7 @@ A pane tab's own menu (right-click its pill, in a pane with more than one tab) h
 |--------|-------|-----------------|
 | Split Right | `⌘D` | `Ctrl+Shift+D` |
 | Split Below | `⇧⌘D` | `Ctrl+Alt+Shift+D` |
-| Split in Direction | `Ctrl+Shift+S` + Arrow | Same |
+| Split in a direction | `Ctrl+Shift+S`, then ↓ (below) or → (right) | Same |
 
 A pane's right-click menu has the same splits, and the command palette has **Split Right** and **Split Down**. **Every split opens a Shortcuts pane** beside the pane it came from, for you to choose what the new pane should be. It does not copy the pane you split.
 
@@ -657,6 +659,7 @@ A pane's right-click menu has the same splits, and the command palette has **Spl
 A Shortcuts pane is a grid of tiles, one for every pane type and every installed widget you've approved: Agent, Terminal, Editor, Files, Browser, Swarm, Memory, Connectors and the rest, with their icons and labels. The ones you opened most recently come first (from anywhere: a tile here, the widget bar, the **+** menu, a shortcut); the rest keep the order of the widget bar. Widgets you hid in **Settings → Widgets** are left out.
 
 - **Choose a tile** with a click, or with the arrow keys and **Enter**. The Shortcuts pane is replaced in place by that pane, at the same size and position. The **Agent** tile opens the agent picker.
+- **A tile for a pane you already have open** (Memory, Connectors, Settings and the other panes listed under [Opening a widget again](#opening-a-widget-again)) brings that pane back and closes the Shortcuts pane. **Shift**-click the tile, or press **Shift+Enter**, to open a new pane in its place instead.
 - **Type to filter** the tiles by name. A group, such as Messengers, opens its own tiles; **Escape** goes back out.
 - **Escape** clears what you typed first. With an empty box, **Escape** closes a Shortcuts pane that a split opened (it has nothing in it to lose, so nothing is asked, and its neighbour takes the space).
 - **A Terminal or Files tile starts where you were.** It opens in the same folder and on the same connection as the pane you split.
@@ -664,7 +667,7 @@ A Shortcuts pane is a grid of tiles, one for every pane type and every installed
 
 ### The pane menu
 
-Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane that takes typed input), **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**. To split up or left, use the keys under [Splitting](#splitting).
+Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane that takes typed input), **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**.
 
 ![A pane's right-click menu](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
 
@@ -675,6 +678,8 @@ Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane tha
 To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, right-click its tab pill and choose **Open in Its Own Pane**, or drag the pill out; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
 
 The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
+
+From the click on **Close** until the pane is gone, the pane is dimmed and ignores clicks, and its header reads **Closing…** (**Closing 3 tabs…** when the pane holds three tabs). A pane with nothing to ask you, such as an editor or a terminal, closes without waiting on the backend.
 
 ![The Agent pane maximized to fill its tab](../../assets/screenshots/chrome/chrome-pane-maximized.png)
 
@@ -703,7 +708,7 @@ Rearrange panes by dragging their headers. You can:
 - Move panes across tabs
 - Drag panes between windows (cross-window drag supported on all platforms)
 
-Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. A pane with two or more tabs can place one of its own tabs this way. Several selected tabs always join the pane under the pointer.
+Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. A pane with two or more tabs can place one of its own tabs this way. `Ctrl`+click (`Cmd`+click on macOS) on a pane tab picks it; pick as many as you like, in different panes too. Dragging any picked tab moves all of them into the pane you drop on, and several picked tabs always join the pane under the pointer. `Esc` or a plain click on a tab clears the pick. A plain click on a tab of a collapsed pane expands the pane; dropping a tab on one does not.
 
 ### Dropping files onto panes
 

@@ -21,6 +21,8 @@ AgentMux keeps the last copy that opened cleanly as well. If the latest save doe
 
 **After an update:** the first launch of a new version copies the workspaces of the newest older version on the same channel, once. From then on each version keeps its own. Two versions running side by side never share workspaces. See [Running multiple instances](/multi-instance/).
 
+When a window opens with the default layout because nothing was restored, AgentMux can offer the newest layout another build saved in the last 14 days, in a notice such as "Restore the layout from 0.60.4 (closed 03:28 today): 3 tabs, 8 agents?" with **Restore** and **Not now**. It never offers a build that is running at that moment.
+
 **Quitting doesn't close windows.** Every window that was open when you quit opens again at the next launch, with its tabs and panes. After a crash, the next launch reopens the workspace from its last save.
 
 ## Windows in a workspace
@@ -88,7 +90,7 @@ The next launch opens the workspace that was open last. **New Window** opens a w
 
 **Import…** opens an exported workspace, or a `*.agentmux-layout.json` file saved with the **Save layout…** of earlier versions, as a new workspace. Before it opens anything it shows a preview: the windows and tabs, each tab's panes, anything that can't be reproduced exactly here, and every terminal command the file would run, with **Run these commands** (ticked only for a file this AgentMux saved in its own folders; for any other file it says "This file wasn't saved by this AgentMux. Check these commands before running them."). **Import** then switches to the new workspace, named after the file ("Ops", or "Ops 2" when you already have an "Ops").
 
-Every pane of an imported workspace is new. The agent panes of the windows that open start their agents; an agent pane in a window that was closed shows the agent picker when you reopen it.
+Every pane of an imported workspace is new. The agent panes of the windows that open start their agents; an agent pane in a window that was closed shows the agent picker when you reopen it. An agent never gets a second pane from an import: if it already has one in the windows that open, the pane in the imported workspace shows the agent picker, and a notice says where the agent already is.
 
 ## See also
 

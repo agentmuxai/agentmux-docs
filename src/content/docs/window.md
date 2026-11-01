@@ -34,6 +34,8 @@ Hover **more** (or click it) to list the widgets that aren't pinned to the bar. 
 
 Right-click a window tab to colour it or rename it: pick one of 14 colours, **Clear color** to remove it, or **Rename**. The colour is stored with the tab (`tab:color`).
 
+No two tabs in a window share a name, ignoring case. A new, renamed or moved tab whose name is taken gets a counter: "Tab 4 (2)", "Report (2)". A new tab is named with the next free "Tab N". A name that ends in a year, such as "Report (2024)", keeps it, and the counter goes after it: "Report (2024) (2)".
+
 ![A window tab's menu: 14 tab colours, Clear color, Rename and Close menu](../../assets/screenshots/chrome/chrome-tab-menu.png)
 
 ### Closing a tab
@@ -69,11 +71,16 @@ From left to right:
 | ↑ ↓ | Network upload and download | — |
 | **R** **W** | Disk reads and writes | — |
 | **GFX** | Whether the window is drawn by the GPU (`HW`), in software (`SW`), or without WebGL | — |
+| Agent count | A robot icon with **N running**, and **N waiting on you** in the warning colour when some of them wait for your answer. Shown only while an agent runs. An agent counts as running when it has a process, with or without a pane | The [Swarm](/subagent-watcher/) |
+| **History** (clock icon) | How much agent history is kept on this computer. It sits just left of the token count | Where the history is kept |
 | ↑ ↓ (right) | Tokens your agents have sent and received this session | Token usage by service |
+| **Offline** or **Connection issues** | Shown only when a service AgentMux needs can't be reached. **Offline** (red): MuxBus or a model provider's API can't be reached at all. **Connection issues** (amber): some requests to one have kept failing for more than 30 seconds. Hover it for each service and since when. It clears when the service answers | — |
 | Host name | This computer's name, with the LAN discovery indicator (◇) and the MuxBus Cloud dot | The host panel |
 | Version | The AgentMux version | The instance panel |
 
 Hover an item for a short description. Each panel closes with `Esc` or a click outside it.
+
+AgentMux watches MuxBus and the model API of each provider your agents use: the **Anthropic API** (Claude), the **OpenAI API** (Codex) and the **Google AI API** (Gemini). Codex and Gemini join once one of their turns has reported. If an agent's CLI is pointed at a proxy or gateway, that address is watched as a service of its own, named with its host. On Windows, a change of network (a Wi-Fi switch, a VPN) is checked at once. Messages you type to an agent while its model API is out are held and sent when it answers; the agent's row in the [Swarm](/subagent-watcher/) says how many are held.
 
 ### Backend
 
@@ -99,6 +106,10 @@ Tokens sent and received since the time shown, by service. **Reset counter** sta
 
 ![The Token Usage panel before any turn has completed, with Reset counter](../../assets/screenshots/chrome/chrome-status-tokens.png)
 
+### History size
+
+The figure in the status bar is the total of agent history on this computer. Click it to see where that history is kept: the CLI's own session files, the shared pane history, archived sessions and the jekt audit trail, each with its size, and the largest pane histories. The total counts the data the pane history holds, not the free space inside its file. That free space shows on its own **Reclaimable (not in the total)** line when there is some, and the copies of the pane history that older versions kept are listed as **Old copies, per version (not in the total)**. AgentMux keeps history forever, so the total only grows. The panel says when it was measured. **Measure again** measures anew, and **Open History** opens the [History](/history/) pane, where **Storage** can give the free space back.
+
 ### Host
 
 This computer: its OS, address, the backend's process id, and the version's data folder (click the path to open it in your file manager). Below that: the [LAN discovery](/lan-discovery/) switch and **Pair a device**, [MuxBus Cloud](/auth/) sign-in, and the local endpoints (IPC, backend, WebSocket, DevTools).
@@ -116,11 +127,13 @@ The window list is headed by the workspace's name and how many windows it has ("
 
 #### Maintenance and updating
 
-The **Maintenance** part of the panel shows whether a newer release is out. Nothing checks on its own: **Check for update** (or **Check again**) asks. When one is out, the row reads "v*x* is out" with **What's new** (the release notes) and **Download**. The Microsoft Store build updates through the Store instead, which gets each release after GitHub does. When your version is older than the oldest one a release upgrades from, the row says to install that version first.
+The **Maintenance** part of the panel shows whether a newer release is out. Nothing checks on its own: **Check for update** (or **Check again**) asks. When one is out, the row reads "v*x* is out" with **What's new**, which opens that release's page on GitHub in your browser (the list of releases when the version isn't known), and **Download**. **Download** works for the Windows installer and portable builds, the AppImage, the Linux portable build, a `.deb` or `.rpm`, and the macOS app when it sits in a folder you can write to. For any other install it opens the release page, and you install the release yourself. On the Microsoft Store build the button reads **Update in the Store** and asks the Store to install the update, or opens the Store page when it can't; the Store gets each release after GitHub does, so it may not be there yet. When your version is older than the oldest one a release upgrades from, the row says to install that version first.
 
-After **Download** the row shows the progress ("Downloading v*x*… 40%", then "Unpacking"), then "v*x* is ready" with **Show folder** or **Show installer** (AgentMux shows the file, it never runs it) and **Upgrade & restart**. A failed download says why, with **Try again** and **Release page**.
+After **Download** the row shows the progress ("Downloading v*x*… 40%", then "Unpacking"). AgentMux checks the file against the release's signed manifest before it keeps it, and refuses a file that doesn't match. Then the row reads "v*x* is ready" with **Show folder** or **Show installer** (**Show file** for an AppImage) and **Upgrade & restart**. The first only reveals the file in your file manager and never runs it; **Upgrade & restart** is what installs it. A failed download says why, with **Try again** and **Release page**.
 
-**Upgrade & restart** doesn't interrupt an agent. The row reads "Waiting for 3 agents to finish…" and keeps waiting for as long as it takes, reading the count again each time; an agent whose process has ended doesn't count. It lists what the restart would also stop, such as commands agents left running. **Restart now** skips the wait, and **Cancel** stops the upgrade. When the agents are done, the launcher asks you in a dialog: "Restarting: answer the AgentMux dialog (No cancels)". Your agents resume after the restart, and an agent whose turn was cut off is told to carry on.
+**Upgrade & restart** doesn't interrupt an agent. The row reads "Waiting for 3 agents to finish…" and keeps waiting for as long as it takes, reading the count again each time; an agent whose process has ended doesn't count. It lists what the restart would also stop, such as commands agents left running. **Restart now** skips the wait, and **Cancel** stops the upgrade. When the agents are done, the launcher asks you in a dialog: "Restarting: answer the AgentMux dialog (No cancels)". Your agents resume after the restart, and an agent whose turn was cut off is told to carry on. The cut-off turn ends with "This turn was cut off mid-tool, so it didn't finish." instead of an error.
+
+A `.deb` or `.rpm` upgrade asks for your password in your desktop's own prompt. If the new version can't be kept running, AgentMux offers, for 7 days after the upgrade, to go back to the version before it; that asks for your password too.
 
 An agent can ask for an upgrade through the `App` tool, on this computer or, with `host`, on another one on your network. It goes to the super agent as a sensitive request, and the person at that computer sees a banner with a countdown that they can veto (see [Interagent communication](/internals/interagent-comms/) and [MuxAPI](/internals/muxapi/)).
 
