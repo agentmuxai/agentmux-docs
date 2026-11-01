@@ -1,8 +1,10 @@
 name: Build & Deploy
 
+# Deploys are on demand, not on every merge, to save cost: a merge to main
+# publishes nothing. PRs still build and check links in pr-check.yml. To
+# publish the current main:
+#   gh-agent workflow run deploy.yml -R agentmuxai/agentmux-docs
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:

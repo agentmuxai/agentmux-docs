@@ -34,26 +34,23 @@ Custom CSS overrides Starlight's CSS custom properties. Key details:
 
 ### Deployment
 
-No CDK. Static S3 + CloudFront. **Deploys automatically** via `.github/workflows/deploy.yml`
-on every push to `main` (added 2026-06-27, PR #97) — merging a PR *is* deploying to
-production. There is no separate manual step in the normal flow; don't tell a user
-"merged, but not deployed" without checking the workflow run.
+No CDK. Static S3 + CloudFront. **Deploys are on demand** via `.github/workflows/deploy.yml`
+(`workflow_dispatch` only, since 2026-11-01, to save cost). **A merge to `main` publishes
+nothing:** the change reaches `docs.agentmux.ai` only when someone runs the workflow. Don't
+tell a user a merged change is live; say it is merged and waits for the next deploy.
 
-How it behaves (checked against the workflow and its run history on 2026-10-20):
+How it behaves:
 
-- **Any merge deploys,** whatever it changes: there is no path filter, so a merge that only
-  touches CI or `CLAUDE.md` rebuilds and re-uploads the whole site.
-- **A newer merge cancels a deploy still running** (`concurrency: deploy-prod`,
-  `cancel-in-progress: true`). A `cancelled` run is normal when merges land close together;
-  only the latest run on `main` has to succeed.
-- **It can be rerun by hand** (`workflow_dispatch`), e.g. after a transient AWS failure:
-  `gh-agent workflow run deploy.yml --repo agentmuxai/agentmux-docs --ref main`.
+- **Run it by hand:** `gh-agent workflow run deploy.yml -R agentmuxai/agentmux-docs` (it builds
+  `main`). Ask the person who owns releases before you do: the plan is one deploy per
+  AgentMux release, and each run costs money.
+- **A newer run cancels one still running** (`concurrency: deploy-prod`,
+  `cancel-in-progress: true`). Only the latest run has to succeed.
 - **It takes about 4–7 minutes** (median 4.7 over the 37 successful runs from 2026-10-05 to
-  2026-10-20; none failed, 2 were cancelled by a newer merge). The page is live when the run
-  is green: its last step checks the live site.
-- **PR checks don't build the Rust reference.** `pr-check.yml` runs `build:typedoc` + `build`
-  (not `build:full`) and skips `/api/rust/` in its link check, so a broken `cargo doc` shows
-  up only in the deploy run, which then fails before uploading anything.
+  2026-10-20). The page is live when the run is green: its last step checks the live site.
+- **PRs still build and check links.** `pr-check.yml` runs `build:typedoc` + `build` (not
+  `build:full`) and skips `/api/rust/` in its link check, so a broken `cargo doc` shows up
+  only in the deploy run, which then fails before uploading anything.
 
 The CI job runs exactly this sequence (also useful to reproduce locally when debugging
 a failed run):
@@ -106,7 +103,7 @@ If any of these is missing, or `cargo doc` fails, `build:rust-docs` behaves diff
   `DOCS_DEPLOY_ROLE_ARN`); the resources are defined in a private infrastructure repo.
   This repository is public: never write those values into a file, commit message or PR.
 - **Domain:** `docs.agentmux.ai` (DNS alias to the CloudFront distribution)
-- **Deploy status:** `gh-agent run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after merging, don't assume success (agents use `gh-agent`; plain `gh` is not signed in for them)
+- **Deploy status:** `gh-agent run list --repo agentmuxai/agentmux-docs --workflow deploy.yml` — check this after you run a deploy, don't assume success (agents use `gh-agent`; plain `gh` is not signed in for them)
 
 ### Content Source
 
