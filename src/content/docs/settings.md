@@ -12,7 +12,7 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is a **pane view** with eleven tabs — Appearance, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Agents and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
+Settings is a **pane view** with twelve tabs — Appearance, Animations, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Agents and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
 
 - Click **Settings** in the widget bar. It is pinned by default.
 - Press `Ctrl+,` (`⌘,` on macOS).
@@ -40,6 +40,24 @@ Under `Midnight` specifically, the agent pane background is pure black; other pa
 The default theme and opacity for windows without their own, the startup splash screen, window transparency and blur, the gap between panes, a custom background colour, how a pane looks while it's hover-magnified, and the colour of each widget type's panes.
 
 ![Settings, Appearance tab](../../assets/screenshots/settings/settings-appearance.png)
+
+### Animations
+
+How much the interface moves. Choose **Follow system**, **Off**, **Quick**, **Smooth** (the default) or **Slow**; a change applies at once in every window, and there is no Save. Under the choice, a line says how long a menu takes to open at the current setting, for example "Menus open in 160 ms" at Smooth, or "Menus open instantly" when animations are off. A **Preview** plays a card that slides and fades in, a switch and button press, and a panel that collapses, with the chosen settings; **Replay** runs it again.
+
+- **Follow system** uses your computer's reduced-motion setting (Windows: Settings, Accessibility, Visual effects, Animation effects; macOS: Accessibility, Display, Reduce motion). With no preference it behaves like Smooth. Every other choice ignores the system setting, in both directions. If your system asks for reduced motion and you chose something else, a notice says so and has a **Follow system** button.
+- **Off** stops all movement and fades: changes happen instantly.
+- **Quick**, **Smooth** and **Slow** run animations at 50%, 100% and 150% of their designed length.
+
+**Advanced** shows the numbers behind the choice, and you can edit them:
+
+- **Animation duration (%)**: how long animations take, as a percent of their designed length. `0` is off; otherwise 25 to 300, in steps of 5.
+- **Hover and fade polish (%)**: the length of hover and focus fades and hover lifts, in the same range. `0` turns them off.
+- **Reduce movement**: replace slides, zooms and bounces with fades.
+
+A number you type that is out of range is corrected (1 to 24 becomes 25, more than 300 becomes 300, anything else snaps to a step of 5) and a line under the numbers says what it used. Editing a number switches the choice to **Custom**. Choosing a preset again keeps your numbers stored, and **Use my custom values** brings them back. **Reset to default** returns to Smooth with 100%, 100% and Reduce movement off. Under **Follow system** the numbers are shown but not editable.
+
+The command palette has **Animations: Off**, **Animations: Quick**, **Animations: Smooth** and **Animations: Slow**, which set the same choice.
 
 ### Window & Panes
 
@@ -173,6 +191,15 @@ A key you don't set uses the default shown below. "Unset" in the Default column 
 
 Browser profiles, the standing powers you give agents on sites and **Pause all agent browsing** are managed in Settings ▸ Browser, not in `settings.json`.
 
+## Animation Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `animation:preset` | string | `"smooth"` | The choice on Settings ▸ Animations: `system`, `off`, `quick`, `smooth`, `slow` or `custom`. A missing or unknown value is `smooth`. Only `system` follows the computer's reduced-motion setting. |
+| `animation:speed` | integer | `100` | Animation duration as a percent of the designed length, used by `custom`. `0`, or 25 to 300 in steps of 5 (other values are corrected). |
+| `animation:polish` | integer | `100` | Length of hover and focus fades and hover lifts as a percent, used by `custom`. Same range. |
+| `animation:reducemovement` | boolean | `false` | Replace slides, zooms and bounces with fades, used by `custom`. |
+
 ## Window Settings
 
 | Setting | Type | Default | Description |
@@ -183,7 +210,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `window:opacity` | number | `0.8` | Default opacity for windows without their own, used only while `window:transparent` or `window:blur` is on. Settings allows 0.35–1. A window's own opacity is saved with the window. See [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color (hex). Blank uses the theme's. |
 | `window:tilegapsize` | integer | `3` | Gap between panes in pixels (Settings allows 0–20) |
-| `window:reducedmotion` | boolean | `false` | Deprecated and ignored: motion follows the system. A settings file that still sets it loads without error. |
+| `window:reducedmotion` | boolean | `false` | Deprecated and ignored. Use [Animation Settings](#animation-settings). A settings file that still sets it loads without error. |
 | `window:magnifiedblockopacity` | number | `1` | Background opacity of a pane while it's hover-magnified (0–1) |
 | `window:magnifiedblocksize` | number | unset | Scale factor applied to a pane while it's hover-magnified. Unset, the layout uses its built-in size. |
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
