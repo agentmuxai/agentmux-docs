@@ -126,7 +126,7 @@ This is a smaller shape than the Swarm's or the Drone's view models, which carry
 
 ## Section status chips: not just decoration
 
-The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content came from the same entry in the section list (`WARDEN_SECTIONS` in `frontend/app/view/warden/warden-sections.ts` today). When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
+The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same entry in the section list (`WARDEN_SECTIONS` in `frontend/app/view/warden/warden-sections.ts`). When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
 
 The Warden was a long-running multi-PR effort, and the chip's status tied it together as it grew.
 

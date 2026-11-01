@@ -525,7 +525,7 @@ A focus change could reach the row both ways, and a whole-row write could land a
 
 ### 6.2 One Writer Now
 
-The dual path is gone. the old whole-tree persist call no longer exists, srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`), and every write to the row comes from srv:
+The dual path is gone. persistToBackend() no longer exists, srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`), and every write to the row comes from srv:
 
 | Writer | Fields | When |
 |---|---|---|
@@ -611,32 +611,32 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 
 ### Key File Index
 
-| Concern | Primary File | Location |
-|---|---|---|
-| LayoutModel class | `frontend/layout/lib/layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| localTreeStateAtom init | `frontend/layout/lib/layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| focusedNodeId getter | `frontend/layout/lib/layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| focusedNode memo | `frontend/layout/lib/layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| FocusNode reducer arm | `frontend/layout/lib/layoutModel.ts` | `frontend/layout/lib/layoutModel.ts` |
-| validateFocusedNode (bootstrap + reconcile) | `layoutFocus.ts` | `frontend/layout/lib/layoutFocus.ts` |
-| isFocused memo (per-node) | `layoutNodeModels.ts` | `frontend/layout/lib/layoutNodeModels.ts` |
-| Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts` | `frontend/layout/lib/layoutIntentActions.ts` |
-| Intent outbox, send, compare with srv's tree | `frontend/layout/lib/layoutIntents.ts` | `frontend/layout/lib/layoutIntents.ts` |
-| srv: apply and store an intent | `crates/srv/src/server/service/layout_intents.rs` | `crates/srv/src/server/service/layout_intents.rs` |
-| srv: `LayoutApplyIntent` reducer arm | `crates/srv/src/reducer/layout/intent.rs` | `crates/srv/src/reducer/layout/intent.rs` |
-| MOS getMuxObjectAtom | `mos.ts` | `frontend/app/store/mos.ts` |
-| LayoutState atom from tab | `layoutAtom.ts` | `frontend/layout/lib/layoutAtom.ts` |
-| AgentPaneState / TurnPhase types | `types.ts` | `frontend/app/store/agent-pane-state/types.ts` |
-| AgentDocumentState types | `frontend/app/store/agent-document/types.ts` | `frontend/app/store/agent-document/types.ts` |
-| BrowserPaneState types | `frontend/app/store/browser-pane-state/types.ts` | `frontend/app/store/browser-pane-state/types.ts` |
-| EditorPaneState / reducer | `editor-pane-state-store.ts` | `frontend/app/store/editor-pane-state-store.ts` |
-| blockAgentColor memo | `blockframe.tsx` | `frontend/app/block/blockframe.tsx` |
-| isUsableFocusRingColor | `autotitle.ts` | `frontend/app/block/autotitle.ts` |
-| block-focused CSS (border) | `block.scss` | `frontend/app/block/block.scss` |
-| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs` | `crates/srv/src/persist_subscriber.rs` |
-| Strong layout authority (design, status) | `SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` | `docs/specs/` |
-| Reducer-stack master status | `MASTER_REDUCER_STACK_STATUS_2026-05-05.md` | `docs/specs/` |
-| Discussion #707 ref | `SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md` | `docs/specs/` |
-| Border fix plan | `pane-highlight-fix-plan.md` | `docs/specs/` |
-| Focus border tab-switch bug | `focus-border-tab-switch-bug.md` | `docs/specs/` |
-| Agent-pane-layout reducer (Phase 0) | `SPEC_AGENT_PANE_LAYOUT_REDUCER_2026_06_02.md` | `docs/specs/` |
+| Concern | File |
+|---|---|
+| LayoutModel class | `frontend/layout/lib/layoutModel.ts` |
+| localTreeStateAtom init | `frontend/layout/lib/layoutModel.ts` |
+| focusedNodeId getter | `frontend/layout/lib/layoutModel.ts` |
+| focusedNode memo | `frontend/layout/lib/layoutModel.ts` |
+| FocusNode reducer arm | `frontend/layout/lib/layoutModel.ts` |
+| validateFocusedNode (bootstrap + reconcile) | `frontend/layout/lib/layoutFocus.ts` |
+| isFocused memo (per-node) | `frontend/layout/lib/layoutNodeModels.ts` |
+| Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts` |
+| Intent outbox, send, compare with srv's tree | `frontend/layout/lib/layoutIntents.ts` |
+| srv: apply and store an intent | `crates/srv/src/server/service/layout_intents.rs` |
+| srv: `LayoutApplyIntent` reducer arm | `crates/srv/src/reducer/layout/intent.rs` |
+| MOS getMuxObjectAtom | `frontend/app/store/mos.ts` |
+| LayoutState atom from tab | `frontend/layout/lib/layoutAtom.ts` |
+| AgentPaneState / TurnPhase types | `frontend/app/store/agent-pane-state/types.ts` |
+| AgentDocumentState types | `frontend/app/store/agent-document/types.ts` |
+| BrowserPaneState types | `frontend/app/store/browser-pane-state/types.ts` |
+| EditorPaneState / reducer | `frontend/app/store/editor-pane-state-store.ts` |
+| blockAgentColor memo | `frontend/app/block/blockframe.tsx` |
+| isUsableFocusRingColor | `frontend/app/block/autotitle.ts` |
+| block-focused CSS (border) | `frontend/app/block/block.scss` |
+| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs` |
+| Strong layout authority (design, status) | `docs/specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` |
+| Reducer-stack master status | `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` |
+| Discussion #707 ref | `docs/specs/SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md` |
+| Border fix plan | `docs/specs/pane-highlight-fix-plan.md` |
+| Focus border tab-switch bug | `docs/specs/focus-border-tab-switch-bug.md` |
+| Agent-pane-layout reducer (Phase 0) | `docs/specs/` |
