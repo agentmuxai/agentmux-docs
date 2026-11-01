@@ -72,7 +72,7 @@ Each agent is independent. Agents don't share context unless they message each o
 
 ## 5. Add instructions with a bundle (optional)
 
-A bundle is a reusable set of instructions, MCP servers, memory and skills. Create one from **Memory → Bundles → + New Bundle** (click **Memory** in the widget bar). Enter a **Name**, add **Instructions**, then click **Save**. A bundle works with any agent, whatever harness it runs. Add it under **Bundles** when you create an agent, or later from **Bundles…** in the agent's **My Agents** row menu. See [Bundles](/bundles/).
+A bundle is a reusable set of instructions, MCP servers, memory and skills. Create one from **Memory → Bundles → + New Bundle** (click **Memory** in the widget bar). Enter a **Name**, add **Instructions**, then click **Save**. A bundle works with any agent, whatever harness it runs. Add it under **Bundles** when you create an agent, or later from **Bundles…** in the agent's **My Agents** panel. See [Bundles](/bundles/).
 
 ![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 

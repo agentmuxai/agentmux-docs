@@ -7,7 +7,7 @@ description: Reusable packages of an agent's instructions, MCP servers, memory a
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** row menu or its pane's right-click menu. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
+A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** panel or its pane's right-click menu. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
 
 :::note[Earlier names]
 Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [MuxAPI](/internals/muxapi/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
