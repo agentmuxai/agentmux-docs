@@ -20,7 +20,7 @@ Settings is a **pane view** with eleven tabs — Appearance, Window & Panes, Bro
 
 Editing `settings.json` directly still works and is reflected in the pane — use the command palette ("Open Settings File"), or **Open raw settings.json** at the bottom of the pane, if you want the raw file instead of the UI.
 
-Type in **Search settings…** at the top of the pane to find a setting on any tab:
+Type in **Search settings…** at the top of the pane to find a setting on any tab. Each result shows where the setting lives, for example **Sounds › Tool-call tones › Volume**, so settings with the same name can be told apart. The path is searched too: typing a tab or group name finds the settings under it. Hover a result for its full path.
 
 ![Searching Settings for "font": Font size and Font family, from the Terminal tab](../../assets/screenshots/settings/settings-search.png)
 
@@ -37,7 +37,7 @@ Under `Midnight` specifically, the agent pane background is pure black; other pa
 
 ### Appearance
 
-The default theme and opacity for windows without their own, the startup splash screen, window transparency and blur, the gap between panes, reduced motion, a custom background colour, how a pane looks while it's hover-magnified, and the colour of each widget type's panes.
+The default theme and opacity for windows without their own, the startup splash screen, window transparency and blur, the gap between panes, a custom background colour, how a pane looks while it's hover-magnified, and the colour of each widget type's panes.
 
 ![Settings, Appearance tab](../../assets/screenshots/settings/settings-appearance.png)
 
@@ -117,7 +117,7 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ### Agents
 
-**Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`).
+**Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`). If an agent's new id is already taken, its row says "Not now: *reason* (the next free id is *id*)" with **Use *id*** and **Choose another id**; type an id and click **Use this id**. Update the other agents first.
 
 ### Advanced
 
@@ -134,7 +134,7 @@ Settings live under the channel's data dir, so every version that binds to the s
 | Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
 | Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
-The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Multi-instance & dev mode](/multi-instance/) for the full layout.
+The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE`. `task dev` does this by default: it runs on a home of its own, so its `dev/...` folder sits under that home and not under your real `~/.agentmux` (see [Which home `task dev` uses](/multi-instance/#which-home-task-dev-uses)). See [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 A key you don't set uses the default shown below. "Unset" in the Default column means the key has no single default value: the description says what happens when it isn't set.
 
@@ -167,8 +167,8 @@ A key you don't set uses the default shown below. "Unset" in the Default column 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `browser:searchsuggestions` | boolean | `true` | The address bar also asks your default search engine for suggestions while you type, sending it each edit before you press Enter, as Chrome does. Off: suggestions come only from this computer (history, typed addresses). Incognito tabs never ask. |
-| `browser:hibernate` | boolean | `true` | A browser pane out of sight for a while hibernates: its page closes to free its memory (often 100 to 200 MB) and loads again when you're about to look at it, with a note while it restores. Never a pane an agent is using, one playing or capturing media, one with something typed into it, or a local dev server. Off: browser panes keep running while hidden. See [Windows, tabs, panes and renderers](/internals/renderers/#browser-panes). |
-| `browser:hibernateafter` | number | `30` | Minutes a browser pane is hidden before it hibernates. Sooner when the computer is low on memory: 5 minutes, then 1. |
+| `browser:hibernate` | boolean | `true` | A browser pane out of sight for a while hibernates: its page closes to free its memory (often 100 to 200 MB) and loads again when you're about to look at it, with a note while it restores. Never a pane playing or capturing media, one with something typed into it, one whose page asks before you leave it, one with DevTools or a popup window open, one with auto-approve on or waiting for you, a page whose title or icon changed in the last 30 minutes (a chat or an inbox), or a local dev server. A pane an agent is using stays awake until the agent has left it alone for `browser:hibernateafter` minutes; then it sleeps, and the agent's next `Browser` call wakes it. Off: browser panes keep running while hidden. See [Windows, tabs, panes and renderers](/internals/renderers/#browser-panes). |
+| `browser:hibernateafter` | number | `30` | Minutes a browser pane is hidden before it hibernates, and minutes an agent can leave its pane alone before the pane may hibernate. A hidden pane hibernates sooner when the computer is low on memory: after 5 minutes, then 1. |
 | `browser:keepawakesites` | array | `[]` | Sites whose browser panes never hibernate, by host (`example.com`) or origin (`https://example.com`). |
 
 Browser profiles, the standing powers you give agents on sites and **Pause all agent browsing** are managed in Settings ▸ Browser, not in `settings.json`.
@@ -183,7 +183,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `window:opacity` | number | `0.8` | Default opacity for windows without their own, used only while `window:transparent` or `window:blur` is on. Settings allows 0.35–1. A window's own opacity is saved with the window. See [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color (hex). Blank uses the theme's. |
 | `window:tilegapsize` | integer | `3` | Gap between panes in pixels (Settings allows 0–20) |
-| `window:reducedmotion` | boolean | `false` | Turn off CSS animations and transitions |
+| `window:reducedmotion` | boolean | `false` | Deprecated and ignored: motion follows the system. A settings file that still sets it loads without error. |
 | `window:magnifiedblockopacity` | number | `1` | Background opacity of a pane while it's hover-magnified (0–1) |
 | `window:magnifiedblocksize` | number | unset | Scale factor applied to a pane while it's hover-magnified. Unset, the layout uses its built-in size. |
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
@@ -217,7 +217,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 |---------|------|---------|-------------|
 | `agents:always_available` | boolean | `true` | Closing an agent's pane, its tab or its workspace parks the agent instead of stopping it: it keeps running, and a message or a Job starts a stopped one. `false`: closing a pane stops its agent, as before. See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane). |
 | `agents:idle_stop_minutes` | number | `60` | With `agents:always_available` on, minutes an agent with no pane may be idle before it is stopped (a message starts it again). `0`: never. |
-| `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once (the default was `12` in 0.60.5). A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
+| `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once. A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
 | `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. `0`: off. |
 | `agents:start_per_minute` | integer | `5` | The most agent starts one sender (an agent, or a job) may make in any 60 seconds, so two agents can't start each other in a loop. A refusal names the limit. `0`: no limit. |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
@@ -231,6 +231,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agent:subagentmodel` | string | `"sonnet"` | The model Claude agents' general-purpose sub-agents run on: `sonnet`, `haiku`, `opus`, a model ID, or `inherit` for the agent's own. A sub-agent that names its own model still wins. Takes effect when each agent next starts. |
 | `agent:exploremodel` | string | `"haiku"` | The model Claude agents' Explore sub-agents run on: `haiku`, `sonnet`, `opus`, a model ID, or `inherit` for Claude Code's built-in. Takes effect when each agent next starts. |
 | `agent:retryonreconnect` | boolean | `true` | When a turn failed because the model API couldn't be reached, retry it once by itself when the API answers again, if no tool ran in it, you started it and you haven't typed in that pane since. `false`: only offer a Retry button. |
+| `agent:belownormalpriority` | boolean | `true` | Run agents' process trees at below-normal CPU priority (nice 10 on Linux and macOS, a lower priority class on Windows), so their builds and tests yield to AgentMux and your foreground apps while still using every idle core. Terminals you type in are never lowered. Applies to agents started afterwards. |
 | `agent:inputhistory:max` | integer | `10000` | How many messages you sent each agent are kept for ArrowUp and Ctrl+R in its composer. `0` keeps none from now on. Kept on this computer only. |
 | `agent:outdatedidsnotice` | boolean | `true` | Tell you once at startup when some agents have an id an older build chained, pointing to Settings ▸ Agents. Turned off when you dismiss it. |
 | `agent:transcriptframes` | boolean | `true` | Compress the finished parts of agent transcripts in the global transcript store (about 6 times smaller). Only parts received over a day ago and at least 8 MiB from a transcript's end. Nothing you read changes. |
@@ -253,7 +254,7 @@ Keys in `settings.json` for how agents message each other and share work. None h
 
 | Key | Type | Default | What it does |
 |---|---|---|---|
-| `message:refuse_bare_acks` | boolean | `true` | Refuse a bare acknowledgement ("got it", "thanks"; at most 24 characters) sent to an agent that wrote to the sender in the last 30 minutes, or as a reply to a message marked `reply: none`, so an acknowledgement doesn't start a turn on the other side. `false` turns the check off. |
+| `message:refuse_bare_acks` | boolean | `true` | Refuse a bare acknowledgement ("got it", "thanks"; at most 24 characters) sent to an agent that wrote to the sender in the last 30 minutes, so an acknowledgement doesn't start a turn on the other side. `false` turns this check off. A reply to a message sent with `reply: none` is always refused, for an hour after that message, whatever this is set to. A restart makes AgentMux forget both. |
 | `jekt:cold_hold_minutes` | integer | `55` | Minutes of quiet after which an agent's session counts as cold. A message that can wait is held for such an agent and delivered when it is next active, instead of starting a turn that pays for its whole context again. An urgent message, or one that names a task waiting on the agent, goes through. `0` turns the hold off. |
 | `fleet:quota_mode` | `"off"` or `"tight"` | `"off"` | While `"tight"`, a `Tasks` `claim` with no id takes only a task aimed at the claimer or one whose priority is at least `fleet:quota_min_priority`; a claim by id still works. Changing the mode posts a bulletin to the agents. Set it with `Message` action `quota_mode`. |
 | `fleet:quota_min_priority` | integer | `1` | The lowest priority an unnamed `Tasks` `claim` takes while `fleet:quota_mode` is `"tight"`. |
@@ -275,10 +276,10 @@ For the `Desktop` tool, which lets an agent look at and control native desktop a
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `desktop:enabled` | boolean | `false` | Let agents use the Desktop tool. Even when on, an agent can use an app only after you allow it, for a while or for its session, and you can stop it at any time. Every action is logged. Web browsers, password managers and AgentMux itself are refused. |
+| `desktop:enabled` | boolean | `false` | Let agents use the Desktop tool. Even when on, an agent can use an app only with a grant for that app: it asks, the super agent reviews the request (with none, the countdown is twice as long), and you can veto it during the countdown. You can stop it at any time. Every action is logged. Web browsers, password managers and AgentMux itself are refused. |
 | `desktop:blocklist` | array of strings | `[]` | App names the tool must never control, added to the built-in list. An entry matches an app's name exactly (`notepad`) or any part of a window's title (`bank`). |
 | `desktop:allowlist` | array of strings | `[]` | App names to take off the built-in blocklist, for example a browser you want an agent to control. AgentMux itself can't be taken off. |
-| `desktop:grantminutes` | integer | `30` | How many minutes **Allow for a while** lasts when you allow an agent to control an app (1 to 1440). |
+| `desktop:grantminutes` | integer | `30` | How many minutes a grant to control an app lasts once the agent's request is approved (1 to 1440). |
 
 ## Supervisor Settings
 
@@ -376,7 +377,7 @@ See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see)
 | `notify:sound:agent.waiting.for.input` | boolean | `true` | A looping tone while an agent waits for you: a question, a tool permission, a browser hand-off or approval, an SSH consent or a widget install. Quiet while you're looking at that pane. |
 | `notify:sounds:waiting:volume` | number | `0.25` | Volume of the waiting tone, 0 to 1, under the master volume |
 | `notify:waiting:browser` | boolean | `true` | Include browser hand-offs and approvals in the waiting tone, the tab flash and the notification |
-| `notify:sound:agent.shutdown.pending` | boolean | `true` | A falling chime when something other than you asks to shut an agent down and you have 15 seconds (30 when another agent stops it) to keep it running |
+| `notify:sound:agent.shutdown.pending` | boolean | `true` | A falling chime when something other than you asks to shut an agent down and you have 15 seconds (30 when another agent stops it) to keep it running, and when an agent's request for a sensitive operation, such as installing a widget or an upgrade, starts its countdown |
 | `notify:tooltones:enabled` | boolean | `true` | A quiet tone for every agent tool call |
 | `notify:tooltones:volume` | number | `0.25` | Volume of tool-call tones, 0 to 1, under the master volume |
 | `notify:tooltones:scope` | string | `"all"` | Which panes play tool-call tones: `"all"`, or `"focused"` (only the focused pane in the focused window) |
@@ -405,6 +406,8 @@ See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see)
 | `notify:quiethours` | string | `""` | Daily quiet hours, local time, as `"HH:MM-HH:MM"` (it may span midnight, for example `"22:00-08:00"`). Works like a pause. Empty: none. |
 | `notify:taskbar:attention` | boolean | `true` | Badge the AgentMux taskbar button, and flash it once, while an agent needs you. Windows only. |
 
+On Windows, a notification can go straight to the Action Center with no banner drawn: while the screen saver is on, the PC is locked or another user is signed in, while a full-screen app or Direct3D full-screen app is in front, in presentation mode, or while Do Not Disturb is on. When that happens AgentMux writes a line to `~/.agentmux/logs/agentmux-launcher.log`, so a missing banner has a reason you can look up: `notify: toast <kind> went to the Action Center without a banner: <reason>`.
+
 ## Voice Input Settings
 
 See [Voice input](/pane-types/#voice-input).
@@ -428,6 +431,25 @@ See [Pin, keep in More, or hide](/pane-types/#pin-keep-in-more-or-hide).
 | `widget:pinned` | array of strings | unset | The widget bar's pinned icons, in order: a built-in widget's short name (`"agent"` for `defwidget@agent`) or an installed package widget's full key (`"ext@acme.board/main"`). Unset: the default pins. |
 | `widget:hidden` | array of strings | unset | Widgets hidden from the bar, **more** and a pane's **+** menu, as full keys (`"defwidget@drone"`). Settings can't be hidden. |
 | `widget:icononly` | boolean | `false` | Icon-only widget bar (no labels) |
+
+## Build Cache Settings
+
+AgentMux clears Rust build caches inside agent working folders (`~/.agentmux/agents/`) by itself, and warns agents when the disk runs low. It never touches a clone that has a cargo, rustc, linker or test process running in it, and each removal is logged. The installed AgentMux does this; a `task dev` build, a headless srv and an instance with a home of its own don't (see `AGENTMUX_BUILD_CACHE_CLEAN` in [Environment variables](/internals/env-vars/#agentmux_build_cache_clean)). The keys have no control in Settings: set them in `settings.json`.
+
+- When an agent completes a Kanban task, its own clones lose their `incremental` folders.
+- Every hour, `incremental` folders left behind by old builds are removed: the newest few per crate and profile stay, and the rest go once they have been idle for a day.
+- When a task completes or the disk runs low, a clone that was not built in for 3 days also loses its `target` folder.
+- When the free space on the disk that holds the working folders is under 20 GB or 10%, and clearing did not fix it, the three agents with the biggest build folders, and their leaders, get a note naming the folders. The note is sent at most once an hour per computer.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `buildcache:enabled` | boolean | `true` | `false` turns off all clearing. The low-disk warning stays. |
+| `buildcache:orphans` | boolean | `true` | Remove old `incremental` folders in the hourly pass and when the disk runs low. |
+| `buildcache:orphan_keep` | number | `3` | How many `incremental` folders per crate and profile always stay (never fewer than 1). |
+| `buildcache:orphan_idle_hours` | number | `24` | Hours an `incremental` folder beyond those must have been idle before it goes. |
+| `buildcache:stale_days` | number | `3` | Days without a build after which a clone loses its `target` folder, when a task completes or the disk runs low. `0`: never. |
+| `buildcache:warn_free_gb` | number | `20` | Warn when the free space is under this many GB... |
+| `buildcache:warn_free_pct` | number | `10` | ...or under this percentage of the disk. |
 
 ## Old Version Settings
 
@@ -474,7 +496,7 @@ AgentMux respects these environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (intended for tests) |
+| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (used by tests and by `task dev`) |
 | `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
 | `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
 | `CLAUDE_CONFIG_DIR` | Per-instance Claude Code auth/config dir; AgentMux sets this automatically |

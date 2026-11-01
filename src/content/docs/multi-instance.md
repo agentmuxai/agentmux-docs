@@ -92,12 +92,22 @@ Each new launch picks up its own dynamic backend port. There's no port to coordi
 
 Two checkouts of `agentmux` on the same host can each run `task dev` in parallel, even on the same branch. Every dev launch derives a stable **clone id** from a hash of its workspace-root path:
 
-- **Data dir:** `~/.agentmux/dev/<branch>/<clone-id>/` — distinct per clone, so lockfile, IPC socket/pipe, CEF cache, and logs all isolate. (Without this, two clones on the same branch would silently share state — the second `task dev`'s launcher would attach to the first clone's running window.)
+- **Data dir:** `<home>/dev/<branch>/<clone-id>/` — distinct per clone, so lockfile, IPC socket/pipe, CEF cache, and logs all isolate. (Without this, two clones on the same branch would silently share state — the second `task dev`'s launcher would attach to the first clone's running window.)
 - **Vite dev server port:** `5173 + cksum($PWD) % 200` — derived the same way. First clone often gets 5173; the second gets a different deterministic port from the same range (5173–5372).
 - **Sidecar TCP ports:** dynamic (OS-assigned), so always distinct without any keying.
 - **`target/` and `dist/cef-dev/`:** live inside each clone's working tree, so they're per-clone by construction.
 
 You don't need to configure anything — the derivation is automatic. If two clones happen to hash to the same Vite port (rare, but possible), override with `AGENTMUX_VITE_PORT=<free-port> task dev`. To force a specific clone identity for some external integration, set `AGENTMUX_CLONE_ID=<16-hex>` before launch.
+
+### Which home `task dev` uses
+
+`<home>` is not your real `~/.agentmux` by default. `task dev` runs on a data home of its own, `<clone>/.dev-home/<vite port>/`, kept between runs, so it never shows or changes your real agents, accounts and transcripts. The start-up banner says `isolated`.
+
+- `AGENTMUX_HOME_OVERRIDE=<dir>` runs it on another folder instead. A folder that is your real home is refused.
+- `AGENTMUX_DEV_USE_REAL_HOME=1` runs it on your real `~/.agentmux`. The banner says `REAL`. A dev build on the real home refuses to start when a pending migration would move the shared stores ahead of the installed build: start the installed AgentMux first, or use the isolated home.
+- `task dev:seed` gives the running dev build an agent that works with no account (a scripted stand-in for Claude Code), so you can try the app on an empty home. Run it once the dev window is up.
+
+A dev build's paths written as `~/.agentmux/dev/...` in these docs sit under `<home>`.
 
 Switching branches within a clone still re-keys the data dir by `<branch>` — your `main` and `agentx/feature` dev sessions remain isolated from each other regardless of which clone they're in.
 
@@ -108,8 +118,9 @@ Switching branches within a clone still re-keys the data dir by `<branch>` — y
 | `AGENTMUX_CHANNEL=<name>` | Pin the channel explicitly for Installed / Portable runs. Lets you test a release candidate channel side-by-side with `stable` without touching `stable` state. No effect in Dev mode. |
 | `AGENTMUX_DEV_BRANCH=<name>` | Override the branch detection for Dev mode (CI-style). Useful when you're running a dev build from a CI worker that has no checked-out branch. |
 | `AGENTMUX_CLONE_ID=<16-hex>` | Override the auto-derived clone id. Mostly used by child processes (host, sidecar) that inherit it from the launcher; you'd rarely set it by hand. |
+| `AGENTMUX_DEV_USE_REAL_HOME=1` | Make `task dev` run on your real `~/.agentmux` instead of its own home. |
 | `AGENTMUX_VITE_PORT=<n>` | Override the auto-derived per-clone Vite port. Useful when the derivation collides or you need a specific port for an external integration. |
-| `AGENTMUX_HOME_OVERRIDE=<path>` | Test-only — replace `~/.agentmux/` as the root. Used by the test suite to keep tempdirs isolated. |
+| `AGENTMUX_HOME_OVERRIDE=<path>` | Replace `~/.agentmux/` as the root. `task dev` sets it to its own home (see [Which home `task dev` uses](#which-home-task-dev-uses)); the test suite uses it to keep tempdirs isolated. |
 
 ## Tearing a tab into its own window
 

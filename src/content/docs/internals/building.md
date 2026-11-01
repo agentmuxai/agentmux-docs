@@ -77,6 +77,10 @@ task dev
 
 This launches the four-process app with Vite hot reload. The frontend rebuilds on save (SolidJS HMR via Vite); changes to the Rust crates require a rebuild and restart.
 
+`task dev` builds the backend and the host with a lighter release profile than a package or release build: no link-time optimization, 16 codegen units, `opt-level` 1 and incremental builds. A dev build compiles faster and needs less memory to link. `task package` and release builds keep the full profile. Set `CARGO_TARGET_DIR` to keep build output outside the checkout; `task dev` and the lookup of the CEF runtime both read it.
+
+By default `task dev` runs on a data home of its own, not on your real `~/.agentmux`. See [Multiple `task dev` sessions](/multi-instance/#multiple-task-dev-sessions-from-different-clones).
+
 ### After code changes
 
 | Changed | Action |

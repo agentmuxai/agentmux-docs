@@ -17,7 +17,7 @@ Settings live under the channel's data dir, so every version that binds to the s
 | Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
 | Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
-The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE` for tests. See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE`. `task dev` does this by default: it runs on a home of its own, so its `dev/...` folder sits under that home and not under your real `~/.agentmux` (see [Which home `task dev` uses](/multi-instance/#which-home-task-dev-uses)). See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Core Settings
 
@@ -78,7 +78,7 @@ AgentMux respects these environment variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (intended for tests) |
+| `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (used by tests and by `task dev`) |
 | `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
 | `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
 | `CLAUDE_API_KEY` | API key for Claude agent panes |

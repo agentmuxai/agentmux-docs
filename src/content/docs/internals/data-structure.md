@@ -207,7 +207,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `shared/adoption-ledger.json` | JSON | Which older per-channel stores have been adopted |
 | `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `workspaces/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, layout files saved by earlier versions, exported workspaces (where **Export…** starts), sign-in refresh locks |
 | `shared/browser-bookmarks.json`, `browser-profiles.json`, `browser-start-page.json` | JSON | Browser pane bookmarks, named profiles, start page |
-| `agents/<slug>/` | Folder | An agent's working folder: its startup instructions file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), `.mcp.json`, `.claude/` settings and skills |
+| `agents/<slug>/` | Folder | An agent's working folder: its startup instructions file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), `.mcp.json`, `.claude/` settings and skills. AgentMux clears Rust build caches inside these folders; see [Build Cache Settings](/settings/#build-cache-settings) |
 | `widgets/<id>/` | Folder | Installed widgets: `widget.json`, signature, files |
 | `shell/<hash>/` | Scripts | Shell integration files each terminal sources, one folder per instance |
 | `tools/`, `cache/scratch/`, `state/`, `tmp/` | Mixed | Tool store, editor scratch buffers (30 days), command-wrapper state, window captures (1 hour) |
@@ -223,7 +223,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `channels/<ch>/wan-identity/wan.db` | See [`wan.db`](#wandb) |
 | `channels/<ch>/logs/current-host-v<v>.path` | The path of the current host log |
 | `channels/<ch>/updates/<version>/` | An unpacked update, when it can't be placed beside the running install |
-| `channels/<ch>/agentmux-last-version.json`, `agent-cli-versions.json`, `agentmux-stopped-at-quit.json` | Upgrade notice state, provider CLI versions seen, agents stopped by a quit |
+| `channels/<ch>/agentmux-last-version.json`, `agent-cli-versions.json`, `agentmux-stopped-at-quit.json`, `agentmux-interrupted-turns.json` | Upgrade notice state, provider CLI versions seen, agents stopped by a quit, agents whose turn was running when AgentMux last quit (the next start tells them to carry on) |
 
 ### Per version
 
@@ -282,7 +282,7 @@ The launcher then starts srv again. Every later start of that version finds noth
 
 Separately, on a version's first start the host copies browser sign-ins (cookies, local storage, IndexedDB, saved logins and `Local State`) from the previous version's `cef-cache`, unless that version is still running.
 
-Everything else under `data/` starts empty: attachments, event logs, update downloads. Dev builds and `task package` builds have no older version to copy from. Nothing deletes old version folders.
+Everything else under `data/` starts empty: attachments, event logs, update downloads. Dev builds and `task package` builds have no older version to copy from. AgentMux lists the old version folders once a day and removes them only on a computer that turns `oldversions:clean` on; see [Old Version Settings](/settings/#old-version-settings).
 
 **Without the launcher** (a headless srv, `task dev:standalone`), srv does the same work itself during startup. It also takes a snapshot of the per-version databases first when `objects.db`'s schema version is older than the build's, except after a copy-forward, since the older version's folder already holds that data.
 
@@ -293,7 +293,7 @@ Everything else under `data/` starts empty: attachments, event logs, update down
 Two mechanisms change the schema:
 
 - **Schema setup** runs every time a database is opened: it creates missing tables and indexes and adds missing columns. It then stamps `PRAGMA user_version`. A build that finds a **higher** version than its own refuses to open the file (`SchemaTooNew`), so an older build never writes to a newer schema. `wan.db` has no such guard.
-- **Migrations** are numbered data changes, `m0000`–`m0038` ([`crates/srv/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
+- **Migrations** are numbered data changes, `m0000`–`m0044` ([`crates/srv/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
 
 Before a batch of migrations, `migrate --prepare` takes `migrations.lock.db` (shared first, then the version's), so only one AgentMux on the computer migrates at a time; the splash shows a row while it waits. It then copies `store.db`, `identity-store.db` and `objects.db` to `shared/backups/pre-migration-<version>-<time>/` with `VACUUM INTO`, leaving out `objects.db` when it was just copied forward. A failed step stops srv from starting: the launcher shows the error, and the next start retries, running only the migrations that haven't completed. Nothing is restored automatically.
 

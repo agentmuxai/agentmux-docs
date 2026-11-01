@@ -43,6 +43,8 @@ An Armory pane (the earlier pane that held both Connectors and Memory) is moved 
 
 **Global Memory** is a set of entries that every agent inherits at launch (`frontend/app/view/global-bundle/global-bundle-manager.tsx`). The section reads "Every agent inherits this at launch — takes effect after a restart. Drag entries to change their order." It shows a tile per entry, a read-only `CLAUDE.md` tile, a **Combined preview** of what agents receive, and **+ Add memory**. Click a tile to open the entry with its history, a diff view and revert.
 
+Entries you remove are listed under **Removed**, with who removed each (you, or an agent's name) and how long ago. **Restore** puts an entry back at the end of the order. A removal is recorded in the entry's history either way.
+
 ![Memory → Global: AgentMux's system entries, three of your own entries, the read-only CLAUDE.md, Combined preview and + Add memory](../../assets/screenshots/memory/memory-global.png)
 
 ![A Global Memory entry opened: Edit, move up and down, Remove, its versions, and its text](../../assets/screenshots/memory/memory-global-entry.png)
@@ -51,7 +53,7 @@ An Armory pane (the earlier pane that held both Connectors and Memory) is moved 
 
 Claude Code agents also get their memory again whenever Claude Code starts a new session, including after `/clear` and after a compaction, but not when a session is resumed. AgentMux delivers it through Claude Code's `SessionStart` hook: Global Memory, AgentMux's Operator Config entries and the agent's Personal Memory, split into up to eight parts of at most 9,000 characters each (`crates/bashwrap/src/sessionstart.rs`, `crates/srv/src/backend/memory_delivery.rs`). If the hook doesn't deliver, for example when AgentMux had to start a fresh session because the previous one couldn't be resumed, AgentMux sends the same memory as a hidden message instead.
 
-Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries at most 72,000 characters. Global Memory comes first and then Personal Memory, so what doesn't fit is cut off the end, and the last part says how much was left out. On the card, an entry that went out in part is marked "cut" and one that didn't go out at all "not sent". When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
+Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries at most 72,000 characters. Global Memory comes first and is never cut by the limits below. Personal Memory follows, newest file first (by the file's `modified` line, else the time it was last changed), so the oldest files are the ones left out. Each Personal Memory file goes in at most 8,000 characters: a longer one is cut, with a line saying how much more there is and which file to read. A file that still doesn't fit is left out whole and named, with its description, in a note at the end that lists up to 25 files. On the card, an entry that went out in part is marked "cut" and one that didn't go out at all "not sent". After a compaction, one more note asks the agent to trim its Personal Memory when it is over about 40,000 characters, when a file is over the 8,000-character limit, or when a project file hasn't been touched for 7 days; AgentMux never deletes memory itself. When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
 
 Every change to Global Memory is also written to a Global Memory record that keeps each entry's versions and the order of entries (`crates/srv/src/backend/global_memory_record.rs`). Channels that share your main accounts share one Global Memory; an isolated channel (for example a development build) keeps its own.
 
@@ -144,7 +146,7 @@ A rule that only matters for one kind of task belongs in a skill. A rule that mu
 
 A skill's page says "Used by N agents" and lists them, each with **Unbind**.
 
-The section lists each skill with who it reaches (**All agents** for `disk-cleanup`, the one skill AgentMux ships), and ends with **+ New skill**, **Import a skill…** and **Agents and skills**.
+The section lists each skill with who it reaches (the tag reads **all agents** for `disk-cleanup`, the one skill AgentMux ships, and otherwise how many agents the skill is bound to), and ends with **+ New skill**, **Import a skill…** and **Agents and skills**.
 
 ![Memory → Skills: the skill list with its reach tag, and + New skill, Import a skill… and Agents and skills below it](../../assets/screenshots/memory/memory-skills.png)
 
@@ -152,7 +154,7 @@ The section lists each skill with who it reaches (**All agents** for `disk-clean
 
 ### Agents and skills
 
-**Agents and skills** at the top of **Memory → Skills** opens a grid with one row per agent and one column per skill. Each cell says how that agent gets that skill:
+**Agents and skills**, below the skill list in **Memory → Skills**, opens a grid with one row per agent and one column per skill. Each cell says how that agent gets that skill:
 
 | Cell | Meaning | Click |
 |---|---|---|
@@ -166,7 +168,7 @@ A change reaches an agent's files at its next launch. An agent whose skills can'
 
 ### Import a skill
 
-To bring in a skill someone else wrote, click **Import a skill…** at the top of **Memory → Skills**. Choose where it is under **From**:
+To bring in a skill someone else wrote, click **Import a skill…** below the skill list in **Memory → Skills**. Choose where it is under **From**:
 
 - **A folder on this computer**: a folder with a `SKILL.md`, or a folder of skills.
 - **A git repository (https)**: an `https://` address such as `https://github.com/owner/skills.git`, and optionally a branch or tag (the default branch if empty).
