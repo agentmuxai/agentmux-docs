@@ -24,7 +24,7 @@ Most rows are one line that you can open. The same four rules apply to all of th
 - **Fixed**: always shown in full, with nothing to open. Replies, your own messages and most notes are fixed.
 - **Open, you can close it**: shown in full; click the row's header (or press `e` with it focused) to fold it to one line.
 - **Closed, you can pin it open**: one line; click the header (or press `e`) to pin it open, and again to close it.
-- **Held open while it is on screen**: a row that arrives while you are looking at it, such as a tool call that finishes or a message from another agent, stays open until it scrolls off the top of the pane, and is a closed line from then on. Nothing is closed under your eyes, and nothing needs a timer.
+- **Held open while it is on screen**: a row that arrives while you are looking at it, such as a tool call that finishes or a message from another agent, stays open until it scrolls off the top of the pane, and is a closed line from then on. Nothing is closed under your eyes, and nothing needs a timer. Leaving the pane and coming back changes nothing, and a row held open this way stays open through a restart or an upgrade, until it has been on screen again and has scrolled off the top. One that stays off screen is let go after a minute with the pane shown.
 
 Hovering over a row that has a time shows a small preview with the exact time, how long ago it was, and an estimate of its size in tokens.
 
@@ -51,8 +51,8 @@ A link in a reply, or anywhere AgentMux shows Markdown, opens inside AgentMux wh
 |---|---|---|---|---|
 | **Your message** (`user_message`) | What you typed, or a message AgentMux sent as you. | Inverted colours (your text colour as the background) with a thick bar on the left; long lines scroll sideways instead of wrapping. Images you attached show as thumbnails. | Fixed | A few lines |
 | **Startup context** (`user_message`, startup) | The text AgentMux gives the agent when a session starts: the session context, [Global Memory](/memory/), the workspace rules. Recognised by its `# Session Context` heading. | One summary line in the same style as your message | Closed; hover to peek, click to pin | One line, or up to the whole text when pinned |
-| **Broadcast message** (`user_message`, broadcast) | A message you sent to several agents at once from the [Swarm](/subagent-watcher/#fleet-toolbar). AgentMux strips the `[BROADCAST:…]` line it wrote and shows a badge in its place. | Your message, with a broadcast badge and the number of recipients | Fixed | A few lines |
-| **Supervisor message** (`user_message`, supervisor) | The nudge the [Supervisor](/subagent-watcher/#supervisor) sends to keep an agent going. The `[SUPERVISOR:…]` line becomes a badge with the mode and the count. | Your message style, with a Supervisor badge (mode, `N/total`) | Fixed | A few lines |
+| **Broadcast message** (`user_message`, broadcast) | A message you sent to several agents at once from the [Swarm](/subagent-watcher/). AgentMux strips the `[BROADCAST:…]` line it wrote and shows a badge in its place. | Your message, with a broadcast badge and the number of recipients | Fixed | A few lines |
+| **Supervisor message** (`system_note`, supervisor) | The nudge the [Supervisor](/subagent-watcher/#supervisor) sends to keep an agent going. It is not your turn. See [Messages that are not yours](#messages-that-are-not-yours). | A quiet container (thin edge, no inverted colours) headed **Supervisor**, with the mode and the count after it ("drive 2 of 5"), then the nudge as text | Fixed | A few lines |
 | **Reply** (`markdown`) | The agent's own words: the explanation between tool calls and the final answer. Text from the model, streamed as it arrives. In bug reports this is "assistant text" or a markdown block. | Normal text with Markdown rendering and highlighted code | Fixed | As long as the answer: from a line to most of the pane |
 | **Thinking** (`markdown`, thinking) | The model's reasoning, for providers that send it. | Italic, dimmed to about 60% opacity, with a thin bar on the left and a faint tint | Fixed (always shown) | A few lines to many; as long as the reasoning |
 | **Canceled thought** (`markdown`, canceled) | A thought or reply that was cut off when the turn ended or the agent stopped. | Dimmed, headed "Canceled — partial thought" | Closed; click to open | One line |
@@ -60,8 +60,8 @@ A link in a reply, or anywhere AgentMux shows Markdown, opens inside AgentMux wh
 | **Question and answer** (`tool`, AskUserQuestion) | When an agent asked you something and you answered, the pair stays in the conversation. While it waits, see [Question panel](#around-the-transcript). | The question as a reply, then your answer as your message. A cancelled question says "Cancelled — no answer provided" | Fixed | A few lines |
 | **Shell** (`shell`) | A persistent shell the agent keeps in the [details drawer](/pane-types/#persistent-shell): one row per shell. | One line: title, status (running, exited ok, exited with an error, stopped) and elapsed time or exit code | Closed even while running; pin to open | One line; open: the live log, capped |
 | **Agent message** (`agent_message`) | A message sent between agents through the older `mux` or `ject` route, in either direction. | A thin bar on the left (bright for incoming, dim for outgoing), the two names and a ▸/▾ chevron | Open; you can close it | One line, then a few lines |
-| **Jekt** (`jekt_message`) | A [jekt](/glossary/#jekt): a message from another agent, a person's device, a job or AgentMux. AgentMux reads the `[JEKT:…]` block the agent received and shows a bubble instead. See [Jekts](#jekts). | A bar on the left, an arrow for direction, the other agent's name, and two small badges: tier and delivery | Closed; held open when it arrives on screen; a `sensitive` jekt is open by default | One line; open: a few lines, with the details underneath |
-| **System note** (`system_note`) | A note AgentMux added to a message, starting `[AgentMux] `. See [System notes](#system-notes). | Small muted text with a thin bar on the left | Fixed | One or two lines |
+| **Jekt** (`jekt_message`) | A [jekt](/glossary/#jekt): a message from another agent, a person's device, a job or AgentMux. AgentMux reads the `[JEKT:…]` block the agent received and shows a bubble instead. See [Jekts](#jekts). | The same quiet container, headed **Jekt from *name*** (**Jekt to *name*** when this agent sent it) with an arrow for direction, and two small badges: tier and delivery | Closed; held open when it arrives on screen; a `sensitive` jekt is open by default | One line; open: a few lines, with the details underneath |
+| **System note** (`system_note`) | A note AgentMux added to a message, starting `[AgentMux] `. See [System notes](#system-notes). | A quiet container headed **AgentMux** | Fixed | One or two lines |
 | **Ambient line** (`ambient_narration`) | A short line AgentMux wrote itself about something happening, such as "Moved to the background: *what it is doing*" when a command goes to the background and "Finished in the background: …" when it ends (see [Long commands go to the background](/pane-types/#long-commands-go-to-the-background)). It never reaches the agent's own history. | Like reply text, with a small `ambient` tag at the end | Fixed | One or two lines |
 | **Error** (`agent_error`) | The provider's or the API's error when a turn ends (an HTTP code and the message). A **401** or **403** adds a **Login Again** button. | An error-coloured block | Fixed | One to three lines |
 | **Compacting** (`compaction_started`) | A compaction of the agent's context is under way. | "Compacting conversation…" and why: "you ran /compact" or "context filled up" | Fixed | Two lines |
@@ -73,6 +73,23 @@ A link in a reply, or anywhere AgentMux shows Markdown, opens inside AgentMux wh
 | **Resume check** (`resume_preflight`) | Before the first message of a resumed pane: whether the agent will continue its conversation or start a new one. Never saved; it comes and goes. | "Checking whether this conversation can resume…", then "This agent will reconnect to its conversation…" or "…start a new conversation — the history below isn't available to it." | Fixed | One line |
 | **History link** (`history_link`) | A row at the top of the live transcript, and at gaps in it, that opens [Agent History](/pane-types/#agent-history). Not saved. | A row with an hourglass, "Earlier turns in the history" or a skipped-turns count, and "Open Agent History →" | Fixed | One line |
 | **Day divider** (`day_divider`) | A date separator, shown in Agent History only. Not saved. | A rule with the date, like "Sun, Aug 10 2026" | Fixed | One line |
+
+### Messages that are not yours
+
+Every message that is not the human's own words shows in one quiet container with a header that says what it is. Only your own turn uses the inverted style.
+
+| Header | What it is |
+|---|---|
+| **Message from *name*** | A message from another agent |
+| **Notice from *service*** | A message from a service, such as a review or CI notice |
+| **Scheduled: *name*** | A cron or loop prompt |
+| **Task notice** | A Kanban notice |
+| **Supervisor** | A Supervisor nudge, with its mode and count |
+| **AgentMux** | One of AgentMux's own notes |
+| **CLI message** | A turn the agent's program wrote itself |
+| **Earlier message** | A record with no verified origin, such as one saved before origins were recorded |
+
+The header names the origin AgentMux signed when it delivered the message, not what the text says, so text that claims to be a jekt or a note doesn't become one. A tag shows the sender's trust (`host-verified` and so on; a warning colour marks one nothing proved) and **signed** or **signature invalid**. A message that arrived late shows how late, such as "11 min late". A long body folds to four lines, with **Show more** and **Show less**. A message from another agent or a service that arrives as a `[JEKT:…]` block is shown as a jekt instead, in the same container, with its closed row and the tier and delivery tags (see [Jekts](#jekts)). In the [View](#choosing-what-the-pane-shows), a message with a signed origin other than AgentMux's own is governed by **Jekts and agent messages**, not **AgentMux notes**, and an **Earlier message** is never hidden.
 
 ### Tool rows
 
@@ -169,7 +186,7 @@ These are not rows in the transcript. They sit above the message box, or float, 
 
 ### Failure rows
 
-Each failure row has a title, a short explanation (with the exit code or signal, and "retryable" where it is), the buttons that fit, and on every row **Copy error** (**Copy details** when there is program output to copy), **Details** (the explanation and the end of the program's error output) and **×** to dismiss. A message the pane refused to send is not lost: the row quotes it ("not sent: …").
+Each failure row has a title, a short explanation (with the exit code or signal, and "retryable" where it is), the buttons that fit, and on every row **Copy error** (**Copy details** when there is program output to copy), **Details** (the explanation and the end of the program's error output) and **×** to dismiss. A message the pane refused because the agent is open in another pane is not lost: the row quotes it ("not sent: …"), **Move here** sends it from here, and dismissing the row puts the text back in the message box and its attachments back in the tray.
 
 | Failure | Icon | Button |
 |---|---|---|
@@ -187,6 +204,10 @@ Each failure row has a title, a short explanation (with the exit code or signal,
 | The agent was deleted | 🗑 | none: Details and × only |
 | Running in another AgentMux | ⇄ | **Take over**: click once to arm, **Confirm take over** to stop it there and run it here |
 | Open in another pane | ⇄ | **Go there**, and **Move here**: click once to arm, **Confirm move here** |
+
+A failure row follows what is true now, so it does not stay on screen after its cause is gone. A completed turn clears any failure row. A **Sign-in rejected** row also clears when AgentMux sees that the agent can work again, and a **Usage limit** row also when the limit's reset time has passed. Only those two rows offer account buttons; a rate limit never does. When the automatic retries for a **Rate limited**, **Overloaded** or **Network** failure are used up, the row becomes one muted line: the failure's title and how long ago it happened, with "no longer retrying", **Retry** and **×**. That line goes at the next completed turn or when you dismiss it.
+
+When a login's sign-in has expired, AgentMux moves the agents on it to another valid login once their turn is over (see [First Agent Setup](/first-agent/#when-an-agent-fails)), so a **Sign-in rejected** row for it clears by itself. A turn that an upgrade or restart cut off in the middle of a tool call isn't a failure: it ends with "This turn was cut off mid-tool, so it didn't finish." instead of an error.
 
 ## Providers
 
@@ -211,7 +232,7 @@ Tool names a provider uses that AgentMux doesn't recognise are shown as **Other*
 
 A pane shows its whole conversation by default (the **Full** view). Its **View** hides the routine work that has finished, so a long run reads as the replies and what needs you. It changes only what the list shows: the rows, the pane's [History](/pane-types/#agent-history), search and copy stay complete (`frontend/app/view/agent/virtualization/verbosity.ts`).
 
-Open the **View** popover from the view chip in the strip above the message box (beside **Shell**), from the pane's right-click menu, or with **Agent view…** in the command palette. It offers:
+Open the **View** popover from the pane's right-click menu (**View…**), with **Agent view…** in the command palette, or from the view chip in the strip above the message box (beside **Shell**). The chip appears only when the pane doesn't follow a default of Full: it reads **Standard**, **Replies** or **Custom**, with **· this pane** when the pane keeps its own view. The popover offers:
 
 | Preset | What it does |
 |---|---|
@@ -234,7 +255,7 @@ Below the presets is one control per kind of row, so you can set a view of your 
 A switch only hides routine work that finished, or plumbing. Never hidden, whatever the view:
 
 - a tool call that waits for your approval or your answer;
-- a jekt that is sensitive, or whose sender nothing proved;
+- a jekt, or another message with a signed origin, that is sensitive or whose sender nothing proved, and an **Earlier message**;
 - a note that something was lost (a message that expired undelivered);
 - errors, warnings, the outcome of a session, compaction having finished, and the date and history markers.
 

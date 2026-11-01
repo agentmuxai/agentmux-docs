@@ -119,7 +119,7 @@ A jekt for a known agent of this instance that can't take it now is stored and d
 |---|---|---|
 | `not_running` | The agent isn't running. AgentMux starts it first when it can; the answer then says `not_running, starting`, and the message follows as soon as the agent is up | When the agent starts |
 | `needs_login` | The agent is signed out, or its sign-in gate refused a start | After a confirmed sign-in |
-| `usage_limit` | The agent's account is out of quota. The answer carries the reset time when the provider gave one | When the agent can work again: an account move, or the reset |
+| `usage_limit` | The agent's account is out of quota. The answer carries the reset time when the provider gave one | When the agent can work again: an account move, the reset, or a clean turn. A message that must not wait (an `urgent` or `high` priority, or one naming a task waiting on the agent, `#12`) is still held when the limit has a known reset time, and also starts one small probe turn on the agent, at most once every 15 minutes; if that turn is clean, the held messages are sent. |
 | `idle` | A **routine** message reaches a Claude session that has been quiet for 55 minutes (`jekt:cold_hold_minutes`; `0` turns this off), so starting a turn on a cold context would cost more than the message says | When the agent is next active |
 
 - **Who fills the hold.** A request authenticated with the instance auth key, arriving as `host`, not from the scheduler. For an agent that is signed out or out of quota, also a LAN message whose signature verified and a WAN message from an approved install of the same account, which keep their original tier and proof, with their files. A LAN or WAN message for an agent that is simply not running is not held here; it goes on to the routing tiers. An unverified message for an agent that can't work is refused, not kept, with a `refused_reason` and a `retry_when` the sender can read.
@@ -161,7 +161,7 @@ On LAN, files are accepted only from a sender whose LAN signature verified. On W
 A message that starts a turn makes its recipient read its whole context again, so a bare "got it" costs far more than it says. The sender's srv refuses two kinds of message before anything is delivered:
 
 - **An answer to a message sent with `reply: none`.** The sender marks a status, a mode change or any note that needs no answer, and the recipient's marker carries `REPLY=none` (Section 7.1). A `Message` `send` with `in_reply_to` naming that message is refused, and nothing is sent. srv remembers the id for an hour.
-- **A bare acknowledgement** ("ok", "thanks", "got it", "on it", "done", a thumbs-up, and a few more; short, with no question mark) to an agent that sent the sender a message in the last 30 minutes. The refusal says to say something new, or nothing. The setting `message:refuse_bare_acks` set to `false` turns this refusal off.
+- **A bare acknowledgement** ("ok", "thanks", "got it", "on it", "done", a thumbs-up, and a few more; at most 24 characters, with no question mark) to an agent that sent the sender a message in the last 30 minutes. The refusal says to say something new, or nothing. The setting `message:refuse_bare_acks` set to `false` turns this refusal off. It does not change the first refusal: an answer to a `reply: none` message is refused whatever the setting is and whatever the text says.
 
 The memory is in process: a restart forgets it, and a forgotten message is delivered as before. A WAN message does not carry `reply` yet, so it never arrives marked `REPLY=none`.
 
@@ -209,7 +209,7 @@ A request that carries the sending agent's own identity token, whose UID owns th
 |---|---|
 | Material, v1 | the base material |
 | Material, v2 | `amx-jekt-lan-v2 0x01 msgid 0x01 source 0x01 source_uid 0x01 target 0x01 ts 0x01 message` |
-| Key | the agent's LAN key pair, made at its first launch, never rotated; the public half is served at `GET /agentmux/reactive/agent?id=<name>` |
+| Key | the agent's LAN key pair, made at its first launch and never rotated. It belongs to the computer, not to a channel: every channel and build on this computer signs an agent with the same key, so moving an agent from one build to another does not change the key other computers have pinned. The public half is served at `GET /agentmux/reactive/agent?id=<name>` |
 | Window | 600 seconds either way |
 | Pinning | the first public key seen for a name is pinned; a different key later is a forgery until you move or forget the pin (Settings > Paired devices > Pinned senders) |
 

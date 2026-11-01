@@ -74,7 +74,7 @@ The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gem
 Open an Agent pane. The starter layout already has one; you can also click **Agent** in the widget bar, or run **Open Agent** from the command palette (`Ctrl + P`). An empty Agent pane shows the **agent picker**:
 
 - A filter bar and sort control.
-- **My Agents**: agents you've already created. Click one to relaunch it and continue its current conversation. See [My Agents](#my-agents) for what each row shows and what its menu does.
+- **My Agents**: agents you've already created. Click a tile to open a panel under it, and choose **Open** to relaunch the agent and continue its conversation. See [My Agents](#my-agents) for what each tile shows and what its panel does.
 - **New Agent**: one card per harness. Each card is a template. Some cards carry **Free** and **Local** tags, and chips above the cards filter them (see below).
 
 ![The agent picker with no agents yet: the New Agent cards, each with its Free and Local tags, and the Free, Local and Installed chips above them](../../assets/screenshots/agent/agent-picker.png)
@@ -113,7 +113,7 @@ The model lists are built into AgentMux. For Claude Code only, AgentMux also ask
 
 ## My Agents
 
-**My Agents** lists every agent you have created, whether or not it is open. Each row shows:
+**My Agents** lists every agent you have created, whether or not it is open, as one tile each. Each tile shows:
 
 - The agent's name, with its provider's logo.
 - Its **runtime state** as a chip: **stopped**, **starting**, **idle**, **working** (red, as in the [Swarm](/subagent-watcher/)), **waiting on you**, **limited**, **signed out** or **error**. Hover over a **limited** or **signed out** chip for why ("Out of usage until it resets", "Signed out: sign in to continue").
@@ -123,24 +123,34 @@ The model lists are built into AgentMux. For Claude Code only, AgentMux also ask
 - Its account, or "No auth", and under it "reports to …" when it has a seat, a preview of its last message and how many messages it holds.
 - When it was last active, last launched and created.
 
-**Click a row** to open the agent in this pane. If the agent is already open in another pane, a prompt says where ("*Name* is already open in another pane.") and offers **Fork…** and **Switch to existing**. If it is running with no pane, the prompt says "*Name* is running with no pane." and offers **Open it**, which attaches this pane to the running agent, and **Fork…**. **Fork…** suggests a name for the copy ("Name for new session:"); click **Start** to open a fork of the conversation as a new agent. The prompt's close button is at its top right; a click outside it, or `Esc`, dismisses it.
+**Click a tile** to open a panel under it; click the tile again, press `Esc` or use the panel's close button to close it. The panel holds the agent's choices and its other actions together. A click outside it does not close it.
+
+- **Open** opens the agent in this pane. It is the only choice for an agent that is not open anywhere.
+- If the agent is already open in another pane, the panel says where ("*Name* is already open in another pane.") and offers **Switch to existing** and **Fork…**.
+- If it is running with no pane, the panel says "*Name* is running with no pane." and offers **Open it**, which attaches this pane to the running agent, and **Fork…**.
+- **Fork…** suggests a name for the copy ("Name for new session:"); click **Start** to open a fork of the conversation as a new agent.
+
+When you open an agent from **My Agents**, the Swarm's **Open** or the agent picker, it starts with a short update of at most three lines: what it did since your last message to it, what is in flight and what it is waiting on. This takes one turn of the agent, and it is skipped if the agent is in the middle of a turn. Restoring a layout, switching tabs or a background resume do not ask for it.
+
+An agent has one pane. Opening an agent that already has one, running or not, takes you to that pane in whichever tab it is, instead of opening a second. A layout you import or restore never adds a second pane for an agent either. If an older layout left an agent in two panes, AgentMux keeps the pane that runs it (else the one it launched last) and closes the others at startup; a closed pane says where the agent is and has **Go there** and **Move here**. An agent that opens another agent without naming a tab opens it in its own tab.
 
 The filter bar narrows the list, and **Sort** orders it: **Recently used** (the default), **Name (A–Z)** or **Type**.
 
 The **status bar** shows how many agents are running and how many of those wait on you ("3 running", "1 waiting on you"), next to a robot icon. An agent counts as running in every state except stopped and error, so one that is out of quota or signed out still counts. Click it to open the [Swarm](/subagent-watcher/). It is hidden while no agent runs.
 
-### The row menu
+### The tile panel
 
-The chevron at the right of a row opens its menu:
+The chevron at the right of a tile opens the same panel. Besides the choices above, its actions are:
 
 | Item | What it does |
 |---|---|
 | **Rename** | Renames the agent. |
-| **Duplicate** | Makes a copy: the same prompt as **Fork…**. |
+| **Duplicate** | Makes a copy: the same prompt as **Fork…**. Not shown for an agent that is open in a pane or running with none. |
 | **View History** | Opens the agent's whole recorded conversation, read-only. See [History](/history/#agents). |
 | **Seat…** | Opens the seat editor. See [Seats](#seats). |
 | **Bundles…** | Picks the bundles the agent starts with, in order. See [An agent's bundles](/bundles/#an-agents-bundles). |
 | **Environment…** | Edits the agent's extra environment variables (below). |
+| **Shut down** | Shuts the agent down. Shown for a running agent, with a pane or without one. See [Closing and shutting down](/closing-and-shutting-down/). |
 | **Delete** | Deletes the agent, after asking. |
 
 The pane's own right-click menu has **Seat…**, **Bundles…** and **Personal memory** for the agent in that pane. See [Pane types → Subsections](/pane-types/#subsections).
@@ -206,9 +216,9 @@ The pane header shows the agent as a tab, with its name and its provider's logo.
 
 Type `/shutdown` (or its older names, `/quit` and `/exit`) in the message box to shut the agent down gracefully. AgentMux releases the agent's work claims, stops the shells it started and closes its tab. The conversation is kept: pick the agent in **My Agents** to resume it.
 
-Closing an agent pane, with its close button or a shortcut, does **not** end its agent (see [Agents keep running without a pane](#agents-keep-running-without-a-pane)). **Shut down** is what ends one, and it is the same act wherever you find it: `/shutdown` in its message box, **Shut down** in its row menu in **My Agents** (which also reaches an agent with no pane) or in the right-click menu of its pane, **Stop** in the [Swarm](/subagent-watcher/#fleet-toolbar) fleet toolbar, or the `Stop` tool. See [Closing and shutting down](/closing-and-shutting-down/). With [`agents:always_available`](/settings/#agent-settings) turned off, closing the pane ends its agents as `/shutdown` does: the pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes, and if something can't be stopped it stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
+Closing an agent pane, with its close button or a shortcut, does **not** end its agent (see [Agents keep running without a pane](#agents-keep-running-without-a-pane)). **Shut down** is what ends one, and it is the same act wherever you find it: `/shutdown` in its message box, **Shut down** in its tile panel in **My Agents** (which also reaches an agent with no pane) or in the right-click menu of its pane, **Stop** in the [Swarm](/subagent-watcher/#fleet-toolbar) fleet toolbar, or the `Stop` tool. See [Closing and shutting down](/closing-and-shutting-down/). With [`agents:always_available`](/settings/#agent-settings) turned off, closing the pane ends its agents as `/shutdown` does: the pane stays on screen with a "Shutting down…" log of what it stops (the turn, the agent and each process), then closes, and if something can't be stopped it stays open with **Try again** and **Keep open** (`frontend/app/view/agent/shutdown/`). Terminal, editor and browser panes close at once.
 
-An agent can also end itself, through AgentMux's `Stop` tool (action `self`). It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. When another agent stops this agent with `Stop` `agents` (or `Agents` `stop`), the banner counts down from 30 seconds instead. Click **Keep running** to cancel the shutdown (`crates/srv/src/sagas/pending_shutdown.rs`).
+An agent can also end itself, through AgentMux's `Stop` tool (action `self`). It's meant for when you ask it to quit. If your own message started the current turn and the agent quotes it, the agent shuts down without delay. Otherwise the pane shows a banner saying who asked to shut the agent down, and why, with a countdown ("Closing in 15 s") and a **Keep running** button. A chime plays when the banner appears and again with 5 seconds left. When another agent stops this agent with `Stop` `agents` (or `Agents` `stop`), the banner counts down from 30 seconds instead. Click **Keep running** to cancel the shutdown (`crates/srv/src/sagas/pending_shutdown.rs`). **Close now** (**Stop now** when the agent is being stopped, not closed) skips the rest of the countdown. When one `Stop` `agents` call names several agents, they share one 30-second window. Each banner then reads "*Name* asked to close *Agent* and 4 others", and **Keep running** on one agent's banner keeps only that agent while the others still close; **Close now** closes all of them.
 
 ### Running a shell command
 
@@ -260,12 +270,16 @@ AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows 
 
 Rows with an explanation or captured CLI output also have **Details**, and every row has a dismiss button.
 
+A failure row follows what is true now, so it does not stay on screen after its cause is gone. A completed turn clears any failure row. A sign-in row also clears when AgentMux sees that the agent can work again, and a usage-limit row also when the limit's reset time has passed. Only those two rows offer account buttons; a rate limit never does. When the automatic retries for a rate limit, an overload or a network error are used up, the row becomes one muted line, the failure's title and how long ago it happened, with "no longer retrying", **Retry** and **×**. See [What the agent pane shows](/agent-pane-messages/#failure-rows).
+
+When a login's sign-in expires or is refused, AgentMux does not leave its agents stopped on it. Once their turn is over, it moves them to another valid login of the same account, else to another signed-in account of the same provider that has quota. It never picks an account marked **never fail over**, and `agent:accountfailover` set to `false` turns the moves off. An agent whose turn stopped on the expired login is told that its last step may not have finished and to check `git status` and its pull request before it carries on. You get one notification that a login needs signing in again, and the [Swarm](/subagent-watcher/) shows a row for that login with **Sign in again**, which opens **Connectors → Accounts**.
+
 <a id="host-and-container-agents"></a>
 ## Native and container agents
 
 **Native agents** run the CLI directly on your computer, with access to your files, environment and credentials.
 
-**Container agents** run each turn inside a Docker container that sees only the agent's workspace and its Personal Memory. Only Claude Code has a container runtime today; every other harness is Native-only. The container option needs Docker installed and its daemon running. If it's greyed out as "Docker not detected", start Docker Desktop; the panel notices within a few seconds.
+**Container agents** run each turn inside a Docker container that sees only the agent's workspace and its Personal Memory. Only Claude Code has a container runtime today; every other harness is Native-only. The container option needs a container runtime running: Docker, or Podman through its Docker-compatible socket. If it's greyed out as "Docker not detected", start Docker Desktop or your runtime; the panel notices within a few seconds. [Container agents](/container-agents/#making-a-container-agent) lists the runtimes AgentMux looks for.
 
 The Claude template suggests the container runtime, so when Docker is running, its new-agent panel preselects it. Choose **Native (runs on this computer)** if you want a Native agent. For a container agent the panel also asks for a **Container image**: **Standard**, or **Developer**, which adds a build toolchain.
 
@@ -294,19 +308,19 @@ An agent's **seat** says where it sits in your team: what kind of agent it is, w
 
 | Part | What it is |
 |---|---|
-| **Role** | **Leader**, **Worker**, **Specialist**, **Platform tester**, **Analyst** or **Super agent**. Required. Only one agent can be the **Super agent**: the one that reviews sensitive operations. Giving the role to another agent moves it, and the first goes back to the role it had. |
+| **Role** | **Leader**, **Worker**, **Specialist**, **Platform tester**, **Analyst** or **Super agent**. Required. Only one agent can be the **Super agent**: the one that reviews sensitive operations, such as an agent's request to upgrade AgentMux, to install a widget it built or to control a desktop app. Giving the role to another agent moves it, and the first goes back to the role it had. |
 | **Qualifier** | Optional, up to 40 characters, shown after the role: "Leader · product". |
 | **Reports to** | The agent's **lead**: another agent on this computer, or the operator (you). An agent can't be its own lead, and following the leads up must end at you. |
 | **Area** | Optional, one line of up to 120 characters: what the agent owns, such as "user docs, changelog". |
 
-Seats are labels. Setting or changing one never renames an agent and never moves its memory or keys, and nothing is allowed or refused because of a seat: the Kanban doesn't refuse a task outside an agent's area, and a lead gets no say over its reports. AgentMux doesn't add the seat to the agent's startup instructions either; agents read seats with the `Agents` tool (see [Where seats show](#where-seats-show)).
+Seats are labels, with one exception: the **Super agent** seat decides which agent reviews sensitive operations. Setting or changing a seat never renames an agent and never moves its memory or keys, and nothing else is allowed or refused because of a seat: the Kanban doesn't refuse a task outside an agent's area, and a lead gets no say over its reports. AgentMux doesn't add the seat to the agent's startup instructions either; agents read seats with the `Agents` tool (see [Where seats show](#where-seats-show)).
 
 ### Setting a seat
 
-You set a seat from the UI:
+You set a seat from the UI (an agent can also set seats, with the `Agents` tool's `set_seat`; see [Where seats show](#where-seats-show)):
 
 - In the agent's pane: right-click the pane and choose **Seat…**.
-- In **My Agents**: the row's menu → **Seat…**. It opens the same editor over the picker, so the agent doesn't have to be open.
+- In **My Agents**: the tile's panel → **Seat…**. It opens the same editor in the panel, so the agent doesn't have to be open.
 
 The editor says "*name*'s seat: its role, whom it reports to and what it owns. Only you set it; agents read it." Choose a **Role**, fill in **Qualifier**, **Reports to** and **Area** if you want them, and click **Save**. **Clear** removes the seat.
 
