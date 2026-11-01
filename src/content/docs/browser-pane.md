@@ -148,6 +148,20 @@ When a saved credential matches a later request, AgentMux asks before using it, 
 
 Each sign-in appears in the Vault with the other logins, where you can change or delete it, and each use is in the Vault's Activity as "signed in", with the site. Sign-ins saved by an earlier version were kept in the operating system's keychain; AgentMux moves the ones it had noted into **Personal** at its next start, marked "moved from the old sign-in store: check the profile", and deletes the keychain copies. A sign-in it never noted can't be listed from the keychain: enter it once more and it is saved in the Vault.
 
+## Sign-ins on web pages
+
+A browser pane notices when you sign in to a site with a form, and offers to save it to the [Vault](/vault/). It also fills a saved sign-in into a form when you pick it. AgentMux turns Chromium's own password manager and autofill off in every pane, Incognito tabs included, so Chromium's own "save password" prompts never appear; this is the replacement.
+
+**Saving.** After you send a form that has one password field, a bar appears under the navigation bar once the page moves on (or the password field leaves the page): "Save the sign-in for *https://example.com* (*al\*\*\**) to the Vault?" The user name is shown masked, to its first two characters. The bar has **Save**, **Never for this site** and **Not now**.
+
+- **Save** stores a Login entry in the Vault, for the profile of the tab you are in (Personal, or a named [profile](#profiles-and-incognito)). If that profile already holds a password for the same user on the site, the bar reads "Update the saved password for …?" and **Update** replaces it.
+- **Never for this site** stops the offer for that site in that profile.
+- **Not now** drops it. The offer also goes by itself after 2 minutes or when you move on to another page. AgentMux keeps the user name and password in memory until then and writes them nowhere else.
+
+The offer is for a sign-in, not a sign-up: a form with two or three password fields, or one marked as a new password, is skipped. Only your own click or key press counts as sending the form: a page that submits one by script is ignored. A site that asks for the user name first and the password on the next step is saved as one sign-in. A site gets at most one offer every 15 seconds, and the offer names the exact site the form belongs to, which the page cannot change. An Incognito tab never offers to save.
+
+**Filling.** When the page shows a sign-in form and the Vault holds a Login for exactly that site in the tab's profile, a **key button** appears next to the profile button in the navigation bar, with a count when there are two or more. It opens a menu such as "Sign in as al\*\*\*"; when the page has forms of more than one site, each item also names its site. Choosing one fills the user name and the password into the form's fields, and it is recorded in the Vault's Activity as "signed in". Your choice in the menu is the approval: an agent driving the pane cannot click it, and the password is never sent to the agent or shown on the page. The button shows only for https sites and for `http` on this computer, never for Incognito, never for the HTTP sign-ins above, and not for a sign-in marked as refused by its site. It fills the form and does not submit it.
+
 ## New windows and popups
 
 What a page gets when it asks for a new window depends on what it asked for. A new window is only opened inside AgentMux when you caused it with a click or key press, it is an `http` or `https` page, and either it is on the same site as the page that opened it or an agent owns the pane. A pane may have at most 8 popup windows and 8 popup panes open at once (`crates/common/src/popup_rules.rs`, `crates/cef/src/client/popup_route.rs`).
