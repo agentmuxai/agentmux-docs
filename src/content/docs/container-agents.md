@@ -36,6 +36,7 @@ The **Developer** image adds:
 - the Rust toolchain, at the version AgentMux itself builds with, with `clippy` and `rustfmt`;
 - a C toolchain (`build-essential`, `cmake`, `ninja`, `pkg-config`) and the development headers AgentMux's own Linux build needs;
 - go-task and cargo-nextest;
+- the AWS CLI v2, which gets its credentials from [AWS grants](#aws), not from a key in the container;
 - a headless display (Xvfb, with `xdotool` and `scrot` for screenshots) and the libraries a Chromium-based window loads, plus an `agent-dev` command that runs a checkout's `task dev` on that display.
 
 It builds for Linux only: Windows and macOS targets need toolchains that can't be shipped in a Linux image. Cargo's registry and build output live in [per-agent volumes](#build-caches), so a build isn't thrown away when the image updates.
@@ -103,6 +104,21 @@ A container agent gets `git` and `gh` through AgentMux, and no token is written 
 - If AgentMux can't get a token, the agent is told why. If `gh-agent` is slow to answer, it is told the token took too long and to try again, not that GitHub isn't connected.
 
 See [Identity and credential storage](/security/identity-credential-storage/) for how Native agents' GitHub access differs.
+
+## AWS
+
+A container agent can use AWS without any key in its container. AgentMux hands out credentials one use at a time, from grants you write on the host. With no grants, a container agent has no AWS: running `aws` says so and says where the grants go.
+
+- **The grants are a file on your computer,** `~/.agentmux/aws-grants.json`. It is read on each request, so an edit takes effect without a restart, and a container's AWS config is rebuilt the next time it starts. A file that doesn't parse is an error that names the line, and the last good version stays in force. A fresh install shares nothing.
+- **A grant** has a name (the container's AWS profile is called the same), a `tier` of `read` or `write`, how AgentMux gets the credentials, which agents may use it (their lower-case names, or `*`), and limits. A write grant asks for a reason by default. The credentials come from your own AWS profile on the host (`host_profile`), or from any program you name that prints `credential_process` JSON (`command`). AgentMux never runs a shell for it, and refuses credentials that don't expire.
+- **The container asks, AgentMux mints.** The container's AWS config calls `agentmux-bashwrap aws-credentials --profile <grant>`, which asks AgentMux on the host. AgentMux checks the grant, gets a short-lived session on the host, and answers with it. The agent's reason for a write grant goes in `AGENTMUX_AWS_REASON` in front of the command, and a shorter lifetime in `AGENTMUX_AWS_DURATION` (seconds, 900 to 3600).
+- **Sessions are reused.** An agent gets the same session for a grant and reason while at least 10 minutes remain, then a new one: a 30-minute session serves about 20 minutes of work. A new reason is a new session. Each agent and grant is capped at 12 new sessions an hour unless the grant sets `max_mints_per_hour`, and refused tries count.
+- **You are told, not asked.** There is no prompt on each use. Every new session and every refusal is a row in the [Audit](/audit/) under the agent, with the grant, tier, reason and lifetime, and never a credential.
+- **A refusal says what to do:** the grant doesn't exist or isn't open to this agent, a reason is needed, the hourly cap was reached, the host's AWS login has lapsed (`aws sso login` on the computer), or the host has no AWS CLI v2. A Native agent that asks is told to use the host's own AWS setup.
+
+The environment inside the container points the AWS tools at that config (`AWS_CONFIG_FILE`), ignores any `~/.aws/credentials` (`AWS_SHARED_CREDENTIALS_FILE=/dev/null`), turns off the instance metadata lookup, and sets `AWS_PROFILE` to the file's `default_grant`, so a bare `aws s3 ls` works for the free reads.
+
+The developer image has the AWS CLI v2. For an agent that at least one grant is open to, AgentMux also copies the host's own AWS work command-line tools into a read-only folder the container has on its `PATH`, after the system's commands; no registry token enters the container. If the host has none installed, the command says so.
 
 ## Accounts and sign-in
 
