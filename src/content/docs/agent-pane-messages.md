@@ -30,6 +30,21 @@ Hovering over a row that has a time shows a small preview with the exact time, h
 
 Where a row's body is long, it is capped: a body inside a row scrolls within a box of about one sixth of the window height (about 13 lines on a tall window). The reply text itself is never capped.
 
+## Links
+
+A link in a reply, or anywhere AgentMux shows Markdown, opens inside AgentMux when it points at something in it (`frontend/app/element/link-target.ts`, `link-open.ts`, `link-destinations.ts`):
+
+| Link | What it opens |
+|---|---|
+| A web page (`https://…`) | Your system browser. A middle-click opens it in an AgentMux browser pane |
+| A local file: `C:/…`, `C:\…`, `/…`, `~/…`, `\\host\share\…` or a `file:` URL | The **Editor**: a tab of the Editor on screen, else a new Editor pane. A file that isn't there is for the Editor to say so |
+| A local folder (a path that ends in `/`, or one that lists) | A **Files** pane on it |
+| `agentmux://task/<n>` | The **Kanban** (the one open, else a new one) with task #n's card open |
+| Any other `agentmux:` link | Nothing: a link only navigates, so AgentMux never hands one to the system |
+| `mailto:`, `ssh:` and the like, and a relative link | The system's own handler, as before |
+
+**Ctrl+click** (**Cmd+click** on macOS) on a link, a widget in the bar, a palette entry or a file opens the pane it would open as a [floating window](/pane-types/#floating-panes) instead. A task link opens a new Kanban in its own window. A host without multiple windows ignores the modifier.
+
 ## The transcript
 
 | Name | What it is, and where it comes from | Looks like | Open or closed | Room |
