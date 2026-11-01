@@ -47,7 +47,7 @@ In a section, click **Add**, choose the **Kind**, give it a **Label** (how you a
 
 An entry's id is made once from its kind and label and never changes, so an agent's reference survives a rename. **Change** (the pen) replaces only the parts you type; leave a part empty to keep it. **Delete** (the bin) deletes the entry, its value and its permissions.
 
-A login's **Browser profile** says whose browser tabs may use it: **Personal**, or one of your [browser profiles](/browser-pane/#profiles-and-incognito). Incognito tabs never save a sign-in.
+A login's **Browser profile** says whose browser tabs may use it: **Personal**, or one of your [browser profiles](/browser-pane/#profiles-and-incognito). Incognito tabs never save a sign-in. A login with a site belongs to Personal unless you pick another profile; one without a site belongs to none. The sign-ins a browser pane saves from an HTTP sign-in prompt are Login entries too, with the **Realm** (and the proxy, for a proxy's prompt) that the browser set, shown with the entry and not typed. Deleting a browser profile in **Settings ▸ Browser** asks whether to move its sign-ins to Personal or delete them with it. See [Sign-in prompts](/browser-pane/#sign-in-prompts-http-authentication).
 
 An agent can ask you for an entry it needs. Every AgentMux window then shows its request, naming the agent, the kind, the label and why, with **Fill it in** and **Not now**, and the Vault lists it at the top with **Fill in** and **Dismiss**. **Fill it in** opens the Vault on a new entry of that kind. The agent gets the new entry's id, never its value.
 

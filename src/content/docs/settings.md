@@ -53,7 +53,7 @@ Pane block ids in headers (a debugging aid), the view a new tab or pane opens wi
 
 **Hibernate hidden browser panes** (with **Minutes hidden before it sleeps** and **Sites that never sleep**): a browser pane out of sight for a while frees its memory and loads again when you are about to look at it. See [Browser settings](#browser-settings).
 
-**Browser profiles**: each keeps its own sign-ins, cookies and site data, so one site can be open as two accounts side by side. **Personal** is the profile every tab starts with and can't be removed; add others by name. For each profile you can rename it, pick its colour, delete it, and switch on **Agents may use it**: an agent can browse as a profile only if you allow it. See [Browser pane](/browser-pane/#profiles-and-incognito).
+**Browser profiles**: each keeps its own sign-ins, cookies and site data, so one site can be open as two accounts side by side. **Personal** is the profile every tab starts with and can't be removed; add others by name. For each profile you can rename it, pick its colour, delete it (which closes its tabs, and asks whether to move its saved [Vault](/vault/) sign-ins to Personal or delete them too), and switch on **Agents may use it**: an agent can browse as a profile only if you allow it. See [Browser pane](/browser-pane/#profiles-and-incognito).
 
 **Pause all agent browsing**: an emergency stop. While it is on, every browser pane an agent drives refuses every call the agent makes, and the clocks of Auto-approve grants stand still. It stays on after a restart until you turn it off here, in the status bar or from the command palette. See [Pause all agent browsing](/browser-pane/#pause-all-agent-browsing).
 
