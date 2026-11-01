@@ -374,7 +374,7 @@ Activity is tracked per-pane and aggregated across panes, so the indicator refle
 
 ### Rendering performance
 
-The agent message list is **virtualized**: only ~50 visible rows + 5-row overscan are mounted in the DOM at any moment, regardless of session length. A 2000-message session no longer means a 2000-element layout tree.
+The agent message list is **virtualized**: only the rows in view, 5 rows of overscan on each side, and the trailing 50 rows (the streaming buffer) are mounted in the DOM, regardless of session length. A 2000-message session no longer means a 2000-element layout tree.
 
 The virtualization is **hybrid** — the trailing 50 rows (the streaming buffer) are always mounted in normal flex flow, never recycled. Older rows are virtualized by custom code: each row sits at an absolute position computed by the pane's layout slice from measured heights (per-row `ResizeObserver` measurement), and only the rows in view plus a small overscan are mounted. This split eliminates measurement lag during token streams, which would otherwise cause visible jitter as text grew.
 
