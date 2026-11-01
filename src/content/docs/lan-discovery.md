@@ -7,7 +7,7 @@ description: How AgentMux instances on the same network discover each other via 
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the status bar's network pill (the host popover), with its hostname and version, and agents can send messages directly to agents on those machines and, once the machines trust each other, [do things there](#remote-operations). Click a peer's row for its address and port, operating system and channel, its agents and when it was last seen: see [the network pill](/warden/#the-network-pill).
+AgentMux instances can **discover each other on the local network** using [mDNS / DNS-SD](https://en.wikipedia.org/wiki/Multicast_DNS), the zero-configuration protocol behind Bonjour and printer discovery. With it on, every AgentMux on your LAN appears in the status bar's network pill (the host popover), with its hostname and version, and agents can send messages directly to agents on those machines and, once the machines trust each other, [do things there](#remote-operations). Click a peer's row for its address and port, operating system and channel, its agents and when it was last seen: see [the network pill](#the-network-pill).
 
 LAN discovery is **off by default** and can be switched on and off live from the status bar.
 
@@ -42,7 +42,7 @@ It can't reach anything else in the API. The `lan_key` is regenerated each time 
 
 ## Enable it
 
-Click the hostname in the status bar to open the host popover, and flip the **LAN discovery** toggle. The popover then shows the number of peers found and each peer's hostname and version, or `Searching for peers…`.
+Click the hostname in the status bar to open the host popover, and flip the **LAN discovery** toggle. The popover then lists the peers found (see [The network pill](#the-network-pill)), or says `Searching for peers…`.
 
 ![The host popover with LAN discovery switched off, and Pair a device](../../assets/screenshots/chrome/chrome-status-host.png)
 
@@ -50,9 +50,34 @@ The toggle writes `"network:lan_discovery": true` to `settings.json` and starts 
 
 You can also set `"network:lan_discovery": true` in `settings.json` by hand (`~/.agentmux/channels/settings.json` on the stable channel). A hand edit takes effect at the next start of AgentMux; only the toggle applies immediately.
 
+## The network pill
+
+The hostname in the status bar is the network pill: its glyph shows where LAN discovery stands, and its popover lists the peers. A filled ◆ means peers were found, and its tooltip reads "*n* on LAN". An empty ◇ means one of:
+
+| Tooltip | Meaning |
+|---|---|
+| LAN discovery off | Click to enable it |
+| LAN discovery on, no peers found | Nothing else is out there yet |
+| LAN discovery failed | The discovery service could not start; the reason follows |
+| Other machines can't see this one | This computer hears peers but is not announced on any address, often because another program holds the mDNS port (UDP 5353). AgentMux retries on its own; turning LAN off and on retries at once |
+| Windows Firewall, or the network, blocks incoming connections | On Windows: a Block rule or "Block all incoming connections", no rule that lets other devices in (see [Windows Firewall](#windows-firewall)), a network marked Public, or a firewall your administrator manages. Peers may still show, but they can't reach this computer |
+
+With discovery on, each AgentMux found on your network is a row in the popover. Click a row to expand it:
+
+| Row | What |
+|---|---|
+| **Address** | The peer's IP address and port |
+| **Runs** | Its operating system and channel |
+| **Agents** | How many agents it has, with **Show in Swarm** |
+| **Last seen** | How long ago the peer was last seen |
+
+A peer whose agent sent a message that was refused because its key changed has a warning on its row, with **Review in Settings › Devices › Pinned senders**. Accepting a new key stays in Settings, beside its explanation. The pill doesn't change a peer's trust by itself, and has no control to send to or quarantine a peer: agents send with the `Message` tool.
+
 ## Pairing the mobile app
 
-With LAN discovery on, the host popover offers **Show QR code**, for pairing the AgentMux mobile app. The QR code contains this machine's LAN address, the server port, and **the instance's full auth key**, not the `lan_key`. Anyone who scans or photographs it can control this AgentMux instance over the network, with the same power as the app itself, until AgentMux restarts. Show it only to the device you are pairing.
+With LAN discovery on, the host popover has **Pair a device** (it is disabled while discovery is off). It shows a QR code for the AgentMux mobile app. The code holds a one-time pairing code and the fingerprint of this computer's certificate, never the instance's auth key or the `lan_key`. It works once, for two minutes (the popover counts it down); **New code** cancels it and shows another, **Copy link** copies the same pairing as a link for another AgentMux computer's Tower, and **Hide** removes it. A wrong code is refused: five wrong tries from one address in a minute lock that address out for the minute, and ten wrong in a row cancel every code on show.
+
+Show the code only to your own devices: whoever redeems it watches this computer's agents, read-only (see below). When a device pairs, the popover says "Paired *name*. Settings › Paired devices lists it."
 
 ## What a paired device can see
 
@@ -137,6 +162,5 @@ If a peer is missing, the usual causes are a firewall (yours or the peer's), VPN
 ## See also
 
 - [Network exposure](/security/network-exposure/): every listener and what it accepts
-- [The network pill](/warden/#the-network-pill): the peers it finds, in the status bar
 - [Running multiple instances](/multi-instance/): multiple AgentMux processes side by side
 - [LAN discovery (internals)](/internals/lan-discovery/): the mDNS module, listeners and live toggle

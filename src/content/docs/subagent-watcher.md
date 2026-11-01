@@ -348,7 +348,7 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## What Swarm doesn't do
 
 - **No history or search.** Swarm shows live state only. Subagent activity is held in memory; when an agent pane is reopened, AgentMux reloads that session's subagent activity from Claude Code's transcript files.
-- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For the instances themselves, see the [network pill](/warden/#the-network-pill).
+- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For the instances themselves, see the [network pill](/lan-discovery/#the-network-pill).
 - **No subagent tracking for providers other than Claude Code.**
 - **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
 
