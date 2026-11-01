@@ -26,6 +26,10 @@ Closing doesn't ask about working agents while they keep running. These closes s
 - **Switching workspace.**
 - **Any close, with `agents:always_available` turned off.** Closing then ends the agents in it, as it did before.
 
+From your click on **Close** until the pane is gone, the pane is dimmed and ignores clicks, and its header reads **Closing…** (**Closing 3 tabs…** for a pane that holds three).
+
+A browser pane whose page may have unsaved changes (one that would ask "Leave site?") asks first, in AgentMux's own dialog: "Close this pane?" with "*site* may have unsaved changes.", **Keep open** and **Close anyway**. Only a close you make asks. A close an agent makes, or quitting AgentMux, just closes.
+
 An agent with no pane still stops itself after 60 minutes idle (`agents:idle_stop_minutes`), and at most 24 run at once (`agents:max_running`). See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane).
 
 ## Shut down ends an agent
@@ -35,10 +39,21 @@ An agent with no pane still stops itself after 60 minutes idle (`agents:idle_sto
 You can shut an agent down from:
 
 - **`/shutdown`** in its message box. `/quit` and `/exit` still work as other names for it.
-- **My Agents:** the row's menu, **Shut down**. It is there for every running agent, with a pane or without one.
+- **My Agents:** click the agent's tile; its panel has **Shut down**. It is there for every running agent, with a pane or without one.
 - **The agent pane's right-click menu:** **Shut down**.
 
 Other ways to end an agent keep their places: **Stop** in the [Swarm](/subagent-watcher/#fleet-toolbar) fleet toolbar and the `Stop` tool, which asks you for 30 seconds when another agent uses it.
+
+### When another agent asks to stop or close yours
+
+You get a countdown, in two places:
+
+- **In the agent's pane,** a banner such as "Korp asked to close Camper. Closing in 12 s." with **Keep running**, which cancels it, and **Close now**, which skips the rest of the wait.
+- **In a notification from AgentMux,** such as "Closing Camper in 30 s", with the same two buttons. On Windows it also has a progress bar.
+
+If you do nothing, it goes ahead when the time is up. The wait is 30 seconds when another agent stops or closes yours, and 15 seconds when an agent quits itself during a turn you didn't start.
+
+When one `Stop` call names several agents, they share one window and one notification ("Closing 5 agents: A, B, C and 2 more in 30 s"), whose **Keep running** and **Close now** apply to all of them. **Keep running** on one agent's own banner keeps only that agent; the others still close. That banner reads "Korp asked to close Camper and 4 others".
 
 ### When it asks first
 

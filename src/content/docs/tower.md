@@ -42,6 +42,8 @@ A rail on the left lists each agent running here, in the agent's colour, with it
 
 Select an entry to see its processes on the right as a tree, so you can see what started what, for example `claude → bash → cargo → rustc`. Processes with the same name under one parent collapse into a single line with their totals (`rustc.exe ×6`); expand it to see each one. An agent's support processes, such as its MCP servers, are shown dimmer than the work it started.
 
+Below the entry's totals, two small charts show its CPU and memory over the last 10 minutes.
+
 This is the view for questions like "which agent is driving this `rustc.exe`, and how much is that agent using overall?"
 
 ## Panes
@@ -70,7 +72,7 @@ Pick another machine in **Machine**:
 - It's read-only: it can't end, suspend or reprioritise a process.
 - It never shows a process's command line.
 - It never asks for administrator rights, so other users' processes can't be measured.
-- It keeps no history beyond the short sparklines; values are live.
+- It looks back only a little. The Memory view keeps the last hour. In the Agents view, the selected entry's CPU and memory are charted over the last 10 minutes; those charts are kept in the pane and start empty when you reopen it. The Processes and Panes views show current values.
 
 ## See also
 
