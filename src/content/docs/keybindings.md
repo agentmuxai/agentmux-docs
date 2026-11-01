@@ -195,14 +195,14 @@ The native macOS menu bar adds the standard system shortcuts: `âŒ˜Q` (quit), `âŒ
 
 ## Resizing panes
 
-Pane resizing is mouse-driven, with `Shift` selecting the "surgical" variant of each gesture. The modifier is `Shift` on every platform, and it can be pressed or released **mid-drag**: the layout re-bases from wherever it is, with no jumps.
+Pane resizing is mouse-driven, and `Shift` switches a gesture to its other variant. The modifier is `Shift` on every platform, and it can be pressed or released **mid-drag**: the layout re-bases from wherever it is, with no jumps.
 
 ### Dragging a pane border
 
 | Gesture | Effect |
 |--------|--------|
-| Drag a pane border | **Resize the whole row or column.** The border under the cursor tracks it exactly. The panes on each side of it grow or shrink in proportion to their size. |
-| `Shift` + drag a pane border | **Resize a single border.** Only the two panes flanking the dragged border change size; everything else stays put. |
+| Drag a pane border | **Move a single border.** Only the two panes flanking the dragged border change size; everything else stays put. |
+| `Shift` + drag a pane border | **Resize the whole row or column.** The border under the cursor tracks it exactly. The panes on each side of it grow or shrink in proportion to their size. |
 
 Panes have a 128 px minimum size while you drag. When a group resize runs out of room on one side, panes stop at the minimum and the drag caps at whatever space was actually available (`frontend/layout/lib/layoutResize.ts`, `computeGroupResizeSizes`).
 

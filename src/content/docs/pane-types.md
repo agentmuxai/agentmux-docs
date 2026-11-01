@@ -332,7 +332,7 @@ There is no separate Media pane any more. Images, audio and video open in the [E
 | **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
 | **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls. Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
 
-**Zooming a PDF** (`Ctrl`+scroll, `Ctrl`+`+` / `-` / `0`) zooms the pages, not the whole pane: 100% is the width that fits the pane, the pages are drawn again at the new size so they stay sharp, and the point under the pointer stays under it. The zoom is saved with the pane. The Editor's tabs, toolbar and file tree stay at the app's own zoom, and `Ctrl`+scroll over them zooms the app (see [Zoom system](/internals/zoom/)). In the text editor, zoom scales the whole pane, tabs and tree included.
+**Zooming a PDF** (`Ctrl`+scroll, `Ctrl`+`+` / `-` / `0`) zooms the pages, not the whole pane: 100% is the width that fits the pane, the pages are drawn again at the new size so they stay sharp, and the point under the pointer stays under it. Each step makes the pages 25% larger or smaller, and a PDF zooms in to 1500% (other panes stop at 200%). The zoom is saved with the pane. The Editor's tabs, toolbar and file tree stay at the app's own zoom, and `Ctrl`+scroll over them zooms the app (see [Zoom system](/internals/zoom/)). In the text editor, zoom scales the whole pane, tabs and tree included.
 
 A viewer reloads when its file changes on disk. To open one of these files, open it in the Editor as you would any file, or drop it on an Editor pane (see [Dropping files onto panes](#dropping-files-onto-panes)).
 
@@ -620,6 +620,8 @@ and pick a widget type; it's added as a new tab *in that same pane*, no new
 split. This works for every widget type, not just more of the pane's own
 kind — an agent pane can pick up a terminal tab and a browser tab right next
 to it, all inside one pane.
+
+When a pane has more tabs than fit, the mouse wheel over the strip scrolls it 10 px per notch, and selecting a pane scrolls its selected tab flush left, the way selecting the tab does.
 
 ![A pane's + menu: one entry per widget type, from Agent to Settings](../../assets/screenshots/chrome/chrome-pane-add-menu.png)
 
