@@ -14,7 +14,7 @@ Download it from [GitHub Releases](https://github.com/agentmuxai/agentmux/releas
 
 - **Windows (x64):** the [Microsoft Store](https://apps.microsoft.com/detail/9p9qcxnncrk3), the `.exe` installer, or the portable `.7z`
 - **macOS:** the `.dmg`, Apple Silicon only
-- **Linux (x86_64):** AppImage, `.deb`, `.rpm` or portable `.tar.gz`
+- **Linux (x86_64):** AppImage, `.deb`, `.rpm` or portable `.tar.xz`
 
 See [Installation](/installation/) for the steps on each platform.
 
