@@ -178,10 +178,9 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `sessionStats` | `SessionStats \| null` | Cumulative token usage for the session |
 | `currentTool` | `string \| null` | Name of the tool currently executing |
 | `turnTokens` | `TurnTokens \| null` | Per-turn input/output token deltas (cleared at TurnEnd) |
-| `lastContextTokens` | `number \| null` | Input fill at last `message_start`; survives TurnEnd |
+| `context` | `ContextReading \| null` | The context meter's reading (tokens in context, the model's window, and where each came from); set by `TokensIn`, survives TurnEnd, cleared on a reset, an invalidation or a compaction |
 | `pending` | `PendingMessage[]` | Messages queued but not yet acknowledged by backend |
-| `detailsOpen` | `boolean` | Composer details panel open/closed state |
-| `composerUnreadCount` | `number` | Log entries arrived while panel was closed |
+| `detailsOpen` | `boolean` | Whether the composer's Shell drawer is open |
 
 #### TurnPhase discriminated union
 

@@ -4,7 +4,7 @@ description: How AgentMux keeps its model of windows in sync with what Win32 act
 ---
 
 :::note[Windows-only by design]
-WRR hooks into Win32 (`WM_PAINT`, `SetWindowPos`, `GetForegroundWindow`). A full macOS/Linux WRR observation layer is **not planned** — its drift classes are largely Windows-specific defenses, and Wayland exposes no portable per-window / monitor-topology event API. The cross-platform safety net is instead the host's **orphan reconciler**; the one genuinely cross-platform gap (detecting a window that dies without `on_before_close`) is tracked in [#1569](https://github.com/agentmuxai/agentmux/issues/1569), not as a WRR port. On macOS and Linux, `task dev` runs without WRR drift detection. See [Platform support](/internals/platform-support/).
+WRR observes Win32 through the host's `SetWinEventHook` hooks (object create, show, hide, destroy, location change and foreground events) and the window procedure. A full macOS/Linux WRR observation layer is **not planned** — its drift classes are largely Windows-specific defenses, and Wayland exposes no portable per-window / monitor-topology event API. The cross-platform safety net is instead the host's **orphan reconciler**; the one genuinely cross-platform gap (detecting a window that dies without `on_before_close`) is tracked in [#1569](https://github.com/agentmuxai/agentmux/issues/1569), not as a WRR port. On macOS and Linux, `task dev` runs without WRR drift detection. See [Platform support](/internals/platform-support/).
 :::
 
 WRR — Window Reality Reconciliation — is the layer that keeps AgentMux's launcher reducer in sync with the OS. Win32 has a thousand quiet ways for window state to mutate without telling us: a different process steals focus, a monitor goes to sleep, the user drags a window across DPI boundaries, an OEM utility minimizes everything to clear the desktop, an Alt+Tab cycle reorders things mid-paint. WRR notices and corrects.
@@ -25,12 +25,15 @@ WRR records drift events as `Event::HwndDriftDetected { kind, .. }` (see `crates
 
 | Drift kind | What it means |
 |---|---|
-| `HiddenSinceOpen` | A window the launcher believes is foreground hasn't reported a `WM_PAINT` since being opened. Usually benign during the open transient (the OS fires multiple `SetWindowPos` calls during HWND placement); the WRR arm distinguishes "in transient" from "stuck hidden". |
-| `HwndWithoutBrowser` | The host has a window HWND but no CefBrowserView attached. Indicates a partial open that the host didn't finish. |
-| `MonitorChanged` | The window's containing monitor changed since the last report — DPI / scaling / position need refresh. |
-| `BoundsDiverged` | The Win32 bounds (GetWindowRect) don't match what the launcher believes. Could be DPI scaling, could be user drag the launcher missed. |
+| `HiddenSinceOpen` | A window the host opened was never shown (it has had no foreground event) since being opened. Usually benign during the open transient (the OS reports several location changes during HWND placement); the WRR arm distinguishes "in transient" from "stuck hidden". |
+| `BrowserWithoutHwnd` | The reducer has a window whose HWND was never filled in, and a later event should have filled it. CEF says it is open and Win32 has no matching window. |
+| `HwndWithoutBrowser` | Win32 has a window HWND that maps to no window or pool label the reducer knows. The "stray taskbar" case. |
+| `OffMonitor` | The window's rectangle doesn't intersect any known monitor: an off-screen orphan. |
+| `OrphanDestroy` | The host reported an HWND destroyed with no preceding close for its label, as when a renderer crashes and takes the window with it. |
+| `LingeringHwnd` | The host reported a window closed, but OS events for its HWND keep firing: it never went away on the Win32 side. |
+| `OrphanInstance` | No user-meaningful window is left but the host is still running, because pool windows keep it alive. It is paired with a host-should-quit event. |
 
-The reducer applies a corrective action specific to each kind: re-emit a layout fix, queue a `RepositionWindow` command, fire a focus rebalance, or simply log the drift if it's within an acceptable transient window.
+The kinds are `HwndDriftKind` in `crates/common/src/ipc.rs`. The reducer applies a corrective action specific to each kind, or simply logs the drift if it is within an acceptable transient window.
 
 ## The "just promoted" bridge
 
@@ -56,7 +59,8 @@ Proptests in `crates/launcher/src/reducer/tests.rs` (`both_drain_paths_remove_ju
 |---|---|
 | `crates/launcher/src/reducer/` | The reducer arms that consume host reports and emit drift events |
 | `crates/launcher/src/ipc/server.rs` | The launcher-side WRR observability: takes timestamps, broadcasts drift to subscribers |
-| `crates/cef/src/commands/window_pool.rs` | The host's emit side — `ReportPoolWindowRemoved`, `ReportPoolWindowPromoted`, `ReportWindowOpened` |
+| `crates/cef/src/launcher_ipc/reporters.rs` | The host's emit side — `ReportPoolWindowRemoved`, `ReportPoolWindowPromoted`, `ReportWindowOpened` |
+| `crates/cef/src/wrr/win_event.rs` | The host's Win32 observation layer (`SetWinEventHook`) |
 | `<data-dir>/data/launcher-events.log` | The durable event log where every WRR record lands (JSONL) |
 
 ## Reading the event log

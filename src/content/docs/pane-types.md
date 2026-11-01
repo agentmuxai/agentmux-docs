@@ -55,7 +55,7 @@ These views exist in the codebase but are **not** opened directly from the widge
 
 | Surface | How it's reached |
 |---|---|
-| **Identity** | App-wide: **Connectors** → **Accounts**. An agent's own account is the login email in its composer strip (see [Composer strip](#composer-strip)). View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
+| **Identity** | App-wide: **Connectors** → **Accounts**. An agent's own account is the login email in its composer strip (see [Composer strip](#composer-strip)). View registration (`view: "identity"`, the pane tab `identityPaneTab`) exists for `pane.open` RPC and right-click menu paths. |
 | **Global and Personal Memory** | App-wide: **Memory** → **Global** and **Personal**. For one agent, right-click its pane and choose **Personal memory** to open Memory → Personal on that agent. These are notes, not the Bundle editor. |
 | **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |

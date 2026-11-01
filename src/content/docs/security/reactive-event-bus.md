@@ -68,7 +68,7 @@ All routes live on the local AgentMux server (`agentmux-srv`). See [Network expo
 | `/api/bus/*` | Full auth key | Legacy local message-bus API. Nothing in AgentMux calls it; its inject path runs the same signature check and marker |
 | `/agentmux/reactive/poller/{config,status,stats}` | Full auth key | Legacy. `config` stores a URL and token, and nothing uses them: no poller runs |
 
-The auth checks are `auth_middleware` and `lan_or_full_auth_middleware` in `crates/srv/src/server/mod.rs`.
+The auth checks are `auth_middleware` and `lan_or_full_auth_middleware` in `crates/srv/src/server/auth.rs`.
 
 **The full auth key** is the per-launch key every terminal pane and agent process receives as `AGENTMUX_AUTH_KEY`. Holding it is equivalent to being the AgentMux UI. See the [trust model](/security/trust-model/).
 
@@ -194,7 +194,8 @@ Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`
 - `crates/srv/src/server/reactive.rs` — `deliver` (tier order), `verify_jekt_signature`, `verify_reagent_signature`, `verify_lan_signature`, `verify_cross_channel_signature`, `resolve_transcript_request_tier_fields`, `hold_for_absent_target`, `try_cloud_relay`
 - `crates/srv/src/backend/reactive/handler.rs` — target resolution, recipient verification, the forced-sensitive and `ESCALATE` rules
 - `crates/srv/src/backend/reactive/sanitize.rs` — `wrap_jekt_message`, `marker_field`, `neutralize_markers`, keyword lists
-- `crates/srv/src/server/mod.rs` — `lan_forward_routes`, `auth_middleware`, `lan_or_full_auth_middleware`
+- `crates/srv/src/server/routes.rs` — `lan_forward_routes`
+- `crates/srv/src/server/auth.rs` — `auth_middleware`, `lan_or_full_auth_middleware`
 - `crates/common/src/jekt_sign.rs` — signature schemes and the muxreview key allow-list (`is_reagent_trusted_signing_key`)
 - `crates/srv/src/backend/storage/agent_jekt_keys.rs` — 24 h HMAC key rotation
 - `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`

@@ -121,12 +121,12 @@ Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10
 
 ## Tests
 
-There is no `task test`. CI runs these, and so can you:
+There is no `task test`. CI runs the frontend checks below and the Rust tests under cargo-nextest; so can you:
 
 ```bash
 npx vitest run                                      # frontend and script tests (npm test starts vitest in watch mode)
 npx tsc --noEmit -p tsconfig.citypecheck.json       # TypeScript type check
-cargo test --workspace -- --test-threads=1          # Rust tests, all crates
+cargo nextest run --workspace                       # Rust tests, all crates (what CI runs; settings in .config/nextest.toml)
 ```
 
 ## Source Layout

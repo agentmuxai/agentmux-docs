@@ -3,9 +3,9 @@ title: IPC catalog
 description: Every inter-process channel in AgentMux — transport, direction, authentication, and the bearer-token leak surface.
 ---
 
-**Version:** 0.44.1  
-**Main branch:** 6d282acf  
-**Date:** 2026-06-12  
+**Checked against:** 0.60.10  
+**Host command list checked:** 2026-11-01  
+**Security sweep:** 2026-06-12 (the findings in section 16 date from it)  
 
 This document catalogs every inter-process channel in AgentMux, their wire contracts, authentication models, and security properties observed in the Sweep 2026-06-12. It is intended as both a developer reference and a security audit anchor point.
 
@@ -73,25 +73,25 @@ agentmux-launcher.exe  (owns Win32 Job Object J0)
 Axum HTTP server bound to `127.0.0.1:0` (random ephemeral port). Port is written to `<data_dir>/ipc-port-<hash>` file as `<port>:<token>` after CEF init. File is owner-readable only on Unix (0600); no Windows DACL restriction on the port file itself (only on `authkey.dev`).
 
 Routes:
-- `POST /ipc` — main command handler (`ipc.rs:85`)
-- `GET /health` — unauthenticated health check (`ipc.rs:86`)
+- `POST /ipc` — main command handler (`ipc.rs`)
+- `GET /health` — unauthenticated health check (`ipc.rs`)
 - `POST /agentmux/browser/*` — Browser DOM API (see Channel G)
 
 ### Authentication
 
-`Authorization: Bearer <ipc_token>` header required on `POST /ipc` (`ipc.rs:138-155`).  
+`Authorization: Bearer <ipc_token>` header required on `POST /ipc` (`ipc.rs`).  
 `ipc_token` is a random UUID generated once per host process.
 
-**Gap:** `CorsLayer::permissive()` is applied (`ipc.rs:94`), accepting any Origin header. Any web page that guesses or reads the port can make unauthenticated cross-origin preflight-exempt requests (OPTIONS is ignored by the auth check) and then authenticated ones if it has obtained the token.
+**Gap:** `CorsLayer::permissive()` is applied (`ipc.rs`), accepting any Origin header. Any web page that guesses or reads the port can make unauthenticated cross-origin preflight-exempt requests (OPTIONS is ignored by the auth check) and then authenticated ones if it has obtained the token.
 
 ### Wire Format
 
 JSON body: `{"cmd": "<command_name>", "args": <JSON>}`  
-Response: `{"success": bool, "data": <JSON>|null, "error": string|null}` always HTTP 200 (even for errors; frontend checks `success` field). (`ipc.rs:176`)
+Response: `{"success": bool, "data": <JSON>|null, "error": string|null}` always HTTP 200 (even for errors; frontend checks `success` field). (`ipc.rs`)
 
 ### Command Catalog
 
-All commands dispatched through `route_command()` (`ipc.rs:190`).
+All commands dispatched through `route_command()` (`ipc.rs`).
 
 #### Tier 1 — Bootstrap
 
@@ -100,17 +100,10 @@ All commands dispatched through `route_command()` (`ipc.rs:190`).
 | `get_platform` | — | `"win32"` / `"darwin"` / `"linux"` | |
 | `get_auth_key` | — | string | Returns `state.auth_key` — the srv-side auth key. Logged at debug with first 8 chars. |
 | `get_is_dev` | — | bool | |
-| `get_user_name` | — | string | |
-| `get_host_name` | — | string | |
-| `get_data_dir` | — | path string | |
-| `get_config_dir` | — | path string | |
-| `get_user_home_dir` | — | path string | |
-| `get_docsite_url` | — | URL string | |
 | `get_zoom_factor` | — | number | |
 | `get_about_modal_details` | — | object | Version, build label, etc. |
 | `get_host_info` | — | object | |
 | `get_backend_endpoints` | — | `{web_endpoint, ws_endpoint}` | Srv HTTP + WS addresses |
-| `get_wave_init_opts` | — | object | |
 | `set_window_init_status` | `{status}` | null | |
 | `fe_log` | `{level, msg}` | null | Frontend log relay |
 | `fe_log_structured` | `{level, msg, fields}` | null | |
@@ -200,22 +193,11 @@ All commands dispatched through `route_command()` (`ipc.rs:190`).
 | `browser_pane_auth_cancel` | `{request_id}` | bool | Cancels auth challenge |
 | `browser_panes_set_overlay_clip` | `{window_label?, rects[]}` | bool | Clips pane HWNDs around DOM overlays |
 
-#### Provider/CLI Management
+#### CLI login and files
 
 | Command | Args | Returns |
 |---------|------|---------|
-| `detect_installed_clis` | — | array |
-| `get_provider_config` | — | object |
-| `save_provider_config` | `{config}` | null |
-| `get_provider_install_info` | `{provider}` | object |
 | `set_provider_auth` | `{provider, ...}` | null |
-| `clear_provider_auth` | `{provider}` | null |
-| `get_provider_auth_status` | `{provider}` | object |
-| `check_cli_auth_status` | `{cli}` | object |
-| `install_cli` | `{cli, ...}` | null |
-| `get_cli_path` | `{cli}` | string |
-| `check_nodejs_available` | — | bool |
-| `ensure_auth_dir` | `{provider}` | path |
 | `run_cli_login` | `{cli, ...}` | null |
 | `cancel_cli_login` | — | null |
 | `ensure_settings_file` | — | null |
@@ -229,6 +211,30 @@ All commands dispatched through `route_command()` (`ipc.rs:190`).
 |---------|---------|
 | `run_command` | Command palette execution |
 | `open_agent` | Open agent pane |
+
+
+#### Other commands
+
+The host handles more commands than the tables above show. Their names are listed here, grouped; the handler for each is in `crates/cef/src/commands/` (the `route_command` match in `crates/cef/src/ipc.rs` names it). Argument shapes are not repeated here.
+
+| Group | Commands |
+|---|---|
+| Approvals and attestations | `credential_approval_decide`, `desktop_request_decide`, `desktop_stop`, `operator_attest`, `ssh_approval_decide`, `upgrade_request_decide`, `widget_approval_decide` |
+| Browser panes and popups | `browser_attention_resolve`, `browser_bypass_set`, `browser_download_cancel`, `browser_pane_auth_save`, `browser_pane_autocomplete`, `browser_pane_copy`, `browser_pane_cut`, `browser_pane_discard`, `browser_pane_hibernation_check`, `browser_pane_inspect_element`, `browser_pane_memory`, `browser_pane_paste`, `browser_pane_print`, `browser_pane_set_frozen`, `browser_pane_stop`, `browser_pane_view_source`, `browser_panes_set_rects`, `browser_pause_set`, `browser_popup_close`, `browser_popup_show` |
+| Cross-window drag | `claim_cross_drag_target`, `peek_drag_paths`, `start_tab_drag_tracking`, `stop_tab_drag_tracking` |
+| Diagnostics | `background_audit_take`, `begin_gpu_trace`, `capture_window_viewport`, `end_gpu_trace`, `fe_log_batch`, `get_pane_debug_state`, `report_first_paint` |
+| Dialogs | `show_open_bundle_dialog`, `show_open_file_dialog`, `show_open_layout_dialog`, `show_save_layout_dialog` |
+| Floating panes | `get_floating_redock_target`, `set_floating_always_on_top`, `set_floating_redock_target` |
+| Incidents and health | `get_health_signals`, `incident_acknowledge`, `incidents_list` |
+| Input ownership | `input_owner_state`, `input_select` |
+| Memory | `memory_adoption_decide`, `memory_adoption_request`, `memory_pressure_level`, `memory_release_request` |
+| Opening things | `open_in_file_manager`, `open_login_terminal`, `open_panel`, `open_restored_window` |
+| Other | `app_update_action`, `autostart_status`, `get_cli_login_status`, `get_mux_init_opts`, `get_window_button_layout`, `get_window_system`, `google_op`, `is_window_maximized`, `quit_app`, `read_clipboard_attachments`, `set_taskbar_attention`, `store_update_install`, `take_reload_snapshot` |
+| Panes | `pane_media_permission_respond`, `pane_media_revoke`, `pane_pool_window_ready` |
+| Renderer recycling | `recycle_begin`, `recycle_cancel`, `recycle_declined` |
+| Vault | `vault_copy`, `vault_export`, `vault_import`, `vault_import_delete`, `vault_op`, `vault_reveal` |
+
+Some names are accepted but do nothing (`download_file`, `quicklook`, `create_tab`, `close_tab` and similar): they are stubs (`crates/cef/src/commands/stubs.rs`).
 
 ---
 
@@ -256,7 +262,7 @@ Srv events dispatched as:
 window.__agentmux_srv_event(<JSON Event>)
 ```
 
-Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs:897-1596`).
+Event shapes are the `agentmux_common::ipc::Event` variants serialized to JSON (`crates/common/src/ipc.rs`).
 
 ### Purpose
 
@@ -278,7 +284,7 @@ Dev mode (`task dev` without launcher, or host invoked directly): `AGENTMUX_LAUN
 
 ### Authentication
 
-None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `crates/cef/src/lib.rs:750-763`).
+None. OS-level pipe ownership. The host process must be a child of the launcher (enforced by `parent_process::parent_is_agentmux_launcher()` check before connecting, `crates/cef/src/lib.rs`).
 
 ### Wire Format
 
@@ -290,7 +296,7 @@ Newline-delimited JSON. One message per line.
 - `{"kind":"event","event":"<name>",...}` — launcher-emitted `Event` broadcast
 - `{"kind":"command","cmd":"<name>",...}` — saga-issued `Command` dispatched to host
 
-Backward-compat: Pre-CPD-2 launchers emit bare `Event` JSON without the `HostFrame` wrapper; the host falls back to parsing as raw `Event` (`crates/cef/src/launcher_ipc/mod.rs:309-329`).
+Backward-compat: Pre-CPD-2 launchers emit bare `Event` JSON without the `HostFrame` wrapper; the host falls back to parsing as raw `Event` (`crates/cef/src/launcher_ipc/mod.rs`).
 
 ### Command Variants (Host → Launcher)
 
@@ -361,7 +367,7 @@ All `agentmux_common::ipc::Event` variants propagated. Key ones:
 - **Windows:** Win32 named pipe. Path in env var `AGENTMUX_SRV_PIPE_PATH` (set by launcher's `srv_spawner.rs`).
 - **Unix:** Unix domain socket (same env var).
 
-Activated only when `AGENTMUX_SRV_PIPE_PATH` is set. Dev builds (`is_dev_build_exe`) short-circuit to None (`crates/cef/src/lib.rs:789-793`).
+Activated only when `AGENTMUX_SRV_PIPE_PATH` is set. Dev builds (`is_dev_build_exe`) short-circuit to None (`crates/cef/src/lib.rs`).
 
 ### Authentication
 
@@ -387,7 +393,7 @@ WebSocket at `ws://127.0.0.1:<srv_port>/ws`.
 
 ### Authentication
 
-`?authkey=<auth_key>` query parameter on the WebSocket upgrade URL (`crates/srv/src/server/auth.rs:80-90`). This is the only route that accepts the authkey via query string; all other routes require the `X-AuthKey` header.
+`?authkey=<auth_key>` query parameter on the WebSocket upgrade URL (`crates/srv/src/server/auth.rs`). This is the only route that accepts the authkey via query string; all other routes require the `X-AuthKey` header.
 
 **Gap (audit C3):** The query-string authkey is visible in browser history, server access logs, and `Referer` headers on cross-origin navigations. Acceptable for WebSocket (where the browser API does not permit custom headers) but represents a key leak risk if the URL is ever logged or forwarded.
 
@@ -456,11 +462,11 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ### Authentication
 
-`X-AuthKey: <auth_key>` header required (`crates/srv/src/server/auth.rs:58-105`). Auth middleware also accepts `?authkey=` query param exclusively on the `/ws` route.
+`X-AuthKey: <auth_key>` header required (`crates/srv/src/server/auth.rs`). Auth middleware also accepts `?authkey=` query param exclusively on the `/ws` route.
 
 ### CORS
 
-`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs:51-55`). External origins rejected. This is a narrowing from the previous `CorsLayer::permissive()` that accepted any origin (corrected in 2026-05-11 audit C3).
+`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs`). External origins rejected. This is a narrowing from the previous `CorsLayer::permissive()` that accepted any origin (corrected in 2026-05-11 audit C3).
 
 ### Wire Format
 
@@ -491,7 +497,7 @@ Updates from service calls are broadcast on the event bus to all WebSocket subsc
 
 ## 9. Channel G: Browser DOM API (HTTP over IPC)
 
-**Source:** `crates/cef/src/browser_api/routes.rs`, registered via `crate::browser_api::register_routes(app)` (`ipc.rs:89`)
+**Source:** `crates/cef/src/browser_api/routes.rs`, registered via `crate::browser_api::register_routes(app)` (`ipc.rs`)
 
 ### Transport
 
@@ -499,7 +505,7 @@ Same HTTP server as Channel A (`127.0.0.1:<ipc_port>`). Routes under `/agentmux/
 
 ### Authentication
 
-`Authorization: Bearer <ipc_token>` header required by every handler (`routes.rs:1058-1065`).
+`Authorization: Bearer <ipc_token>` header required by every handler (`routes.rs`).
 
 ### Routes
 
@@ -521,13 +527,13 @@ Same HTTP server as Channel A (`127.0.0.1:<ipc_port>`). Routes under `/agentmux/
 
 All Browser DOM API routes speak the Chromium DevTools Protocol (CDP) **in-process**, through CEF's `SendDevToolsMessage` and a DevTools message observer on the target browser (`crates/cef/src/browser_api/cdp.rs`). They don't use the remote-debugging port (Channel I), which is off in release builds.
 
-**Security: `/agentmux/browser/eval` runs arbitrary JS.** The `eval` route accepts a caller-supplied `script` string and executes it in the pane's JS world via `Runtime.evaluate` with no sandbox or isolation (`routes.rs:238`). The script runs in whatever origin the pane currently loads. Any local process holding the `ipc_token` can execute arbitrary JS in any browser pane.
+**Security: `/agentmux/browser/eval` runs arbitrary JS.** The `eval` route accepts a caller-supplied `script` string and executes it in the pane's JS world via `Runtime.evaluate` with no sandbox or isolation (`routes.rs`). The script runs in whatever origin the pane currently loads. Any local process holding the `ipc_token` can execute arbitrary JS in any browser pane.
 
 ---
 
 ## 10. Channel H: OSC 16162 — Terminal Shell Integration Escape Sequences
 
-**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts:147-239`, `frontend/app/view/term/termwrap.ts:232-233`
+**Source:** `crates/srv/src/backend/shellintegration/bash.sh` (and zsh, fish, pwsh), `frontend/app/view/term/termosc.ts`, `frontend/app/view/term/termwrap.ts`
 
 ### Transport
 
@@ -536,7 +542,7 @@ VT escape sequence embedded in PTY output, parsed by xterm.js in the renderer:
 ESC ] 16162 ; <command> ; <JSON-payload> BEL
 ```
 
-Registered as an OSC handler on xterm.js number `16162` (`termwrap.ts:227`).
+Registered as an OSC handler on xterm.js number `16162` (`termwrap.ts`).
 
 ### Authentication
 
@@ -546,8 +552,8 @@ None. The sequence is parsed from PTY byte stream. Any program running in the te
 
 | Sub-command | Wire example | Handler action | Security implication |
 |-------------|-------------|----------------|---------------------|
-| `E` | `\033]16162;E;{"AGENTMUX_AGENT_ID":"Alice","AGENTMUX_AGENT_COLOR":"#ff0000"}\007` | Calls `RpcApi.SetMetaCommand` to write `{"cmd:env": <payload>}` into the block's persistent metadata (`termosc.ts:266-271`). Empty payload clears. | **Env-key injection**: any terminal program can write arbitrary keys into `cmd:env`. Values are then injected into child process environments (`shell.rs:365-375`). The `AGENTMUX_AGENT_COLOR=#000000` Win11 focus-border bug was caused by a user's shell profile emitting this sequence with a black color — no valid value range is enforced. |
-| `X` | `\033]16162;X;{"muxbus_url":"https://...","muxbus_token":"tok"}\007` | Makes an authenticated `POST /agentmux/reactive/poller/config` to reconfigure the cloud MuxBus poller URL and token (`termosc.ts:286-312`). | **Poller injection**: any terminal program can redirect the srv's outbound polling to an attacker-controlled endpoint. Pre-audit C1/C2 this route was unauthenticated; now requires `X-AuthKey`. |
+| `E` | `\033]16162;E;{"AGENTMUX_AGENT_ID":"Alice"}\007` | Calls `RpcApi.SetMetaCommand` to write `{"cmd:env": <payload>}` into the block's persistent metadata (`termosc.ts`). Empty payload clears. | **Env-key injection**: any terminal program can write arbitrary keys into `cmd:env`. Values are then injected into child process environments (`shell.rs`). The `AGENTMUX_AGENT_COLOR=#000000` Win11 focus-border bug was caused by a user's shell profile emitting this sequence with a black color — no valid value range is enforced. |
+| `X` | `\033]16162;X;{"muxbus_url":"https://...","muxbus_token":"tok"}\007` | Makes an authenticated `POST /agentmux/reactive/poller/config` to reconfigure the cloud MuxBus poller URL and token (`termosc.ts`). | **Poller injection**: any terminal program can redirect the srv's outbound polling to an attacker-controlled endpoint. Pre-audit C1/C2 this route was unauthenticated; now requires `X-AuthKey`. |
 | `A` | `\033]16162;A;{}\007` | Sets `shell:state = "ready"` in block RT info | State metadata injection |
 | `C` | `\033]16162;C;{"cmd64":"<b64>"}\007` | Sets `shell:state = "running-command"`, decodes `cmd64` → `shell:lastcmd` | Last-command display |
 | `D` | `\033]16162;D;{"exitcode":0}\007` | Sets `shell:lastcmdexitcode` | Exit code display |
@@ -557,7 +563,7 @@ None. The sequence is parsed from PTY byte stream. Any program running in the te
 
 ### Shell Integration Deployment
 
-Scripts are embedded in the srv binary (`shellintegration.rs:17-20`) and deployed to `~/.agentmux/shell/<type>/` on first launch or version change. The shell controller sources them via `--rcfile` (bash), `ZDOTDIR` (zsh), `-File` (pwsh), or `-C source` (fish) (`shellintegration.rs:260-315`).
+Scripts are embedded in the srv binary (`shellintegration.rs`) and deployed to `~/.agentmux/shell/<type>/` on first launch or version change. The shell controller sources them via `--rcfile` (bash), `ZDOTDIR` (zsh), `-File` (pwsh), or `-C source` (fish) (`shellintegration.rs`).
 
 ---
 
@@ -582,7 +588,7 @@ Chromium DevTools Protocol over HTTP and WebSocket:
 - Intercept network traffic
 - Modify DOM
 
-**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs:1070-1080`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
+**Note:** `no_sandbox: 1` is set in CEF settings (`crates/cef/src/lib.rs`), which means the Chromium renderer processes run without the OS sandbox. This widens the blast radius of any renderer compromise.
 
 ### Internal Use
 
@@ -606,7 +612,7 @@ There are two distinct secrets:
 | `ipc-port-<hash>` file (`<data_dir>/ipc-port-<hash>`) | `<port>:<ipc_token>` | Always (owner-readable, but data dir may have lax permissions on some installations) |
 | `authkey.dev` file (`<data_dir>/authkey.dev`) | Both `ipc_token` and `auth_key`, plus both endpoint addresses | Dev mode only (`AGENTMUX_DEV=1`); file is chmod 0600 (Unix) / DACL-restricted (Windows) (`dev_authfile.rs`) |
 | Renderer URL query string | `ipc_token` via `?ipc_token=<token>` (if frontend embeds it in the URL on load) | Visible in process arguments, browser history, `Referer` headers |
-| WS URL query string | `auth_key` via `?authkey=<key>` | Visible in server access logs (`crates/srv/src/server/auth.rs:80`) |
+| WS URL query string | `auth_key` via `?authkey=<key>` | Visible in server access logs (`crates/srv/src/server/auth.rs`) |
 | `get_auth_key` IPC command | `auth_key` | Any caller that already holds `ipc_token` — no additional gate |
 
 ### `authkey.dev` File Contents
@@ -629,7 +635,7 @@ There are two distinct secrets:
 }
 ```
 
-(`dev_authfile.rs:32-50`)
+(`dev_authfile.rs`)
 
 ---
 
@@ -673,7 +679,7 @@ All `Command` variants from the second half of `ipc.rs` (Phase E.x):
 
 These share a wire-level namespace. The routing logic lives in the respective process's connection handler and is not enforced by the type system. A mis-addressed `CreateWorkspace` sent to the launcher pipe returns `Event::Error { code: InvalidCommand }` rather than a type error.
 
-See `ipc.rs:1-23` for the stated backward-compat policy (externally tagged enums, unknown-command → `Event::Error`).
+See `ipc.rs` for the stated backward-compat policy (externally tagged enums, unknown-command → `Event::Error`).
 
 ---
 
@@ -695,29 +701,9 @@ There is no sub-module or feature-flag separation between launcher-domain and sr
 
 ## 15. Environment Variable Contract
 
-The following env vars are injected into PTY child processes by the shell controller (`shell.rs:796-923`) and are consumed by the OSC 16162 shell integration scripts. Their documented meaning, the source that sets them, and known hazards are listed here.
+The variables srv puts in a pane's environment, who sets them and which are kept from the instance's own environment are in [Environment variables](/internals/env-vars/): the pane allow-list (`PANE_ENV_KEEP` in `crates/srv/src/backend/pane_env.rs`) decides which `AGENTMUX_*` variables reach a pane, and `AGENTMUX` is always set to `1`. The OSC 16162 `E` command can still write keys into a block's `cmd:env` (section 10).
 
-| Variable | Set by | Consumed by | Notes |
-|----------|--------|-------------|-------|
-| `AGENTMUX` | `shell.rs` (always `"1"`) | Shell integration scripts (guard against nested invocations) | |
-| `AGENTMUX_BLOCKID` | `shell.rs` | Shell integration, muxlog | Block UUID for the pane |
-| `AGENTMUX_TABID` | `shell.rs` | Shell integration | Tab UUID |
-| `AGENTMUX_VERSION` | `shell.rs` | Shell integration (muxlog pointer resolution) | Semver string |
-| `AGENTMUX_LOG_DIR` | `shell.rs` | `muxlog` helper | Path to `~/.agentmux/logs/` |
-| `AGENTMUX_LOCAL_URL` | `shell.rs` (forwarded from host's env) | Agent CLIs, bashwrap | `http://127.0.0.1:<srv_port>` |
-| `AGENTMUX_AGENT_ID` | User's shell profile or `cmd:env` block meta | Shell integration → OSC 16162 E | Pane title/color identity. **Any value from the shell profile flows into block metadata via OSC 16162 E.** |
-| `AGENTMUX_AGENT_COLOR` | User's shell profile or `cmd:env` block meta | Shell integration → OSC 16162 E → UI | **Regression root cause:** A user setting `AGENTMUX_AGENT_COLOR=#000000` in their shell profile caused the Win11 focus-border to turn black. No value range validation exists. |
-| `AGENTMUX_AGENT_TEXT_COLOR` | User's shell profile | Shell integration | Similar risk to `AGENTMUX_AGENT_COLOR` |
-| `TERM` | `shell.rs` (`xterm-256color`) | Terminal applications | |
-| `COLORTERM` | `shell.rs` (`truecolor`) | Terminal applications | |
-| `TERM_PROGRAM` | `shell.rs` (`agentmux`) | Terminal applications | |
-| `ZDOTDIR` | `shellintegration.rs` (zsh only) | zsh startup | Redirects zsh config to `~/.agentmux/shell/zsh/` |
-| `AGENTMUX_ZDOTDIR` | `shellintegration.rs` (zsh only) | Integration script | Preserved original ZDOTDIR |
-
-Variables **removed** from the environment when launching non-agent panes (no explicit `cmd:env` agent config, `shell.rs:330-334`):
-- `AGENTMUX_AGENT_ID`, `AGENTMUX_AGENT_COLOR`, `AGENTMUX_AGENT_TEXT_COLOR`, `WAVEMUX_AGENT_ID`, `WAVEMUX_AGENT_COLOR`
-
-**Gap:** There is no schema for what values are valid for `AGENTMUX_AGENT_COLOR`. The shell controller accepts and injects whatever value the block meta contains without validation. A color value of `#000000` produced a visible Win11 focus-border regression; other values (e.g., malformed CSS) could cause UI rendering issues.
+`AGENTMUX_AGENT_COLOR` and `AGENTMUX_AGENT_TEXT_COLOR` are decommissioned: nothing injects or reads them, and the pane border uses the agent's persisted `ui:color`.
 
 ---
 
@@ -727,20 +713,19 @@ This section maps the sweep findings to the specific code locations documented a
 
 | Finding | Location | Impact | Mitigation status |
 |---------|----------|--------|-------------------|
-| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs:1306-1309` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
+| **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
 | **`ipc_token` leaks via renderer URL query** | Frontend's load-time URL (not in scope of this sweep's source read; reported by sweep) | Token in browser history, `Referer`, process arguments | Not mitigated in code seen |
-| **`authkey.dev` leaks both tokens (dev mode)** | `dev_authfile.rs:32-50`; written when `AGENTMUX_DEV=1` | Full API access with both `ipc_token` and `auth_key` | File is chmod 0600 / owner DACL. Dev-only. |
-| **`get_auth_key` IPC command returns srv auth key** | `ipc.rs:203-207` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
-| **`get_env` returns any env var** | `platform.rs:37-50`; `ipc.rs:319` | Renderer can extract `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`, etc. from the host process environment. Requires `ipc_token`. | No allowlist or blocklist enforced |
-| **`/agentmux/browser/eval` runs arbitrary JS** | `routes.rs:238` | Any caller with `ipc_token` can execute JS in any open browser pane (including cross-origin pages). | Auth: `ipc_token` required. No script length or content restriction. |
-| **OSC 16162 `E` injects env keys into block meta** | `termosc.ts:265-285` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs:365-375`. | No key allowlist. No value validation. Caused `AGENTMUX_AGENT_COLOR` Win11 bug. |
-| **OSC 16162 `X` reconfigures srv poller** | `termosc.ts:286-312` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
-| **`CorsLayer::permissive()` on host IPC server** | `ipc.rs:94` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs:51-55`); host has not. |
+| **`authkey.dev` leaks both tokens (dev mode)** | `dev_authfile.rs`; written when `AGENTMUX_DEV=1` | Full API access with both `ipc_token` and `auth_key` | File is chmod 0600 / owner DACL. Dev-only. |
+| **`get_auth_key` IPC command returns srv auth key** | `ipc.rs` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
+| **`get_env` returns any env var** | `platform.rs`; `ipc.rs` | Renderer can extract `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`, etc. from the host process environment. Requires `ipc_token`. | No allowlist or blocklist enforced |
+| **`/agentmux/browser/eval` runs arbitrary JS** | `routes.rs` | Any caller with `ipc_token` can execute JS in any open browser pane (including cross-origin pages). | Auth: `ipc_token` required. No script length or content restriction. |
+| **OSC 16162 `E` injects env keys into block meta** | `termosc.ts` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs`. | No key allowlist. No value validation. |
+| **OSC 16162 `X` reconfigures srv poller** | `termosc.ts` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
+| **`CorsLayer::permissive()` on host IPC server** | `ipc.rs` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs`); host has not. |
 | **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `crates/srv/src/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
-| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs:1070-1080` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
-| **WS authkey in query string** | `crates/srv/src/server/auth.rs:80-90` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
-| **`AGENTMUX_AGENT_COLOR` no value validation** | `shell.rs:365-375`; `termosc.ts:266-271` | Shell profile can inject arbitrary CSS color value into block meta → UI rendering with unvalidated color value. Root cause of Win11 focus-border regression. | No validation added as of 0.44.1. |
+| **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
+| **WS authkey in query string** | `crates/srv/src/server/auth.rs` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
 
 ---
 

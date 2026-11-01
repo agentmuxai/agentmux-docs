@@ -42,7 +42,7 @@ Identity is **not a widget-bar entry** and an agent pane has no accounts tab. Tw
 
 An account row's right-click menu has **Copy account ID**, **Fail over to this account** (see [below](#when-an-agent-hits-its-usage-limit)) and, after a separator, **Delete account…**. There is no menu item that binds an account to an agent: you change an agent's account from the agent.
 
-The view registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths, but nothing in the app opens that view.
+The view registration (`view: "identity"`, the pane tab `identityPaneTab`) exists for `pane.open` RPC and right-click menu paths, but nothing in the app opens that view.
 
 ## Changing an agent's account
 

@@ -1,6 +1,6 @@
 ---
 title: Clipboard & export
-description: How copy/paste, save-to-file, and open-in-editor are wired across panes in AgentMux — the CEF clipboard bridge, the SelectionProvider contract, and where the surfaces (keyboard, context menu, action bar) plug in.
+description: How copy/paste, save-to-file, and open-in-editor are wired across panes in AgentMux — the CEF clipboard bridge, and where the surfaces (keyboard, context menu, action bar) plug in.
 ---
 
 AgentMux routes all clipboard interaction through **one** path: a thin frontend wrapper that calls into the host process via CEF IPC. CEF's Chromium blocks `navigator.clipboard.readText()` without a Permissions-Policy header, and `writeText()` works today but is fragile — the wrapper exists so every pane in the app behaves the same way regardless.
@@ -27,7 +27,7 @@ Errors propagate: `writeText` and `readText` reject when the underlying CEF IPC 
 
 ### Rule: never call `navigator.clipboard.*` directly
 
-The audit on 2026-05-18 found exactly one direct call (the OAuth URL copy button in `PreLaunchAuthPanel.tsx`) — that's been routed through the wrapper. New code must follow suit. If you need clipboard from a pane, the wrapper is your only API.
+An audit on 2026-05-18 found one direct call, in a sign-in panel that has since been removed, and routed it through the wrapper. New code must follow suit. If you need clipboard from a pane, the wrapper is your only API.
 
 ## Surfaces: keyboard, context menu, action bar
 
@@ -41,39 +41,9 @@ A given copy action shows up in three places (one user-visible command, three di
 
 The intent of putting one command in three places: discoverability without re-implementing the action.
 
-## The SelectionProvider contract
+## What is selectable
 
-A pane that has selectable content tells the global commands what's selectable. Define a provider:
-
-```ts
-interface SelectionProvider {
-    /** Best-effort current selection. Empty string if nothing selected. */
-    getSelection(): string;
-    /** Full content of the view (used by Copy All / Save / Open). */
-    getAll(): string;
-    /** Optional filename label — "terminal", "agent-log", "install-output". */
-    exportLabel?(): string;
-}
-```
-
-Register it on mount, unregister on unmount:
-
-```ts
-import { registerSelectionProvider } from "@/util/selection-registry";
-
-onMount(() => {
-    const dispose = registerSelectionProvider({
-        getSelection: () => terminal.getSelection(),
-        getAll: () => serializeBuffer(terminal),
-        exportLabel: () => `install-${agent.id}`,
-    });
-    onCleanup(dispose);
-});
-```
-
-The provider is **activated when the pane has DOM focus**. Multiple panes can be mounted; only the focused one's provider is queried by global commands.
-
-> **As of 2026-05-18 the SelectionProvider registry ships in Phase β.** Phase α (the install-modal fix) wires clipboard inline. See [`SPEC_UNIFIED_CLIPBOARD_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_CLIPBOARD_2026_05_18.md) for the implementation roadmap.
+There is no shared selection registry. The unified clipboard spec (`SPEC_UNIFIED_CLIPBOARD_2026_05_18.md`) proposed a `SelectionProvider` that each pane would register, but it was never built. Each pane wires its own copy actions: the terminal as described below, and the install log view (`frontend/app/element/install/LogView.tsx`) with its own **Copy All** menu item.
 
 ## xterm.js terminals
 
@@ -102,7 +72,7 @@ Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
 ## Adding clipboard to a new pane
 
 1. Import the wrapper: `import { writeText } from "@/util/clipboard"`.
-2. If the pane has selectable content, implement and register a `SelectionProvider` (once Phase β lands).
+2. If the pane has selectable content, wire its copy actions in the pane itself, as the terminal and the install log view do.
 3. For xterm-based panes, wire all three xterm hooks (selection-change, key-handler, container context menu) as above.
 4. Add Copy / Copy All to the pane's right-click menu via `ContextMenuModel.showContextMenu`.
 5. **Do not** call `navigator.clipboard.*` directly.
