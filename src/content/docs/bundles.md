@@ -40,7 +40,7 @@ You pick them in these places, all with the same control: each picked bundle has
 | Where | When it's saved |
 |---|---|
 | The new-agent panel's **Bundles** field | When you click **Create and start**. It starts empty. |
-| **Bundles…** in the agent's **My Agents** row menu, or in its pane's right-click menu | On each change. |
+| **Bundles…** in the agent's **My Agents** panel, or in its pane's right-click menu | On each change. |
 
 **At launch,** in list order:
 
@@ -70,7 +70,7 @@ Bundles are managed **app-wide only**:
 
 ![Editing a bundle: name, description, the provider it's suggested for, instructions, and instructions for Codex that replace the bundle's own](../../assets/screenshots/memory/memory-bundle-edit.png)
 
-**Bundles…** (in an agent's **My Agents** row menu, or in the right-click menu of its pane) picks which bundles that agent starts with, and links to **Memory → Bundles**, but doesn't edit bundles itself.
+**Bundles…** (in an agent's **My Agents** panel, or in the right-click menu of its pane) picks which bundles that agent starts with, and links to **Memory → Bundles**, but doesn't edit bundles itself.
 
 :::caution[Bundles are not Personal Memory]
 The **Global** and **Personal** sections of [Memory](/memory/), and the **Personal memory** item in an agent pane's right-click menu, do **not** open the Bundle editor described on this page. They open **Global Memory** and **Personal Memory**, different primitives covered on the [Memory](/memory/#personal) page.

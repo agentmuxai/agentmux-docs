@@ -57,7 +57,7 @@ These views exist in the codebase but are **not** opened directly from the widge
 |---|---|
 | **Identity** | App-wide: **Connectors** → **Accounts**. An agent's own account is the login email in its composer strip (see [Composer strip](#composer-strip)). View registration (`view: "identity"`) and `IdentityPaneViewModel` exist for `pane.open` RPC and right-click menu paths. |
 | **Global and Personal Memory** | App-wide: **Memory** → **Global** and **Personal**. For one agent, right-click its pane and choose **Personal memory** to open Memory → Personal on that agent. These are notes, not the Bundle editor. |
-| **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents row menu or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
+| **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
 | **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
 | **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx:16`) — see [Media](#media). |
@@ -357,7 +357,7 @@ The agent pane is the first-class resident unit of AgentMux. Each agent gets a s
 - **File diffs** — Visual diff overlay when the agent writes files
 - **Auto-scroll** — Follows output, with manual scroll override
 - **[Voice input](#voice-input)** — dictate prompts into the composer via the mic button in the pane header
-- **Enter animation** — New messages animate into view as they stream in; set `window:reducedmotion = true` to disable.
+- **Enter animation** — New messages animate into view as they stream in.
 - **Disconnected banner** — if the WebSocket tore down mid-turn, a banner appears at the top of the pane with a single action to reconnect. Dismissing it lands you in an idle state with the partial turn preserved.
 
 ![An agent pane mid-turn: a subagent's result, a file read, the reply streaming in, and the working timer](../../assets/screenshots/agent/agent-working.png)
@@ -481,9 +481,9 @@ The agent pane has no drawer of its own. What belongs to one agent is reached fr
 
 | What | Where |
 |---|---|
-| **Seat** (role, lead and area, and **Import roster…**) | **Seat…**, from the row menu or the pane's right-click menu. See [Seats](/first-agent/#seats). |
+| **Seat** (role, lead and area, and **Import roster…**) | **Seat…**, from the My Agents panel or the pane's right-click menu. See [Seats](/first-agent/#seats). |
 | **Bundles** the agent starts with, in order, its own bundle first | **Bundles…**, from either menu; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
-| **Environment** variables it starts with | **Environment…** in the row menu. See [Environment variables](/first-agent/#environment-variables). |
+| **Environment** variables it starts with | **Environment…** in the My Agents panel. See [Environment variables](/first-agent/#environment-variables). |
 | **Personal Memory** | **Personal memory** in the pane's right-click menu opens [Memory → Personal](/memory/#personal) on this agent. There you can browse its files, see history and diffs, revert, and add a **New file** or **Create MEMORY.md**. |
 | **Account** | The login email in the composer strip (see [Composer strip](#composer-strip)). Which agents use an account is in [Connectors → Accounts](/connectors/#accounts). |
 | **MCP servers** and **Skills** | Each server's page in [Connectors → MCP servers](/connectors/#mcp-servers) and each skill's page in [Memory → Skills](/memory/#skills) list the agents it is bound to, each with **Unbind**, and bind another with **Bind to agent**. |

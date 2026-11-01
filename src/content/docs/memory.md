@@ -190,14 +190,14 @@ The app-wide view of all bundles. A bundle packages instructions, MCP servers, m
 
 ![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
-Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** row menu or its pane's right-click menu) picks which bundles that agent starts with; it doesn't create or edit them.
+Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** panel or its pane's right-click menu) picks which bundles that agent starts with; it doesn't create or edit them.
 
 ## Per agent
 
 Memory is app-wide, and each of its sections has a way in for one agent:
 
 - **Personal Memory**: right-click an agent's pane and choose **Personal memory**. Memory opens on **Personal** with that agent selected.
-- **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** row menu or its pane's right-click menu, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
+- **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** panel or its pane's right-click menu, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
 
 ## Portable bundles (beta spec)
 
