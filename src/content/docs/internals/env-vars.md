@@ -287,16 +287,31 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 
 ---
 
-### AGENTMUX_HOME_OVERRIDE (test-only)
+### AGENTMUX_HOME_OVERRIDE
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Test harness only |
+| **Who sets it** | The test harness, and `task dev` (to its own home, `<clone>/.dev-home/<vite port>`, unless `AGENTMUX_DEV_USE_REAL_HOME=1`) |
 | **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:721`, `crates/srv/src/registry/paths.rs:144` |
-| **Purpose** | Replaces `~/.agentmux` root with a temp directory so tests don't touch the real user data |
+| **Purpose** | Replaces `~/.agentmux` root with another folder so tests and dev builds don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
 variable can redirect the entire AgentMux state tree to an arbitrary path.
+
+---
+
+### AGENTMUX_DEV_USE_REAL_HOME (`task dev` only)
+
+| Attribute | Value |
+|-----------|-------|
+| **Who sets it** | A developer, before `task dev` |
+| **Who reads it** | `task dev` (`scripts/dev-home.mjs`) |
+| **Example** | `1` |
+
+`1` makes `task dev` run on the real `~/.agentmux` instead of a home of its
+own, and the start-up banner says `REAL`. A dev build on the real home refuses
+to start when a pending migration would move the shared stores ahead of the
+installed build. See [Which home `task dev` uses](/multi-instance/#which-home-task-dev-uses).
 
 ---
 
@@ -369,6 +384,24 @@ when running `task dev` from two clones simultaneously.
 Allows forcing dev mode for a specific branch without matching the
 exe-path heuristics. Value is sanitized (path traversal stripped). If the
 sanitized value is empty, mode falls through to `Installed`.
+
+---
+
+### AGENTMUX_BUILD_CACHE_CLEAN
+
+| Attribute | Value |
+|-----------|-------|
+| **Who sets it** | You, before AgentMux starts |
+| **Who reads it** | srv's build cache cleanup (`crates/srv/src/backend/build_cache_service.rs`) |
+| **Example** | `1`, `0` |
+
+`1`, `true` or `on` lets this srv clear idle agents' build folders; `0`,
+`false` or `off` never does. Unset: only an srv started by its launcher on
+the real home cleans (the installed release, or a local package), and only
+one at a time per computer. A `task dev` build, a headless srv, a binary run
+from a source tree and an instance with a home of its own don't. An instance
+with a home of its own never cleans, even with `1`. The settings that tune the
+cleanup are in [Build Cache Settings](/settings/#build-cache-settings).
 
 ---
 
@@ -696,11 +729,13 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX_INSTANCE_RUNTIME_DIR` | Paths | launcher | No |
 | `AGENTMUX_SHARED_DIR` | Paths | launcher | No |
 | `AGENTMUX_HOME` | Paths | launcher (Windows only) | No |
-| `AGENTMUX_HOME_OVERRIDE` | Paths (test) | test harness | No |
+| `AGENTMUX_HOME_OVERRIDE` | Paths (test, `task dev`) | test harness, `task dev` | No |
 | `AGENTMUX_RUNTIME_MODE` | Runtime | launcher | No |
 | `AGENTMUX_CHANNEL` | Runtime | launcher / user | No |
 | `AGENTMUX_CLONE_ID` | Runtime | launcher (dev mode) | No |
 | `AGENTMUX_DEV_BRANCH` | Runtime | CI / user (pre-launch) | No |
+| `AGENTMUX_DEV_USE_REAL_HOME` | Runtime (`task dev`) | user (pre-launch) | No |
+| `AGENTMUX_BUILD_CACHE_CLEAN` | Runtime | user (pre-launch) | No |
 | `AGENTMUX_VERSION` | Runtime | shell controller | Yes |
 | `AGENTMUX_BUILD_CHANNEL_DEFAULT` | Runtime (build-time) | build script | No |
 | `AGENTMUX_DEV` | Runtime (legacy) | deprecated | No |

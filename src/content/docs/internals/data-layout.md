@@ -102,7 +102,7 @@ A single tree at `~/.agentmux/`, independent of channel:
 | Path | Purpose | Owner |
 |---|---|---|
 | `~/.agentmux/shared/` | Account-wide state, independent of channel and version: the shared databases (`store.db`, `identity-store.db`, `agents/transcripts/filestore.db`), provider login folders (`shared/providers/<provider>/`, `shared/identities/<id>/<provider>/`), the global agent **definition** registry (`shared/agents/definitions/`), the global agent **instances** registry (`shared/agents/registry/` — cross-channel agents plus their `session_id` for resume), and pre-migration backups (`shared/backups/`). Browser cookies and spell-check dictionaries are *not* here; they live in the version-scoped `versions/<v>/cef-cache/`. The full list is in [Data structure](/internals/data-structure/#machine-wide). | srv |
-| `~/.agentmux/agents/<slug>/` | Agent working folders, shared by every channel | srv |
+| `~/.agentmux/agents/<slug>/` | Agent working folders, shared by every channel. AgentMux clears Rust build caches inside them ([Build Cache Settings](/settings/#build-cache-settings)) | srv |
 | `~/.agentmux/widgets/<id>/` | Installed widgets | srv |
 | `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own log; rotates at 50 MB, keeping 3 old files | Launcher |
 | `~/.agentmux/logs/migration-error.log` | The last failed `agentmux-srv migrate` run | srv |
