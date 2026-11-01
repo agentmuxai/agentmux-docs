@@ -194,7 +194,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1342-1394`):
+**Watchdog constants** (`types.ts`, from `STUCK_THRESHOLD_MS`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -419,7 +419,7 @@ Tabs no longer get a color automatically at creation; a user picks one from the 
 | Pink | `#c02b75` |
 | Rose | `#c42742` |
 
-Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:736`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
+Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
 ### 4.6 The 2026-06-12 Border Fix
 
