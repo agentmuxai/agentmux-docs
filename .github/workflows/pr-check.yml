@@ -44,7 +44,7 @@ jobs:
         with:
           repository: agentmuxai/agentmux
           ref: d3c71463be7886d6423a82fd450ff008cf2d87e8
-          path: ${{ runner.temp }}/agentmux-scripts
+          path: .ci-agentmux-scripts
           sparse-checkout: scripts
 
       - name: Docs reference check (paths, symbols, line citations, tables and facts against the pinned code)
@@ -54,7 +54,7 @@ jobs:
         # and run scripts/check-doc-references.mjs with the same arguments (the header of that file
         # describes each one).
         run: >
-          node "${{ runner.temp }}/agentmux-scripts/scripts/check-doc-references.mjs"
+          node .ci-agentmux-scripts/scripts/check-doc-references.mjs
           --docs src/content/docs --code src/agentmux --facts --any-symbol
           --allow scripts/doc-references.allow --deny scripts/doc-references.deny
 
