@@ -292,7 +292,7 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Test harness only |
-| **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:699`, `crates/srv/src/registry/paths.rs:144` |
+| **Who reads it** | `data_paths.rs:884`, `crates/srv/src/bootstrap/stores.rs:721`, `crates/srv/src/registry/paths.rs:144` |
 | **Purpose** | Replaces `~/.agentmux` root with a temp directory so tests don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
@@ -333,7 +333,7 @@ pane's environment unless you know exactly what you are doing.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs:314`) from channel resolution; also a user override for `Installed`/`Portable` modes |
-| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:742` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
+| **Who reads it** | `crates/srv/src/bootstrap/stores.rs:764` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
 | **Example** | `stable`, `beta`, `local-main`, `experiment` |
 | **Constraints** | Max 64 chars; cannot be `shared`, `snapshots`, `dev`, `versions`, `channels`, `runtime`; `default` maps to `stable` |
 
@@ -421,7 +421,7 @@ Child processes inside panes also see some of them (LOCAL_URL, BLOCKID).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv after binding its HTTP listener (`crates/srv/src/bootstrap/network.rs:102`): `std::env::set_var("AGENTMUX_LOCAL_URL", &local_web_url)` |
-| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:100`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
+| **Who reads it** | Shell controller propagates it into PTY children (`shell.rs`); `agentmux-bashwrap` reads it for WPS publish authentication (`crates/bashwrap/src/mps_client.rs:105`); jekt registry writer uses it for cross-instance registration (`shell.rs`) |
 | **Example** | `http://127.0.0.1:49312` |
 | **Lifetime** | Set once per srv startup; changes only when srv restarts |
 
@@ -440,7 +440,7 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher generates a UUID v4 per run (`srv_spawner.rs:457`); sets it on both srv and host |
-| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:574`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:101` for WPS publish |
+| **Who reads it** | srv `config.rs:136` reads and immediately removes it from the process env (security hardening, PR #801); websocket handler re-injects it into agent process spawns (`crates/srv/src/server/agent_handlers/input.rs:574`) for streaming bash auth; `crates/bashwrap/src/mps_client.rs:106` for WPS publish |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv actively removes this from its own process environment
