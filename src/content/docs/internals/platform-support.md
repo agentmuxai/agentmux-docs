@@ -24,7 +24,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Native splash screen | ✅ ships | ✅ ships | ✅ ships (X11 window, centered under XWayland too; Wayland fallback when there is no X display) |
 | Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
 | Sidecar minidumps | ✅ crash monitor → `C:\CrashDumps\agentmuxsrv\` | ❌ uses macOS crash reporter (`~/Library/Logs/DiagnosticReports/`) | ❌ uses systemd-coredump or apport |
-| Portable distribution | ✅ `.7z` (`task package`) | ✅ DMG, notarized (v0.42.x+) | ✅ AppImage (`task package:linux`, v0.42.x+); also `.deb`, `.rpm` and `.tar.gz` |
+| Portable distribution | ✅ `.7z` (`task package`) | ✅ DMG, notarized (v0.42.x+) | ✅ AppImage (`task package:linux`, v0.42.x+); also `.deb`, `.rpm` and `.tar.xz` |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |
 | Version isolation (per-version single-instance domain + version-scoped runtime dirs) | ✅ v0.41.1+ | ✅ v0.42.x+ | ✅ v0.42.x+ |
 

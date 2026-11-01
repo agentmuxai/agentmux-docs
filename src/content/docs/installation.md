@@ -14,18 +14,18 @@ AgentMux bundles its own Chromium runtime (CEF), so it doesn't use a system brow
 
 ## Downloads
 
-Release files carry the version in their name. The sizes below are for v0.59.24 and change a little from release to release.
+Release files carry the version in their name. The sizes below are for v0.60.10 and change a little from release to release.
 
 | Platform | File | Download size |
 |---|---|---|
-| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 147.4 MB |
-| Windows | `agentmux-<version>-x64-portable.7z` (portable) | 125.3 MB |
-| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 207.3 MB |
-| macOS | `AgentMux_<version>_arm64.dmg` | 218.9 MB |
-| Linux | `AgentMux_<version>_amd64.AppImage` | 177.1 MB |
-| Linux | `AgentMux_<version>_amd64.deb` | 191.3 MB |
-| Linux | `AgentMux-<version>-1.x86_64.rpm` | 191.2 MB |
-| Linux | `AgentMux_<version>_amd64-portable.tar.gz` | 192.0 MB |
+| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 154.7 MB |
+| Windows | `agentmux-<version>-x64-portable.7z` (portable) | 132.3 MB |
+| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 218.3 MB |
+| macOS | `AgentMux_<version>_arm64.dmg` | 229.2 MB |
+| Linux | `AgentMux_<version>_amd64.AppImage` | 186.8 MB |
+| Linux | `AgentMux_<version>_amd64.deb` | 144.4 MB |
+| Linux | `AgentMux-<version>-1.x86_64.rpm` | 144.3 MB |
+| Linux | `AgentMux_<version>_amd64-portable.tar.xz` | 144.6 MB |
 
 ## Windows
 
@@ -33,7 +33,7 @@ Windows 10 or 11, x64.
 
 ### Microsoft Store
 
-Install AgentMux from its [Microsoft Store listing](https://apps.microsoft.com/detail/9p9qcxnncrk3). The Store keeps it updated. Store submissions are uploaded by hand, so the Store version can trail the newest release on GitHub for a while.
+Install AgentMux from its [Microsoft Store listing](https://apps.microsoft.com/detail/9p9qcxnncrk3). The Store keeps it updated. The Store version can trail the newest release on GitHub for a while.
 
 ### Moving off the Microsoft Store build
 
@@ -104,7 +104,7 @@ Mounting an AppImage needs FUSE. If your system has no FUSE, extract it and run 
 squashfs-root/AppRun
 ```
 
-Or use the `.deb`, `.rpm` or `.tar.gz` package, none of which need FUSE.
+Or use the `.deb`, `.rpm` or `.tar.xz` package, none of which need FUSE.
 
 ### .deb (Debian, Ubuntu)
 
@@ -124,10 +124,10 @@ agentmux
 
 The install layout is the same as the `.deb`.
 
-### Portable (.tar.gz)
+### Portable (.tar.xz)
 
 ```bash
-tar -xzf AgentMux_*_amd64-portable.tar.gz
+tar -xJf AgentMux_*_amd64-portable.tar.xz
 ./AgentMux/agentmux.sh
 ```
 
@@ -169,7 +169,7 @@ The **hamburger menu (≡)** has New Tab, New Window, Theme, Opacity, Workspaces
 
 ![The hamburger menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
 
-Agents need their CLI tools, and most of those need Node.js and npm. The Toolchain pane (the widget bar's **more** → **Toolchain**, or **Open Toolchain** in the command palette) shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
+Agents need their CLI tools, and most of those need Node.js and npm. The Toolchain pane (the widget bar's **more** → **Toolchain**, or **Open Toolchain** in the command palette) shows what AgentMux can find: Node.js, npm, Git, Python, and the optional Docker and uv, plus every agent CLI, each with its version, path and status. For a missing Git, Node.js, npm or Python it offers **or install it now**, which installs through winget on Windows or Homebrew on macOS (if you have them), or through your distribution's package manager on Linux (for example apt-get, dnf, pacman or zypper, elevated through `pkexec`). Before anything runs, AgentMux opens an **Install** window of its own that shows the exact command, and says when it will ask for your permission or password. Nothing is installed until you choose **Install**; with no answer, or if you choose **Cancel**, nothing runs. An agent can't answer for you. The same option appears in the prompt AgentMux shows when you pick an agent whose required tools are missing.
 
 A **Local models** section, between the core tools and the agent CLIs, looks for tools for running models on your own machine: Ollama, llama.cpp, LM Studio and llmfit. Each row shows the version and path it found, or "Not installed (optional)", with an install command to copy and a link. There is no one-click install for these (`frontend/app/store/toolchain-catalog.ts`, `LOCAL_MODEL_TOOLS`).
 
@@ -199,7 +199,22 @@ On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and
 
 ## Updating
 
-Apart from the Microsoft Store build, AgentMux doesn't update itself. To update, download the new release and install or run it in place of the old one. Quit the old version first: close its windows, or, if you turned on **Keep running after all windows are closed** or it was started at login, use **Quit AgentMux** in its tray icon's menu (see [System tray](#system-tray)). Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
+AgentMux never checks for updates on its own. To update, click the version in the status bar to open the instance panel, then choose **Check for update**. When a release is out, **Download** fetches the file for your install and checks it against the release's signed manifest (see [Update model](/security/update-model/#signed-releases)). **Upgrade & restart** then waits for your agents to finish their turns, installs it and starts AgentMux again. Your tabs come back and your agents resume. See [Window → Maintenance and updating](/window/#maintenance-and-updating) for the buttons and what each one does.
+
+AgentMux can install the update itself for:
+
+- the Windows installer and portable builds;
+- the AppImage and the Linux portable `.tar.xz`;
+- a `.deb` or `.rpm`, which asks for your password through your desktop's own prompt;
+- the macOS app, when it sits in a folder you can write to (not on the mounted `.dmg`).
+
+Any other install opens the release page instead, and you install it yourself. If a `.deb` or `.rpm` upgrade doesn't finish, the panel says why and the old version starts again. After one that does finish, if the new version can't be kept running, AgentMux offers to go back to the version before it. The offer lasts 7 days; it asks for your password and installs the previous release.
+
+The Microsoft Store build shows **Update in the Store** instead, which asks the Store to download and install the update. When it can't, it opens the Store page.
+
+You can still download a release and install it by hand. Quit the old version first: close its windows, or, if you turned on **Keep running after all windows are closed** or it was started at login, use **Quit AgentMux** in its tray icon's menu (see [System tray](#system-tray)). Your settings and agents carry over, because every release build uses the same `stable` channel. See [Update model](/security/update-model/).
+
+If AgentMux's background service stops unexpectedly, AgentMux starts it again and reopens your windows. If it keeps stopping (more than 3 times within 2 minutes), AgentMux gives up and closes.
 
 ## Next Steps
 

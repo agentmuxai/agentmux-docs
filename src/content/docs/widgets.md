@@ -24,7 +24,7 @@ Installing a widget copies it in; it doesn't run yet. AgentMux first shows you w
 
 It runs once you approve it, and only the version you approved. If any of its files change later (an update, an edit), it stops running and asks you again, showing the new version.
 
-Only you can approve a widget, in AgentMux's own window. An agent can install one, but can't approve it; neither can any program that only talks to AgentMux's server.
+You approve a widget you install yourself, in AgentMux's own window. When one of your agents installs a widget it built, the request goes to the super agent, and you see a banner with a 30 second countdown that names the widget, its publisher and every permission; the widget is approved when the countdown ends, unless you press **Don't install** (see [When an agent builds one for you](#when-an-agent-builds-one-for-you)). You can also approve it or turn it off in **Settings → Widgets** at any time. No program that only talks to AgentMux's server can approve a widget by itself.
 
 ## Who made it: signed widgets
 
@@ -50,6 +50,7 @@ Most widgets are **sandboxed**. A sandboxed widget is a web page running in an i
 | `net:<origin>` | Connect to that address, for example `https://api.github.com`, and nothing else |
 | `files` | Open files you pick, and save files where you choose |
 | `clipboard:write` | Copy text to your clipboard |
+| `links:open` | Open web pages in a browser pane next to it |
 | `panes` | Open other kinds of panes |
 | `agents:read` | See your agents' names and whether they're working |
 | `tasks:read` | See the Kanban's tasks: their titles, who is on them and where they stand |
@@ -79,12 +80,16 @@ An [agent bundle](/abf/#widgets-in-a-bundle) can carry the sandboxed widgets its
 
 ## When an agent builds one for you
 
-Ask an agent for a widget ("make me a pane that shows my open pull requests") and it can build one in its workspace and install it with its `Widget` tool (action `install`). You then see a prompt naming the agent and showing exactly what the widget asks for:
+Ask an agent for a widget ("make me a pane that shows my open pull requests") and it can build one in its workspace and install it with its `Widget` tool (action `install`). The request goes to the [super agent](/security/trust-model/#sensitive-operations), which can look at the widget's files first. If it approves, a banner appears in the agent pane: "*agent* asked: install a widget (widget …, publisher …, permissions …). Approved by *name*. Starts in 30 s." The publisher part says whether the widget is signed and, if it is signed by a different key than that publisher's earlier widgets, says so. A trusted widget shows "TRUSTED: full access to AgentMux" where the permissions would be. It has two buttons:
 
-- **Install** approves it, and the agent can open it next to its own pane.
-- **Don't install** leaves it in Settings → Widgets, not approved; the agent hears that you declined.
+- **Don't install** stops it. The widget stays in Settings → Widgets, not approved, and the agent is told you vetoed it.
+- **Install now** skips the wait.
 
-Each new version the agent installs asks you again.
+If you do nothing, the widget is approved and installed when the countdown ends, and the agent can open it next to its own pane. If the super agent denies the request, the widget stays in Settings → Widgets, not approved, and you can still approve it there yourself.
+
+If no super agent reviews the request, the banner says "No super agent reviewed this." and the countdown is 60 seconds. Each new version the agent installs asks again.
+
+An install that doesn't come from one of your agents, such as one from a program that isn't a verified agent, shows the approval prompt described above instead, with **Install** and **Don't install**.
 
 ## Manage your widgets
 

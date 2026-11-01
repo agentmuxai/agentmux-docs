@@ -71,7 +71,7 @@ These commands are registered in `agentmux-srv`: the MuxAPI handlers are split b
 
 | Command | Purpose |
 |---|---|
-| `pane.open` | Open a non-agent pane (editor / term / browser / sysinfo / help), docked or floating. Like `agent.open`, routes through the reducer/`CreateBlock` for saga consistency (PR #1681). This is what the `Pane` tool's `open` action calls. |
+| `pane.open` | Open a non-agent pane (editor / term / browser / sysinfo / help), docked or floating. Like `agent.open`, routes through the reducer/`CreateBlock` for saga consistency (PR #1681). This is what the `Pane` tool's `open` action calls. A call from a window must say which tab it is for: `origin_tab_id` (the tab the person acted in), `tab_id` or `split_reference_block_id`. One that names none is refused with `INVALID_ARG` instead of opening in the first workspace. |
 
 ### Blockfile pagination (`blockfile.rs` in `app_api/`)
 

@@ -64,10 +64,13 @@ Each pane is a view named `ext:<id>/<name>`, for example `ext:acme.pr-dashboard/
 | `net:<origin>` | Make HTTP requests to that origin: `net:https://api.github.com` allows exactly that origin; `net:https://*.example.com` allows its subdomains (never the bare domain, never a lone `*`) |
 | `files` | Open files the user picks, and save files where the user chooses |
 | `clipboard:write` | Copy text to the clipboard |
+| `links:open` | Open `http`/`https` links in a browser pane next to the widget (`am.ui.openUrl`) |
 | `panes` | Open views other than its own |
 | `agents:read` | List the user's agents and whether they're working |
 | `agents:send` | Send messages to the user's agents |
 | `tasks:read` | List the Kanban's tasks (below) |
+
+An AgentMux older than 0.60.1 refuses a manifest that lists `links:open`, and one that has it refuses `am.ui.openUrl` to a widget that doesn't list it.
 
 A **private or local address** (loopback, your network, link-local) is reachable only through a permission that names that address itself, port included: an IP address (`net:http://127.0.0.1:8188`) or `localhost` (`net:http://localhost:3000`). A public name that resolves to a private address is refused, and so is a wildcard.
 
@@ -108,7 +111,7 @@ Every method returns a promise. A refused call rejects with an `AgentMuxError` (
 | `am.ui.setHeaderActions(actions)` | | Up to 4 buttons in the pane's header, `{ id, icon, title }`; a click is the `action` event |
 | `am.ui.setContextMenu(items)` | | Up to 20 items in the pane's menu, `{ id, label, disabled? }` or `{ separator: true }`; a click is the `action` event |
 | `am.ui.toast(text, kind?)` | | A notification under the widget's name; `kind` is `info`, `success`, `warning` or `error` |
-| `am.ui.openUrl(url)` | | Opens an `http`/`https` link in a browser pane next to the widget |
+| `am.ui.openUrl(url)` | `links:open` | Opens an `http`/`https` link in a browser pane next to the widget |
 | `am.ui.setStatusItem(id, look?)` | | Changes how one of the widget's status bar items looks while this pane is open: `{ text, icon, tooltip, tone, hidden }`, where `tone` is `info`, `success`, `warning` or `error`. Fields left out show the `widget.json` look; no `look` puts it back. An id `widget.json` doesn't declare is `not_found` |
 | `am.theme.get()` | | The current theme |
 | `am.panes.open(view, meta?, split?)` | `panes`, except for the widget's own views | Opens a pane; `split` is `right` (default), `down` or `tab`. What `meta` may say depends on the view (below) |

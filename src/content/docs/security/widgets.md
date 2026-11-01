@@ -7,7 +7,7 @@ A widget is code someone else may have written, running in your AgentMux. This p
 
 ## The short version
 
-- **No widget runs until you approve it**, in AgentMux's own window, and only the exact version you approved. Any change to its files asks again.
+- **No widget runs until it is approved**, and only the exact version that was approved. You approve in AgentMux's own window; for a widget an agent installs, the super agent reviews it and you can veto it during a countdown. Any change to its files asks again.
 - **A sandboxed widget can't reach AgentMux, your files or the network** except through the widget API, and only for the permissions you approved. AgentMux checks every call against them twice: in the app and in the server.
 - **A trusted widget has full access**, by design, and its prompt says so in those words.
 
@@ -15,7 +15,8 @@ A widget is code someone else may have written, running in your AgentMux. This p
 
 - Installing a widget copies it in and does nothing else. It runs once you approve it.
 - The prompt lists its permissions in plain words, or, for a trusted widget, the full-access warning.
-- **Only AgentMux's own window can approve.** The approval reaches the server with a secret that only AgentMux's window process holds; panes and agents never see it. The server's auth key, which every terminal pane and agent holds, can install a widget but can't approve one. So an agent can ask, and you decide.
+- **Only AgentMux's own window can approve a widget or veto an agent's install.** The approval, and the veto of a countdown, reach the server with a secret that only AgentMux's window process holds; panes and agents never see it. The server's auth key, which every terminal pane and agent holds, can install a widget but can't approve one. So an agent can ask, the super agent reviews, and you can stop it before it happens.
+- **An agent's install is a sensitive request.** When a verified agent installs a widget, AgentMux files a [sensitive request](/security/trust-model/#sensitive-operations) naming the agent, the widget, its publisher and every permission, in full: a request with too many permissions to show whole is refused. If the super agent approves, a 30-second countdown starts, and AgentMux approves that exact version when it ends unless you veto it. With no super agent reviewing, the countdown is 60 seconds. The approval is for the version and signing key the request named: if the files or the signature change meanwhile, nothing is approved.
 - **An approval names exactly what you saw.** AgentMux hashes every file in the widget, and the approval is for that hash. Every file is hashed again each time it's served. An edited file is never served, whether or not AgentMux has noticed the change yet, and the widget asks for approval again.
 - **Each AgentMux installation on your computer asks for itself.** They share the widgets folder, but not approvals.
 
@@ -42,7 +43,8 @@ The prompt in **Settings → Widgets**:
 A sandboxed widget's page runs in a frame with an opaque origin, isolated from the AgentMux window around it:
 
 - It can't read AgentMux's page, storage or cookies, or any of the secrets the app holds.
-- It can't navigate AgentMux or open windows. If it navigates its own frame away from its page, AgentMux stops it.
+- It can't navigate AgentMux, open windows, or show `alert`, `confirm` or `prompt` dialogs, which would look like the app's own. If it navigates its own frame away from its page, AgentMux stops it.
+- To open a web page it calls `am.ui.openUrl`, which needs the `links:open` permission and opens an `http` or `https` link in a browser pane next to it.
 - It loads code only from its own approved files. A content security policy blocks scripts, styles and frames from anywhere else.
 - It can't make network requests at all from its page. Requests go through `net.fetch`, below.
 - Its files are served at an address that includes the approved version and a key only AgentMux knows, so another web page on your computer can't load them.
