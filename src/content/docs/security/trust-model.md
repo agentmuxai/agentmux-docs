@@ -99,15 +99,38 @@ A device on the LAN can't use this without an agent key this machine has pinned.
 
 ## Who each action is recorded as
 
-Every state-changing call on the RPC channel (the WebSocket the UI and agents use) leaves one line in the audit log, `GET /agentmux/reactive/audit` and the audit file: who made it, the command, the agent or pane it acted on, the identifier it acted on (an account id, a widget id, a path), and whether it was done or refused. Who made it comes from the connection, never from anything in the request:
+Every state-changing call, on the RPC channel (the WebSocket the UI and agents use) and over HTTP (`POST`, `PUT`, `PATCH` and `DELETE`), leaves one line in the audit log, `GET /agentmux/reactive/audit` and the audit file: who made it, the command, the agent or pane it acted on, the identifier it acted on (an account id, a widget id, a path), and whether it was done or refused. Who made it comes from the connection, never from anything in the request:
 
 - **An agent** is a connection registered as that agent with its token, recorded as `agent:<id>`.
 - **The operator** is a connection the AgentMux host has proved is its own window, recorded as `operator`.
 - **Anything else** is recorded as `unproven`. Holding the auth key is not enough to be recorded as the operator, and an agent registered on a connection is the agent.
+- **Over HTTP** the caller is the agent its token names, or `unproven`. An HTTP call is never recorded as the operator, because nothing on an HTTP request proves the window made it.
 
 The record names what was acted on, not what was sent: keys, tokens, message text and file contents are not in it. Reads and live terminal input are not recorded, and the window's own view state (layout, tabs, drafts) is recorded only when something other than the proven window changes it.
 
 What this is for: agents run as your OS user with a shell, so these checks stop misuse through AgentMux's own APIs and keep the record honest about who did what through them. They are not a barrier against a determined local process, which can act as you without going through AgentMux. A [container agent](#container-agents) is the boundary that holds.
+
+## Sensitive operations
+
+Some operations are too sweeping for one agent's say-so. An agent asks for them through the `Sensitive` tool, or through the tool that does the thing: `App` `upgrade`, `Widget` `install`, a `Desktop` grant, or an `App` `disk` cleanup. Four operations run this way today: an AgentMux upgrade, a widget install, control of a desktop app, and clearing idle agents' build folders. The other operations the `Sensitive` tool lists can't be run yet, so they are never approved. When your own message in a turn asks an agent to upgrade AgentMux, `App` `upgrade` doesn't need the request; you still confirm in AgentMux's own dialog.
+
+The request goes to the **super agent**, the one agent whose [seat](/first-agent/#seats) is **Super agent**. It can check the facts first, then approves or denies. If it approves, a banner appears in the agent panes: "*agent* asked: *what will happen*. Approved by *name*. Starts in 12 s." It has two buttons worded for the operation:
+
+| Operation | Stops it | Skips the wait | Countdown |
+|---|---|---|---|
+| Upgrade AgentMux | **Don't upgrade** | **Upgrade now** | 2 minutes |
+| Install a widget | **Don't install** | **Install now** | 30 seconds |
+| Let an agent control the desktop | **Don't allow** | **Allow now** | 30 seconds |
+| Clear idle agents' build folders | **Keep them** | **Clear now** | 30 seconds |
+
+If you do nothing, it happens when the countdown ends. A chime plays (the sound setting is `notify:sound:agent.shutdown.pending`) and an OS notification names what will happen and who asked.
+
+- **No super agent reviews it.** If no agent holds the seat or runs here, or the one that does hasn't answered within 2 minutes, the request goes ahead with a countdown twice as long (at most 2 minutes). The banner says "No super agent reviewed this." Your veto is then the only check.
+- **Only you can press the buttons.** The AgentMux window sends them with proof that it is the window; an agent can't, and neither can any other program holding the server's auth key.
+- **Each step is recorded.** Filing, approving, denying, cancelling and vetoing a request each leave a row in the [Audit](/audit/) pane.
+- **Closing or stopping other agents has its own window** and doesn't go through the super agent (see below).
+
+This is a check on the tools agents use; it doesn't move the trust boundary described above. The banner's wording is AgentMux's own for each operation, filled in with the request's facts, so a request can't dress itself up in its own words.
 
 ## What an agent can do to other panes and windows
 

@@ -20,7 +20,7 @@ AgentMux doesn't upload any of this. But your prompts and your agents' work do l
 
 - **No telemetry, analytics or usage pings.** The frontend's telemetry hooks have no backend: the server accepts `TelemetryUpdate` and discards it. The `telemetry:*` settings only control the local system-stats graph.
 - **No crash reporting.** Crash dumps stay on disk.
-- **No update or version check** for AgentMux itself. See [Update model](/security/update-model/).
+- **No update or version check on its own.** AgentMux contacts `github.com` for the latest release only when you click **Check for update** or an agent asks through the `App` tool. See [Update model](/security/update-model/).
 - **No license check.** AgentMux is open source under Apache 2.0.
 - **No Chromium background traffic.** The embedded Chromium is started with background networking, component updates, domain reliability reporting and field trials disabled (`crates/cef/src/app/mod.rs`).
 
@@ -82,6 +82,8 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 
 | Feature | Destination |
 |---|---|
+| Checking for an AgentMux update (**Check for update** in the instance panel, or an agent's `App` tool) | `github.com` (the releases page and API) |
+| Downloading an AgentMux update | `github.com` release downloads: the file and its signed manifest |
 | Installing an agent CLI | Your npm registry (`registry.npmjs.org` by default) |
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
@@ -109,7 +111,8 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 | `agent:continuity` (per agent pane) | On for Claude agents with a definition | Continuity-summary model calls |
 | Voice engine | Groq (inactive without a key) | Where audio is sent |
 | Messaging bridges | Off | Discord, Telegram, Slack, WhatsApp |
-| Crash reporting, update check | Not applicable: neither exists | — |
+| Crash reporting | Not applicable: it doesn't exist | — |
+| Update check | Never on its own | Only **Check for update** or an agent's `App` tool contacts `github.com` |
 
 ## Offline and air-gapped use
 

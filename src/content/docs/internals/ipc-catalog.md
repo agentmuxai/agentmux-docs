@@ -154,9 +154,9 @@ All commands dispatched through `route_command()` (`ipc.rs:190`).
 | `list_windows` | — | array | |
 | `list_window_instances` | — | array | |
 | `get_double_click_time` | — | number | |
-| `focus_window` | `{window_label}` | null | |
-| `close_window_by_label` | `{window_label}` | null | |
-| `main_window_focus` | `{window_label?}` | null | Reclaim keyboard focus from pane HWNDs |
+| `focus_window` | `{label}` | `{found, raised, restored, moved, foreground}` | Brings the window forward. A minimized window is restored first, and on Windows an off-screen one is moved onto a display. `foreground` is read back after the raise, so it is false when the OS refused. `found` is false when no window has that label. |
+| `close_window_by_label` | `{label}` | null | |
+| `main_window_focus` | `{window_label?}` | true | Reclaim keyboard focus from pane HWNDs |
 
 #### Cross-window Drag
 

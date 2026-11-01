@@ -132,6 +132,7 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | `api.anthropic.com/v1/models` | At each launch, when a Claude login token is found |
 | `muxbus.agentmux.ai`, `muxbus-ws.agentmux.ai` | Only after you sign in to MuxBus Cloud |
 | `registry.npmjs.org` (or your configured npm registry) | Installing an agent CLI; checking CLI versions in the Toolchain pane |
+| `github.com`, `api.github.com` | Only when you ask for an update check (**Check for update**, or an agent's `App` tool), and when you download a release |
 | `github.com` release downloads | Installing jq or ripgrep from the tool catalog; Crush's npm install script fetches its binary there |
 | `github.com` release downloads (goose), `x.ai` (Grok Build), `aider.chat` and `pypi.org` (Aider), `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com` (Muse Code), `antigravity.google` (Antigravity) | Made by the vendor's installer when you install one of these harnesses, not by AgentMux |
 | `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
@@ -141,7 +142,9 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | Groq, Hugging Face, Discord, Telegram, Slack, WhatsApp, OAuth providers, key-validation endpoints | Only when you configure or use those features |
 | LAN peers | Only with LAN discovery on |
 
-There is no telemetry endpoint, crash-report upload, update check or license check.
+There is no telemetry endpoint, crash-report upload or license check, and no update check unless you (or an agent) ask for one.
+
+The live connections to MuxBus Cloud, Slack (Socket Mode) and Discord (gateway) go through the HTTP proxy named by `HTTPS_PROXY` (then `ALL_PROXY`) when there is one, and honour `NO_PROXY`. AgentMux sends `CONNECT host:port` and runs TLS end to end with the real host, so the proxy only carries bytes. If a proxy is set and can't be used, the connection fails; it never goes direct. Only `http://` proxy addresses are supported.
 
 ## Firewall configuration
 

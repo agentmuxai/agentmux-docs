@@ -1,18 +1,19 @@
 ---
 title: "Update model"
-description: "AgentMux has no in-app updater. How releases are published and signed, how to update, and how agent CLIs and tools get installed."
+description: "How AgentMux updates only when you ask, how releases are published and signed, and how agent CLIs and tools get installed."
 ---
 
-AgentMux has no auto-updater and never checks for a newer version of itself. This page covers how releases reach you, what is and isn't signed on each platform, and how agent CLIs and helper tools are installed, which is a separate flow.
+AgentMux never checks for a newer version of itself on its own. This page covers how an update happens when you ask for one, how releases reach you, what is and isn't signed on each platform, and how agent CLIs and helper tools are installed, which is a separate flow.
 
-## No in-app updates
+## Updates happen only when you ask
 
-- The app contains no update client and makes no version-check request.
-- The status bar contains update UI, but nothing in the app ever reports an update, so it never appears. The underlying `install_update` command is a stub that does nothing (`crates/cef/src/commands/stubs.rs`).
-- **Microsoft Store** installs are updated by the Store.
-- For **every other install** you download and install new releases yourself.
+- **Nothing checks at startup or on a timer.** A check is a request to GitHub for the latest release. It happens when you choose **Check for update** in the instance panel, or when an agent asks through the `App` tool (`version` or `upgrade`), at most every 30 seconds between them.
+- **You choose the download.** **Download** fetches the release file for your install from `github.com`, checks it (below) and unpacks it. **Upgrade & restart** installs it only when you choose it, once your agents have finished their turns. See [Window → Maintenance and updating](/window/#maintenance-and-updating).
+- **An agent can ask, not do.** `App` `upgrade` goes to the [super agent](/security/trust-model/#sensitive-operations) as a sensitive request, and you can veto its 2-minute countdown. The only release it can install is the one AgentMux found itself: an agent can't name a file or a URL.
+- **Which installs update themselves.** The Windows installer and portable builds, the AppImage, the Linux portable `.tar.xz`, a `.deb` or `.rpm` (through its install helper, which asks for your password through your desktop's own prompt) and a macOS app in a folder you can write to. Any other install opens the release page, and you install it yourself. A build run from source never upgrades.
+- **Microsoft Store** installs are updated by the Store. The panel's **Update in the Store** button asks the Store to do it.
 
-Consequences: nothing can push code to your machine through AgentMux, and nothing brings you security fixes automatically either. To hear about new releases, watch the GitHub releases feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
+Consequences: nothing can push code to your machine through AgentMux, and nothing brings you security fixes unless you ask. To hear about new releases, watch the GitHub releases feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
 
 ## How releases are published
 
@@ -22,7 +23,7 @@ Releases are built by the `release.yml` workflow in the AgentMux repository and 
 |---|---|---|
 | Windows | Installer (`AgentMux-<version>-x64-setup.exe`), portable `.7z`, MSIX | x64 only |
 | macOS | `AgentMux_<version>_arm64.dmg` | Apple Silicon only |
-| Linux | AppImage, `.deb`, `.rpm`, portable `.tar.gz` | x86_64 only |
+| Linux | AppImage, `.deb`, `.rpm`, portable `.tar.xz` | x86_64 only |
 
 The Windows installer is built with **Inno Setup** (`packaging/windows/agentmux.iss`). By default it installs for the current user, into `%LOCALAPPDATA%\Programs\AgentMux`, without an administrator prompt; its first dialog lets you install for all users instead. It adds a Start-menu shortcut and, if you tick the box, a desktop shortcut. It creates no firewall rules, services or scheduled tasks.
 
@@ -35,9 +36,17 @@ Start-at-login is a separate, opt-in setting in the app. On Windows it creates a
 | Windows installer and portable `.7z` | **No.** Neither the installer nor the executables are Authenticode-signed, so Windows SmartScreen may warn. |
 | Windows MSIX on GitHub Releases | **No**, so Windows won't install it directly. The Microsoft Store signs the copy it distributes. |
 | macOS DMG | **Yes**, with a Developer ID certificate and the hardened runtime. Notarization is attempted on every build. If Apple doesn't accept it, the build logs a warning and still ships a signed but un-notarized DMG. |
-| Linux AppImage, `.deb`, `.rpm`, `.tar.gz` | **No.** No GPG signatures, and no package repository. |
+| Linux AppImage, `.deb`, `.rpm`, `.tar.xz` | **No.** No GPG signatures, and no package repository. |
 
-The release workflow publishes **no checksum file**. For Windows and Linux, the only integrity guarantee is HTTPS from GitHub or agentmux.ai. On macOS you can check the signature and notarization yourself:
+## Signed releases
+
+The installers above are not signed on Windows and Linux, but the releases are. Each release from v0.60.4 publishes a signed manifest next to its files: `AgentMux-<version>-manifest.json` lists every file's name, size and SHA-256, `AgentMux-<version>-envelope.json` binds it to that release, and `AgentMux-<version>-envelope.json.sig` signs the envelope.
+
+- **AgentMux checks it before it downloads.** The app has the matching public key built in. It downloads an update only if the manifest verifies against that key and agrees with the file. The `.deb` and `.rpm` install helper makes the same check before it installs.
+- **It refuses with a message.** A release that wasn't signed ("v0.60.9 wasn't signed, so AgentMux won't download it itself. Get it from the release page."), a signature that doesn't match ("The signature on v0.60.9 doesn't match, so AgentMux won't download it. Don't install it; tell the AgentMux team."), a manifest that doesn't list the file for your install ("v0.60.9 has no file for this kind of install."), and a manifest it couldn't fetch.
+- **The file is also checked against the SHA-256 GitHub lists for it.**
+- **Releases before v0.60.4 have no manifest.** AgentMux still downloads those, on that checksum alone.
+- **A file you download yourself is not checked by AgentMux.** The manifest lists each file's SHA-256, so you can compare it with the file's. On macOS you can also check the signature and notarization:
 
 ```bash
 codesign --verify --deep --strict /Applications/AgentMux.app
@@ -121,13 +130,14 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 
 ## What we don't promise
 
-- **No automatic security updates.** A fix ships as a release; you install it on your own schedule.
+- **No automatic security updates.** A fix ships as a release; you ask for it, and install it on your own schedule.
 - **No staged rollouts** and **no telemetry-driven rollback.** Everyone who downloads a version gets the same files, and we learn about breakage only when you report it on GitHub Issues.
 
 ---
 
 **Source-of-truth references**:
-- `crates/cef/src/commands/stubs.rs` — `install_update` stub
+- `crates/srv/src/backend/update_check.rs`, `crates/srv/src/backend/update_download.rs`, `crates/srv/src/backend/update_install.rs` — checking, downloading and installing an update
+- `crates/common/src/update_manifest.rs`, `crates/srv/src/backend/update_signature.rs` — the signed manifest
 - `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
 - `packaging/windows/agentmux.iss` — Windows installer
 - `crates/launcher/src/autostart/mod.rs` — start-at-login
