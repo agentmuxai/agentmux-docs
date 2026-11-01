@@ -79,6 +79,7 @@ An agent row shows:
 | Chevron (▸ / ▾) | Expands or collapses the row. Shown only when the agent has child rows. |
 | Provider logo and name | The pane's agent name, or "Agent" if it has none |
 | Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one. Hover over it for the whole seat. |
+| **No pane** tag | Shown on an agent that is running with no pane, because closing its pane, tab or window parked it. Hover it for how to bring it back: open the agent from **My Agents**. My Agents marks its row the same way. See [Closing and shutting down](/closing-and-shutting-down/) |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
 | Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **question** while it waits for your answer, with a countdown when the question has a timeout; **idle** (green) otherwise. An agent that can't start a turn shows **Out of quota** (with the time the limit lifts, when the provider gave one) or **Signed out** in its place, so a resting agent and a stuck one don't look alike |

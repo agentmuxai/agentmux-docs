@@ -16,6 +16,8 @@ Two different things can happen to an agent, and AgentMux keeps them apart:
 
 With the default setting (`agents:always_available`, on), closing a pane, tab or window **parks** the agents in it: the process, the conversation, its claims and its crons carry on as before, with no pane to show them. Open the agent from **My Agents** to see it again, whether it is idle or in the middle of a turn.
 
+When a close parks agents, a notification says so for a few seconds: "KCont keeps running without a pane" (or "A and B keep running…", "A, B and 2 more keep running…"), with the line "Closing keeps it running. Shut down ends it." and an **Open** button that brings back the first agent. The others are in **My Agents**.
+
 Closing a **window** also keeps the window's place in the workspace. It is listed in the status bar's instance panel as a closed window, with how many of its agents keep running ("2 agents keep running without a window"). **Reopen** puts the window back as it was, and each agent is back in the tab it was in. This survives a restart of AgentMux. Terminals, browsers and other panes in the window do close.
 
 Closing doesn't ask about working agents while they keep running. These closes still stop agents, and still ask first when one is mid-turn:
