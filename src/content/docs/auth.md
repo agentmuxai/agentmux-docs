@@ -68,7 +68,7 @@ For Pi, Antigravity and the nine newest harnesses (Kilo Code CLI, Cline CLI, Ope
 
 When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, the pane shows **Not signed in** with **Log in**, **Login via terminal**, and **Connectors → Accounts**. When an existing account for the provider can be used instead, the last action becomes **Use &lt;account&gt;** (one candidate) or **Use account…** (several). After a turn has been rejected for auth, **Log in** reads **Login Again**. See [First Agent Setup](/first-agent/#sign-in).
 
-![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
+![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Use dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
 
 **Log in** goes through `frontend/app/view/agent/flows/run-provider-login.ts` (`runProviderLogin`):
 

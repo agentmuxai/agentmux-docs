@@ -105,7 +105,7 @@ Clicking a card opens a panel under it, pushing the cards below it down; click t
 
 There's no account field. The agent takes the provider's first account from [Connectors → Accounts](/connectors/#accounts), and you can change it later from the login email in the agent's composer strip (see [Changing an agent's account](/identity/#changing-an-agents-account)). If you have none, a provider that needs an account (see [Sign in](#sign-in)) asks you to sign in when the agent starts.
 
-![The panel under the Claude Code card: Name, Runtime, Model, Model Vendor / Custom Endpoint and Bundles, with Cancel and Create and start](../../assets/screenshots/agent/agent-create.png)
+![The panel under the Claude Code card, with Runtime set to Container: Name, Runtime, Container image, Model, Model Vendor / Custom Endpoint and Bundles, with Cancel and Create and start](../../assets/screenshots/agent/agent-create.png)
 
 Click **Create and start** (or press `Enter`). The agent is created and launched in the pane.
 
@@ -169,7 +169,7 @@ When an agent pane launches, AgentMux runs the CLI's own auth check. If the CLI 
 - **Login via terminal**: runs the login in a terminal window straight away.
 - **Connectors → Accounts**: opens the Connectors pane on its Accounts section. If you already have signed-in accounts for this provider, this action is replaced by **Use &lt;account&gt;** (one account) or **Use account…** (several), which attaches an existing account to this agent.
 
-![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Bind: dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
+![A new agent that isn't signed in: Not signed in, with Log in, Login via terminal, Use dev@acme.example, Copy error and Details](../../assets/screenshots/agent/agent-sign-in.png)
 
 For the five providers above, a successful login is saved as an account in Connectors → Accounts and bound to the agent. For the other providers, the login lands in AgentMux's shared folder for that provider. Aider is the exception: it has no login and no config-folder variable, so it reads model keys from the environment and keeps its own state in `~/.aider`. [Auth flows](/auth/) explains where credentials are kept.
 
