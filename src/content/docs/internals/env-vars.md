@@ -118,7 +118,7 @@ An `AGENTMUX_*` variable reaches a pane only if it is on the allow-list `PANE_EN
 
 `AGENTMUX` itself (the nesting sentinel) is always set to `1` and never stripped. On Linux, the AppImage's own `APPIMAGE`, `APPDIR`, `OWD` and `ARGV0`, and this version's folder in `LD_LIBRARY_PATH`, are removed too.
 
-An agent's turn gets more variables than a plain pane, which srv sets when it starts the turn: `AGENTMUX_AGENT_UID`, `AGENTMUX_AGENT_TOKEN` (the agent's own token), the former names and slugs after a rename, the git author and committer identity, and the GitHub-broker switches. `crates/srv/src/backend/agent_env_scope.rs` lists each with the reason it reaches a container agent or doesn't. The MCP server entry in an agent's `.mcp.json` also carries the signing keys for jekts (`AGENTMUX_JEKT_KEY` and the LAN and WAN keys). Treat those as secrets and never log them.
+An agent's turn gets more variables than a plain pane, which srv sets when it starts the turn: `AGENTMUX_AGENT_UID`, `AGENTMUX_AGENT_TOKEN` (the agent's own token), the former names and slugs after a rename, the git author and committer identity, and the GitHub-broker switches. `crates/srv/src/backend/agent_env_scope.rs` lists each with the reason it reaches a container agent or doesn't. The MCP server entry in an agent's `.mcp.json` (`crates/srv/src/backend/mcp_json_identity.rs`) also carries the signing keys for jekts (`AGENTMUX_JEKT_KEY` and the LAN and WAN keys). Treat those as secrets and never log them.
 
 ---
 
@@ -468,14 +468,14 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | The launcher generates a UUID v4 per run (`srv_spawner.rs`) and sets it on both srv and host |
-| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment (security hardening, PR #801). Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP`, and `crates/srv/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
+| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment (security hardening, PR #801). Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP` (`crates/srv/src/backend/pane_env.rs`), and `crates/srv/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv removes the key from its own environment so that children it spawns by other paths don't inherit the bearer token. A pane is different: the shell helpers (`muxsh`, `muxlog`, `muxopen` and the rest) need it, so a pane's process holds an authenticated handle to the instance that spawned it. Anything started from a pane can use it. The allow-list comments in `pane_env.rs` call this the largest remaining coupling.
 
 **SECURITY:** Do not log this value. It authenticates all WebSocket connections to the srv instance for the lifetime of that srv process.
 
-**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/container_routes.rs`). See [Trust model](/security/trust-model/#container-agents).
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/container_routes.rs`; the `amxc_` prefix is `TOKEN_PREFIX` in `crates/srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
 
 ---
 
@@ -683,7 +683,7 @@ preserve user configuration.
 |-----------|-------|
 | **Status** | Deprecated alias for `AGENTMUX_DATA_DIR` |
 | **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs` re-publishes it for backward compatibility if `config.data_home` is non-empty |
-| **Who reads it** | `base.rs` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs`; `sidecar.rs` (pre-unification path) |
+| **Who reads it** | `crates/srv/src/backend/base.rs` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs`; `sidecar.rs` (pre-unification path) |
 
 Use `AGENTMUX_DATA_DIR` in new code.
 

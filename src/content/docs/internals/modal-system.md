@@ -90,7 +90,7 @@ return (
 );
 ```
 
-Add new request variants in [`frontend/app/element/modal-layer.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-layer.ts) and a matching `case` in `renderRequest()` of [`ModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/ModalLayer.tsx).
+Add new request variants in [`frontend/app/element/modal-layer.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-layer.ts) and a matching `case` in `renderRequest()` of [`frontend/app/element/ModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/ModalLayer.tsx).
 
 The request kinds today are `browser-auth`, `agent-seat`, `agent-env`, `agent-container-limits`, `agent-bundles` and the three `bundle-import-*` steps. Examples: `AgentSeatPanel.tsx`, `AgentEnvPanel.tsx` and `AgentContainerLimitsPanel.tsx` in `frontend/app/view/agent/components/`, and `BrowserAuthModal.tsx` in `frontend/app/view/browser/components/`.
 

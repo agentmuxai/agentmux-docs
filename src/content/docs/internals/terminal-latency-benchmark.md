@@ -9,7 +9,7 @@ no UI automation. It measures the **wall-clock interval from sending a
 command into a PTY until its echo appears in the output stream**, then
 reports p50/p95/p99/max across configurable sample counts.
 
-The benchmark was written to validate the `writeInFlight` fix in PR #926
+The benchmark was written to validate the in-flight write fix in PR #926
 and to give agents a repeatable, CI-friendly instrument for catching future
 regressions in the terminal render path.
 
@@ -85,7 +85,7 @@ node tools/tests/bench-term-echo.mjs \
 2. **`eventsub`** — subscribes to `blockfile` events for that pane; PTY
    output arrives as `eventrecv` messages with a base64 payload.
 3. **Sentinel echo** — sends `echo __BENCH_N__\r` for each sample, records
-   send time, then waits for `__BENCH_N__` to appear in the PTY stream.
+   send time, then waits for the benchmark's end marker to appear in the PTY stream.
 4. **Cleanup** — closes the pane when done (or on Ctrl+C).
 
 The sentinel pattern avoids false matches from concurrent output or shell
@@ -96,10 +96,10 @@ prompts. The pane is isolated — the benchmark never touches existing tabs.
 | Scenario | How it's set up | What it reveals |
 |----------|----------------|-----------------|
 | **Quiet** | Shell at prompt, no concurrent output | Baseline echo path, scheduler cost |
-| **Busy** (`--busy`) | `seq 1 50000 > /dev/null &` running during measurement | RAF coalescing contention, `writeInFlight` interactions |
+| **Busy** (`--busy`) | `seq 1 50000 > /dev/null &` running during measurement | RAF coalescing contention, in-flight write interactions |
 
 The **busy scenario** is the one most sensitive to xterm.js batching bugs. The
-`writeInFlight` fix (PR #926) specifically targets this path: before the fix,
+in-flight write fix (PR #926) specifically targets this path: before the fix,
 keystroke echoes fell through to the RAF queue when a large PTY batch was
 in-flight, adding up to one frame (~16 ms) of jitter.
 
@@ -149,7 +149,7 @@ the meaningful one because it exercises the edge the fix addresses.
 - **RAF path**: coalesces multiple PTY chunks per frame — prevents cursor
   flicker from Ink redraws.
 
-Before PR #926, the fast path additionally required `!this.writeInFlight`.
+Before PR #926, the fast path additionally required that no write was in flight.
 When any large PTY batch was in-flight, echoes missed the fast path and
 waited up to one frame. xterm.js serialises `write()` calls internally, so
 the guard was unnecessary and has been removed.

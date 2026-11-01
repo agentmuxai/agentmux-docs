@@ -27,7 +27,7 @@ The **per-pane path** converges on `setBlockZoom(blockId, factor)` which writes 
 
 The **chrome path** (`chromeZoomIn/Out`) updates `chromeZoomAtom`, the `--zoomfactor` CSS variable and the window's `sessionStorage`; it does NOT write block meta. Don't look for chrome zoom under `term:zoom` — it lives in the atom, scoped to the window, and starts again at 100% when AgentMux restarts.
 
-A pane shows the level it just asked for before the backend has stored it. `setBlockZoom` holds the new level locally (`frontend/app/store/pane-zoom-local.ts`) until the `SetMeta` write settles, plus 1.5 s for its update to reach the cache, or drops it at once if the write is refused. Views read `paneZoom(blockId, meta)`, not `meta["term:zoom"]` directly, so a second wheel tick sent before the first came back steps from the right level.
+A pane shows the level it just asked for before the backend has stored it. `setBlockZoom` (`frontend/app/store/zoom.ts`) holds the new level locally (`frontend/app/store/pane-zoom-local.ts`) until the metadata write settles, plus 1.5 s for its update to reach the cache, or drops it at once if the write is refused. Views read `paneZoom(blockId, meta)`, not `meta["term:zoom"]` directly, so a second wheel tick sent before the first came back steps from the right level.
 
 ## How to make a view type zoomable
 
@@ -82,7 +82,7 @@ A zoom keeps the text under the pointer where it is, so the part you are reading
 
 ### Panes whose content zooms on its own
 
-Some panes have content that takes the pane's zoom while the pane's own controls follow chrome zoom. The Editor showing a PDF is one (`frontend/app/view/editor/viewers/content-zoom.ts`): its `term:zoom` is a multiple of the width that fits the pane, pdf.js draws the pages again at the new scale, the point under the pointer is held as a page and a fraction of it (`frontend/app/view/editor/viewers/pdf/pdf-zoom.ts`), and the tab strip, viewer bar and file tree are drawn at `chromeZoomAtom`. Its pages are `data-zoom-scope="content"`, and the rest of the Editor is `chrome`, so a wheel over the pages zooms the PDF and a wheel over the tabs zooms the app.
+Some panes have content that takes the pane's zoom while the pane's own controls follow chrome zoom. The Editor showing a PDF is one (`frontend/app/view/editor/viewers/content-zoom.ts`): its `term:zoom` is a multiple of the width that fits the pane, pdf.js draws the pages again at the new scale, the point under the pointer is held as a page and a fraction of it (`frontend/app/view/editor/viewers/pdf/pdf-zoom.ts`), and the tab strip, viewer bar and file tree are drawn at `chromeZoomAtom` (`frontend/app/view/editor/viewers/pdf/pdf-viewer.tsx`). Its pages are `data-zoom-scope="content"`, and the rest of the Editor is `chrome`, so a wheel over the pages zooms the PDF and a wheel over the tabs zooms the app.
 
 ## Persistence
 
