@@ -90,11 +90,12 @@ Click a card to open its drawer: the prompt, what you asked, the checklist, the 
 - **Needs you:** type **Your answer** and **Answer**.
 - **Review:** **Accept** (**Accept spec** on a spec), or **Send back** with what to fix. A task an agent accepted shows **Reopen**, which puts it back in Review.
 - **Failed:** **Try again**.
+- **A task an agent holds** (In progress, or waiting on your answer): **Take it back** returns it to the backlog and tells its agent to stop. Pick an agent under **Give it to…** and choose **Give** to hand it to that agent, or to **Anyone**. If its holder is out of quota or signed out, the drawer says "*name* can't work right now. Take the task back to let someone else do it." A task open to anyone is also let go on its own once its holder has been out of quota or signed out for 30 minutes and the limit lifts more than an hour from then (or at an unknown time).
 - **Open** the agent that holds it (the button names it), and **Cancel task** from any column but Merged and Released. Cancelling a spec also cancels the builds waiting on it, or puts them on hold if you clear the box.
 
 You can also drag a Backlog or Spec'd card onto another agent's backlog group to give it to that agent, or onto an agent's chip in the strip above the board to start it there.
 
-The toolbar above the board has a search box (title, `#number`, agent or repository), a repository filter when there is more than one, **Lanes** (one row of columns per repository, those with unfinished work first), **Untracked** (show or hide agents working without a task), **New task** and **Refresh**. Once an agent has a [seat](/first-agent/#seats), the toolbar also has a **Reports to** filter, and hovering over a card's owner shows the owner's seat. **New task** takes a title, an optional prompt, the tasks it starts after (`#12`), who it is for, and **On hold**.
+The toolbar above the board has a search box (title, `#number`, agent or repository), a repository filter when there is more than one, **Lanes** (one row of columns per repository, those with unfinished work first), **Untracked** (show or hide agents working without a task), **New task** and **Refresh**. Once an agent has a [seat](/first-agent/#seats), the toolbar also has a **Reports to** filter, and hovering over a card's owner shows the owner's seat. **New task** takes a title, an optional prompt, the tasks it starts after (`#12`), who it is for, **Spec first** and **On hold**. **Spec first** is on by default: it files a spec, and a build that starts after the spec is done. Untick it for a small fix that needs no spec.
 
 An untracked card has **Track**, which turns the agent's current work into a task it holds.
 

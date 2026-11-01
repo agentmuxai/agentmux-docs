@@ -28,7 +28,9 @@ The feed is the record of what happened between agents, newest first (`frontend/
 - the 30-second override window that an agent's `Stop` `agents` or its `Stop` `pane` opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user);
 - [remote operations](/lan-discovery/#remote-operations): `remote.request` rows for the requests an agent here sent to another machine, and `remote.<operation>` rows for the typed requests another machine's agent sent here, under `agent@machine` with how the request was proven and how it ended (done, refused with its reason, or failed);
 - agent registrations: a row when an agent **registered**, **unregistered**, or was **swept** (its pane was gone);
-- agent starts and ends: a row when an agent's session started (resumed, or new, with or without its record) and when it stopped, with why.
+- agent starts and ends: a row when an agent's session started (resumed, or new, with or without its record) and when it stopped, with why;
+- the state-changing calls agents and the app make through AgentMux's APIs, as **Actions** rows ("*agent* *command* on *target*", with "(failed)" when refused). Over HTTP the caller is the agent its token names, or `unproven`; an HTTP call is never recorded as you, because nothing on an HTTP request proves the window made it;
+- messages two agents send each other through the Claude CLI's own messaging (only when `agent:climessaging` is on), as a jekt row whose summary says "CLI message", with the sender named by AgentMux from the verified process id, not from the name the message gives.
 
 An entry never holds a message's text, only its length: the file keeps a hash and a size.
 
