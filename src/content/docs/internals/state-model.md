@@ -639,4 +639,4 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Discussion #707 ref | `docs/specs/SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md` |
 | Border fix plan | `docs/specs/pane-highlight-fix-plan.md` |
 | Focus border tab-switch bug | `docs/specs/focus-border-tab-switch-bug.md` |
-| Agent-pane-layout reducer (Phase 0) | `docs/specs/` |
+| Agent-pane-layout reducer (Phase 0) | `docs/specs/SPEC_AGENT_PANE_LAYOUT_REDUCER_2026_06_02.md` |
