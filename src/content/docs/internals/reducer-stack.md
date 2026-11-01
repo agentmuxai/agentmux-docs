@@ -24,7 +24,7 @@ There are three reducers in Rust, one per process, each a pure `update` function
 | | Launcher | Host (cef) | Sidecar (srv) |
 |---|---|---|---|
 | Source | `crates/launcher/src/reducer/` | `crates/cef/src/reducer/` | `crates/srv/src/reducer.rs` + `crates/srv/src/reducer/` |
-| Commands | the shared `agentmux_common::ipc::Command` | its own `HostCommand` (30 variants), host-internal, never on a pipe | the shared `agentmux_common::ipc::Command` |
+| Commands | the shared `agentmux_common::ipc::Command` | its own `HostCommand` (34 variants), host-internal, never on a pipe | the shared `agentmux_common::ipc::Command` |
 | Output | `Vec<Event>`, which the saga coordinator subscribes to | a `DispatchOutput` whose Win32/CEF effects the caller applies | `Vec<Event>`, which the persist subscriber writes to SQLite |
 
 The launcher and srv reducers share the wire types and the same discipline (total, deterministic, the state lock held only for the dispatch), but not their `State` or the commands each handles. A command one of them doesn't handle gets a non-fatal error event back rather than a silent success.

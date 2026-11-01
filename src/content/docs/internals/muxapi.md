@@ -21,7 +21,7 @@ When AgentMux launches an agent, the sidecar injects three environment variables
 | `AGENTMUX_BLOCKID` | `<pane UUID>` | The pane this agent lives in — used as self-context default |
 | `AGENTMUX_AGENT_ID` | `<agent name>` | Agent's registered name — used by `Message` `send` routing |
 
-`AGENTMUX_AUTH_KEY` is **not classified as a PTY env var** (see [Environment variables](/internals/env-vars/) — "Available In Pane? No"). The sidecar strips it from its own process environment at startup (security PR #801) and re-injects it per spawn only for internal tooling that requires it (`agentmux-bashwrap`, the streaming bash runner). `agentmux-mcp` receives it through its own spawn configuration, not from the agent's PTY environment.
+`AGENTMUX_AUTH_KEY` is on the pane allow-list (`PANE_ENV_KEEP`), so a terminal pane or agent process holds it (see [Environment variables](/internals/env-vars/) — "Available In Pane? Yes"). The sidecar strips it from its own process environment at startup (security PR #801), and the pane and agent spawn paths give it back to the processes that need it (`agentmux-bashwrap`, the streaming bash runner, and the shell helpers). `agentmux-mcp` receives it through its own spawn configuration.
 
 ```
 Agent CLI (claude / codex / gemini / …)

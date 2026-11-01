@@ -28,7 +28,7 @@ Beyond messages, an agent can [act on another machine](/internals/muxapi/#acting
 
 ### `Agents` `list`
 
-No parameters besides `action`. Returns what is reachable from here, as JSON (`handle_discovery` in `crates/srv/src/server/mod.rs`):
+No parameters besides `action`. Returns what is reachable from here, as JSON (`handle_discovery` in `crates/srv/src/server/http_health.rs`):
 
 ```json
 {

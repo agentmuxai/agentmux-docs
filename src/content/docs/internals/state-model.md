@@ -178,10 +178,9 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `sessionStats` | `SessionStats \| null` | Cumulative token usage for the session |
 | `currentTool` | `string \| null` | Name of the tool currently executing |
 | `turnTokens` | `TurnTokens \| null` | Per-turn input/output token deltas (cleared at TurnEnd) |
-| `lastContextTokens` | `number \| null` | Input fill at last `message_start`; survives TurnEnd |
+| `context` | `ContextReading \| null` | The context meter's reading (tokens in context, the model's window, and where each came from); set by `TokensIn`, survives TurnEnd, cleared on a reset, an invalidation or a compaction |
 | `pending` | `PendingMessage[]` | Messages queued but not yet acknowledged by backend |
-| `detailsOpen` | `boolean` | Composer details panel open/closed state |
-| `composerUnreadCount` | `number` | Log entries arrived while panel was closed |
+| `detailsOpen` | `boolean` | Whether the composer's Shell drawer is open |
 
 #### TurnPhase discriminated union
 
@@ -195,7 +194,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 | `isDisconnected(state)` | `turnPhase.kind === "Disconnected"` |
 | `isInitReady(state)` | `initPhase.kind === "InitReady"` |
 
-**Watchdog constants** (`types.ts:1342-1394`):
+**Watchdog constants** (`types.ts`, from `STUCK_THRESHOLD_MS`):
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -420,7 +419,7 @@ Tabs no longer get a color automatically at creation; a user picks one from the 
 | Pink | `#c02b75` |
 | Rose | `#c42742` |
 
-Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts:736`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
+Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts`). The startup tab is intentionally left without a color (`tabbar.tsx:271-276`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
 ### 4.6 The 2026-06-12 Border Fix
 

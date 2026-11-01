@@ -13,16 +13,18 @@ This page covers the Warden widget's internals: the file layout, the view model 
 
 ## File layout
 
-The Warden is unusually compact for a widget — most of its surface area is wiring to existing endpoints, not new backend code.
+The Warden pane tab is now a thin shell: the Vault, History and Audit became panes of their own, and only Jobs is left under the `warden` view. Where the original single-file widget (`warden.tsx`, `WardenViewModel` and `WardenView` together) once held everything, the code is now:
 
 | File | What |
 |---|---|
-| `frontend/app/view/warden/warden.tsx` | `WardenViewModel` + `WardenView` (single file, ~400 lines) |
-| `frontend/app/view/warden/warden-view.scss` | All Warden styling |
-| `frontend/app/block/block.tsx` | `BlockRegistry.set("warden", WardenViewModel)` |
-| `crates/srv/src/config/widgets.json` | `defwidget@warden` declaration |
+| `frontend/app/view/warden/warden.tsx` | The pane tab manifest (`wardenPaneTab`, labelled **Jobs**), loaded lazily |
+| `frontend/app/view/warden/warden-instance.tsx` | The code that loads with the first Warden pane |
+| `frontend/app/view/warden/warden-model.ts`, `warden-view.tsx` | The view model and view |
+| `frontend/app/view/warden/warden-sections.ts` | The section list, and how an old Warden section link maps to its new pane (`frontend/app/block/pane-sections.ts`) |
+| `frontend/app/view/warden/warden-view.scss` | Warden styling |
+| `frontend/app/block/block-registry.ts` | Registers `wardenPaneTab` with the other native pane tabs |
 
-There's no `warden-model.ts` or `warden-view.tsx` split — the widget is small enough that one file is clearer than three. The view model follows the **`HelpViewModel` pattern** (single class with `viewType`, `blockId`, and a `viewComponent` getter), not the `SwarmViewModel` / `DroneViewModel` multi-file pattern.
+The widget no longer has a `defwidget@warden` entry in `crates/srv/src/config/widgets.json`. The view model followed the `HelpViewModel` pattern (a single class with `viewType`, `blockId` and a `viewComponent` getter), not the `SwarmViewModel` / `DroneViewModel` multi-file shape.
 
 ## The three layers
 
@@ -55,7 +57,7 @@ The `× ` per-row button calls `POST /agentmux/reactive/unregister` (also pre-ex
 
 ### LAN section
 
-Source: `GET /api/lan-instances` (the public, no-auth route exposed by `LanDiscoveryController.get_instances()`).
+Source: `GET /api/lan-instances` (a route behind srv's normal `X-AuthKey` check, served from `LanDiscoveryController.get_instances()`).
 
 Same 5 s + 1 s tick pattern. The LAN section's empty-state copy points the operator at the HostPopover toggle if [LAN discovery](/lan-discovery/) isn't on yet — most "no peers" situations are "you haven't enabled it."
 
@@ -63,7 +65,7 @@ Same 5 s + 1 s tick pattern. The LAN section's empty-state copy points the opera
 
 The section is a stub that renders a "closed by default" message. The tier itself works: jekts travel through MuxBus Cloud once you sign in; the Warden just doesn't show it yet.
 
-## Authed vs public endpoints
+## Endpoint authentication
 
 The Warden talks to two flavors of endpoint:
 
@@ -78,7 +80,7 @@ function authedHeaders(): Record<string, string> {
 }
 ```
 
-`/agentmux/reactive/*` requires the `X-AuthKey` header (audit C1+C2 hardening). `/api/lan-instances` is a public route. The Warden uses the auth helper for reactive endpoints and bare `fetch()` for `/api/lan-instances`.
+`/agentmux/reactive/*` requires the `X-AuthKey` header (audit C1+C2 hardening). `/api/lan-instances` sits behind the same check (`auth_middleware`), so both calls go through the auth helper.
 
 ## Why polling, not WebSocket subscriptions
 
@@ -126,17 +128,15 @@ This matches `HelpViewModel` and contrasts with `SwarmViewModel` / `DroneViewMod
 
 The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same `LayerSection` entry in the `SECTIONS` array. When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
 
-This is the same reason `defwidget@warden` carries a single `description` field that mentions the spec — the Warden is a long-running multi-PR effort, and the navigation breadcrumb back to the spec (and the chip's status) is what ties it together as it grows.
+The Warden was a long-running multi-PR effort, and the chip's status tied it together as it grew.
 
 ## Source
 
-- `frontend/app/view/warden/warden.tsx` — model + view + section data sources
-- `frontend/app/view/warden/warden-view.scss` — section styling, audit feed, toggle switches
-- `frontend/app/block/block.tsx` — view registration in `BlockRegistry`
-- `crates/srv/src/config/widgets.json` — `defwidget@warden`
-- `crates/srv/src/server/reactive.rs` — `/agentmux/reactive/agents`, `/audit`, `/unregister` handlers
-- `crates/srv/src/server/mod.rs` — `/api/lan-instances` route
-- `specs/SPEC_WARDEN_WIDGET_2026-05-25.md` — full design spec
+- `frontend/app/view/warden/` — the Warden pane tab (see File layout above)
+- `frontend/app/block/block-registry.ts` — registers the pane tab
+- `crates/srv/src/server/pane_binding.rs` — `handle_unregister`, the `/agentmux/reactive/unregister` handler
+- `crates/srv/src/server/routes.rs` — the `/api/lan-instances` route, in the authenticated router
+- `docs/specs/SPEC_WARDEN_WIDGET_2026-05-25.md` — full design spec (in the main repo)
 - [Jekt protocol](/internals/jekt-protocol/) — the delivery tiers the sections map onto
 
 ## See also

@@ -64,7 +64,7 @@ A `task dev` build has no version level: its per-version folders are at `~/.agen
 | `store.db` | `shared/` | Machine-wide | 12 | Accounts, bundles and Global Memory, drones, cron jobs, MuxBus sign-in metadata, native memory |
 | `identity-store.db` | `shared/` | Machine-wide | 11 | Agent ↔ account links, Skills and MCP catalogs, work queue, coordination posts, vault |
 | transcripts `filestore.db` | `shared/agents/transcripts/` | Machine-wide | 2 | Every agent's conversation, the Global Memory record, per-agent memory records |
-| `wan.db` | `channels/<ch>/wan-identity/` | Channel-wide | — (own counter, 3) | WAN instance and agent keys, peer records, replay guard |
+| `wan.db` | `channels/<ch>/wan-identity/` | Channel-wide | — (own counter, 5) | WAN instance and agent keys, peer records, replay guard |
 | `migrations.lock.db` | `shared/` and `versions/<v>/data/db/` | Both | — | No data: a lock held while migrations run |
 
 All eight use WAL journaling except the lock files. srv opens each with one writer connection; `filestore.db` also keeps a small pool of read-only readers and checkpoints its WAL from a background thread.
@@ -189,7 +189,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `wan_agent_keys`, `wan_agent_key_publications` | Agent WAN keys and where each is published |
 | `wan_peer_records`, `wan_known_instances` | Cached records of peers and instances seen |
 | `wan_seen_sigs` | Replay guard |
-| `wan_meta` | Its own schema counter (3); the schema only ever grows |
+| `wan_meta` | Its own schema counter (5); the schema only ever grows |
 
 ## Files that aren't databases
 

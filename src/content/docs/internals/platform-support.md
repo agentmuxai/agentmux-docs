@@ -14,7 +14,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Sidecar (`agentmux-srv`) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | `agentmux-common` (path resolution, runtime mode) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | Frontend / SolidJS renderer | ✅ ships | ✅ runs in any CEF | ✅ runs in any CEF |
-| **WRR (Window Reality Reconciliation)** | ✅ Win32 hooks | ❌ not planned (by design) | ❌ not planned (by design) |
+| **WRR (Window Reality Reconciliation)** | ✅ Win32 event hooks | ❌ not planned (by design) | ❌ not planned (by design) |
 | Browser pane (CefBrowserView) | ✅ ships | ✅ ships (v0.42.x+) | ✅ ships (v0.42.x+) |
 | Terminal pane (PTY) | ✅ ConPTY | ✅ posix\_openpt | ✅ posix\_openpt |
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
@@ -34,7 +34,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 
 A handful of features are Windows-coupled because they hook directly into Win32:
 
-- **WRR (Window Reality Reconciliation)** — hooks `WM_PAINT`, `SetWindowPos`, `GetForegroundWindow` to reconcile against AgentMux's reducer model. Windows-only **by design**: a full macOS/Linux observation layer is not planned — its drift classes are largely Windows-specific defenses, and Wayland exposes no portable per-window event API. The cross-platform safety net is the host's orphan reconciler; the one real gap (crash-orphan detection) is tracked in [#1569](https://github.com/agentmuxai/agentmux/issues/1569), not as a WRR port. `task dev` on macOS/Linux runs without WRR drift detection. See [WRR](/internals/wrr/).
+- **WRR (Window Reality Reconciliation)** — observes windows through `SetWinEventHook` to reconcile against AgentMux's reducer model. Windows-only **by design**: a full macOS/Linux observation layer is not planned — its drift classes are largely Windows-specific defenses, and Wayland exposes no portable per-window event API. The cross-platform safety net is the host's orphan reconciler; the one real gap (crash-orphan detection) is tracked in [#1569](https://github.com/agentmuxai/agentmux/issues/1569), not as a WRR port. `task dev` on macOS/Linux runs without WRR drift detection. See [WRR](/internals/wrr/).
 - **Sidecar crash minidumps** — the sidecar's own crash monitor writes to `C:\CrashDumps\agentmuxsrv\` ([Debugging → Sidecar crash dumps](/internals/debugging/#sidecar-crash-dumps)). On macOS the system Crash Reporter writes to `~/Library/Logs/DiagnosticReports/`; on Linux it depends on whether `systemd-coredump` or `apport` is installed.
 
 Pages and admonitions in these docs that are Windows-specific are flagged with a `:::note[Windows-only]` block at the top of the relevant section. If you don't see a flag, assume it works cross-platform.
@@ -70,7 +70,7 @@ The architecture is designed cross-platform from the start:
 - Ships as an **AppImage** (`task package:linux`) — one self-contained file, no installer. System requirements: glibc 2.31+ and FUSE (for the compressed SquashFS mount; pre-installed on most desktop distros — see [Installation → Linux](/installation/#linux) for the `--appimage-extract` fallback if FUSE is absent).
 - **Launch flow:** `AppRun` → `linux-apprun.sh` → `agentmux-launcher` (the AppImage entry point). The launcher supervises the sidecar and host as a process group. On first launch the AppImage extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts.
 - **Single-instance IPC:** Unix domain socket at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (fallback: `/tmp/agentmux-<uid>/<hash>.sock`). The full reducer + saga coordinator runs on Linux (A1, v0.42.x+) — same feature set as Windows.
-- **Display server:** defaults to XWayland (`--ozone-platform=x11`). Set `AGENTMUX_OZONE_PLATFORM=wayland` for native Wayland (experimental).
+- **Display server:** native Wayland when the session sets `WAYLAND_DISPLAY` (since CEF 148); otherwise Chromium's X11 default. Set `AGENTMUX_OZONE_PLATFORM=wayland` or `x11` to pin a backend.
 - **Window drag:** requires the patched `libcef.so` bundled in all release AppImages (`CefWindow::BeginWindowDrag()` dispatches `xdg_toplevel.move` / `_NET_WM_MOVERESIZE`).
 - **Wayland app\_id:** `agentmux`. Desktop file: `agentmux.desktop` (auto-registered by the AppImage on first launch).
 - **WRR:** Windows-only by design — no Linux equivalent is planned (Wayland exposes no portable per-window event API); the launcher runs without drift detection, with the orphan reconciler as the safety net.
@@ -99,9 +99,7 @@ This recipe relies on Windows Error Reporting. macOS and Linux equivalents are d
 Cross-platform parity priority order (subject to change):
 
 1. **Window transparency on Linux** — root cause identified (views::SolidBackground), fix in progress.
-2. **Native splash screen on Linux** — Windows and macOS already have it; Linux splash is spec-complete and ready to implement.
-3. **Native crash-reporting hookup** — replace the Windows-WER-only path with per-OS native handlers feeding into a unified diagnostics view.
-4. **Native Wayland (non-XWayland)** — experimental today; stability work ongoing.
+2. **Native crash-reporting hookup** — replace the Windows-WER-only path with per-OS native handlers feeding into a unified diagnostics view.
 
 WRR equivalents on macOS/Linux are deliberately **not** on this list — WRR is Windows-only by design, with the orphan reconciler as the cross-platform safety net ([#1569](https://github.com/agentmuxai/agentmux/issues/1569); see [WRR](/internals/wrr/)).
 

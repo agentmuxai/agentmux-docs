@@ -29,7 +29,7 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 `agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv/src/backend/lan_listeners.rs`); no setting changes it.
 
-Authentication (`auth_middleware` in `crates/srv/src/server/mod.rs`):
+Authentication (`auth_middleware` in `crates/srv/src/server/auth.rs`):
 
 - Every route requires the `X-AuthKey` header to equal the instance auth key. The key is a UUIDv4 the launcher generates at each launch.
 - `/ws` also accepts the key as an `?authkey=` query parameter, because the browser WebSocket API can't set headers. No other route accepts it in the query string.
@@ -44,7 +44,7 @@ Every terminal pane and Native agent process receives the auth key as `AGENTMUX_
 
 When you turn on LAN discovery, `LanListenerSupervisor` binds the server's two ports again on **every non-loopback interface address**: all IPv4 addresses, and all IPv6 addresses except link-local. That includes VPN and virtual adapters. It re-checks the interface list every 20 seconds, and removes the listeners when you turn LAN discovery off.
 
-These listeners serve **only the routes LAN peers need** (`build_routers_with` in `crates/srv/src/server/mod.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
+These listeners serve **only the routes LAN peers need** (`build_routers_with` in `crates/srv/src/server/routes.rs`, the `lan` router), with no filtering by source address. From any network that can reach one of those addresses:
 
 - anyone can call `GET /` and `/health` (the version) and the WhatsApp webhook;
 - anyone holding the `lan_key` can call a short list of routes: send a jekt (with files), look up one agent, list agent names and states, ask whether an agent UID is running here, and post a signed [remote operation](/lan-discovery/#remote-operations) (see [what the `lan_key` unlocks](/security/reactive-event-bus/#who-may-call-the-bus)). The remote-operation route does nothing for the `lan_key` alone: it carries out a request only when it is signed by an agent key this machine has pinned;
@@ -165,7 +165,7 @@ Restrict these to your LAN subnet or to known peers.
 - `crates/srv/src/bootstrap/network.rs` (`bind_listeners_and_network`) — loopback startup listeners
 - `crates/srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
 - `crates/srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
-- `crates/srv/src/server/mod.rs` (`build_router`, `auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
+- `crates/srv/src/server/routes.rs` (`build_router`, `build_routers_with`) and `crates/srv/src/server/auth.rs` (`auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
 - `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `crates/srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
 - `crates/srv/src/config.rs` — `lan_key` generation
 - `crates/srv/src/backend/dev_proxy.rs` — dev proxy

@@ -202,7 +202,7 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `crates/srv/src/server/agent_handlers/input.rs` (`carry_agent_uid_env`) — agent UID and token
 - `crates/srv/src/server/caller.rs`, `crates/srv/src/backend/storage/agent_tokens.rs` — attribution
 - `crates/srv/src/server/ui_handlers.rs` (`verified_block_id`), `crates/srv/src/server/app_api/pane.rs` (`handle_close_pane`, `handle_quit_self`) — own-pane checks
-- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` (`fleet_bulk_stop_with_override`) — the 30-second override window
+- `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` — the 30-second override window (`OVERRIDE_WINDOW`)
 - `crates/srv/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv/src/muxbus/wan_lease.rs` — one live instance per agent
 - `crates/mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
 - `crates/srv/src/server/service/credential.rs`, `crates/srv/src/server/service/memory_adopt.rs` — host-only services

@@ -30,7 +30,7 @@ The `scope` prop on `<Modal>` selects what region the modal locks. Mount point, 
 | Scope | Mounts into | Inert region | Backdrop covers | Used for |
 |---|---|---|---|---|
 | `window` (default) | The current window's `document.body` (Portal'd) | The whole body | Full window | App-wide dialogs (Confirm, About, Command palette, Bundle manager, Message, User input) |
-| `tab` | The active tab's content root (via `TabModalScope` context) | Just that tab's content | The tab's area only — title bar + tab bar stay live | Tab-coupled dialogs (Agent launch, Agent install, Create from template, OAuth pre-launch) |
+| `tab` | The active tab's content root (via `TabModalScope` context) | Just that tab's content | The tab's area only — title bar + tab bar stay live | Tab-coupled dialogs (the bundle import steps, the agent seat, environment and container-limit dialogs) |
 | `pane` | A single pane's root (via `PaneModalScope` context) | Just that pane | The pane's area only — everything outside it stays live | Pane-scoped dialogs. Infrastructure exists; pane-scoped modals plug in by adding `<PaneModalScope.Provider>` at the pane root. |
 
 Falls back to `window` (with a console.warn) when `scope="tab"` is used but no `TabModalScope` provider is present. Same for `pane`.
@@ -52,21 +52,21 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from "@/element/modal";
 </Modal>
 ```
 
-Examples in the codebase: `about.tsx`, `command-palette.tsx`, `messagemodal.tsx`, `userinputmodal.tsx`, `ImportPreviewModal.tsx`.
+Examples in the codebase: `command-palette.tsx`, `messagemodal.tsx`, `userinputmodal.tsx` (all in `frontend/app/modals/`), and the bundle import steps (`BundleImportSelectModal.tsx`, `BundleImportPreviewModal.tsx`, `BundleImportConfirmModal.tsx`).
 
 ### Tab-scope example
 
-The modal floats over the tab's content area only — the title bar and tab bar stay interactive. Used when the dialog is tightly coupled to a specific tab (e.g. Agent launch / install).
+The modal floats over the tab's content area only — the title bar and tab bar stay interactive. Used when the dialog is tightly coupled to a specific tab (e.g. the bundle import steps).
 
 These modals run through `ModalLayer` (scoped to `"tab"` or `"pane"`), which wraps a tile layout (tab-scope) or a single pane (pane-scope), provides a `TabModalScope` or `PaneModalScope` for the mount point, and dispatches on a request kind. Triggering one:
 
 ```tsx
 const modalLayer = useModalLayer();
 modalLayer.open({
-    kind: "launch-agent",
-    agent,
-    originBlockId,
-    onSubmit: async (overrides) => { /* ... */ },
+    kind: "agent-seat",
+    agentId,
+    agentName,
+    // ...the rest of the request's fields (see AgentSeatRequest)
 });
 ```
 
@@ -76,15 +76,15 @@ The panel returns the chrome fragment directly — the layer renders it inside a
 return (
     <>
         <header class="modal-panel-header">
-            <h2 class="modal-panel-title">Launch {name}</h2>
-            <p class="modal-panel-description">Pick a runtime and identity.</p>
+            <h2 class="modal-panel-title">Seat for {name}</h2>
+            <p class="modal-panel-description">Set the agent's role, lead and area.</p>
         </header>
         <div class="modal-panel-body">
             {/* form fields */}
         </div>
         <footer class="modal-panel-footer">
             <Button onClick={onCancel}>Cancel</Button>
-            <Button onClick={onSubmit} className="green solid">Launch</Button>
+            <Button onClick={onSubmit} className="green solid">Save</Button>
         </footer>
     </>
 );
@@ -92,7 +92,7 @@ return (
 
 Add new request variants in [`frontend/app/element/modal-layer.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal-layer.ts) and a matching `case` in `renderRequest()` of [`ModalLayer.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/ModalLayer.tsx).
 
-Examples: `AgentLaunchModal.tsx`, `AgentInstallModal.tsx`, `AgentCreateFromTemplateModal.tsx`.
+The request kinds today are `browser-auth`, `agent-seat`, `agent-env`, `agent-container-limits`, `agent-bundles` and the three `bundle-import-*` steps. Examples: `AgentSeatPanel.tsx`, `AgentEnvPanel.tsx` and `AgentContainerLimitsPanel.tsx` in `frontend/app/view/agent/components/`, and `BrowserAuthModal.tsx` in `frontend/app/view/browser/components/`.
 
 ### Pane-scope
 
@@ -137,15 +137,13 @@ Inside the `@container` rule:
 | `.modal-panel-body[class], .modal-panel-body[class] > * { min-width: 0; }` | Universal flex-shrink-trap break. Every modal body and its direct children can shrink below their intrinsic content width — no per-modal opt-in required. The `[class]` selector bumps specificity to `(0,2,0)` so it wins over per-modal `.agent-install-modal-body { min-width: 560px }` style declarations regardless of bundle import order. |
 | `.modal-panel-header / -title / -description / -body / -footer { padding/font-size shrunk }` | Compact chrome: shorter title, smaller body padding, footer stacks vertically with full-width buttons (mobile-pattern thumb-reachable order — Cancel on top, primary action at bottom). |
 
-Per-modal SCSS files can add their own `@container modal-mount (max-width: 400px) { … }` blocks for content-specific tweaks. Example from `_install-modal.scss`:
+Per-modal SCSS files can add their own `@container modal-mount (max-width: 400px) { … }` blocks for content-specific tweaks. Example from `frontend/app/element/install/install-steps.scss`:
 
 ```scss
-.agent-install-modal-body {
-    min-width: 560px;
-    max-width: 720px;
-
-    @container modal-mount (max-width: 400px) {
-        min-height: 200px;   // xterm needs vertical viewport
+// below 400px wide, hints drop under their label
+@container modal-mount (max-width: 400px) {
+    .install-step-hint {
+        grid-column: 2 / -1;
     }
 }
 ```
@@ -206,16 +204,16 @@ Concrete behavior:
 
 ## Chained flows — `modalLayer.replace(next)`
 
-When a modal completes and the natural next step is **another** modal in the same flow (install → launch, install → auth → launch, workflow setup → workflow run), use `modalLayer.replace(next)` instead of `close()` followed by `open(next)`.
+When a modal completes and the natural next step is **another** modal in the same flow (the three bundle import steps: select → preview → confirm), use `modalLayer.replace(next)` instead of `close()` followed by `open(next)`.
 
 ```tsx
 const modalLayer = useModalLayer();
 
 // First modal opens cold — full entrance animation:
-modalLayer.open({ kind: "install-agent", ... onInstalled: () => {
-    // Crossfade into the launch modal — backdrop + outer panel stay
+modalLayer.open({ kind: "bundle-import-select", ... onPreviewed: (filePath, preview) => {
+    // Crossfade into the preview step — backdrop + outer panel stay
     // mounted; only the inner content remounts with a 140ms fade.
-    modalLayer.replace({ kind: "launch-agent", ... });
+    modalLayer.replace({ kind: "bundle-import-preview", ... });
 }});
 ```
 
@@ -260,26 +258,7 @@ See [`SPEC_MODAL_PAINT_GATE_2026_05_18.md`](https://github.com/agentmuxai/agentm
 
 The CHROME stays universal. Modal-specific content (a form layout, an xterm container, a list of cards) uses its own component-scoped classes that DON'T duplicate header/title/body/footer.
 
-For example, the install modal has:
-
-```scss
-.agent-install-modal-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    min-width: 560px;
-    max-width: 720px;
-    min-height: 320px;
-}
-
-.agent-install-modal-term {
-    flex: 1 1 auto;
-    min-height: 240px;
-    /* xterm.js container styling */
-}
-```
-
-— but no `.agent-install-modal-header` or `.agent-install-modal-title`. Those would be ad-hoc duplicates.
+For example, the install steps (`frontend/app/element/install/`) keep their own layout classes, such as `.install-step-hint`, in `install-steps.scss`. They don't define their own header or title classes: those would be ad-hoc duplicates of `.modal-panel-header` and `.modal-panel-title`.
 
 ## Browser-pane airspace clip
 

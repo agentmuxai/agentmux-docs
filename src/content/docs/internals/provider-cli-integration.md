@@ -138,7 +138,7 @@ pub trait Translator: Send {
 }
 ```
 
-**Only Claude Code has a concrete implementation today** (`ClaudeTranslator`, `crates/srv/src/agents/translator/claude.rs`) — it's what the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`) uses. The interactive subprocess-controller path (what actually drives an agent pane) doesn't route non-Claude providers' frames through this trait yet; see the Codex-specific note below for how Codex is parsed today.
+Three implementations exist, in `crates/srv/src/agents/translator/`: `ClaudeTranslator` (`claude.rs`) is what the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`) uses; `CodexTranslator` (`codex.rs`) and `GeminiTranslator` (`gemini.rs`) read only the answer text, for the one-shot `/btw` side question (`crates/srv/src/server/agent_handlers/side_question.rs`). The interactive subprocess-controller path, which drives an agent pane, doesn't route frames through this trait: the controller captures the session id and publishes the raw frames, and the frontend's per-provider translators render them (for Codex, see the note below).
 
 ### Line buffering and fast-reject
 
@@ -175,7 +175,7 @@ OpenClaw, GitHub Copilot CLI, Pi, Kilo Code CLI, Cline CLI, OpenCode, goose, Gro
 
 Codex is launched as `codex exec --json --dangerously-bypass-approvals-and-sandbox -` (`launch_args` in `crates/srv/src/backend/providers.rs`): the `exec` subcommand runs non-interactively, `--json` emits **JSONL** — newline-delimited JSON, one frame per line, not a single JSON document — and the trailing `-` reads the prompt from stdin. Its init frame looks like `{"type":"thread.started","thread_id":"..."}`, contrasted with Claude's `{"type":"system","subtype":"init","session_id":"..."}` and Gemini's `{"type":"init","session_id":"..."}` — Codex is the one provider keyed on `thread_id` rather than `session_id` (`session_id_field: "thread_id"`).
 
-Codex frames go through the same line-buffered, fast-reject front door described above, but unlike Claude there is currently no dedicated `CodexTranslator` implementing the `Translator` trait — only `crates/srv/src/agents/translator/claude.rs` exists today, consumed by the drone Agent-block's headless runner (`crates/srv/src/agents/runner.rs`). For the interactive subprocess-controller path, Codex's own frames are instead classified generically in-line (`classify_output_line`, session-id capture) and published as raw WPS events for the frontend to render — see `crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`.
+Codex frames go through the same line-buffered, fast-reject front door described above. In an interactive pane they are not translated by the `Translator` trait: the subprocess controller captures the session id (`crates/srv/src/backend/blockcontroller/subprocess/host_spawn.rs`) and publishes the raw frames as WPS events, and the frontend renders them with `frontend/app/view/agent/providers/codex-translator.ts`. The Rust `CodexTranslator` handles only the answer text of a one-shot turn, for `/btw`.
 
 ## The terminal tier
 
@@ -231,7 +231,7 @@ The abstraction is **hybrid** — not a single unified interface throughout:
 | Frontend provider definitions | Static lookup table (`PROVIDERS` record), conditional branching on `provider.id` |
 | Argument construction | Conditional logic per provider in `buildRuntimeArgs.ts` |
 | Backend spawn | Conditional on `ProviderDefinition.controllerType` (persistent / subprocess / acp / terminal) |
-| Backend stream parsing | Abstract `Translator` trait — currently only Claude Code has a concrete implementation (`translate(frame) -> Vec<AgentEvent>`); other providers' interactive-pane frames are parsed generically inline (see Step 4's Codex note) |
+| Backend stream parsing | Abstract `Translator` trait (`translate(frame) -> Vec<AgentEvent>`) with Claude, Codex and Gemini implementations; the Codex and Gemini ones read only the answer text for `/btw`, and other providers' interactive-pane frames are parsed by the frontend (see Step 4's Codex note) |
 
 ## See also
 
