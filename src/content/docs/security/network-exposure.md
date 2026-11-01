@@ -36,7 +36,7 @@ Authentication (`auth_middleware` in `crates/srv/src/server/auth.rs`):
 - Unauthenticated: `GET /` returns `{"status":"ok","version":"<version>"}`. `/webhook/whatsapp` is the receiver for the WhatsApp bridge; it checks Meta's verify token and `X-Hub-Signature-256` HMAC instead of the auth key, and returns 503 until that bridge is set up.
 - Every response, including unauthenticated ones, carries an `x-agentmux-srv-version` header.
 
-CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key. `/ws` also refuses a WebSocket upgrade whose `Origin` header is anything other than those two (`ws_origin_guard`); a client that sends no `Origin`, such as the launcher or `agentmux-mcp`, is allowed. Every key and token a caller presents is compared in constant time (`crates/common/src/secret_eq.rs`).
+CORS reflects only the origins `http://127.0.0.1[:port]` and `http://localhost[:port]`. A web page from any other origin can't read responses. A page still can't call any authenticated route without the key. `/ws` also refuses a WebSocket upgrade whose `Origin` header is anything other than those two (`ws_origin_guard` in `crates/srv/src/server/routes.rs`); a client that sends no `Origin`, such as the launcher or `agentmux-mcp`, is allowed. Every key and token a caller presents is compared in constant time (`crates/common/src/secret_eq.rs`).
 
 Every terminal pane and Native agent process receives the auth key as `AGENTMUX_AUTH_KEY`. See the [trust model](/security/trust-model/) for what that means. [Container agents](/security/trust-model/#container-agents) get a narrower per-agent token in the same variable instead.
 

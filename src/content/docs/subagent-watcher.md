@@ -49,7 +49,7 @@ At the top of the Swarm, above its sections, a strip lists each account whose ag
 
 ## Layout
 
-In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view/swarm/swarm-view.tsx`, `SwarmView`):
+In the Supervisor and Broadcast sections, from top to bottom (`frontend/app/view/swarm/swarm-root.tsx`, `SwarmView`):
 
 1. The controls, in a compartment of their own apart from the list (in the Supervisor and Broadcast sections): the Supervisor's settings, or Broadcast's message box, and the [fleet toolbar](#fleet-toolbar). Broadcast's box sits above the list.
 2. A result panel, shown after a fleet action. In the Broadcast section it appears only when a send failed.
@@ -235,7 +235,7 @@ The **Broadcast** section has its own message box above the list. Select agents,
 
 The last ten broadcasts are listed under the box, newest first, each with its age and "N sent · N delivered" (and "· N failed"). Hover a row for the full text. The draft and this list are kept while the pane is open, so switching to the Supervisor section and back loses neither; a restart clears them.
 
-A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs`, `wrap_broadcast_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs`, `broadcast_turn_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
 
 ## Fleet toolbar
 

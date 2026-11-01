@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes), and Media is now part of the [Editor](#media)). The Vault, History and Audit were sections of the Warden pane before it was split up (see [Warden](/warden/)). See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts:191-194`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more** (Remotes, once a widget of its own, is now a section of [Connectors](/connectors/#remotes), and Media is now part of the [Editor](#media)). The Vault, History and Audit were sections of the Warden pane before it was split up (see [Warden](/warden/)). See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -60,7 +60,7 @@ These views exist in the codebase but are **not** opened directly from the widge
 | **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
 | **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
-| **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx:16`) — see [Media](#media). |
+| **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx`) — see [Media](#media). |
 | **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
 The agent pane's header has no button for these. What belongs to one agent is reached from [Subsections](#subsections) below.
@@ -344,7 +344,7 @@ A saved Media pane opens as an Editor: each of its files becomes a tab that foll
 
 ### Opening it programmatically
 
-Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs:14-18`, `crates/srv/src/server/app_api/pane.rs:1113-1126`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
+Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs`, `crates/srv/src/server/app_api/pane.rs`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
 
 ## Agent
 
@@ -724,8 +724,8 @@ Four pane types take file drops. Other panes (browser, Swarm, Drone and so on) s
 |---|---|
 | **Agent** | Attaches the files to the message you're writing (see [Attaching files](#attaching-files)). For a [container agent](/container-agents/), or with `attachments:enabled` off, it copies them into the agent's working folder instead and inserts an `@name` reference for each into the message box. |
 | **Terminal** | Copies the files into the terminal's working directory. It doesn't type their paths. |
-| **Editor** | Opens each file in its own tab, in the viewer that fits it: text, image, PDF, audio and video, or a card with the file's details (see [Media](#media)). An Editor on an SSH connection takes no drops: the files are on this computer, not on that host (`frontend/app/view/editor/editor-model.ts:518-537`). |
-| **Files** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Files pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx:162-194`). Files with no path on disk can't be copied there. |
+| **Editor** | Opens each file in its own tab, in the viewer that fits it: text, image, PDF, audio and video, or a card with the file's details (see [Media](#media)). An Editor on an SSH connection takes no drops: the files are on this computer, not on that host (`frontend/app/view/editor/editor-model.ts`). |
+| **Files** | Copies the files into the folder it shows, or into the folder row you drop them on. A row dragged from a Files pane to a folder on the same drive is moved instead (`frontend/app/view/files/files-view.tsx`). Files with no path on disk can't be copied there. |
 
 Copies land directly in the pane's working folder (`crates/common/src/copy_into_dir.rs`). A name that is already taken gets a numbered suffix: `report.pdf`, then `report_1.pdf`; `.env`, then `.env_1`. Folders are copied with everything in them, except symbolic links. Pasting files into a container agent's message box copies them the same way, with the same notices and `@name` references.
 

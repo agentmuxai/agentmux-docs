@@ -139,7 +139,7 @@ When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwi
 
 ### GPU
 
-AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardware OpenGL, it starts a short probe to check that the GPU really renders (a render node in `/dev/dri` and a renderer that isn't a software one such as llvmpipe), and falls back to software rendering if not (`crates/cef/src/app/gpu.rs`, `crates/cef/src/app/gl_probe.rs`). This keeps AgentMux from opening an invisible window in a VM or on a GPU without working 3D. To pick Chromium's ANGLE backend yourself, set `AGENTMUX_ANGLE` (for example `AGENTMUX_ANGLE=gl`); it takes priority over the check.
+AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardware OpenGL, it starts a short probe to check that the GPU really renders (a render node in `/dev/dri` and a renderer that isn't a software one such as llvmpipe), and falls back to software rendering if not (`crates/cef/src/app/gpu.rs`, `crates/cef/src/app/gl_probe.rs`; the `AGENTMUX_ANGLE` override is read in `crates/cef/src/app/mod.rs`). This keeps AgentMux from opening an invisible window in a VM or on a GPU without working 3D. To pick Chromium's ANGLE backend yourself, set `AGENTMUX_ANGLE` (for example `AGENTMUX_ANGLE=gl`); it takes priority over the check.
 
 ### Sandbox blocked by AppArmor (Ubuntu)
 

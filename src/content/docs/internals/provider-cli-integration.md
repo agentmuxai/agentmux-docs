@@ -49,7 +49,7 @@ Each provider declares its default vendor(s) via `supported_vendors` in `crates/
 
 What *does* gate spawn-time behavior is `base_url_env_var` — the environment variable a provider reads to redirect its model vendor backend off the default endpoint (e.g. Claude Code's `ANTHROPIC_BASE_URL`, pointing it at Bedrock, Vertex, OpenRouter, or a custom proxy). This is set only where independently verified per provider, not guessed — as of this writing only Claude Code has a confirmed one.
 
-The **effective vendor** an agent is actually using is computed, not stored: a non-empty `model_vendor_base_url` override means the provider has been redirected off its default backend, so the effective vendor reads as `"custom"` regardless of what the provider declares — an empty/absent override means the provider is talking to its own default vendor, the first entry in `supported_vendors` (or the provider id itself as a fallback, for an uncataloged provider). See `resolveEffectiveVendor()` in `frontend/app/view/agent/providers/catalog.ts`.
+The **effective vendor** an agent is actually using is computed, not stored: a non-empty model-vendor base URL override (`modelVendorBaseUrl`) means the provider has been redirected off its default backend, so the effective vendor reads as `"custom"` regardless of what the provider declares — an empty/absent override means the provider is talking to its own default vendor, the first entry in the provider's `supportedVendors` (or the provider id itself as a fallback, for an uncataloged provider). See `resolveEffectiveVendor()` in `frontend/app/view/agent/providers/catalog.ts`.
 
 ## Step 1 — CLI resolution
 
@@ -96,7 +96,7 @@ let pair = pty_system.openpty(pty_size)?;
 `native_pty_system()` from the `portable-pty` crate selects the platform implementation:
 
 - **Windows:** ConPTY (Windows Pseudo Console API)
-- **Unix:** POSIX `posix_openpt()`
+- **Unix:** a POSIX pseudo-terminal (openpty)
 
 The PTY size is seeded from the frontend-computed terminal dimensions before the process starts, avoiding a post-spawn resize race. Fallback is 25 rows × 200 columns.
 
@@ -220,7 +220,7 @@ Source: `crates/srv/src/backend/blockcontroller/subprocess/mod.rs`.
 
 Session IDs are captured from the CLI's stdout and persisted in block metadata. Most providers resume with a trailing flag: on the next turn, the frontend appends `--resume <session_id>` (Claude) or `-r <session_id>` (Gemini) so conversation context is restored without re-sending history.
 
-**Codex is different: it resumes via a subcommand, not a flag.** Its continuation invocation is `codex exec resume <thread_id> [flags] -`, not `codex exec [flags] - --resume <thread_id>`. `ProviderConfig::resume_strategy_str()` reports this as `"codex-exec"` (every other provider reports `"flag"` or `"none"`), and `build_turn_argv`/`build_codex_argv` in `crates/srv/src/backend/blockcontroller/subprocess/argv.rs` handle it by inserting `resume <thread_id>` immediately after the `exec` subcommand while keeping the trailing stdin marker `-` last — a plain flag-append would produce an invalid Codex invocation.
+**Codex is different: it resumes via a subcommand, not a flag.** Its continuation invocation is `codex exec resume <thread_id> [flags] -`, not `codex exec [flags] - --resume <thread_id>`. `ProviderConfig::resume_strategy_str()` (`crates/srv/src/backend/providers.rs`) reports this as `"codex-exec"` (every other provider reports `"flag"` or `"none"`), and `build_turn_argv`/`build_codex_argv` in `crates/srv/src/backend/blockcontroller/subprocess/argv.rs` handle it by inserting `resume <thread_id>` immediately after the `exec` subcommand while keeping the trailing stdin marker `-` last — a plain flag-append would produce an invalid Codex invocation.
 
 ## Provider abstraction summary
 

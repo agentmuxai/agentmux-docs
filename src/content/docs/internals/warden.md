@@ -24,7 +24,7 @@ The Warden pane tab is now a thin shell: the Vault, History and Audit became pan
 | `frontend/app/view/warden/warden-view.scss` | Warden styling |
 | `frontend/app/block/block-registry.ts` | Registers `wardenPaneTab` with the other native pane tabs |
 
-The widget no longer has a `defwidget@warden` entry in `crates/srv/src/config/widgets.json`. The view model followed the `HelpViewModel` pattern (a single class with `viewType`, `blockId` and a `viewComponent` getter), not the `SwarmViewModel` / `DroneViewModel` multi-file shape.
+The Warden no longer has an entry in `crates/srv/src/config/widgets.json`. The original view model was a single class with a view type, a block id and a view component getter, a smaller shape than the Swarm's or the Drone's multi-file view models.
 
 ## The three layers
 
@@ -100,7 +100,7 @@ The only enforcement action the Warden ships today is **soft deregister**. The c
 - An agent's PTY / pane is owned by the block controller, which knows nothing about the reactive registry
 - Coupling Warden actions to PTY teardown would conflate two concerns and create surprising side effects (close pane to silence agent? wrong way around)
 
-Hard kill, pause-host, kill-all, and a `governance.json` policy file are all planned, but each requires either backend work the Warden doesn't have yet (a `WardenAction` RPC; an enforcer hook in the `ReactiveHandler` `inject_message` path) or a destructive UI dialog with stronger guard rails. They're listed as follow-up phases in the spec and held back to keep each PR's blast radius small.
+Hard kill, pause-host, kill-all, and a `governance.json` policy file are all planned, but each requires either backend work the Warden doesn't have yet (a Warden action RPC; an enforcer hook in the `ReactiveHandler` `inject_message` path) or a destructive UI dialog with stronger guard rails. They're listed as follow-up phases in the spec and held back to keep each PR's blast radius small.
 
 ## ViewModel pattern: why HelpViewModel-style
 
@@ -122,11 +122,11 @@ class WardenViewModel implements ViewModel {
 
 That's it. No reactive store, no per-pane settings persistence, no service binding at the model layer. The view component owns its own polling and state via SolidJS signals.
 
-This matches `HelpViewModel` and contrasts with `SwarmViewModel` / `DroneViewModel`, which carry significant model-side state (run lists, draft graphs, in-flight saves). The Warden doesn't need any of that — the section data is fully derivable from the backend endpoints on every refresh.
+This is a smaller shape than the Swarm's or the Drone's view models, which carry significant model-side state (run lists, draft graphs, in-flight saves). The Warden doesn't need any of that — the section data is fully derivable from the backend endpoints on every refresh.
 
 ## Section status chips: not just decoration
 
-The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same `LayerSection` entry in the `SECTIONS` array. When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
+The `live` / `stub` / `disabled` chips drive a single-source-of-truth pattern: each section's chip *and* its actual content come from the same entry in the section list (`WARDEN_SECTIONS` in `frontend/app/view/warden/warden-sections.ts`). When a future PR wires Internet (L3), it changes that section's status from `disabled` to `live` *and* swaps the render function to one that talks to the MuxBus cloud relay — both in one place.
 
 The Warden was a long-running multi-PR effort, and the chip's status tied it together as it grew.
 

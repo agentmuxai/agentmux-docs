@@ -71,7 +71,7 @@ MuxBus Cloud is AgentMux's hosted relay for agent-to-agent messages across machi
 
 ### Background model calls
 
-For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-4-5-20251001`, `invoke_ambient_haiku_call` in `crates/srv/src/server/app_api/session.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
+For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-4-5-20251001`, `invoke_haiku` and `AMBIENT_MODEL` in `crates/srv/src/ambient/cli.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
 
 - a running **continuity summary** of the conversation, written after the first completed turn and refreshed once three new user turns have accumulated, or after ten minutes with at least one new turn (`crates/srv/src/backend/continuity_state.rs`). Set `agent:continuity` to `off` on an agent pane to stop it;
 - activity summaries, agent-definition summaries, names for subagents and dispatches, next-prompt suggestions, and narration.
@@ -129,7 +129,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 ## Verifying the claims
 
 - **Watch the traffic.** Run AgentMux behind a proxy or packet capture. Expect your agents' provider traffic, the model-list call at launch, favicon and image loads, and the features you use from the tables above.
-- **Read the source.** Outbound HTTP in the Rust code goes through `reqwest`: search for `reqwest::Client`, `http_client` and `https://` under `crates/srv/src`, `crates/cef/src` and `crates/launcher/src`. The frontend's external loads are the favicon URLs in `frontend/app/view/agent/components/tool-renderers/SearchResults.tsx` and `WebFetchResult.tsx`, and the browser pane's `DEFAULT_BROWSER_URL` in `frontend/app/view/browser/browser-model.ts`.
+- **Read the source.** Outbound HTTP in the Rust code goes through `reqwest`: search for `reqwest` and `https://` under `crates/srv/src`, `crates/cef/src` and `crates/launcher/src`. The frontend's external loads are the favicon URLs in `frontend/app/view/agent/components/tool-renderers/SearchResults.tsx` and `WebFetchResult.tsx`, and the browser pane's `DEFAULT_BROWSER_URL` in `frontend/app/view/browser/browser-model.ts`.
 - **Inspect the databases.** The `.db` files under `~/.agentmux` are ordinary SQLite files; open them with the `sqlite3` CLI.
 
 ---

@@ -55,7 +55,7 @@ AgentMux tracks all three token types — `input_tokens`, `cache_creation_input_
 real_context_tokens = input_tokens + cache_creation_input_tokens + cache_read_input_tokens
 ```
 
-Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation, lines 95-98), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `crates/srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
+Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `crates/srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
 
 **Note:** these three fields are parsed per-turn for the live UI counters only — they are not persisted anywhere queryable. There is currently no way to check historically whether caching landed for a past session; only live, in the moment.
 
@@ -84,12 +84,13 @@ The provider's cached system prompt entry is invalidated whenever the system pro
 - The agent's soul or agentmd is edited, or a bundle's instructions or Global Memory change
 - A bundle is added to or removed from the agent's Bundles list
 - The skills index changes (skill installed/removed)
+- The agent's working directory changes, when its soul or agentmd uses `{{WORKING_DIR}}` (the launch writes the instructions file with the directory substituted)
 - A new session is started without `--resume` (the session ID changes, and the CLI opens a fresh context)
 
 On invalidation, turn 1 of the next session pays full `cache_creation_input_tokens` again.
 
-:::note[Working directory does *not* currently invalidate the cache]
-An earlier version of this page listed "the working directory changes" as a trigger, via `{{WORKING_DIR}}` template substitution. As of this writing, `write_agent_config_files` calls `build_config_files` — the variant that explicitly does **not** substitute `{{WORKING_DIR}}` (its own code comment: *"WORKING_DIR is not available in this signature... expansion will leave `{{WORKING_DIR}}` intact if absent"*). The sibling function that does substitute it, `build_config_files_with_bus`, has no callers anywhere in the codebase. So today, changing an agent's working directory has no effect on the assembled CLAUDE.md and does not invalidate the prompt cache. This is either dead code that should be wired up, or this line should stay removed — tracked as an open item, not yet decided either way.
+:::note[Working directory and the cache]
+`build_config_files` (`crates/srv/src/backend/agent_config.rs`, called from `write_agent_config_files` in `crates/srv/src/server/app_api/agent_open.rs`) substitutes `{{WORKING_DIR}}` along with `{{AGENT}}`, `{{AGENT_SLUG}}`, `{{AGENT_ID}}` and `{{DATE}}`. The directory therefore changes the assembled instructions file only where the agent's soul or agentmd uses `{{WORKING_DIR}}`; an agent that doesn't use it keeps the same file, and the same cached prompt, when its directory changes.
 :::
 
 **Mitigation for cross-instance cache reuse:** the Claude Code provider's launch args include `--exclude-dynamic-system-prompt-sections`, which moves per-machine content (cwd, env info, memory paths, git status) out of the CLI's own dynamically-generated system-prompt sections and into the first user message instead — so the same assembled CLAUDE.md produces the same cached prompt prefix across different machines/instances, rather than each one minting its own cache entry. This only applies to content the CLI itself injects dynamically (separate from the CLAUDE.md-content invalidation triggers above), and is a no-op if an agent's `provider_flags` sets a custom `--system-prompt` (a free-form, user-configurable field), since that flag's own documented behavior only applies to the default system prompt.

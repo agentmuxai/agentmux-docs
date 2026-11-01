@@ -94,7 +94,7 @@ There are two places.
 …
 ```
 
-This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName`, which is the provider id (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`, `kilo`, `cline`, `opencode`, `goose`, `grok`, `dsh`, `aider`, `crush`, `muse`). It is account-wide: every channel, version and instance on the machine shares it.
+This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The subdirectory name is the provider's `authDirName` (`frontend/app/view/agent/providers/types.ts`), which is the provider id (`claude`, `codex`, `muxcode`, `gemini`, `qwen`, `kimi`, `openclaw`, `copilot`, `pi`, `antigravity`, `kilo`, `cline`, `opencode`, `goose`, `grok`, `dsh`, `aider`, `crush`, `muse`). It is account-wide: every channel, version and instance on the machine shares it.
 
 On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `crates/common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
 

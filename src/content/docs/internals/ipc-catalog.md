@@ -354,7 +354,7 @@ All `agentmux_common::ipc::Event` variants propagated. Key ones:
 | `WorkspaceCreated/Deleted/Renamed` | Workspace CRUD |
 | `TabCreated/Deleted/Reordered/Moved` | Tab CRUD |
 | `BlockCreated/Deleted/Moved` | Block CRUD |
-| `LayoutInsertNode` / … (11 layout variants) | Layout tree mutations |
+| `LayoutNodeDeleted`, `LayoutTreeReplaced`, `LayoutBackendActionsQueued` | Layout tree changes (with `FocusedNodeChanged` and `MagnifiedNodeChanged` for focus and magnify) |
 
 ---
 
@@ -668,14 +668,14 @@ All `Command` variants from the second half of `ipc.rs` (Phase E.x):
 | `CreateWindow`, `CloseWindowInternal`, `SwitchWorkspace`, `UpdateWindowMeta` | Window↔workspace mapping |
 | `CreateBlock`, `DeleteBlock`, `MoveBlock`, `UpdateBlockMeta` | Block CRUD |
 | `SetFocusedNode`, `SetMagnifiedNode` | Layout focus/magnify |
-| `LayoutInsertNode`, `LayoutInsertNodeAtIndex`, `LayoutDeleteNode`, `LayoutMoveNode`, `LayoutSwapNodes`, `LayoutResizeNodes`, `LayoutReplaceNode`, `LayoutSplitHorizontal`, `LayoutSplitVertical`, `LayoutClear`, `LayoutSetTree` | Layout tree mutations (E.4.B, 11 variants) |
+| `LayoutApplyIntent`, `LayoutSetTree`, `LayoutDeleteNode`, `LayoutDeleteNodeByBlock`, `LayoutStackPush`, `LayoutStackActivate`, `LayoutStackMove`, `LayoutStackMoveMany`, `LayoutQueueBackendActions` | Layout tree mutations |
 
 ### Domain Mixing Note
 
 `crates/common/src/ipc.rs` (2034 LOC) contains a single `Command` enum that conflates two distinct domains:
 
 - **Launcher domain** (`Register`, `Ping`, `ReportWindow*`, `ReportHwnd*`, `SpawnPoolWindow`, `ReapPanes`, `DrainPoolIfLast`, `GetSnapshot`, `GetEvents`, …) — processed by the launcher's reducer.
-- **Srv domain** (`GetSrvSnapshot`, `CreateWorkspace`, `DeleteWorkspace`, `CreateTab`, `LayoutInsertNode`, …) — processed by the srv reducer.
+- **Srv domain** (`GetSrvSnapshot`, `CreateWorkspace`, `DeleteWorkspace`, `CreateTab`, `LayoutSetTree`, …) — processed by the srv reducer.
 
 These share a wire-level namespace. The routing logic lives in the respective process's connection handler and is not enforced by the type system. A mis-addressed `CreateWorkspace` sent to the launcher pipe returns `Event::Error { code: InvalidCommand }` rather than a type error.
 

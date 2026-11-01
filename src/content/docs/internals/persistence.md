@@ -80,7 +80,7 @@ you everywhere — an agent created in one channel (or one release version) shou
 appear, fully configured, in all of them. That globalization is implemented by a
 **definition-registry mirror** that shadows local `objects.db` agent mutations into
 an account-wide store. See
-[`SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE_2026-06-13.md)
+[`SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE_2026-06-13.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_CROSS_CHANNEL_AGENT_PERSISTENCE_2026-06-13.md)
 and [`def_registry_mirror.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/def_registry_mirror.rs).
 
 ### The two global stores

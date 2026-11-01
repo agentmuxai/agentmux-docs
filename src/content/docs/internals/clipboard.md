@@ -59,7 +59,7 @@ Selection within xterm is managed by xterm.js itself, not by the browser — `xt
 
 For long-output surfaces (install logs, terminal scrollback, agent transcripts), one extra action:
 
-- **Save Selection As…** — writes the selection (or `getAll()` if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
+- **Save Selection As…** — writes the selection (or the whole content if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
 
 Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. The backend handler is planned; it does not exist yet.
 
