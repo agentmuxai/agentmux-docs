@@ -731,6 +731,7 @@ Drag a tab below the tab bar to move it into a **new window** of its own, in a n
 | Control | Behavior |
 |---|---|
 | Drag pane header outside the window | Tears the pane into a floating window at the same size as the original pane |
+| Ctrl+click (Cmd+click on macOS) on a link, a widget, a palette entry or a file | Opens the pane that click opens as a floating window, instead of in the current tab |
 | Drag the floating title bar | Move the floating window freely across monitors |
 | Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 180 ms at that speed; release to dock |
 | Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |

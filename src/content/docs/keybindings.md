@@ -17,6 +17,7 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Keyboard shortcuts | ⌘/, F1 | Ctrl+/, F1 |
 | Voice input | ⌃⇧V | Ctrl+Shift+V |
 | Close dialog or find bar | Esc | Esc |
+| Open as a floating window | ⌘+click | Ctrl+click |
 
 ## Tabs & windows
 
