@@ -1,0 +1,5 @@
+# Terms no page may use, and what to say instead: `term => say instead`. Checked everywhere on a
+# page, code blocks too.
+.tar.gz => the Linux portable build is a .tar.xz
+agent.run-command => removed, see the code
+defwidget@warden => the Warden has no widgets.json entry
