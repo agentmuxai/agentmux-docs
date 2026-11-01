@@ -20,18 +20,39 @@ A tab holds one Audit: choosing it again brings back the one already open. Audit
 
 ## The feed
 
-The feed shows recent entries from the message handler's audit log, most recent first (`frontend/app/view/warden-audit/`):
+The feed is the record of what happened between agents, newest first (`frontend/app/view/audit/`). It is read from a file AgentMux only appends to, so it reaches back past restarts, and you can page back through all of it. It holds:
 
 - every [jekt](/glossary/#jekt) delivery, from any tier, with sender and recipient, size in bytes, and success or failure (failed rows are tinted red and show the error);
 - agent stops from the [Swarm fleet toolbar](/subagent-watcher/#fleet-toolbar) or `Stop` `agents`, and `Stop` `pane` calls in which an agent closed a pane that holds no agent;
 - agents shut down or quitting themselves (`/shutdown`, `/quit`, `/exit`, **Shut down** in My Agents or a pane's menu, or `Stop` `self`), including a self-quit that has to wait for your 15-second override;
 - the 30-second override window that an agent's `Stop` `agents` or its `Stop` `pane` opens for you: one row when it is requested ("pending user override…") and one with the outcome (shut down, superseded, failed, or kept by the user);
 - [remote operations](/lan-discovery/#remote-operations): `remote.request` rows for the requests an agent here sent to another machine, and `remote.<operation>` rows for the typed requests another machine's agent sent here, under `agent@machine` with how the request was proven and how it ended (done, refused with its reason, or failed);
-- agent registrations: a row when an agent **registered**, **unregistered**, or was **swept** (its pane was gone), with the block it was, and the block or agent it replaced if registering displaced one.
+- agent registrations: a row when an agent **registered**, **unregistered**, or was **swept** (its pane was gone);
+- agent starts and ends: a row when an agent's session started (resumed, or new, with or without its record) and when it stopped, with why.
 
-Each row shows the time, `sender → recipient` (or the agent and what happened to it), the status, a size in bytes and the reason. Rows for stops, pane closes and quits don't name the action; tell them apart by the reason text. Their byte size is the length of the internal action name, not of a message. A stop from the Swarm toolbar shows `—` as the sender.
+An entry never holds a message's text, only its length: the file keeps a hash and a size.
 
-The pane requests the latest 50 entries and refreshes every 5 seconds while it is shown. The log holds the last 100 entries in memory and is cleared when AgentMux restarts, so the feed is a recent window, not the whole history. A stopped or hidden Audit doesn't refresh.
+Each row shows how long ago it happened (hover for the exact time), the kind, what happened and the reason, and, on a delivered jekt, what the message cost the receiver to read. A cost marked `~` is an estimate from the message's length, such as "~120 tokens". Stops, pane closes and quits read "*who* *what happened* on *whom*"; the reason says more.
+
+### Filters
+
+Above the feed:
+
+- **Agent**: only the entries that name this agent, as sender, receiver or actor.
+- **Search entries**: only the entries whose summary, agents or reason contain the text.
+- **How far back**: **All time**, **Last hour**, **Last 24 hours** or **Last 7 days**.
+- **Kind chips**: **Jekts**, **Actions**, **Registrations**, **Starts**, **Ends**, **Tool calls** and **Thoughts**. The first five are on by default. Tool calls and thoughts are not recorded anywhere yet: turn them on and the pane says "Not recorded yet".
+
+A line under the filters totals everything the filter matches, not only the rows shown: "212 entries · ~38k tokens". The feed shows 50 entries; **Show older** adds the next 50.
+
+### Open the agents an entry is about
+
+A row has a button for each agent it names, only where it can work:
+
+- **Sender's history** and **Receiver's history** on a jekt, **Actor's history** and **Target's history** on an action, **In history** on a start, an end or a registration: opens that agent's [History](/history/) at the moment of the entry, in the conversation it happened in, so you read what was said around it. For a start or end, History opens at the exact point the session began or ended.
+- **Sender's pane**, **Receiver's pane**, **Actor's pane**, **Target's pane** or **In its pane**: shows the agent's live pane, while it has one.
+
+The feed refreshes every 5 seconds while you are at the newest entries and the pane is shown. Once you page back, the list stays where it is until you change a filter. A stopped or hidden Audit doesn't refresh.
 
 Which agents are registered to receive messages is shown in the [Swarm](/subagent-watcher/): an agent that another AgentMux instance on the same machine also claims, or whose messages were refused for an identity mismatch, carries a badge on its row, and the row menu has **Stop receiving messages** for it.
 
