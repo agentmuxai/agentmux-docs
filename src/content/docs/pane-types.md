@@ -396,6 +396,14 @@ What gets a row (`frontend/app/view/agent/components/ActivityDock.tsx`, `fronten
 - A command the agent launched in the background (`run_in_background`), **immediately**, including one a subagent started. A long-lived background process (a dev server, a watch task) is expected to keep running, so it shouldn't look like a stuck turn.
 - Shells and subagents the agent started.
 
+A running row shows a rotating slash to the left of the short phrase the agent gave the call (a Bash call's description; the command itself when it gave none). A finished row keeps its result mark.
+
+#### Long commands go to the background
+
+For a Claude agent, AgentMux sets the CLI's default Bash timeout to 30 seconds. A Bash call still running at 30 seconds is moved to the background: the tool result says so, the agent's turn ends and the agent is free to take your next message, and the command's end arrives later as a notice that starts a turn. A call that sets a longer `timeout` of its own is cut to 30 seconds by AgentMux's `PreToolUse` hook, so it goes to the background too. The CLI doesn't background a command it can't split into simple commands: one with `git` in it, a command or process substitution, or a brace or `$'…'` expansion is stopped at its timeout instead. When the agent sets none for such a call, the hook gives it five minutes, so a push or a clone can finish. A timeout the agent sets for such a call stands. A background call (`run_in_background`) is left alone, and so is an agent whose own environment sets `BASH_DEFAULT_TIMEOUT_MS`.
+
+When a call with a description moves to the background, the pane says so in the conversation, in the agent's own phrase: "Moved to the background: *phrase*. The agent is free; it picks this up when it finishes." When it ends, a line says "Finished in the background: *phrase*." (or "Failed" or "Stopped"). Only a call that moved while you were watching gets these lines; one in a conversation you open later doesn't. A call with no description keeps the agent's own narration.
+
 A row shows a glyph for its kind while it runs (`$` for a command), then ✓ (done), ✗ (failed) or ■ (stopped). A finished row leaves the dock after a few seconds: 8 s when done, 3 s when stopped, 15 s when failed. A failed row can be dismissed sooner with **×**. A background command's row ends when the agent is told it finished, or when Claude Code reports that it ended, which is what clears rows for commands a subagent started. The same background commands also appear in the [Swarm](/subagent-watcher/#background) pane.
 
 ### Agent History
