@@ -215,7 +215,7 @@ These are the tools `agentmux-mcp` registers for every agent (`crates/mcp/src/to
 
 There is **one tool per area, and every call takes an `action`**: `Pane` with `action: "open"`, not a separate `OpenEditor`. The descriptions and parameters below are the ones agents see, so they are the reference; the parameters an action doesn't use are ignored. Earlier versions had one tool per action (`WhoAmI`, `SendMessage`, `Shell`, `WorkEnqueue`, `FleetBulkStop`, …); those names are gone.
 
-Not every agent is shown every tool. `Calendar`, `Drive` and `Gmail` appear only for an agent that has a grant on its Google service, and `Desktop` does nothing until you turn it on in Settings. A container agent gets the tools whose routes can run in its container; a call that cannot says why and what to do instead.
+Not every agent is shown every tool. `Calendar`, `Drive` and `Gmail` appear only for an agent that holds that service on a Google account, and `Desktop` does nothing until you turn it on in Settings. A container agent gets the tools whose routes can run in its container; a call that cannot says why and what to do instead.
 
 | Area | Tools |
 |---|---|
@@ -226,7 +226,7 @@ Not every agent is shown every tool. `Calendar`, `Drive` and `Gmail` appear only
 | Work and schedules | [`Tasks`](#tasks), [`Schedule`](#schedule) |
 | Memory, secrets and accounts | [`Memory`](#memory), [`Skills`](#skills), [`Vault`](#vault), [`Identity`](#identity) |
 | Widgets and AgentMux itself | [`Widget`](#widget), [`App`](#app), [`Desktop`](#desktop), [`RegisterDevServer`](#registerdevserver) |
-| Google (with a grant) | [`Calendar`](#calendar), [`Drive`](#drive), [`Gmail`](#gmail) |
+| Google | [`Google`](#google-1) (always), [`Calendar`](#calendar), [`Drive`](#drive), [`Gmail`](#gmail) (with a grant) |
 
 ### Acting on another machine
 
@@ -974,11 +974,31 @@ Container-type agents only. Registers a dev server YOU just started inside YOUR 
 
 ### Google
 
-These three are shown only to an agent whose Google service has a grant. AgentMux makes the call with the account the person bound to the agent; the agent never holds a Google token, and every call is logged on the account.
+`Google` is shown to every agent. It lists the connected Google accounts and lets an agent turn a service on for itself or another agent. `Calendar`, `Drive` and `Gmail` are shown only to an agent that holds the service on some account (within a minute of a grant). An agent may hold the same service on several accounts. A call names the account by its email; with one candidate AgentMux uses it, and with several the answer is "name one of: …". AgentMux makes the call; the agent never holds a Google token, and every call is logged on the account.
+
+#### `Google`
+
+The Google accounts the person has connected to AgentMux, and who may use them. The person only signs in and consents (Connectors ▸ Accounts ▸ Connect Google); everything else is the agent's to do. Every call takes an action.
+
+`status`: each connected account, what it can be used for (`connected_for`: none, read or write, from the consent it was given), your own level on each of Calendar, Drive and Gmail (off, read or write) and which agents hold each.
+
+`grant`: turn a service of an account on for an agent (default yourself), at level read (default) or write. Write adds drafts, labels and sending, and every send still waits for the person's approval in the AgentMux window. A grant the account's consent can't back (write on a read-only Gmail connection, for example) is refused, with what to do.
+
+`ungrant`: turn it off.
+
+Every grant and ungrant is recorded under the agent that made it, in the account's log. Grant only what the work needs: mail an agent reads goes to the model provider it runs on.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `action` (required) | `"status"` \| `"grant"` \| `"ungrant"` | What to do |
+| `account` | `string` | grant, ungrant: the Google account's email, from status |
+| `service` | `"calendar"` \| `"drive"` \| `"gmail"` | grant, ungrant: which service |
+| `level` | `"read"` \| `"write"` | grant: read (default) or write |
+| `agent` | `string` | grant, ungrant: the agent's name or id (default you) |
 
 #### `Calendar`
 
-Read the Google Calendar of the account the person bound to you, with their permission (AgentMux makes the call; you never hold a Google token). Every call takes an action.
+Read the Google Calendar of a Google account the person has allowed you to use (`Google` `status` lists them), with their permission (AgentMux makes the call; you never hold a Google token). Every call takes an action.
 
 `list_calendars`: the calendars you can read, with their ids.
 
@@ -991,7 +1011,7 @@ Read the Google Calendar of the account the person bound to you, with their perm
 | Parameter | Type | Description |
 |---|---|---|
 | `action` (required) | `"list_calendars"` \| `"list_events"` \| `"search_events"` \| `"free_busy"` | What to do |
-| `account` | `string` | The Google account's email, if you want to be sure which one; default the one bound to you |
+| `account` | `string` | The Google account's email, needed when you hold this service on more than one account |
 | `calendar_id` | `string` | list_events, search_events, free_busy: a calendar id from list_calendars (default primary) |
 | `time_min` | `string` | list_events, search_events, free_busy: start, RFC 3339 (default now) |
 | `time_max` | `string` | list_events, search_events, free_busy: end, RFC 3339 (default 7 days after time_min) |
@@ -1003,7 +1023,7 @@ Read the Google Calendar of the account the person bound to you, with their perm
 
 #### `Drive`
 
-Read the Google Drive files the person gave you, through the Google account they bound to you, with their permission (AgentMux makes the call; you never hold a Google token). You reach only the files the person picked for AgentMux and the ones AgentMux made, never their whole Drive. Every call takes an action.
+Read the Google Drive files the person gave you, through a Google account they have allowed you to use (`Google` `status` lists them), with their permission (AgentMux makes the call; you never hold a Google token). You reach only the files the person picked for AgentMux and the ones AgentMux made, never their whole Drive. Every call takes an action.
 
 `pick_files`: open Google's file picker in the person's browser so they can choose files for you; it returns at once, so call search_files afterwards.
 
@@ -1016,7 +1036,7 @@ Read the Google Drive files the person gave you, through the Google account they
 | Parameter | Type | Description |
 |---|---|---|
 | `action` (required) | `"pick_files"` \| `"search_files"` \| `"get_file_metadata"` \| `"read_file_content"` | What to do |
-| `account` | `string` | The Google account's email, if you want to be sure which one; default the one bound to you |
+| `account` | `string` | The Google account's email, needed when you hold this service on more than one account |
 | `query` | `string` | search_files: words to look for in names and contents (default: all your files) |
 | `file_id` | `string` | get_file_metadata, read_file_content: a file id from search_files |
 | `max_results` | `integer` | search_files: results per page (default 25, at most 100) |
@@ -1024,7 +1044,7 @@ Read the Google Drive files the person gave you, through the Google account they
 
 #### `Gmail`
 
-Read and write the Gmail of the account the person bound to you, with their permission (AgentMux makes the call; you never hold a Google token). Writing needs the person to have allowed it for you. Every call takes an action.
+Read and write the Gmail of a Google account the person has allowed you to use (`Google` `status` lists them), with their permission (AgentMux makes the call; you never hold a Google token). Writing needs the person to have allowed it for you. Every call takes an action.
 
 `search_threads`: threads matching query in Gmail's own search syntax (for example from:alice newer_than:7d is:unread; default the newest), newest first, each with its subject, sender, date and a snippet.
 
@@ -1043,7 +1063,7 @@ Read and write the Gmail of the account the person bound to you, with their perm
 | Parameter | Type | Description |
 |---|---|---|
 | `action` (required) | `"search_threads"` \| `"get_thread"` \| `"list_labels"` \| `"create_draft"` \| `"update_draft"` \| `"send_draft"` \| `"label_thread"` \| `"trash_thread"` | What to do |
-| `account` | `string` | The Google account's email, if you want to be sure which one; default the one bound to you |
+| `account` | `string` | The Google account's email, needed when you hold this service on more than one account |
 | `query` | `string` | search_threads: Gmail search syntax |
 | `label_id` | `string` | search_threads: only threads with this label id (from list_labels) |
 | `thread_id` | `string` | get_thread, label_thread, trash_thread: a thread id from search_threads; create_draft, update_draft: reply in this thread |

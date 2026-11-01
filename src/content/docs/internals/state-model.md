@@ -400,24 +400,28 @@ export function isUsableFocusRingColor(color: string | null | undefined): boolea
 
 ### 4.5 Tab Color System
 
-Tabs no longer get a color automatically at creation; a user picks one from the 14-color `TAB_COLORS` palette (`frontend/app/tab/tab.tsx`):
+Tabs no longer get a color automatically at creation; a user picks one from the shared 16-color palette (`PALETTE` in `frontend/app/theme/palette.ts`, read from `schema/color-palette.json`), the same hues panes, agents, widgets and browser profiles use:
 
 | Name | Hex |
 |---|---|
-| Red | `#c22a2a` |
-| Orange | `#b75e20` |
-| Amber | `#9d6d1d` |
-| Yellow | `#90731a` |
-| Lime | `#5a821e` |
-| Green | `#248749` |
-| Teal | `#1e8479` |
-| Cyan | `#1a8294` |
-| Blue | `#2562c5` |
-| Indigo | `#2d30cf` |
-| Violet | `#5c29d2` |
-| Fuchsia | `#ae2ac2` |
-| Pink | `#c02b75` |
-| Rose | `#c42742` |
+| Crimson | `#e8777f` |
+| Red | `#e87b64` |
+| Orange | `#e28247` |
+| Amber | `#d48d24` |
+| Yellow | `#bb9c12` |
+| Lime | `#9aa932` |
+| Green | `#75b255` |
+| Jade | `#47b777` |
+| Teal | `#00b89e` |
+| Cyan | `#00b4be` |
+| Sky | `#00aedd` |
+| Azure | `#53a3f2` |
+| Indigo | `#8297f5` |
+| Violet | `#ae88e7` |
+| Magenta | `#ce7cc8` |
+| Pink | `#e276a0` |
+
+The stored hex only names a hue: a window tab is drawn in the pane-tab pill tones for that hue (`frontend/app/tab/tab.tsx`), so picking a tab color never recolors a pane border. An older stored hex snaps to the nearest slot.
 
 Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts`). The startup tab is intentionally left without a color (`tabbar.tsx`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 

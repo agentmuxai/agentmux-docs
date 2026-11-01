@@ -78,6 +78,8 @@ Gmail needs your own client, or your organization's internal one: Google reviews
 
 Under **Agents** the details list the agents bound to the account, with a control for each service: **Off**, **Read**, and for Gmail **Read and write**. An agent sees a `Calendar`, `Drive` or `Gmail` tool only for a service you gave it. Mail, events and file text are written by other people, so the tools mark them as untrusted and the agent is told never to follow instructions found in them. **Activity** at the bottom lists what each agent did with the account: the action and the thread, draft or event ids, never the mail.
 
+An agent can also turn a service on for itself, or for another agent, with the `Google` tool (`status`, `grant`, `ungrant`; see [MuxAPI](/internals/muxapi/#google)). A grant is all it needs: the agent doesn't have to be bound to the account first, and one agent may hold the same service on several Google accounts, naming the account by its email in each call. A grant your consent can't back, such as write on a read-only Gmail connection, is refused with what to do. Every grant and ungrant is recorded in the account's **Activity** under the agent that made it, and a send still waits for your approval in the window.
+
 ### Changing which account an agent uses
 
 Connectors doesn't bind accounts to agents. An agent's account is changed from the agent: click the login email in its composer strip and choose an account, or **Sign in with another account…**. The menu lists every signed-in account of the agent's provider, with its quota state. See [Identity & Accounts → Changing an agent's account](/identity/#changing-an-agents-account).
