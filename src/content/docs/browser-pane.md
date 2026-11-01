@@ -64,7 +64,7 @@ Asking your search engine for suggestions sends it what you type before you pres
 
 If suggestions aren't available, the address bar keeps anything starting with `http://`, `https://` or `about:`. Otherwise, if what you typed contains a dot and no spaces, `https://` is added in front. Anything else is sent to Google search.
 
-The pane title follows the page title, and shows the host name while a page is loading. The pane icon, and the icon on the pane's tab, is the site's favicon. A generic globe stands in when the site has none, or when its icon fails to load, so the slot is never blank. After the first paint, a small loading mark shows in the top-right corner of the page while it loads.
+The pane title follows the page title, and shows the host name while a page is loading. The pane icon, and the icon on the pane's tab, is the site's favicon. A generic globe stands in when the site has none, or when its icon fails to load, so the slot is never blank. A tab in a named profile keeps the site's icon too, with a small dot at its bottom-right in the profile's colour; an Incognito tab's dot is grey, and a Personal tab has none. Hover the tab for the profile's name. After the first paint, a small loading mark shows in the top-right corner of the page while it loads.
 
 ## Keyboard shortcuts
 
@@ -116,8 +116,8 @@ Every browser tab browses as one identity, which never changes. The **Profile** 
 
 Choosing an entry opens a **new tab in the same pane**, at the current page (or your Home page), as that identity. The tab you were on stays as it was.
 
-- **Personal** is the identity every tab starts with: your saved sign-ins.
-- **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**. A new profile opens at your Home page, since it is signed in nowhere. Rename, recolour, delete and allow agents to use them in **Settings ▸ Browser**.
+- **Personal** is the identity every tab starts with: your saved sign-ins. Its tabs carry no dot.
+- **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**. A new profile opens at your Home page, since it is signed in nowhere. Rename, recolour, delete and allow agents to use them in **Settings ▸ Browser**. Deleting a profile closes its tabs and signs it out; if it has saved sign-ins, you choose **Move them to Personal** or **Delete them too**.
 - **An agent's browser pane** (`Browser` `open`) browses as your Personal profile by default for an agent on your computer, and in a fresh Incognito jar for a container agent. The answer to `open` says which one the pane got, and its `profile` argument picks another.
 - **An Incognito tab** has its own cookie jar, separate from your normal browsing and from every other Incognito tab. Nothing is saved, and it's gone when the tab closes.
 
@@ -142,11 +142,11 @@ Limitations:
 
 When a site or proxy asks for HTTP authentication, a sign-in dialog appears over that pane only; the rest of AgentMux stays usable (`frontend/app/view/browser/components/BrowserAuthModal.tsx`). It shows "*origin* says: *realm*", **Username** and **Password** fields, a **Save this credential** checkbox (off by default), and **Cancel** / **Sign in**.
 
-A saved credential goes to your operating system's keychain, filed under the agent identity linked to the pane. If the pane has no linked agent identity, nothing is saved.
+A saved credential goes into the [Vault](/vault/) as a **Login** entry that belongs to the profile of the tab that asked: Personal for a normal tab, or the named profile. An Incognito tab never saves one, and the **Save this credential** checkbox does nothing there. Saving the same user again replaces the password (the old one is kept as a version for 7 days); another user on the same site gets an entry of its own. The entry records the site, the realm the site named and, for a proxy, the proxy, and only tabs of that profile are offered it.
 
-When a saved credential matches a later request, AgentMux asks before using it, in a small separate window: "Use saved sign-in?" with **Approve** and **Deny**. This means an agent controlling the pane never sees the password. The request is denied if you don't answer within 60 seconds. If the site asks again within 15 seconds of an automatic sign-in, AgentMux deletes the saved credential and shows the manual dialog instead.
+When a saved credential matches a later request, AgentMux asks before using it, in a small separate window: "Use saved sign-in?" with **Approve** and **Deny**. This means an agent controlling the pane never sees the password. The request is denied if you don't answer within 60 seconds. If the site asks again within 15 seconds of an automatic sign-in, it has turned the password down: the manual dialog appears instead, and the entry is kept, marked "the site refused it: check the password", and not offered again until you save a new password for that user.
 
-There is no screen for listing or deleting saved credentials.
+Each sign-in appears in the Vault with the other logins, where you can change or delete it, and each use is in the Vault's Activity as "signed in", with the site. Sign-ins saved by an earlier version were kept in the operating system's keychain; AgentMux moves the ones it had noted into **Personal** at its next start, marked "moved from the old sign-in store: check the profile", and deletes the keychain copies. A sign-in it never noted can't be listed from the keychain: enter it once more and it is saved in the Vault.
 
 ## New windows and popups
 
