@@ -32,11 +32,11 @@ Hover **more** (or click it) to list the widgets that aren't pinned to the bar. 
 
 ### A tab's menu
 
-Right-click a window tab to colour it or rename it: pick one of 14 colours, **Clear color** to remove it, or **Rename**. The colour is stored with the tab (`tab:color`).
+Right-click a window tab to colour it or rename it: pick one of the 16 palette colours (the same ones panes, widgets and browser profiles use), **Clear color** to remove it, or **Rename**. The colour is stored with the tab (`tab:color`).
 
 No two tabs in a window share a name, ignoring case. A new, renamed or moved tab whose name is taken gets a counter: "Tab 4 (2)", "Report (2)". A new tab is named with the next free "Tab N". A name that ends in a year, such as "Report (2024)", keeps it, and the counter goes after it: "Report (2024) (2)".
 
-![A window tab's menu: 14 tab colours, Clear color, Rename and Close menu](../../assets/screenshots/chrome/chrome-tab-menu.png)
+![A window tab's menu: tab colours (the earlier 14-colour set), Clear color, Rename and Close menu](../../assets/screenshots/chrome/chrome-tab-menu.png)
 
 ### Closing a tab
 

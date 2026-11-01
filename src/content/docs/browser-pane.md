@@ -111,7 +111,7 @@ Every browser tab browses as one identity, which never changes. The **Profile** 
 
 - **Open new Incognito tab** (`Ctrl+Shift+N`, `Cmd+Shift+N` on macOS);
 - **Personal**, and each profile you created;
-- **New profile…**, which asks for a name and a colour in a dialog that covers only this pane, so the rest of AgentMux stays usable while it is open;
+- **New profile…**, which asks for a name and a colour (one of the 16 palette colours) in a dialog that covers only this pane, so the rest of AgentMux stays usable while it is open;
 - **Manage profiles…**, which opens **Settings ▸ Browser** in the window you clicked in.
 
 Choosing an entry opens a **new tab in the same pane**, at the current page (or your Home page), as that identity. The tab you were on stays as it was.

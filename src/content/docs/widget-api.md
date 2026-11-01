@@ -46,7 +46,7 @@ A widget is a folder named for its id, holding `widget.json` and the widget's fi
 | `description` | no | At most 300 characters. |
 | `author`, `homepage` | no | Shown in the prompt. `homepage` must be an `https://` link. |
 | `icon` | no | A [Font Awesome](https://fontawesome.com/icons) icon name. |
-| `defaultHue` | no | The pane color's hue, 0 to 359. |
+| `defaultHue` | no | The pane color's hue, 0 to 359. It is snapped to the nearest of the 16 shared palette colors. |
 | `kind` | no | `sandboxed` (the default) or `trusted`. |
 | `entry` | no | The page a pane loads when it names none: `index.html` by default. |
 | `permissions` | no | What it asks for (below). An unknown permission makes the package invalid. |

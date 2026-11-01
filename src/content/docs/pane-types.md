@@ -465,11 +465,13 @@ Click **Shell** in the composer strip to open a resizable **details drawer** ben
 
 ### Pane and tab colors
 
-Every agent has its own **automatically assigned display color** — a deterministic color derived from the agent's id, set the moment the agent is created (and backfilled for agents that existed before this shipped) and shown as the agent pane's border. It requires no action on your part; it's just how you can tell agents apart at a glance across panes.
+Every agent has its own **automatically assigned display color**, one of the 16 colors of the shared palette (see below). New agents are spread over the colors in use the least, and the choice is stored when the agent is created. It is shown as the agent pane's border. It requires no action on your part; it's just how you can tell agents apart at a glance across panes.
 
-This is separate from **manual** pane/tab coloring: right-click a **pane header** and open **Pane Color** for **Default** and 12 named colors (applies a `frame:hue` to that pane) — this works on every pane type, not just Agent panes, and overrides an agent's automatic color when set. Right-click a **window tab** for a separate 14-swatch palette (`tab:color`) to color the tab itself, with **Clear color** and **Rename**. These are two independent color systems (different storage, different swatch sets) by design.
+This is separate from **manual** pane/tab coloring: right-click a **pane header** and open **Pane Color** for **Default** and the 16 palette colors, each shown with a swatch in the current theme's tone (the pick is stored as `frame:color`). This works on every pane type, not just Agent panes, and overrides an agent's automatic color when set. On a pane that isn't an agent's, once you have picked a color, **Use for all ‹Widget› panes** makes it the color of every pane of that type and returns this pane to following it. Right-click a **window tab** for the same 16 colors (`tab:color`) to color the tab itself, with **Clear color** and **Rename**. Panes, window tabs, agents, widgets and browser profiles all use the same 16 colors; each is drawn in its own tone for its role, so coloring a tab never recolors a pane's border.
 
-![A pane's right-click menu with Pane Color open: Default, then Crimson, Coral, Amber, Chartreuse, Green, Emerald, Teal, Sky, Blue, Violet, Fuchsia and Pink](../../assets/screenshots/chrome/chrome-pane-color-submenu.png)
+The palette: Crimson, Red, Orange, Amber, Yellow, Lime, Green, Jade, Teal, Cyan, Sky, Azure, Indigo, Violet, Magenta, Pink.
+
+![A pane's right-click menu with Pane Color open, showing the colors of the earlier 12-color palette](../../assets/screenshots/chrome/chrome-pane-color-submenu.png)
 
 ### Subsections
 
