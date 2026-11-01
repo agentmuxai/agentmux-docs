@@ -202,11 +202,27 @@ If the menu can't be shown, you get Chromium's native menu instead.
 
 When you drag a pane, a pane tab or a window tab over a browser pane, the page is replaced by a still snapshot of itself for the duration of the drag, so the drop preview shows and the drop lands, including a tab dropped onto the page (`frontend/app/view/browser/browser-view.tsx`). This works on every platform.
 
+## Closing a pane with unsaved changes
+
+If a page may have unsaved changes (it would ask "Leave site?"), closing its pane asks first in AgentMux's own dialog, not in a box from the page. The dialog reads "Close this pane?" with "*site* may have unsaved changes.", and **Keep open** and **Close anyway** buttons. Only a close you make asks. A close by an agent, or by quitting AgentMux, just closes.
+
 ## What a pane keeps
 
 Only the current URL is saved with the pane. Switching to another window tab and back keeps the page as it was. So does switching between pane tabs in the same pane: a browser tab stays loaded while another tab is showing, keeping its scroll position, form input and history (`frontend/app/view/browser/browser.tsx`, `lifecycle: "keepAlive"`). Moving a browser pane to another window creates a fresh browser at the saved URL, so the page reloads and its back/forward history, scroll position and camera/microphone grants are lost. Its [zoom](#zoom) isn't: that belongs to the site and the profile.
 
-A pane that stays out of sight for a while (30 minutes by default) goes to sleep to free its memory, and loads again when you are about to look at it. Panes an agent is using never sleep. See **Hibernate hidden browser panes** in [Browser settings](/settings/#browser-settings).
+A pane that stays out of sight for a while (30 minutes by default) goes to sleep to free its memory, and loads again when you are about to look at it. While it sleeps, the pane shows a card that says why it slept and how much memory that freed. When the computer is low on memory, hidden panes sleep sooner, and the biggest ones first.
+
+Where AgentMux's browser engine can discard a page in place, a pane that wakes also has its back and forward history, scroll position and anything typed into the page. Otherwise it reloads fresh at the saved address.
+
+A hidden pane stays awake while:
+
+- it plays or captures media, or has something typed into it;
+- its page asks before leaving (the "Leave site?" question);
+- its page's title or icon changed in the last 30 minutes, as a chat or an inbox does;
+- it shows a local development server, has a popup window open, or is waiting for you;
+- an agent has used it within `browser:hibernateafter` minutes (never less than 10).
+
+An agent's pane that the agent has left alone for that long goes to sleep like any other, and the agent's next `Browser` call wakes it. See **Hibernate hidden browser panes** in [Browser settings](/settings/#browser-settings).
 
 ## Driving the browser from an agent
 
@@ -247,7 +263,11 @@ A card, bank or ID number, a security code or a one-time code a page prints, and
 ### Uploading files, forms and frames
 
 - **Uploads.** `set_files` puts files into a file input, and also works on the button or label that opens a page's file chooser (a hidden input, or one the page makes on click). A snapshot lists hidden file inputs as `file input (hidden)`. Up to 10 files and 25 MB in all, from the agent's own workspace, and every upload is logged.
-- **Frames.** A snapshot waits briefly for iframes that are still loading, so a step that loads inside a frame isn't read as empty. References inside a frame look like `f1e3`. In a pane limited to some sites, frames from other sites show their contents with no references.
+- **Fill.** `fill` inserts the text into the field. If the field ignores inserted text, as a masked input does, the field is cleared and the text is typed into it key by key. If it still takes nothing, AgentMux sets the value directly and says so in its answer, because the page may reject that value. The answer says how the field was filled, and warns when the page changed the text, for instance cut it to a limit or reformatted it with a mask. Text longer than the field's `maxlength` is refused, and nothing is typed.
+- **Select.** `select` works on a native list and on a custom dropdown (a control with the `combobox` role, or one that opens a listbox), including one that draws its options in a layer elsewhere on the page. If no option matches, AgentMux types the text into the control and takes the first match.
+- **Long dropdowns.** A closed dropdown with more than 12 options shows as `[N options]` in a snapshot instead of one line per option. A snapshot with `scope` on the dropdown lists them.
+- **Changed pages.** A click on an element the page has removed since the snapshot fails with "the page changed since the snapshot (the element is gone); take a new snapshot".
+- **Frames.** A snapshot waits briefly for iframes that are still loading, so a step that loads inside a frame isn't read as empty. References inside a frame look like `f1e3`, and `scope` also takes one, such as `f1e12.e1`. In a pane limited to some sites, frames from other sites show their contents with no references.
 
 ### Pause all agent browsing
 

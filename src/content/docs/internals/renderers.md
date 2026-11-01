@@ -62,8 +62,10 @@ AgentMux does not change Chromium's process model, so Chromium's usual rules dec
 **A hidden browser pane is put to sleep.** A browser pane that is out of sight (in another window tab or pane tab, or minimized) is collapsed to nothing, and after a while its page is closed so its renderer exits:
 
 - Setting `browser:hibernate` (on by default) turns this off; `browser:hibernateafter` is how many minutes a pane must be hidden first (30 by default; sooner when the computer is low on memory).
-- A sleeping pane keeps its address, title, icon and cookie jar, and loads again when you are about to look at it, with a note while it restores.
-- A pane an agent is using, one playing or capturing media, one with something typed into it, and a local development server never sleep. `browser:keepawakesites` lists sites that never sleep.
+- A sleeping pane keeps its address, title, icon and cookie jar, and loads again when you are about to look at it, with a note while it restores. It shows a card that says why it slept and how much memory that freed. On an engine that can discard a page in place, the wake also brings back the back and forward history, scroll position and anything typed into the page; otherwise the page reloads fresh.
+- When the computer is low on memory, the biggest hidden pages sleep first.
+- A pane an agent used within `browser:hibernateafter` minutes (never less than 10), one playing or capturing media, one with something typed into it, a page that asks before leaving, a page whose title or icon changed in the last 30 minutes, a local development server, a pane with a popup window open and a pane waiting for you don't sleep. `browser:keepawakesites` lists sites that never sleep.
+- An agent's pane that the agent has left alone for that long sleeps, and the agent's next `Browser` call wakes it.
 - Before it sleeps, a hidden page that is still awake is frozen after a few minutes: no scripts or timers run, but its renderer is still there.
 
 See [`hibernation.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/browser/hibernation.ts) for the exact rules.
