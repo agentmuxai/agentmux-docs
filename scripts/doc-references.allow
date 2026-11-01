@@ -1,0 +1,13 @@
+# Names the docs use that are real but not in the agentmux code (so the reference check does not
+# call them missing). One per line; # starts a comment.
+.claude/commands/
+.claude/.agentmux-managed-mcp-servers.json
+CHANGES_REQUESTED
+_input_tokens
+cached_tokens
+WAVETERM
+cmd_env
+createMemo
+GH_TOKEN
+search_history
+SelectionProvider

@@ -36,6 +36,28 @@ jobs:
       - name: Deploy script tests
         run: node --test scripts/publish-html.test.mjs
 
+      - name: Checkout the docs reference checker (agentmux scripts)
+        # The checker lives in agentmux (scripts/check-doc-references.mjs), not in the src/agentmux pin,
+        # which can be older than the script. The ref is fixed so a change to it is a decision;
+        # move it to a newer agentmux commit to pick up new rules.
+        uses: actions/checkout@v4
+        with:
+          repository: agentmuxai/agentmux
+          ref: d3c71463be7886d6423a82fd450ff008cf2d87e8
+          path: .ci-agentmux-scripts
+          sparse-checkout: scripts
+
+      - name: Docs reference check (paths, symbols, line citations, tables and facts against the pinned code)
+        # Fails on a path, name, line number or count a page states that the pinned src/agentmux does
+        # not have. Real names the code lacks: scripts/doc-references.allow. Terms to retire, with
+        # what to say instead: scripts/doc-references.deny. To run it by hand, check out agentmux
+        # and run scripts/check-doc-references.mjs with the same arguments (the header of that file
+        # describes each one).
+        run: >
+          node .ci-agentmux-scripts/scripts/check-doc-references.mjs
+          --docs src/content/docs --code src/agentmux --facts --any-symbol
+          --allow scripts/doc-references.allow --deny scripts/doc-references.deny
+
       - name: Build
         # The TypeScript reference (typedoc) plus the site, not build:full:
         # the Rust reference needs a Rust toolchain and stays a deploy.yml
