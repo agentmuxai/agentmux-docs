@@ -129,8 +129,8 @@ This catalog is generated from the `match cmd` of `route_command` and from `is_s
 | `close_window` | `commands::window::close_window` | inline | yes |  |
 | `quit_app` | `commands::window::quit_app` | inline | — | Issue #2977 Workstream 1 — the tray's "Quit AgentMux". Explicit, user-initiated shutdown that bypasses the background-service gate (see `quit_app`'s doc for why the ordinary last-window path and `Event::HostShouldQuit` both cannot serve here). |
 | `open_panel` | `commands::window::open_panel` | inline | — | Issue #2977 WS3 — the tray panel: a small top-level window, pool-first. |
-| `set_taskbar_attention` | `commands::taskbar_attention::set_taskbar_attention` | inline | yes | Settings UI → launcher auto-start verbs (SPEC_OS_NOTIFICATIONS_SYSTEM _2026_09_24 §4.1). Kept separate from background mode on purpose — tray spec §7.4. Taskbar badge + flash for "agents need you" (SPEC_OS_NOTIFICATIONS _SYSTEM_2026_09_24 Phase 4). |
-| `autostart_status` | `commands::autostart::autostart_status` | async | — |  |
+| `set_taskbar_attention` | `commands::taskbar_attention::set_taskbar_attention` | inline | yes | Taskbar badge + flash for "agents need you" (SPEC_OS_NOTIFICATIONS _SYSTEM_2026_09_24 Phase 4). |
+| `autostart_status` | `commands::autostart::autostart_status` | async | — | Settings UI → launcher auto-start verbs (SPEC_OS_NOTIFICATIONS_SYSTEM _2026_09_24 §4.1). Kept separate from background mode on purpose — tray spec §7.4. |
 | `background_audit_take` | `background_audit::background_audit_take` | inline | — | Issue #2977 WS4 — hand the frontend whatever the background service did while no window was open, so it can tell the user. |
 | `incidents_list` | `commands::incidents::incidents_list` | inline | — | What went wrong and what AgentMux did about it (SPEC_RECOVERY_NOTICES_AND_TOASTS §4.2). |
 | `incident_acknowledge` | `commands::incidents::incident_acknowledge` | inline | yes |  |
@@ -210,7 +210,7 @@ This catalog is generated from the `match cmd` of `route_command` and from `is_s
 | `focus_window` | `commands::window::focus_window` | blocking | yes |  |
 | `close_window_by_label` | `commands::window::close_window_by_label` | inline | yes |  |
 
-#### Clipboard (CEF can't use navigator.clipboard without permission policy)
+#### Vault (the Vault pane's host-side operations; `vault_op` is further down)
 
 | Command | First call | Runs | Args | Note |
 |---------|------------|------|------|------|
@@ -219,6 +219,11 @@ This catalog is generated from the `match cmd` of `route_command` and from `is_s
 | `vault_export` | `commands::vault_files::export` | async | yes |  |
 | `vault_import` | `commands::vault_files::import` | async | yes |  |
 | `vault_import_delete` | `commands::vault_files::delete_picked` | async | yes |  |
+
+#### Clipboard (CEF can't use navigator.clipboard without permission policy)
+
+| Command | First call | Runs | Args | Note |
+|---------|------------|------|------|------|
 | `read_clipboard` | `commands::clipboard::read_clipboard` | inline | — |  |
 | `write_clipboard` | `commands::clipboard::write_clipboard` | inline | yes |  |
 | `read_clipboard_attachments` | `commands::clipboard::read_clipboard_attachments` | inline | — |  |
