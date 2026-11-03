@@ -1,20 +1,18 @@
-
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0" stop-color="#8168d3"/>
-      <stop offset="1" stop-color="#419fe0"/>
-    </linearGradient>
-  </defs>
-  <!-- Dark background -->
-  <rect width="32" height="32" rx="6" fill="#0f0f14"/>
-  <!-- Multi-pane icon: 3 panes suggesting terminal layout -->
-  <!-- Top bar -->
-  <rect x="5" y="5" width="22" height="4" rx="1.5" fill="url(#g)"/>
-  <!-- Left pane -->
-  <rect x="5" y="12" width="10" height="15" rx="1.5" fill="url(#g)" opacity="0.9"/>
-  <!-- Right pane top -->
-  <rect x="17" y="12" width="10" height="7" rx="1.5" fill="url(#g)" opacity="0.7"/>
-  <!-- Right pane bottom -->
-  <rect x="17" y="21" width="10" height="6" rx="1.5" fill="url(#g)" opacity="0.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" shape-rendering="crispEdges">
+  <title>AgentMux icon</title>
+  <style>
+    .edge, .tile { fill: #111016; }
+    .block { fill: #6b82de; }
+    @media (prefers-color-scheme: light) {
+      .edge { fill: #cfcce2; }
+      .tile { fill: #f3f2f8; }
+      .block { fill: #4b5fcf; }
+    }
+  </style>
+  <rect class="edge" width="512" height="512"/>
+  <rect class="tile" x="32" y="32" width="448" height="448"/>
+  <rect class="block" x="64" y="64" width="384" height="64"/>
+  <rect class="block" x="64" y="192" width="160" height="256"/>
+  <rect class="block" x="288" y="192" width="160" height="96"/>
+  <rect class="block" x="288" y="352" width="160" height="96"/>
 </svg>
