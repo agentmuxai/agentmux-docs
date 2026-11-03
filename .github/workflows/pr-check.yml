@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: agentmuxai/agentmux
-          ref: d3c71463be7886d6423a82fd450ff008cf2d87e8
+          ref: cb8e3e6b6cf2ffe235effe9a92cf7bfd4905f77c
           path: .ci-agentmux-scripts
           sparse-checkout: scripts
 
@@ -57,6 +57,15 @@ jobs:
           node .ci-agentmux-scripts/scripts/check-doc-references.mjs
           --docs src/content/docs --code src/agentmux --facts --any-symbol
           --allow scripts/doc-references.allow --deny scripts/doc-references.deny
+
+      - name: Host command catalog (generated from route_command in the pinned code)
+        # The command tables of internals/ipc-catalog.md are written by scripts/gen-ipc-catalog.mjs
+        # (agentmux), between two markers. Fails when the block differs from route_command in the
+        # pinned src/agentmux: a pin bump that adds or drops a command. To regenerate, check out
+        # agentmux and run the same command with --write instead of --check.
+        run: >
+          node .ci-agentmux-scripts/scripts/gen-ipc-catalog.mjs
+          --code src/agentmux --page src/content/docs/internals/ipc-catalog.md --check
 
       - name: Build
         # The TypeScript reference (typedoc) plus the site, not build:full:
