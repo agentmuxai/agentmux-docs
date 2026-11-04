@@ -31,14 +31,13 @@
 
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join, relative, sep } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { createInterface } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 
-const UPLOAD_CONCURRENCY = 16;
 const DELETE_CONCURRENCY = 6;
 const DELETE_BATCH = 1000; // the S3 DeleteObjects limit
 
@@ -195,13 +194,27 @@ async function listBucket(bucket) {
   return remote;
 }
 
-/** `run` runs one aws CLI call and resolves to its stdout; tests pass a fake. */
+/**
+ * Upload `keys` (paths under `root`) to the bucket. The files are copied into a staging folder and sent by one
+ * `aws s3 cp --recursive`, which moves them over its own pool of connections. One aws process per file took
+ * about 0.3 s of CPU each, so a deploy that changed every page (a head or CSS-hash change does) ran past the
+ * hour the AWS session lasts and failed. `cp` always uploads, so the equal-mtime skip of `sync` (see the
+ * header) does not apply. `run` runs one aws CLI call and resolves to its stdout; tests pass a fake.
+ */
 export async function upload(bucket, root, keys, run = aws) {
-  let done = 0;
-  await pool(keys, UPLOAD_CONCURRENCY, async (key) => {
-    await run(['s3', 'cp', join(root, ...key.split('/')), `s3://${bucket}/${key}`, '--only-show-errors']);
-    if (++done % 100 === 0) console.log(`[publish-html] uploaded ${done}/${keys.length}`);
-  });
+  if (keys.length === 0) return;
+  const stage = await mkdtemp(join(tmpdir(), 'publish-html-stage-'));
+  try {
+    for (const key of keys) {
+      const to = join(stage, ...key.split('/'));
+      await mkdir(dirname(to), { recursive: true });
+      await copyFile(join(root, ...key.split('/')), to);
+    }
+    console.log(`[publish-html] uploading ${keys.length} files`);
+    await run(['s3', 'cp', stage, `s3://${bucket}/`, '--recursive', '--only-show-errors']);
+  } finally {
+    await rm(stage, { recursive: true, force: true });
+  }
 }
 
 export async function remove(bucket, keys, run = aws) {
