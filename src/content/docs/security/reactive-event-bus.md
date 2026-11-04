@@ -200,7 +200,7 @@ Two kinds of WAN message carry a signature the receiver verifies: muxreview's (`
 - `crates/srv/src/backend/storage/agent_jekt_keys.rs` — 24 h HMAC key rotation
 - `crates/srv/src/backend/agent_config.rs` — `inject_jekt_signing_keys_into_mcp_json`
 - `crates/srv/src/backend/storage/jekt_held.rs`, `crates/srv/src/server/jekt_held.rs` — durable hold and replay
-- `crates/srv/src/backend/lan_discovery.rs` — LAN key advertisement and public-key lookup
+- `crates/srv/src/backend/lan/discovery.rs` — LAN key advertisement and public-key lookup
 - `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs` (`wan_sign_at_origin`), `crates/srv/src/muxbus/wan_lease.rs` — MuxBus Cloud
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/wan_publish.rs`, `crates/srv/src/backend/storage/wan_identity.rs` — WAN signing
 - `crates/srv/src/server/agent_takeover.rs` — `/agentmux/agent/holding` and `/agentmux/agent/release`

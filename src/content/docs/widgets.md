@@ -117,7 +117,7 @@ An entry in `widgets.json` that should appear only inside its group's flyout (no
 
 ### Sections
 
-Some panes have a row of sections: Swarm, Connectors, Memory, Settings and the Vault. Each pane declares its sections on its manifest (`frontend/app/block/pane-sections.ts`; the Swarm's in `frontend/app/view/swarm/swarm-section.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`vault:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **Cards**, which opens the Vault on its Cards and banks section:
+Some panes have a row of sections: Swarm, Connectors, Memory, Settings and the Vault. Each pane declares its sections on its manifest (`frontend/app/store/pane-sections.ts`; the Swarm's in `frontend/app/view/swarm/swarm-section.ts`). The section a pane shows is kept with the pane, under `<view>:section` (`vault:section`, for example). A `widgets.json` entry can open its pane on a section with `"section"` next to `blockdef`. Your `widgets.json` is next to `settings.json`; an entry with a new key adds one to **more** (pin it from there), and one with a built-in key replaces that one. This entry adds **Cards**, which opens the Vault on its Cards and banks section:
 
 ```json
 {

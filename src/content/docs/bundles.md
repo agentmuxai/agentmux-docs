@@ -26,13 +26,13 @@ The New/Edit Bundle form has Name, Description, an optional **Suggested for** (p
 | `mcp_servers` | MCP servers for the bundle: servers from the [MCP servers](/connectors/#mcp-servers) catalog, or servers private to the bundle. | Yes, after saving |
 | `skills` | **Skill primitive IDs** — see [Memory → Skills](/memory/#skills). | Yes, after saving |
 
-An agent with no bundles picked runs the harness as it comes ("vanilla CLI"), plus Global Memory and its own bundle. The singleton `is_blank` bundle that once stood for this is never offered in a picker.
+An agent with no bundles picked runs the harness as it comes ("vanilla CLI"), plus Global Memory, and its own bundle if it has one. The singleton `is_blank` bundle that once stood for this is never offered in a picker.
 
 ## An agent's bundles
 
 An agent starts with an ordered list of bundles:
 
-1. **Its own bundle** comes first, always. AgentMux creates it with the agent (named "&lt;agent&gt; — ABF") to hold what's bound to just that agent, and it can't be removed from the list. See [every agent gets its own ABF](/abf/#every-agent-gets-its-own-abf).
+1. **Its own bundle** comes first, when the agent has one, and can't be removed from the list. A new agent doesn't get one: AgentMux no longer creates an empty "&lt;agent&gt; — ABF" bundle with it. An agent that already has one with something in it keeps it, and the empty ones nothing used are removed. See [every agent gets its own ABF](/abf/#every-agent-gets-its-own-abf).
 2. **The bundles you pick** follow, in the order you put them.
 
 You pick them in these places, all with the same control: each picked bundle has **Move up**, **Move down** and **Remove**, and **Add a bundle…** lists the rest.
@@ -49,7 +49,7 @@ You pick them in these places, all with the same control: each picked bundle has
 - **MCP servers** from the bundles are added when the agent is opened through MuxAPI (`agent.open`). The Launch button in the agent pane doesn't add a bundle's MCP servers yet.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
 
-The list is kept per [channel](/glossary/#channel), like the agent's own bundle. Deleting a bundle takes it out of this channel's lists.
+The list is kept per [channel](/glossary/#channel), like the agent's own bundle, if it has one. Deleting a bundle takes it out of this channel's lists.
 
 ## Session zones and default-continue
 

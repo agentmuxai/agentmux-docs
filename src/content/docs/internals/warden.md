@@ -20,7 +20,7 @@ The Warden pane tab is now a thin shell: the Vault, History and Audit became pan
 | `frontend/app/view/warden/warden.tsx` | The pane tab manifest (`wardenPaneTab`, labelled **Jobs**), loaded lazily |
 | `frontend/app/view/warden/warden-instance.tsx` | The code that loads with the first Warden pane |
 | `frontend/app/view/warden/warden-model.ts`, `warden-view.tsx` | The view model and view |
-| `frontend/app/view/warden/warden-sections.ts` | The section list, and how an old Warden section link maps to its new pane (`frontend/app/block/pane-sections.ts`) |
+| `frontend/app/view/warden/warden-sections.ts` | The section list, and how an old Warden section link maps to its new pane (`frontend/app/store/pane-sections.ts`) |
 | `frontend/app/view/warden/warden-view.scss` | Warden styling |
 | `frontend/app/block/block-registry.ts` | Registers `wardenPaneTab` with the other native pane tabs |
 

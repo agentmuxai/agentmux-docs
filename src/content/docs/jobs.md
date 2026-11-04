@@ -7,13 +7,13 @@ description: "The Jobs pane: everything AgentMux runs by itself on a schedule, w
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **Jobs** pane lists everything that runs by itself: scheduled jobs, and [Drone](/widget-gallery/#drone) graphs that have run. A job has a trigger (when it runs), an action (what it does), a policy (how) and caps. Each time a job was meant to run is a **run**, including the times it didn't (skipped or missed), each with its reason.
+The **Jobs** pane lists everything that runs by itself: scheduled jobs, [Drone](/widget-gallery/#drone) graphs that have run, and approved cloud jobs that report in. A job has a trigger (when it runs), an action (what it does), a policy (how) and caps. Each time a job was meant to run is a **run**, including the times it didn't (skipped or missed), each with its reason.
 
 ## Where to find it
 
 Open it with **Open Jobs** in the command palette (`open:jobs`). The pane's title reads **Jobs**, and **Jobs · N failing** when N jobs are failing. Jobs was for a while a section of the Warden pane: see [Warden](/warden/).
 
-An agent creates a job with the `Schedule` tool (action `create`, with `cron`), and you create one yourself with **New job**. A Drone graph appears in the list once it has run.
+An agent creates a job with the `Schedule` tool (action `create`, with `cron`), and you create one yourself with **New job**. A Drone graph appears in the list once it has run, and a cloud job once you approve its template.
 
 ## The list
 
@@ -21,12 +21,14 @@ The pane refreshes while it is shown. A line at the top says "Everything that ru
 
 | Column | What |
 |---|---|
-| **Job** | The name, a **Drone** mark for a graph, and who made it: `by <agent>`, or `yours`. A job made from a template shows **Update available** or **Update to approve** when the template has a newer version |
-| **Trigger** | When it runs, in words (for example "Mondays 06:00 UTC"), and when it runs next |
+| **Job** | The name, a **Drone** mark for a graph, a **Cloud** mark for a cloud job, and who made it: `by <agent>`, or `yours`. A job made from a template shows **Update available** or **Update to approve** when the template has a newer version |
+| **Trigger** | When it runs, in words (for example "Mondays 06:00 UTC"), and when it runs next. A cloud job with no schedule reads "when it reports" |
 | **Last run** | How the last run ended, and how long ago |
 | **Recent** | One mark per recent run; hollow marks are runs that were skipped |
 | **Cost** | What its runs cost today, and over the last 7 days. A dash means no run reported a cost: the provider's own figure is the only source, and not every provider reports one |
 | **State** | **Active**, **Paused**, **Paused by Pause all**, or **Ended** |
+
+A line above the list says how many cloud events AgentMux has dropped since it started, and why (for example an unknown job or a bad signature). A dropped event is never shown as a run.
 
 A run ends as **ok**, **findings** (it finished and reported something to look at), **failed**, or **unknown** (it finished without saying how it went: a finished turn isn't proof of success, so an agent reports with `Schedule` action `report`). A run that didn't happen shows **skipped**, **missed** or **lost**, with the reason, for example "AgentMux was off", "agent not running", "previous run still going", "job's daily cap reached" or "timed out".
 
@@ -45,6 +47,19 @@ Click a row to open it. Its history lists each run with **When**, **Run**, **Too
 | **Open owner** | Goes to the agent that owns the job |
 
 **Pause all jobs** pauses every job at once. A banner says so and since when, scheduled fires are skipped and **Run now** is off until you choose **Resume all jobs**.
+
+## Cloud jobs
+
+A cloud job runs somewhere else and reports each run to AgentMux as a signed event. AgentMux starts nothing for it. It appears in the list once you approve its template, with a **Cloud** mark and `reports as <reporter>` under its name. Its history shows the reporter, the **grace** period after an expected time before a missing report counts as **missed**, and how long a run may go without news before it is **lost**.
+
+A cloud job's **Run now** opens the page its template names, or, when there is none, tells you what to ask its owner.
+
+**Cloud reporters** opens a panel of the reporters whose keys you have pinned. Each row shows the reporter's name, the fingerprint of its key and the approved cloud jobs that report as it:
+
+- **Pin reporter** adds one: a **Name** (lowercase letters, digits and dashes) and its **Public key** (an Ed25519 public key, base64). Approving a cloud template pins its reporter too.
+- **Forget** removes a reporter, after a second question (**Forget it** or **Keep**). Its approved jobs stop receiving events.
+
+Pinning a key lets no event in by itself: an event also has to match the key of an approved template. A job whose reporter isn't pinned shows **Reporter not pinned**, and its events are dropped. Agents can list, pin and forget reporters too (`jobs.reporters.list`, `jobs.reporters.add`, `jobs.reporters.forget`), and the list of jobs (`jobs.list`) includes the approved cloud jobs, with their reporter, and the dropped-event counts.
 
 ## Creating and editing a job
 
