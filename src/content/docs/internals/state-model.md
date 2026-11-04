@@ -92,7 +92,7 @@ Dispatching focus goes through a dedicated action type:
 
 ```
 User click / keyboard nav
-  → model.focusNode(nodeId)            layoutFocus.ts:189
+  → model.focusNode(nodeId)            layoutFocus.ts
   → model.treeReducer({ type: FocusNode, nodeId })
   → focusNode(this.treeState, action)  layoutTree.ts (sets treeState.focusedNodeId)
   → localTreeStateAtom._set(...)       reactive update fans out
