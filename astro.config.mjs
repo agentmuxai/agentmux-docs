@@ -53,10 +53,10 @@ export default defineConfig({
 			head: [
 				{ tag: 'meta', attrs: { name: 'color-scheme', content: 'dark light' } },
 				{ tag: 'style', content: ':root{background:#0a0a0f}@media(prefers-color-scheme:light){:root{background:#f1f5f9}}' },
-				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '32x32' } },
-				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' } },
-				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon-32.png', type: 'image/png', sizes: '32x32' } },
-				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico?v=2', sizes: '32x32' } },
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon.svg?v=2', type: 'image/svg+xml' } },
+				{ tag: 'link', attrs: { rel: 'icon', href: '/favicon-32.png?v=2', type: 'image/png', sizes: '32x32' } },
+				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png?v=2' } },
 				// Don't paint a page until its content has been parsed (#sl-content-end, in
 				// Footer.astro). On a network load Chromium otherwise paints the header with
 				// an empty content area for a frame, which reads as a flash on every first
