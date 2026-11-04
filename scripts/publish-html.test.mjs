@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { deleteProblem, distProblem, etagMd5, plan, remove, upload } from './publish-html.mjs';
 
 const md5 = (text) => createHash('md5').update(text).digest('hex');
@@ -72,14 +74,53 @@ test('deleteProblem refuses a plan that deletes over half the bucket', () => {
   assert.equal(deleteProblem({ deletes: 0, remoteObjects: 0 }), null);
 });
 
-test('upload sends each key to its own object', async () => {
+test('upload sends the keys in one recursive copy of a staging folder, then removes it', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'publish-html-test-'));
+  mkdirSync(join(root, 'a', 'b'), { recursive: true });
+  writeFileSync(join(root, 'index.html'), 'home');
+  writeFileSync(join(root, 'a', 'b', 'page.html'), 'page');
+  writeFileSync(join(root, 'skipped.html'), 'not in keys');
   const calls = [];
-  await upload('b', 'dist', ['index.html', 'a/b/page.html'], async (args) => calls.push(args));
-  assert.equal(calls.length, 2);
-  const targets = calls.map((args) => new URL(args[3]).pathname).sort();
-  assert.deepEqual(targets, ['/a/b/page.html', '/index.html']);
-  assert.ok(calls.every((args) => new URL(args[3]).hostname === 'b'));
-  for (const args of calls) assert.deepEqual(args.slice(0, 2), ['s3', 'cp']);
+  const staged = [];
+  try {
+    await upload('b', root, ['index.html', 'a/b/page.html'], async (args) => {
+      calls.push(args);
+      const stage = args[2];
+      staged.push(stage, readFileSync(join(stage, 'index.html'), 'utf8'), readFileSync(join(stage, 'a', 'b', 'page.html'), 'utf8'));
+      staged.push(existsSync(join(stage, 'skipped.html')));
+      return '';
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+  assert.equal(calls.length, 1, 'one aws call, not one per file');
+  assert.deepEqual(calls[0].slice(0, 2), ['s3', 'cp']);
+  const target = new URL(calls[0][3]);
+  assert.deepEqual([target.protocol, target.hostname, target.pathname], ['s3:', 'b', '/']);
+  assert.ok(calls[0].includes('--recursive'));
+  assert.deepEqual(staged.slice(1), ['home', 'page', false]);
+  assert.equal(existsSync(staged[0]), false, 'the staging folder is gone');
+});
+
+test('upload calls nothing when there is nothing to send, and cleans up when aws fails', async () => {
+  const calls = [];
+  await upload('b', 'dist', [], async (args) => calls.push(args));
+  assert.equal(calls.length, 0);
+  const root = mkdtempSync(join(tmpdir(), 'publish-html-test-'));
+  writeFileSync(join(root, 'index.html'), 'home');
+  let stage;
+  try {
+    await assert.rejects(
+      upload('b', root, ['index.html'], async (args) => {
+        stage = args[2];
+        throw new Error('aws s3 cp exited 1');
+      }),
+      /exited 1/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+  assert.equal(existsSync(stage), false);
 });
 
 test('remove deletes in batches of at most 1000 keys and fails on a per-key error', async () => {
