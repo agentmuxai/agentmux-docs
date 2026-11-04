@@ -65,7 +65,7 @@ Every process on the machine that AgentMux can read, in one list:
 Pick another machine in **Machine**:
 
 - An **SSH or WSL remote** runs no AgentMux agents, so Tower shows its processes. SSH hosts must run Linux or macOS; others are listed greyed out as not supported.
-- A **paired AgentMux computer** has agents of its own: Tower shows that computer's agents and processes.
+- A **paired AgentMux computer** has agents of its own: Tower shows that computer's agents and processes. That computer shares its processes only if its user turned on **Share this computer's processes with paired devices** in the Tower pane's settings menu there (`tower:sharewithpaired`, off by default). What it shares is names only, never a command line, and leaves out the processes of an agent hidden from paired devices.
 
 ## What Tower doesn't do
 

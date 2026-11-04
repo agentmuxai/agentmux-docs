@@ -39,7 +39,7 @@ A pane shows the level it just asked for before the backend has stored it. `setB
    },
    ```
 
-   `getBlockZoom` (`frontend/app/store/zoom.ts`) asks for this capability (`frontend/app/block/pane-tab-registry.ts`) rather than keeping its own list of view types. Without it, `getBlockZoom` returns `null`, the "this pane doesn't zoom" signal: `zoomBlockIn/Out` early-returns and the universal indicator doesn't show.
+   `getBlockZoom` (`frontend/app/store/zoom.ts`) asks for this capability (`frontend/app/store/pane-tab-registry.ts`) rather than keeping its own list of view types. Without it, `getBlockZoom` returns `null`, the "this pane doesn't zoom" signal: `zoomBlockIn/Out` early-returns and the universal indicator doesn't show.
 
 2. **Read** the persisted value in your view component:
 

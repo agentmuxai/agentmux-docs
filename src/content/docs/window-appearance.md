@@ -53,6 +53,10 @@ A window that doesn't come from another window, such as the first window when yo
 
 Floating panes have no hamburger menu. Their opacity is set from the Instance Panel and lasts only for the session. They show the default theme.
 
+## The app icon
+
+The AgentMux icon is flat and hard-edged: a square tile with four square blocks, in a dark version and a light one. The dark one is the default, and the only one wherever a single icon is possible (the Linux launcher, the portable Windows exe, the tray). The light one has a light tile with a darker edge, so it shows on a light taskbar: the Microsoft Store build on Windows picks it when the taskbar is light. On macOS the Dock icon is the four blocks on Apple's rounded tile.
+
 ## Platform support
 
 Theme and opacity work on Windows, macOS and Linux:

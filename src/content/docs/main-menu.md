@@ -52,7 +52,7 @@ Registered commands are grouped by category:
 
 | Category | Commands |
 |----------|----------|
-| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Kanban, Open Vault, Open History, Open Audit, Open Jobs, Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain. Open Tower, Kanban, Vault, History, Audit, Jobs, Help and Swarm bring back the pane that is already open; New Tower, New Kanban, New Help and New Swarm always open another. |
+| **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Kanban, Open Vault, Open History, Open Audit, Open Jobs, Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain. Open Tower, Kanban, Vault, History, Audit, Jobs, Help and Swarm bring back the pane that is already open in this tab (with it in another tab, they open a new one here); New Tower, New Kanban, New Help and New Swarm always open another. |
 | **Split** | Split Right, Split Down |
 | **Window** | New Window, Close Window, Minimize Window, Toggle Maximize, Reload Window (Free Memory), Hibernate Hidden Browser Panes, Wake Sleeping Browser Panes, Restart Backend, Open Settings File |
 | **Workspace** | New Workspace…, Open Workspace…, Rename Workspace…, Delete Workspace…, Export Workspace…, Import Workspace… |

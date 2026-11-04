@@ -136,8 +136,8 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 ---
 
 **Source-of-truth references**:
-- `crates/srv/src/backend/update_check.rs`, `crates/srv/src/backend/update_download.rs`, `crates/srv/src/backend/update_install.rs` — checking, downloading and installing an update
-- `crates/common/src/update_manifest.rs`, `crates/srv/src/backend/update_signature.rs` — the signed manifest
+- `crates/srv/src/backend/update/check.rs`, `crates/srv/src/backend/update/download.rs`, `crates/srv/src/backend/update/install.rs` — checking, downloading and installing an update
+- `crates/common/src/update_manifest.rs`, `crates/srv/src/backend/update/signature.rs` — the signed manifest
 - `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
 - `packaging/windows/agentmux.iss` — Windows installer
 - `crates/launcher/src/autostart/mod.rs` — start-at-login

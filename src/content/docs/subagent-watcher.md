@@ -90,8 +90,8 @@ An agent row shows:
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
 | Status chip | **working** (red) while the agent is in a turn, including while it runs tools or stops; **question** while it waits for your answer, with a countdown when the question has a timeout; **idle** (green) otherwise. An agent that can't start a turn shows **Out of quota** (with the time the limit lifts, when the provider gave one) or **Signed out** in its place, so a resting agent and a stuck one don't look alike |
-| Activity line | A one-line summary of what the agent is doing, when available. An agent that can't work reads **Out of quota until …** or **Needs sign-in**; one with a question or approval parked for you reads as waiting on you, even with no pane showing it |
-| Notes | **Holding the build slot · 12 min · cargo test** while the agent holds this computer's build slot, so other builds wait for it; **Running … · 12 min** while one tool call runs long; **2 held** for messages typed while its model API was out. Information only |
+| Activity line | A one-line summary of what the agent is doing, when available. The agent sets its own: it writes one short line (5 to 10 words, up to 80 characters) when it starts a task, changes plan, is blocked or waiting for an answer, or is done (`Presence` `status`, see [MuxAPI](/internals/muxapi/#presence)). That line comes first, ahead of the generated title; claiming a [Kanban](/kanban/) task puts the task's title there until the agent says more. A line older than 30 minutes shows muted, with its age ("· 2h ago"). An agent that can't work reads **Out of quota until …** or **Needs sign-in**; one with a question or approval parked for you reads as waiting on you, even with no pane showing it |
+| Notes | **Holding the build slot · 12 min · cargo test** while the agent holds this computer's build slot, so other builds wait for it; **Running … · 12 min** while one tool call runs long; **2 held** for messages typed to it that wait to be sent, in order, while its model API is out, its usage limit has a known reset still to come, it needs to sign in, or it isn't running. Information only |
 | Current tool | The tool the agent is running right now, while it is working |
 | Supervisor chip | Claude agents only: the [Supervisor](#supervisor) mode and what it is doing. Click to change it. |
 
@@ -177,14 +177,18 @@ Use it to stop an agent receiving messages while you investigate, without killin
 
 ## Stopped agents
 
-Closing an agent's pane doesn't stop it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)), and an agent you have stopped isn't forgotten: Swarm lists every agent you have created. Agents that aren't running appear under **Stopped agents**, a folded list (open when no agent is running) with the count in its heading. Each row shows the agent's name, provider and state, and two buttons:
+Closing an agent's pane doesn't stop it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)), and an agent you have stopped isn't forgotten: Swarm lists every agent you have created, so none is missing from the list. An agent that runs with no pane, and that the list above has no row for, appears under **Running with no pane**, with the count in its heading. Agents that aren't running appear under **Stopped agents**, a folded list (open when no agent is running) with the count in its heading. Each row shows the agent's name, provider and state. A stopped agent has two buttons:
 
 - **Start** runs the agent with no pane, resuming its session.
 - **Open** starts it in a pane.
 
-If srv refuses a start (the limit of running agents, a sign-in or a usage limit), the reason shows under the row. A stopped agent has no Supervisor, selection or activity: those appear once it runs.
+A row under **Running with no pane** has only **Open**, which shows the agent in a pane. **Clicking a row opens the agent's pane**, the same as its **Open** button; a click on a button in the row is that button's own.
 
-An agent also starts when a message, a Job or a Kanban task is sent to it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)); a message to an agent that is stopped says it is being started and delivered, not that it is held. The state each agent is in, whether or not it has a pane, is `stopped`, `starting`, `idle`, `working`, `waiting_on_user`, `limited`, `signed_out` or `error`; the status bar's count, My Agents and the palette read the same states.
+If srv refuses a start (the limit of running agents, a sign-in or a usage limit), the reason shows under the row. A stopped agent that something wants running, because a message is waiting for it or it was left running, but that a limit would stop from starting, shows **can't start** in place of **stopped**; hover the chip for the reason, for example that memory commitment is over its limit. A stopped agent has no Supervisor, selection or activity: those appear once it runs.
+
+When AgentMux stops an agent with no pane to make room for another's start (see `agents:max_running` in [Settings](/settings/#agent-settings)), it tells that agent's leader, if the leader is on this computer with a pane open: the note names the agent, why it was stopped, what it was working on, and that `Agents` `start` brings it back once there is room.
+
+An agent also starts when a message, a Job or a Kanban task is sent to it (see [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane)); a message to an agent that is stopped says it is being started and delivered, not that it is held. When a limit would refuse that start, the message is held instead, for up to 24 hours, and the answer says why (`HELD … (not_running, capacity)`); it is delivered when the agent starts, once you free the room or start it, or when the next message tries again. The state each agent is in, whether or not it has a pane, is `stopped`, `starting`, `idle`, `working`, `waiting_on_user`, `limited`, `signed_out` or `error`; the status bar's count, My Agents and the palette read the same states.
 
 ## Agents on other instances
 
@@ -205,6 +209,8 @@ Each is one row with no children:
 | Where | The machine's name, with the channel when that machine runs more than one instance (for example "laptop · dev"); a badge, **this machine** or **LAN**; and the platform (Windows, macOS or Linux) when the instance reports it |
 | Status chip | The state its instance reports: **working**, waiting for an answer, **idle** (also for a stopped agent) or an error. Hover it for the exact state. No chip when the instance reports no state. |
 | Summary line | The agent's one-line summary, when its instance shares it. Each instance decides with **Share what my agents are working on** (`swarm:sharesummaries`); see [Swarm summary lines](/lan-discovery/#swarm-summary-lines). |
+
+A LAN peer also shares, for an agent whose usage limit has a known reset, when the limit lifts: that time only, never the account, the title or the error text.
 
 An instance that hasn't been heard from for 60 seconds is shown as stale: its rows say when it was last seen ("seen 2m ago"), have no status or summary, and can't be selected. Another channel on this machine that hasn't been heard from for 10 minutes is left out.
 
@@ -235,7 +241,7 @@ The **Broadcast** section has its own message box above the list. Select agents,
 
 The last ten broadcasts are listed under the box, newest first, each with its age and "N sent · N delivered" (and "· N failed"). Hover a row for the full text. The draft and this list are kept while the pane is open, so switching to the Supervisor section and back loses neither; a restart clears them.
 
-A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs`, `broadcast_turn_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/swarm_lan_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs`, `broadcast_turn_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/lan/swarm_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
 
 ## Fleet toolbar
 

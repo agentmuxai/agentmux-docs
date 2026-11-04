@@ -139,7 +139,7 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ### Advanced
 
-Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
+Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Preview scroll skid**, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
 
 ![Settings, Advanced tab: the agent panes group, with the compaction and container limit settings](../../assets/screenshots/settings/settings-advanced.png)
 
@@ -153,6 +153,10 @@ Settings live under the channel's data dir, so every version that binds to the s
 | Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
 
 The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE`. `task dev` does this by default: it runs on a home of its own, so its `dev/...` folder sits under that home and not under your real `~/.agentmux` (see [Which home `task dev` uses](/multi-instance/#which-home-task-dev-uses)). See [Multi-instance & dev mode](/multi-instance/) for the full layout.
+
+A new install starts from a `settings.json` that lists every setting, grouped by section, with its description and its default commented out: remove the leading `//` to override one. AgentMux generates that file from its settings schema, so it names every setting in this reference.
+
+If `settings.json` doesn't parse when AgentMux starts (a half-finished edit, a bad paste), AgentMux leaves the file exactly as it is and runs on the last settings that read cleanly, or on the defaults when there are none. A banner at the top of the Settings pane gives the error, with its line, and says when it is running on the last settings that worked; **Fix in editor** opens the file. AgentMux keeps that copy as `settings.json.lastgood` beside `settings.json`, updated each time the file loads cleanly. Fix the file and save it, and the new settings apply at once.
 
 A key you don't set uses the default shown below. "Unset" in the Default column means the key has no single default value: the description says what happens when it isn't set.
 
@@ -245,7 +249,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agents:always_available` | boolean | `true` | Closing an agent's pane, its tab or its workspace parks the agent instead of stopping it: it keeps running, and a message or a Job starts a stopped one. `false`: closing a pane stops its agent, as before. See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane). |
 | `agents:idle_stop_minutes` | number | `60` | With `agents:always_available` on, minutes an agent with no pane may be idle before it is stopped (a message starts it again). `0`: never. |
 | `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once. A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
-| `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. `0`: off. |
+| `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. No agent is stopped when stopping one idle agent could not bring it down to the limit: the start is refused and the reason says how much has to be freed. A start that is refused leaves a message for that agent held (`not_running, capacity`) until it can start. `0`: off. |
 | `agents:start_per_minute` | integer | `5` | The most agent starts one sender (an agent, or a job) may make in any 60 seconds, so two agents can't start each other in a loop. A refusal names the limit. `0`: no limit. |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
 | `agent:container_memory` | number or `auto` | `auto` | Megabytes of memory each [container agent](/container-agents/#cpu-and-memory-limits) may use, unless the agent has its own limit. `auto`: half of what Docker has (at least 2 GB; the developer image asks for 16 GB), never more than Docker has. `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' memory**. |
@@ -257,7 +261,9 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agent:freshhintat` | integer | `150000` | The context size, in tokens, from which a turn that finished a Kanban task gets a note suggesting a fresh session if the next work is unrelated. |
 | `agent:subagentmodel` | string | `"sonnet"` | The model Claude agents' general-purpose sub-agents run on: `sonnet`, `haiku`, `opus`, a model ID, or `inherit` for the agent's own. A sub-agent that names its own model still wins. Takes effect when each agent next starts. |
 | `agent:exploremodel` | string | `"haiku"` | The model Claude agents' Explore sub-agents run on: `haiku`, `sonnet`, `opus`, a model ID, or `inherit` for Claude Code's built-in. Takes effect when each agent next starts. |
+| `agent:previewskidnotches` | integer | `2` | How many wheel notches a tool preview, or another capped box in an agent pane, absorbs at its top or bottom edge before the scroll passes to the pane, so a preview sliding under the pointer is not scrolled past. `0` to `10`; `0` passes the scroll on at once, with no edge line. Settings ▸ Advanced ▸ Agent panes ▸ **Preview scroll skid**. A change applies to open panes. |
 | `agent:retryonreconnect` | boolean | `true` | When a turn failed because the model API couldn't be reached, retry it once by itself when the API answers again, if no tool ran in it, you started it and you haven't typed in that pane since. `false`: only offer a Retry button. |
+| `agent:stopkeepsbackground` | boolean | `true` | Stopping an agent keeps its background tasks (dev servers) running, when the one stopping it doesn't say otherwise. `false` stops them with the agent. |
 | `agent:belownormalpriority` | boolean | `true` | Run agents' process trees at below-normal CPU priority (nice 10 on Linux and macOS, a lower priority class on Windows), so their builds and tests yield to AgentMux and your foreground apps while still using every idle core. Terminals you type in are never lowered. Applies to agents started afterwards. |
 | `agent:inputhistory:max` | integer | `10000` | How many messages you sent each agent are kept for ArrowUp and Ctrl+R in its composer. `0` keeps none from now on. Kept on this computer only. |
 | `agent:outdatedidsnotice` | boolean | `true` | Tell you once at startup when some agents have an id an older build chained, pointing to Settings ▸ Agents. Turned off when you dismiss it. |
@@ -273,6 +279,8 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agent:view` | string or object | `"full"` | What agent panes show. A preset name (`"full"`, `"standard"` or `"replies"`) or an object with any of `thinking`, `tools` and `jekts` (`"auto"`, `"expanded"`, `"collapsed"` or `"hidden"`), `notes` (`"shown"` or `"hidden"`) and `context` (`"auto"` or `"hidden"`); a missing or unknown switch takes Full's value. A pane that has its own view ignores it. Set from a pane's View popover with **Make this the default**. See [Choosing what the pane shows](/agent-pane-messages/#choosing-what-the-pane-shows). |
 | `markdown:streamtailinplace` | boolean | `true` | While a message streams, update its last, still-open block (a code block, paragraph, list item or table cell) in place instead of rebuilding it on every update. |
 | `kanban:reminders` | boolean | `false` | Remind an idle agent of the tasks waiting in its Kanban backlog: after two minutes idle, one short note naming them, once each time it goes idle (Settings ▸ Advanced ▸ **Remind idle agents of their backlog**, or the Kanban's toolbar). |
+| `kanban:closeonmerge` | boolean | `true` | A task in Review is accepted when its pull request merges. `false` stops that; merges are still recorded for the Merged and Released columns. |
+| `kanban:reviewlimit` | integer | `0` | How many tasks the board may hold in Review before its header says so. Nothing is blocked. `0`: no limit. |
 | `files:icons` | string | `"system"` | Which icons the Files pane shows: `"system"` is the picture the operating system shows for each type, `"app"` is AgentMux's own monochrome glyphs. Where the system has none, the glyph shows. |
 
 ## Messaging and fleet settings
@@ -285,6 +293,37 @@ Keys in `settings.json` for how agents message each other and share work. None h
 | `jekt:cold_hold_minutes` | integer | `55` | Minutes of quiet after which an agent's session counts as cold. A message that can wait is held for such an agent and delivered when it is next active, instead of starting a turn that pays for its whole context again. An urgent message, or one that names a task waiting on the agent, goes through. `0` turns the hold off. |
 | `fleet:quota_mode` | `"off"` or `"tight"` | `"off"` | While `"tight"`, a `Tasks` `claim` with no id takes only a task aimed at the claimer or one whose priority is at least `fleet:quota_min_priority`; a claim by id still works. Changing the mode posts a bulletin to the agents. Set it with `Message` action `quota_mode`. |
 | `fleet:quota_min_priority` | integer | `1` | The lowest priority an unnamed `Tasks` `claim` takes while `fleet:quota_mode` is `"tight"`. |
+
+## Messaging bridge settings
+
+Keys in `settings.json` that connect AgentMux to a chat service, so messages there can reach an agent. None has a control in the Settings pane. A bridge starts when AgentMux starts, only if its `enabled` key is `true` and its token keys are set; with a token missing, AgentMux logs a warning and doesn't start it. Token values are never shown to the Settings pane or to agents. Where `target` is unset, incoming messages are logged, not forwarded.
+
+| Key | Type | Default | What it does |
+|---|---|---|---|
+| `messaging:discord:enabled` | boolean | `false` | Connect the Discord bridge at startup. |
+| `messaging:discord:token` | string | unset | The Discord bot token. |
+| `messaging:discord:channel` | string | `""` | The channel ID whose messages come in, and where sends go by default. |
+| `messaging:discord:target` | string | unset | The agent ID that receives Discord messages. |
+| `messaging:discord:guild` | string | unset | The guild ID, for guild-scoped slash commands. |
+| `messaging:telegram:enabled` | boolean | `false` | Start the Telegram bridge (long polling) at startup. |
+| `messaging:telegram:token` | string | unset | The Telegram bot token, from @BotFather. |
+| `messaging:telegram:allowed_chats` | string | `""` | Comma-separated chat IDs allowed to reach the bridge; updates from any other chat are dropped. |
+| `messaging:telegram:default_chat` | string | unset | The chat ID that outbound sends go to when a request names none. |
+| `messaging:telegram:target` | string | unset | The agent ID that receives Telegram messages. |
+| `messaging:slack:enabled` | boolean | `false` | Open the Slack Socket Mode connection at startup. |
+| `messaging:slack:bot_token` | string | unset | The Slack bot token (`xoxb-…`), for Web API calls. |
+| `messaging:slack:app_token` | string | unset | The Slack app-level token (`xapp-…`) for Socket Mode, with the `connections:write` scope. |
+| `messaging:slack:channel` | string | `""` | The channel ID whose messages come in, and where sends go by default. |
+| `messaging:slack:target` | string | unset | The agent ID that receives Slack messages. |
+| `messaging:whatsapp:enabled` | boolean | `false` | Start the WhatsApp Cloud API bridge and its webhook routes. It needs the access token, app secret and webhook verify token. |
+| `messaging:whatsapp:phone_number_id` | string | `""` | The WhatsApp Business phone number ID. |
+| `messaging:whatsapp:access_token` | string | unset | The System User access token (permanent). |
+| `messaging:whatsapp:app_secret` | string | unset | The Meta App Secret, used to check the signature on incoming webhooks. |
+| `messaging:whatsapp:webhook_verify_token` | string | unset | The verify token for the webhook handshake; it must match the one set in the Meta App Dashboard. |
+| `messaging:whatsapp:target` | string | unset | The agent ID that receives WhatsApp messages. |
+| `messaging:whatsapp:fallback_template` | string | unset | The template name for sends outside the 24-hour customer service window. Unset: such a send fails at once. |
+| `messaging:whatsapp:fallback_template_lang` | string | `en_US` | The language code (BCP-47) of that template. |
+| `messaging:whatsapp:tunnel_domain` | string | `""` | The public origin of your tunnel (for example `wa.example.com`), printed in the startup log as the callback URL to register with Meta. AgentMux doesn't start the tunnel. |
 
 ## Job Caps
 
@@ -387,6 +426,7 @@ See [What a paired device can see](/lan-discovery/#what-a-paired-device-can-see)
 | `viewer:shareterminals` | boolean | `false` | Paired devices can watch this computer's terminals, read-only. Off by default, since terminal scrollback often holds secrets. The shell of an agent hidden from paired devices stays hidden. Turning it off closes feeds already open. |
 | `cloud:publishpresence` | boolean | `true` | While you're signed in to MuxBus Cloud, tell the cloud this computer is online, so your signed-in devices can list it from anywhere. `false` stops it, and tells the cloud this computer went offline. Dev builds, headless installs and isolated homes never publish. |
 | `swarm:sharesummaries` | boolean | `true` | Other AgentMux instances on this computer and on your local network show each of your agents' summary lines in their Swarm. `false` shares status only. |
+| `tower:sharewithpaired` | boolean | `false` | Paired devices see this computer's processes in their [Tower](/tower/#other-machines): names only, never a command line, and without the processes of an agent hidden from paired devices. Off by default. Also in the Tower pane's settings menu as **Share this computer's processes with paired devices**. |
 | `statusbar:showmuxbuscloud` | boolean | `true` | Show MuxBus Cloud in the status bar: the dot after the host name and the sign-in block in the host menu. `false` hides both. LAN discovery isn't affected. |
 
 ## Sound Settings

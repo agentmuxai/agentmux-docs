@@ -42,6 +42,8 @@ If the AgentMux window stops responding on Windows (its UI thread misses two liv
 
 Most error messages in AgentMux, such as an agent's failure row or the startup error card, have a **Copy error** or **Copy details** button. It copies the error with its code, where it happened and when, and replaces the tokens, private keys and passwords it recognises with `[redacted…]` markers (`frontend/app/errors/redact.ts`). Paste that into your report. Redaction is best-effort, so still read it before posting.
 
+Every toast (the notification that slides in at the corner) has a **Copy details** button as well, and clicking the toast copies the same text. It holds the title and the full message, the time, the AgentMux version, build and channel, the window, tab, pane and agent it came from, and any error code or request id. Values under keys that look like secrets, such as tokens, passwords and cookies, are replaced with `[hidden]`. A check mark and "Copied" show for a moment when it is on the clipboard.
+
 The same page also has a feature request form.
 
 ## AI-Generated Content

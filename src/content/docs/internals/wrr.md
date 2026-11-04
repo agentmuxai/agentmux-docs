@@ -33,7 +33,7 @@ WRR records drift events as `Event::HwndDriftDetected { kind, .. }` (see `crates
 | `LingeringHwnd` | The host reported a window closed, but OS events for its HWND keep firing: it never went away on the Win32 side. |
 | `OrphanInstance` | No user-meaningful window is left but the host is still running, because pool windows keep it alive. It is paired with a host-should-quit event. |
 
-The kinds are `HwndDriftKind` in `crates/common/src/ipc.rs`. The reducer applies a corrective action specific to each kind, or simply logs the drift if it is within an acceptable transient window.
+The kinds are `HwndDriftKind` in `crates/common/src/ipc/types.rs`. The reducer applies a corrective action specific to each kind, or simply logs the drift if it is within an acceptable transient window.
 
 ## The "just promoted" bridge
 

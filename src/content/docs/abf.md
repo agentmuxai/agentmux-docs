@@ -158,6 +158,10 @@ Shipped 2026-08-10. v0.1's own manifest example accidentally used `"provider"` f
 
 ## Every agent gets its own ABF
 
+:::note[Changed]
+A new agent no longer gets a bundle of its own. The per-agent "&lt;agent&gt; — ABF" bundle it was given at creation held nothing until you filled it in, and a copy was made again in each channel, so the shared store filled up with empty ones no agent used. AgentMux now removes an empty "— ABF" bundle when no agent, pick or skill binding in any channel on the machine refers to it. A per-agent bundle with content in it, or one an agent still uses, stays. The section below describes the earlier behavior.
+:::
+
 Shipped 2026-08-15 (v0.55.9). Binding a bundle to an agent is no longer optional. Previously an agent could exist and launch indefinitely with no bundle bound at all, silently falling back to a shared, empty `blank` singleton. Now:
 
 - **Every agent definition auto-provisions its own dedicated `db_bundles` row** at creation time, across all six creation paths (new agent, template clone, fork, Claude import, bulk import, `agent.define`) — not just the launch modal that used to be the only place a real (non-blank) bundle was actually enforced.

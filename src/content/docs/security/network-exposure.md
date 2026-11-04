@@ -27,7 +27,7 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 ## The AgentMux server
 
-`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv/src/backend/lan_listeners.rs`); no setting changes it.
+`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv/src/backend/lan/listeners.rs`); no setting changes it.
 
 Authentication (`auth_middleware` in `crates/srv/src/server/auth.rs`):
 
@@ -163,8 +163,8 @@ Restrict these to your LAN subnet or to known peers.
 
 **Source-of-truth references**:
 - `crates/srv/src/bootstrap/network.rs` (`bind_listeners_and_network`) — loopback startup listeners
-- `crates/srv/src/backend/lan_listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
-- `crates/srv/src/backend/lan_discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
+- `crates/srv/src/backend/lan/listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
+- `crates/srv/src/backend/lan/discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
 - `crates/srv/src/server/routes.rs` (`build_router`, `build_routers_with`) and `crates/srv/src/server/auth.rs` (`auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
 - `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `crates/srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
 - `crates/srv/src/config.rs` — `lan_key` generation

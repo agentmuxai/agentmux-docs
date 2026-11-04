@@ -289,8 +289,7 @@ The editor is intentionally scoped — see [`SPEC_EDITOR_FILE_TREE_2026-05-26.md
 The Editor keeps its open files, text or [media](#media), as **document tabs** in the pane header. The **+** at the end opens a new, empty tab.
 
 - **Drag a tab** along the bar to reorder it.
-- **Drop it on another Editor pane** to move it there. It keeps its unsaved changes and undo history.
-- **Drop it near the edge of any pane** to open it in a new pane on that side.
+- **Drop it on another Editor pane** to move it there. It keeps its unsaved changes and undo history. A document tab lands only in another Editor: dropping it anywhere else, near a pane's edge included, doesn't open a new pane.
 - **Right-click a tab** and choose **Move to New Pane** to open it in a new pane to the right of its own.
 
 A new pane made this way is an Editor on the same connection, holding just that tab. A tab that is being saved stays where it is.
@@ -329,8 +328,10 @@ There is no separate Media pane any more. Images, audio and video open in the [E
 
 | Viewer | Files | What it does |
 |---|---|---|
-| **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
-| **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls. Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
+| **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans, and the image itself can't be dragged out of the viewer. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
+| **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls, and a **Loop** button (`L`), **Slower** (`<`) and **Faster** (`>`) buttons around a speed readout, and for video **Back one frame** (`,`) and **Forward one frame** (`.`) (see below). Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
+
+**Loop, speed and frame step.** The toolbar of an audio or video tab has a **Loop** button that repeats the file until you turn it off. **Slower** and **Faster** change the speed in steps of 0.25, from 0.25× to 4×, and the readout between them shows the speed (**1×** at normal speed); click it to go back to normal speed. A video also has **Back one frame** and **Forward one frame**, which pause it and move one frame at a time. The keys are `L` for loop, `<` and `>` for speed, and `,` and `.` for a frame back and forward, while the viewer has the focus (`.`/`,` do nothing in an audio file). A new file starts at normal speed with the loop off.
 
 **Zooming a PDF** (`Ctrl`+scroll, `Ctrl`+`+` / `-` / `0`) zooms the pages, not the whole pane: 100% is the width that fits the pane, the pages are drawn again at the new size so they stay sharp, and the point under the pointer stays under it. Each step makes the pages 25% larger or smaller, and a PDF zooms in to 1500% (other panes stop at 200%). The zoom is saved with the pane. The Editor's tabs, toolbar and file tree stay at the app's own zoom, and `Ctrl`+scroll over them zooms the app (see [Zoom system](/internals/zoom/)). In the text editor, zoom scales the whole pane, tabs and tree included.
 
@@ -390,7 +391,7 @@ Some content in the agent pane sits in a capped box with its own scrollbar: a to
 
 Long-running shell commands started by the agent are pinned to a **dock at the top of the agent pane** — visible at a glance without scrolling to find the tool call. Click any docked activity row to expand its live log output. Three rows show at once; the rest fold under "▸ N more".
 
-What gets a row (`frontend/app/view/agent/components/ActivityDock.tsx`, `frontend/app/view/agent/activity/tool-adapter.ts`):
+What gets a row (`frontend/app/view/agent/components/ActivityDock.tsx`, `frontend/app/agent-model/tool-adapter.ts`):
 
 - A Bash call that has been running for 30 seconds — the auto-detected "this is taking a while" case. A bare `sleep` gets a row straight away, with a "~Ns left" countdown.
 - A command the agent launched in the background (`run_in_background`), **immediately**, including one a subagent started. A long-lived background process (a dev server, a watch task) is expected to keep running, so it shouldn't look like a stuck turn.
@@ -609,7 +610,7 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 
 A widget is either a **singleton**, where one pane is the point, or a widget you can have many of:
 
-- **Brought back:** Swarm, Memory, Connectors, Settings, Vault, History, Audit, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, switches to its tab, and gives it focus. If there is none, it opens one.
+- **Brought back:** Swarm, Memory, Connectors, Settings, Vault, History, Audit, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, brings it to the front of its pane's tabs, and gives it focus. This looks in the tab you are on only: if the pane you have is in another tab or another window, the click opens a new one here and leaves yours where it is. It never switches tabs or windows. If there is none, it opens one.
 - **Opened each time:** Agent, Terminal, Browser, Editor, Files and System info. Every click opens a new pane.
 
 **Shift-click** an entry (or press Shift with it in the palette) to open a new pane even for a singleton. The command palette also lists a **New …** entry for each singleton (**New Tower (Task Manager)**, **New Kanban**, **New Help**, and so on). An installed [widget](/widgets/) says which it is with `singleton` on its pane (see [The package](/widget-api/#the-package)); the default is a new pane each time.
@@ -623,7 +624,7 @@ split. This works for every widget type, not just more of the pane's own
 kind — an agent pane can pick up a terminal tab and a browser tab right next
 to it, all inside one pane.
 
-When a pane has more tabs than fit, the mouse wheel over the strip scrolls it 10 px per notch, and selecting a pane scrolls its selected tab flush left, the way selecting the tab does.
+When a pane has more tabs than fit, the mouse wheel over the strip scrolls it 10 px per notch. Selecting a tab, or a pane whose selected tab is out of view, scrolls the strip only as far as it takes to bring that tab fully into view, never to the left edge, with a quick animation that follows the [Animations](/settings/#animations) setting.
 
 On an agent's tab pill, a line along the top shows what the agent is doing: a bar moving along it while the agent works, a still solid line while it waits for your answer, and a dashed line while it is signed out. Nothing shows when it is idle or out of quota. A collapsed pane shows no border animation, only its pills' lines.
 
@@ -644,7 +645,7 @@ Inspired by [cmux](https://github.com/manaflow-ai/cmux)'s
 [GitHub: SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN_2026_09_17.md)
 for the full design rationale.
 
-A pane tab's own menu (right-click its pill, in a pane with more than one tab) has **Open in Its Own Pane**, which takes that tab out into a pane of its own beside this one, to the right of a row or below a column. A pane that holds two Editors has **Merge document tabs** there too (see [Document tabs](#document-tabs)).
+Right-click a pane tab's pill (in a pane with more than one tab) to bring that tab to the front and open the same menu as the pane's header, built for that tab (see [The pane menu](#the-pane-menu)). A pane that holds two Editors has **Merge document tabs** at the end of it (see [Document tabs](#document-tabs)). To take a tab out into a pane of its own, drag its pill onto a pane's body (see [Drag and Drop](#drag-and-drop)).
 
 ### Splitting
 
@@ -669,7 +670,7 @@ A Shortcuts pane is a grid of tiles, one for every pane type and every installed
 
 ### The pane menu
 
-Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane that takes typed input), **Split Down**, **Split Right**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**.
+Right-click a pane's header for its menu: **Paste** (in a pane that takes typed input), **Split Right**, **Split Down**, **Magnify Pane**, **Minimize to Header** (when the tab has more than one pane), **Close Pane**, **Inspect Element** (opens DevTools on the pane; only with **Dev mode** on in **Settings ▸ Advanced**, on by default in a development build) and **Pane Color**.
 
 ![A pane's right-click menu](../../assets/screenshots/chrome/chrome-pane-context-menu.png)
 
@@ -677,7 +678,7 @@ Right-click a pane's header for its menu: **Copy** (and **Paste**, in a pane tha
 
 **Minimizing a pane merges its tabs into a neighbour.** When you minimize a pane in a split, its tabs join a minimized pane next to it, if there is one: the nearest one before it (above or to the left) with no expanded pane in between, else the nearest after it, with a landing animation on the tabs that arrive. In a row, minimized panes stacked over the same pane count as next to each other. If there is none, the tabs join the nearest expanded pane, after it (to the right or below) else before it, as background tabs; if that neighbour is itself a split, the pane nearest to the one you minimized takes them. Either way the minimized pane's own space goes to the others, and the pane you minimized is gone as a pane. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore, and not a locked pane, a floating pane or the last expanded one.
 
-To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, right-click its tab pill and choose **Open in Its Own Pane**, or drag the pill out; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
+To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, drag its pill out onto a pane's body; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
 
 The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
 
@@ -711,6 +712,8 @@ Rearrange panes by dragging their headers. You can:
 - Drag panes between windows (cross-window drag supported on all platforms)
 
 Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. A pane with two or more tabs can place one of its own tabs this way. `Ctrl`+click (`Cmd`+click on macOS) on a pane tab picks it; pick as many as you like, in different panes too. Dragging any picked tab moves all of them into the pane you drop on, and several picked tabs always join the pane under the pointer. `Esc` or a plain click on a tab clears the pick. A plain click on a tab of a collapsed pane expands the pane; dropping a tab on one does not.
+
+Drop a pane tab's pill on another **window tab** in the top bar and that tab moves there (all the picked tabs, if you picked several). Drop a whole pane by its header on a window tab and the pane moves with all its pane tabs, the visible one kept in front.
 
 ### Dropping files onto panes
 

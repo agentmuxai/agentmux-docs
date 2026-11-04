@@ -19,6 +19,7 @@ An agent is a container agent when you pick **Container (runs in Docker)** in th
 - **Only Claude Code has a container runtime.** Every other harness is Native-only, and its panel says so.
 - The Claude Code template preselects the container runtime when Docker is running and its image can be downloaded. If you picked a runtime yourself before, AgentMux keeps your last choice instead.
 - The pane shows a **CONTAINER** tag next to the model selector.
+- **The new-agent panel skips the steps that are about your computer.** Checking the tools the agent's CLI needs and installing the CLI are for Native agents; a container agent's CLI is installed in its container on the first turn. With **Container (runs in Docker)** chosen, the panel goes straight to the form. When a Native agent's panel is stuck on one of those steps and a container can run, it offers **Run it in a container instead**.
 
 An agent can also make one. `Agents` `create` (a named agent from a template) and `Agents` `spawn` (a worker) take `runtime: container`, plus `container_image`, `memory_mb` and `cpus`; they are refused, with the reason, when Docker isn't available. An agent that is itself a container agent can start only container agents, and can't set limits. A container leader's workers use the leader's image, each with its own container and workspace.
 
@@ -48,6 +49,8 @@ Both images come in the version of the AgentMux that runs. The standard one is `
 For the image of the AgentMux version you run (Standard or Developer), AgentMux starts the container from the image its own release's signed manifest names, by digest, so the image you run is the one the release built. If there is no manifest, it can't be fetched or it names no image, the version tag is used as before. If a manifest is there and doesn't verify, the image isn't downloaded, and the pane says "the signed manifest of this AgentMux release isn't trusted" and to update AgentMux.
 
 ## Starting and updating
+
+A container agent runs each turn as a process in its container, so between turns it has none: it is idle, not stopped. A turn that ends cleanly is reported as completed, so a leader isn't told "stopped: its process exited" about a worker that has only finished its turn. An agent that was stopped and then takes a message and runs a turn is wanted running again, and its pane stops showing the Stopped banner.
 
 The first turn of a container agent can take minutes: the image is downloaded, the container started and the agent CLI installed. The pane shows a **Preparing…** line above the message box while that happens, with the phase ("Downloading the agent image… 42%", "Starting the container…", then "Installing Claude Code …"). It isn't a turn: it has no timer, and what you type isn't queued behind it. The transcript keeps a **Container ready (12 s)** row, then "Ready: send a message to start" when nothing is on its way; a pane keeps one such pair per quiet stretch, not one per reopen. A failed start says **Couldn't start the container** with the reason. A download that gets no data for 60 seconds, or is still not finished after 10 minutes, ends with a message saying so ("the download of *image* stopped (no data for 60 s)", "was still not finished after 10 minutes") and what to check. Send your message again to retry.
 
@@ -141,6 +144,7 @@ Everything a Native agent can do with AgentMux's tools, except what is listed be
 - **Widgets.** It can install a widget it built under `/workspace`; each file is checked as it is copied out. The install is reviewed like any widget an agent installs. See [Widgets](/widgets/).
 - **Seats and environment.** It can set seats (`Agents` `set_seat`) and read or change an agent's environment (`env_get`, `env_set`), its own or another agent's, under the same rules a Native agent meets. See [Seats](/first-agent/#seats).
 - **Compaction.** The **Compact** button in a Claude container agent's message box compacts its conversation, and it gets the same running summary a Native agent does. Codex can't compact inside a container: `Agents` `compact` is refused for a Codex container agent ("a Codex agent in a container can't compact yet"). `Agents` `fresh` is refused for every container agent ("unsupported in containers").
+- **Shell.** The Shell button in its pane opens a shell inside its container, in `/workspace`, where the agent's own commands run, not on your computer. If the container runtime or the container isn't there, the terminal says so; it never falls back to a shell on your computer.
 - **Attachments.** Files dropped or pasted into the pane are copied into its working folder with an `@name` reference. See [Attaching files](/pane-types/#attaching-files).
 
 ## What a container agent cannot do

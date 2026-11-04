@@ -46,11 +46,15 @@ A tab's close button (×) asks first, because the tab's panes close with it. Tic
 
 ## Panes
 
-Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Minimizing a pane in a split puts its tabs into a neighbouring pane as background tabs (hold `Shift` to keep a header chip instead); right-click the tab's pill and choose **Open in Its Own Pane** to bring it back. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
+Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Minimizing a pane in a split puts its tabs into a neighbouring pane as background tabs (hold `Shift` to keep a header chip instead); drag the tab's pill out onto a pane's body to bring it back as a pane of its own. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
+
+Clicking an agent (in the [Swarm](/subagent-watcher/), say) shows its pane, in whichever window holds it. When the pane is in a [workspace](/workspaces/) that no window has open, AgentMux opens a window on that workspace and shows the pane there; if it can't open one, a notice says the pane is in a workspace no window has open.
 
 The mouse's Back and Forward side buttons re-select the panes you had selected before and after, in any tab (see [Pane selection history](/pane-types/#pane-selection-history)).
 
 **Hover tooltips** show once the pointer has rested on a button, pill or truncated label for 40 ms, and at once when you move along a row of them. Labels that used to be the browser's slow native hover text use the same tooltip.
+
+**Dates and times.** Relative times ("5 min. ago", "now") and dates follow your language and regional format, not fixed English wording or a US date order. This covers the update check's last-checked time, the input-history search, notifications (which show their date once they are over a week old), the history size panel's "measured" time and a LAN peer's last-seen time.
 
 **Zoom.** `Ctrl`+scroll over a pane zooms that pane; over the title bar, the status bar or a pane header it zooms the interface itself, which starts again at 100% when AgentMux restarts. `Ctrl+Shift`+scroll zooms every pane in the window. See [Keybindings](/keybindings/#find--zoom) and [Zoom system](/internals/zoom/).
 
@@ -120,10 +124,12 @@ This computer: its OS, address, the backend's process id, and the version's data
 
 This AgentMux instance: its version, channel, commit, CEF version, runtime and build time (each with a copy button), the windows of the open [workspace](/workspaces/), its floating panes, and maintenance (whether this version is up to date, with **Check for update**). **Open another window** opens a new window in the workspace.
 
-The window list is headed by the workspace's name and how many windows it has ("Default Workspace — 3 windows"); double-click the heading, or press `F2` on it, to rename the workspace. Below it:
+The window list is headed by the workspace's name and how many windows it has ("Default Workspace — 3 windows"); double-click the heading, or press `F2` on it, to rename the workspace. Below it is one list of the workspace's windows, open and closed together:
 
 - **Open windows** (● this window, ○ the others): click one to focus it, double-click (or `F2`) to rename it. Each has an opacity slider and **Remove from workspace**, which closes the window and deletes its tabs and panes (disabled on the only open window).
 - **Closed windows**, greyed (◌), with when they closed: click one, or its **Reopen** button, to open it where it was, its agents resuming. Right-click one for **Remove from workspace**.
+
+Every window keeps its place in the list for good. Closing a window greys its row where it is, reopening it brings it back to the same row, and a window opened for the first time goes at the end. Only removing a window closes its gap. The order is kept by AgentMux, so it is the same in every window, and it comes back after a restart and an upgrade. When you close a window from another window, its row stays where it is and greys, instead of disappearing and coming back.
 
 #### Maintenance and updating
 

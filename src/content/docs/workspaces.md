@@ -27,7 +27,7 @@ When a window opens with the default layout because nothing was restored, AgentM
 
 ## Windows in a workspace
 
-Click the version number at the right end of the status bar to open the [instance panel](/window/#instance-panel). Its window list is the open workspace's: headed by its name and how many windows it has (for example "Default Workspace — 3 windows"), then its open windows, then its closed ones, greyed.
+Click the version number at the right end of the status bar to open the [instance panel](/window/#instance-panel). Its window list is the open workspace's: headed by its name and how many windows it has (for example "Default Workspace — 3 windows"), then one list of its windows, open and closed together, each keeping its place, with the closed ones greyed.
 
 | Row | Click it | Its button | Right-click |
 |---|---|---|---|
@@ -86,7 +86,7 @@ The next launch opens the workspace that was open last. **New Window** opens a w
 
 ## Export and import
 
-**Export…** writes the open workspace to a `*.agentmux-workspace.json` file. The Save dialog starts in `~/.agentmux/shared/workspaces/`. The file holds every window, open ones first, then closed ones, each with its name and whether it was closed, but not the references that resume an agent's conversation on this computer. It's a snapshot: later changes to the workspace aren't written to it. If something in it is worth checking before you share the file, the notice that confirms the export lists it.
+**Export…** writes the open workspace to a `*.agentmux-workspace.json` file. The Save dialog starts in `~/.agentmux/shared/workspaces/`. The file holds every window, in the order of the list, each with its name and whether it was closed, but not the references that resume an agent's conversation on this computer. It's a snapshot: later changes to the workspace aren't written to it. If something in it is worth checking before you share the file, the notice that confirms the export lists it.
 
 **Import…** opens an exported workspace, or a `*.agentmux-layout.json` file saved with the **Save layout…** of earlier versions, as a new workspace. Before it opens anything it shows a preview: the windows and tabs, each tab's panes, anything that can't be reproduced exactly here, and every terminal command the file would run, with **Run these commands** (ticked only for a file this AgentMux saved in its own folders; for any other file it says "This file wasn't saved by this AgentMux. Check these commands before running them."). **Import** then switches to the new workspace, named after the file ("Ops", or "Ops 2" when you already have an "Ops").
 
