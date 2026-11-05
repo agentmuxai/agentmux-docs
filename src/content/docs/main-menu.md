@@ -10,7 +10,7 @@ AgentMux groups global actions into two surfaces:
 
 ## AgentMux logo menu
 
-Click the three-line icon at the start of the tab bar. Items, top to bottom:
+Click the AgentMux logo at the start of the tab bar (at the far right of the title bar on macOS). Items, top to bottom:
 
 ![The AgentMux logo menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-logo-menu.png)
 

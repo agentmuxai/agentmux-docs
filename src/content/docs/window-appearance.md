@@ -47,7 +47,7 @@ The Opacity row in Settings shows only while Window transparency is on. Changing
 
 ## New windows
 
-A new window starts with the theme and opacity of the window it came from. That covers **New Window** (from the AgentMux logo menu, the keyboard shortcut, the command palette or the title bar menu), a tab or pane you drag out of a window, and **Open in New Window** on a widget. The copy is taken once: changing the first window later doesn't change the new one.
+A new window starts with the theme and opacity of the window it came from. That covers **New Window** (from the AgentMux logo menu, the keyboard shortcut or the command palette), a tab or pane you drag out of a window, and **Open in New Window** on a widget. The copy is taken once: changing the first window later doesn't change the new one.
 
 A window that doesn't come from another window, such as the first window when you start AgentMux from your desktop, uses the defaults from Settings ▸ Appearance. Windows restored when you restart AgentMux keep their own saved values.
 
