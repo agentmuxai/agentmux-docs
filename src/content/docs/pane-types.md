@@ -61,7 +61,7 @@ These views exist in the codebase but are **not** opened directly from the widge
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
 | **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
 | **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx`) — see [Media](#media). |
-| **DevTools** | Hamburger menu (≡) in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
+| **DevTools** | AgentMux logo menu in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
 The agent pane's header has no button for these. What belongs to one agent is reached from [Subsections](#subsections) below.
 

@@ -11,9 +11,9 @@ Each AgentMux window has its own **theme** and its own **opacity**. Changing the
 
 ## Theme
 
-Open the hamburger menu (≡) → **Theme** and pick a theme. Only the window you opened the menu in changes. The menu checks the theme that window is on.
+Open the AgentMux logo menu → **Theme** and pick a theme. Only the window you opened the menu in changes. The menu checks the theme that window is on.
 
-![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-hamburger-theme.png)
+![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-logo-theme.png)
 
 The choice is saved with the window, as `window:theme` in the window's own meta, so it comes back when you restart AgentMux.
 
@@ -23,10 +23,10 @@ A window without a theme of its own uses **Settings ▸ Appearance ▸ Theme**, 
 
 There is one opacity per window. You can set it from two places, and they show the same value:
 
-- **The hamburger menu (≡) → Opacity:** 100% down to 35%, in 5% steps.
+- **The AgentMux logo menu → Opacity:** 100% down to 35%, in 5% steps.
 - **The window list in the status bar:** click the version chip in the bottom status bar to open the Instance Panel, then drag the **Opacity** slider on a window's row. The window changes as you drag, and the value is saved when you let go.
 
-![The hamburger menu's Opacity submenu: 100% down to 35% in 5% steps, the current value checked](../../assets/screenshots/chrome/chrome-hamburger-opacity.png)
+![The AgentMux logo menu's Opacity submenu: 100% down to 35% in 5% steps, the current value checked](../../assets/screenshots/chrome/chrome-logo-opacity.png)
 
 ![The Instance Panel, with Window 1 at 100% on its opacity slider under Default Workspace](../../assets/screenshots/chrome/chrome-status-instance.png)
 
@@ -47,11 +47,11 @@ The Opacity row in Settings shows only while Window transparency is on. Changing
 
 ## New windows
 
-A new window starts with the theme and opacity of the window it came from. That covers **New Window** (from the hamburger menu, the keyboard shortcut, the command palette or the title bar menu), a tab or pane you drag out of a window, and **Open in New Window** on a widget. The copy is taken once: changing the first window later doesn't change the new one.
+A new window starts with the theme and opacity of the window it came from. That covers **New Window** (from the AgentMux logo menu, the keyboard shortcut, the command palette or the title bar menu), a tab or pane you drag out of a window, and **Open in New Window** on a widget. The copy is taken once: changing the first window later doesn't change the new one.
 
 A window that doesn't come from another window, such as the first window when you start AgentMux from your desktop, uses the defaults from Settings ▸ Appearance. Windows restored when you restart AgentMux keep their own saved values.
 
-Floating panes have no hamburger menu. Their opacity is set from the Instance Panel and lasts only for the session. They show the default theme.
+Floating panes have no AgentMux logo menu. Their opacity is set from the Instance Panel and lasts only for the session. They show the default theme.
 
 ## The app icon
 
@@ -70,5 +70,5 @@ The Opacity menu and slider appear only in the desktop app, where the window can
 ## See Also
 
 - [Settings reference](/settings/#window-settings): `window:theme`, `window:opacity`, `window:transparent`, `window:blur`
-- [Main menu](/main-menu/): the hamburger menu
+- [Main menu](/main-menu/): the AgentMux logo menu
 - [Keybindings](/keybindings/): keyboard shortcuts

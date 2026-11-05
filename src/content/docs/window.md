@@ -13,11 +13,11 @@ An AgentMux window has three parts: the **top bar**, the **panes** of the curren
 
 ## Top bar
 
-![The top bar: the hamburger menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
+![The top bar: the AgentMux logo menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
 From left to right:
 
-- **Hamburger menu (≡):** global actions and preferences. See [Main menu & command palette](/main-menu/).
+- **AgentMux logo menu:** global actions and preferences. See [Main menu & command palette](/main-menu/).
 - **Window tabs:** each tab holds its own layout of panes. **New Tab** (`Ctrl+Shift+T` / `⌘T`) adds one; drag a tab below the tab bar to [tear it off](/pane-types/#tab-tear-off) into a new window.
 - **Widget bar:** one icon per pinned widget; click one to open it. Widgets that aren't pinned are under **more** at the end of the bar. Right-click a pinned icon to unpin it.
 - **Window buttons:** minimize, maximize and close.

@@ -61,7 +61,7 @@ Tick **Don't ask again**, or turn off **Warn before closing a window with workin
 
 ☰ → **Workspaces**:
 
-![The hamburger menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-hamburger-workspaces.png)
+![The AgentMux logo menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-logo-workspaces.png)
 
 | Item | What it does |
 |---|---|

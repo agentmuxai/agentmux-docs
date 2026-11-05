@@ -24,7 +24,7 @@ Type in **Search settings…** at the top of the pane to find a setting on any t
 
 ![Searching Settings for "font": Font size and Font family, from the Terminal tab](../../assets/screenshots/settings/settings-search.png)
 
-The hamburger menu also has submenus for the two things you change most, for the window you open it in:
+The AgentMux logo menu also has submenus for the two things you change most, for the window you open it in:
 
 - **Theme** ▸ Pick a dark theme (`Default`, `Midnight`, `High Contrast`, `Monokai`, `Nord`, `Dracula`, `Catppuccin`, `Tokyo Night`, `Gruvbox`) or a light one (`Light`, `Catppuccin Latte`, `Solarized Light`, `Gruvbox Light`). It changes only this window, and is saved with the window, not in `settings.json`.
 - **Opacity** ▸ This window's translucency, from 100% down to 35% in 5% steps. It is the same value as the window's slider in the status bar's Instance Panel.
@@ -208,8 +208,8 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `window:theme` | string | `"default"` | Default UI color theme, for windows without one of their own (the hamburger menu's **Theme** sets one window's). One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `catppuccin`, `tokyo-night`, `gruvbox`, or the light themes `light`, `catppuccin-latte`, `solarized-light`, `gruvbox-light`. |
-| `window:transparent` | boolean | `false` | Make windows see-through by default (Settings: **Window transparency**). A window's own opacity, set from the hamburger menu, applies whether or not this is on. |
+| `window:theme` | string | `"default"` | Default UI color theme, for windows without one of their own (the AgentMux logo menu's **Theme** sets one window's). One of `default`, `midnight`, `high-contrast`, `monokai`, `nord`, `dracula`, `catppuccin`, `tokyo-night`, `gruvbox`, or the light themes `light`, `catppuccin-latte`, `solarized-light`, `gruvbox-light`. |
+| `window:transparent` | boolean | `false` | Make windows see-through by default (Settings: **Window transparency**). A window's own opacity, set from the AgentMux logo menu, applies whether or not this is on. |
 | `window:blur` | boolean | `false` | Shown in Settings as **Background blur**. It makes windows see-through by default, like `window:transparent`; AgentMux doesn't currently draw a blur behind the window itself. |
 | `window:opacity` | number | `0.8` | Default opacity for windows without their own, used only while `window:transparent` or `window:blur` is on. Settings allows 0.35–1. A window's own opacity is saved with the window. See [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color (hex). Blank uses the theme's. |

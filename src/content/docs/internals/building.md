@@ -167,7 +167,7 @@ See [Architecture overview](/internals/architecture/) for the full topology and 
 
 ### Frontend
 
-Open Chromium DevTools from the **hamburger menu (≡)** in the top tab bar → **Dev Tools**, or use the keyboard shortcut. DevTools is no longer a widget-bar entry (moved to the hamburger menu — see [Pane types](/pane-types/)). Reload the renderer with `Ctrl+R` / `Cmd+R`.
+Open Chromium DevTools from the **AgentMux logo menu** in the top tab bar → **Dev Tools**, or use the keyboard shortcut. DevTools is no longer a widget-bar entry (moved to the AgentMux logo menu — see [Pane types](/pane-types/)). Reload the renderer with `Ctrl+R` / `Cmd+R`.
 
 ### Backend Logs
 
