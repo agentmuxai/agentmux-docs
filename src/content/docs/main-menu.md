@@ -1,18 +1,18 @@
 ---
 title: Main menu & command palette
-description: The hamburger menu (≡) in the top tab bar lists global actions and preferences; the command palette (Ctrl+Shift+P / ⇧⌘P) gives keyboard-driven access to a wider set of commands.
+description: The AgentMux logo menu in the top tab bar lists global actions and preferences; the command palette (Ctrl+Shift+P / ⇧⌘P) gives keyboard-driven access to a wider set of commands.
 ---
 
 AgentMux groups global actions into two surfaces:
 
-- The **hamburger menu** (≡) at the start of the top tab bar — mouse-friendly, organized by category.
+- The **AgentMux logo menu** (the AgentMux logo) at the start of the top tab bar — mouse-friendly, organized by category.
 - The **command palette** (`Ctrl+Shift+P` / `⇧⌘P`) — keyboard-driven, searchable list of every registered command.
 
-## Hamburger menu (≡)
+## AgentMux logo menu
 
-Click the three-line icon at the start of the tab bar. Items, top to bottom:
+Click the AgentMux logo at the start of the tab bar (at the far right of the title bar on macOS). Items, top to bottom:
 
-![The hamburger menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-hamburger-menu.png)
+![The AgentMux logo menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-logo-menu.png)
 
 | Item | Shortcut | What it does |
 |------|---------|--------------|
@@ -32,9 +32,9 @@ Settings, Connectors, Memory and Toolchain aren't in this menu. Open them from t
 
 The Theme and Opacity submenus check-mark this window's current value, so you can see at a glance what you're on. A submenu opens when you hover its row.
 
-![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-hamburger-theme.png)
+![The Theme submenu: the dark themes, then the light ones, with the current theme checked](../../assets/screenshots/chrome/chrome-logo-theme.png)
 
-![The hamburger menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-hamburger-workspaces.png)
+![The AgentMux logo menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-logo-workspaces.png)
 
 ## Reopening your windows at the next launch
 
@@ -71,6 +71,6 @@ The palette is **not exhaustive** — most navigation shortcuts (Connect Remote,
 
 ## Why two surfaces?
 
-The hamburger menu is the discoverable surface — open it once and you know what's in there. The command palette is the speed surface — once you know the command name, typing two or three letters and hitting Enter is faster than menu-and-mouse.
+The AgentMux logo menu is the discoverable surface — open it once and you know what's in there. The command palette is the speed surface — once you know the command name, typing two or three letters and hitting Enter is faster than menu-and-mouse.
 
 If you find yourself wanting an action from the palette that isn't there, [file an issue](/report-issues/) — the registry is small enough that adding new commands is straightforward.

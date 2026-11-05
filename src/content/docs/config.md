@@ -25,7 +25,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 
 ```jsonc
 {
-  // Default theme for windows without their own (the hamburger menu sets one window's)
+  // Default theme for windows without their own (the AgentMux logo menu sets one window's)
   "window:theme": "default",
 
   // Make windows see-through by default
@@ -37,7 +37,7 @@ The `<channel>` segment is `stable` by default for Installed and downloaded Port
 }
 ```
 
-Theme and opacity are set per window from the hamburger menu; these keys are the defaults. See [Window appearance](/window-appearance/).
+Theme and opacity are set per window from the AgentMux logo menu; these keys are the defaults. See [Window appearance](/window-appearance/).
 
 ### Terminal
 

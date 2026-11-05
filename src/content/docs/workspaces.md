@@ -1,6 +1,6 @@
 ---
 title: Workspaces
-description: A workspace is a named set of AgentMux windows, each with its tabs and panes. AgentMux saves it as you work; closing a window keeps it in the workspace, and the ☰ Workspaces menu creates, opens, renames, exports and imports them.
+description: A workspace is a named set of AgentMux windows, each with its tabs and panes. AgentMux saves it as you work; closing a window keeps it in the workspace, and the AgentMux logo menu's Workspaces entry creates, opens, renames, exports and imports them.
 ---
 
 A **workspace** is a named set of [windows](/window/), each with its tabs and panes. One workspace is open at a time, and everyone starts in **Default Workspace**. Every window you open belongs to the open workspace.
@@ -38,7 +38,7 @@ Double-click the heading (or press `F2` on it) to rename the workspace.
 
 ### Closing a window keeps it
 
-Closing a window (its close button, ☰ → **Exit**, the palette's **Close Window**) doesn't remove it from the workspace. Its agents keep running with no window, its shells and other panes stop, and it stays in the list as a closed window ("2 agents keep running without a window"). **Reopen** opens it where it was, with the same panes, and its agents are back in their tabs, mid-turn or idle. Closed windows are kept until you remove them. See [Closing and shutting down](/closing-and-shutting-down/).
+Closing a window (its close button, AgentMux logo menu → **Exit**, the palette's **Close Window**) doesn't remove it from the workspace. Its agents keep running with no window, its shells and other panes stop, and it stays in the list as a closed window ("2 agents keep running without a window"). **Reopen** opens it where it was, with the same panes, and its agents are back in their tabs, mid-turn or idle. Closed windows are kept until you remove them. See [Closing and shutting down](/closing-and-shutting-down/).
 
 Two closes don't make a closed window:
 
@@ -59,9 +59,9 @@ Tick **Don't ask again**, or turn off **Warn before closing a window with workin
 
 ## The Workspaces menu
 
-☰ → **Workspaces**:
+AgentMux logo menu → **Workspaces**:
 
-![The hamburger menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-hamburger-workspaces.png)
+![The AgentMux logo menu with its Workspaces submenu open: New Workspace…, Open Workspace, Import…, Export…, Rename workspace… and Delete workspace…](../../assets/screenshots/chrome/chrome-logo-workspaces.png)
 
 | Item | What it does |
 |---|---|
