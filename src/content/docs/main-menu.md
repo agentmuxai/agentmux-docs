@@ -26,7 +26,7 @@ Click the three-line icon at the start of the tab bar. Items, top to bottom:
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
 | **Exit** | — | Closes the current window. Other windows stay open, and this one stays in the workspace as a closed window you can reopen from the status bar's instance panel. Closing the last window quits AgentMux. Its agents keep running; it asks first only when closing would stop a working agent (the last window, or `agents:always_available` turned off). See [Closing a window keeps it](/workspaces/#closing-a-window-keeps-it). |
 
-**New Window** appears only where AgentMux can open several windows, and **Opacity** only where windows can be see-through (`frontend/app/window/logo-menu.tsx`).
+**New Window** appears only where AgentMux can open several windows, and **Opacity** only where windows can be see-through (`frontend/app/window/hamburger-menu.tsx`).
 
 Settings, Connectors, Memory and Toolchain aren't in this menu. Open them from the widget bar (Settings, Connectors and Memory are pinned by default; Toolchain is under **more**) or from the command palette (**Settings**, **Connectors**, **Memory**, **Open Toolchain**). Settings also opens with `Ctrl+,` / `⌘,`. See [Settings reference](/settings/), [Connectors](/connectors/) and [Memory](/memory/).
 
