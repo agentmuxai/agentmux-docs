@@ -31,9 +31,9 @@ AgentMux does not call AI provider APIs directly. Instead, it manages a provider
 | DeepSeek Harness | `dsh` | `@deepseek-ai/dsh` | `acp` | ACP |
 | Aider | `aider` | — (PyPI `aider-chat`, through Aider's installer) | `terminal` | None: its own UI in a terminal pane |
 | Crush | `crush` | `@charmland/crush` | `terminal` | None: its own UI in a terminal pane |
-| Muse Code | `muse` | — (Meta's installer) | `terminal` | None: its own UI in a terminal pane |
+| Muse Code | `muse` | — (Meta's installer) | `msp` | MSP: JSON-RPC 2.0 over stdio (`muse serve`), with its own translator |
 
-The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` keeps one process speaking the Agent Client Protocol over stdio; `terminal` opens a terminal pane that runs the CLI's own UI (see [The terminal tier](#the-terminal-tier)).
+The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` keeps one process speaking the Agent Client Protocol over stdio; `msp` keeps one `muse serve` process speaking Muse Code's own protocol (MSP) over stdio; `terminal` opens a terminal pane that runs the CLI's own UI (see [The terminal tier](#the-terminal-tier)).
 
 :::note
 **Muxcode** is AgentMux's own first-party agentic coding CLI, not a typo — see [Auth flows](/auth/). **Antigravity** is Google's agentic coding CLI. Its stream-json looks like Gemini CLI's but is its own schema, so it has its own translator, and it takes the prompt as an argument (`-p <prompt>`) rather than on stdin.
@@ -179,13 +179,13 @@ Codex frames go through the same line-buffered, fast-reject front door described
 
 ## The terminal tier
 
-Aider, Crush and Muse Code have no interface AgentMux can parse: no ACP, and no structured output it can read (Muse Code's own protocol needs a controller of its own, which doesn't exist yet). They use the `terminal` controller type. Launching one turns the agent's pane into a terminal pane (`view: "term"`, an interactive command run on start) that runs the CLI with its launch arguments in the agent's folder (`TERMINAL_PANE_META` in `frontend/app/view/agent/launch-args.ts`).
+Aider and Crush have no interface AgentMux can parse: no ACP, and no structured output it can read. They use the `terminal` controller type. Launching one turns the agent's pane into a terminal pane (`view: "term"`, an interactive command run on start) that runs the CLI with its launch arguments in the agent's folder (`TERMINAL_PANE_META` in `frontend/app/view/agent/launch-args.ts`).
 
-AgentMux still does the launch work it does for every harness: it writes the startup instructions file (`AGENTS.md`) and sets the CLI's config folder and opt-out variables. Where the CLI won't read the file by itself, the launch passes it: Aider runs as `aider --read AGENTS.md`. Muse Code runs with `--trust-workspace`, so it reads project rules in the agent's folder.
+AgentMux still does the launch work it does for every harness: it writes the startup instructions file (`AGENTS.md`) and sets the CLI's config folder and opt-out variables. Where the CLI won't read the file by itself, the launch passes it: Aider runs as `aider --read AGENTS.md`.
 
-What the terminal tier doesn't get: an AgentMux transcript, token counts, resume, AgentMux's MCP tools, or a model picker. The CLI's own UI does those. A terminal-tier CLI also can't be a `.cmd` wrapper on Windows, so for Muse Code AgentMux runs the native binary its installer downloaded.
+What the terminal tier doesn't get: an AgentMux transcript, token counts, resume, AgentMux's MCP tools, or a model picker. The CLI's own UI does those. A terminal-tier CLI also can't be a `.cmd` wrapper on Windows.
 
-Crush moves to ACP when upstream ships it, and Muse Code when AgentMux has a controller for its protocol.
+Crush moves to ACP when upstream ships it.
 
 ## Step 5 — Subprocess lifecycle and signal handling
 
