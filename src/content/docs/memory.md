@@ -18,7 +18,7 @@ Memory is a regular pane (icon: `brain`), opened from the widget bar like any ot
 | **Global** | Global Memory: instructions composed into every agent's startup file |
 | **Personal** | Personal Memory: what each agent writes in its own memory files, with history |
 | **Skills** | The skills you add, and which agents each one reaches |
-| **Bundles** | Instructions, MCP servers, memory and skills packaged to give to agents; imports [ABF](/abf/) (`.abf`) files |
+| **Bundles** | Instructions and skills packaged to give to agents; imports [ABF](/abf/) (`.abf`) files |
 
 Memory opens on **Global**. The pane title names the section, for example "Memory · Skills". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
 
@@ -186,9 +186,9 @@ Agents manage skills with the `skill.*` commands; see [MuxAPI](/internals/muxapi
 
 ## Bundles
 
-The app-wide view of all bundles. A bundle packages instructions, MCP servers, memory and skills; an agent takes several, in order. **+ New Bundle** creates one; **Import Bundle** brings in an `.abf` file (its review shows each skill's full text before anything is imported), and any bundle can be exported as one. See [Bundles](/bundles/) for the full reference, including how an agent's bundles are picked, and [Agent Bundle Format (ABF)](/abf/) for the file format.
+The app-wide view of all bundles. A bundle packages instructions and skills; an agent takes several, in order. **+ New Bundle** creates one; **Import Bundle** brings in an `.abf` file (its review shows each skill's full text before anything is imported). See [Bundles](/bundles/) for the full reference, including how an agent's bundles are picked, and [Agent Bundle Format (ABF)](/abf/) for the file format.
 
-![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, each agent's own, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
+![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
 Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** panel or its pane's right-click menu) picks which bundles that agent starts with; it doesn't create or edit them.
 
@@ -199,9 +199,9 @@ Memory is app-wide, and each of its sections has a way in for one agent:
 - **Personal Memory**: right-click an agent's pane and choose **Personal memory**. Memory opens on **Personal** with that agent selected.
 - **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** panel or its pane's right-click menu, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
 
-## Portable bundles (beta spec)
+## Portable bundles
 
-**[Agent Bundle Format (ABF)](/abf/)** is a beta specification for packaging a bundle's instructions, skills, MCP servers, and credential requirements into one portable, versioned directory — composing existing standards (Agent Skills/SKILL.md, MCP server.json, AGENTS.md) rather than inventing new ones. The Bundles section has an **Import Bundle** button for bringing in an ABF bundle. See the [rollout plan](/abf/#rollout-plan) for what's built vs. planned.
+**[Agent Bundle Format (ABF)](/abf/)** packages a bundle's instructions, context files, skills and, if you choose, widgets into one `.abf` file, composing existing standards (Agent Skills, AGENTS.md) rather than inventing new ones. The Bundles section has an **Import Bundle** button for bringing one in.
 
 ## See also
 
