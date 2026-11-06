@@ -144,7 +144,7 @@ Add a `keybindings` list to your settings file (command palette → Open Setting
 
 An entry that can't be used is skipped and the rest still apply.
 
-To open the [Connectors](/connectors/) or [Memory](/memory/) pane from a shortcut, bind `app:connectors` or `app:memory`. Bindings to the retired `app:knowledge` (Memory's earlier name) and `app:identity` (the command palette's former "Identity & Memory" command) are changed to `app:memory` and `app:connectors` the first time it starts after updating.
+To open the [Connectors](/connectors/) or [Memory](/memory/) pane from a shortcut, bind `app:connectors` or `app:memory`.
 
 ## Terminal settings
 

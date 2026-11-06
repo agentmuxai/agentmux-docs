@@ -16,10 +16,6 @@ The **Swarm** pane is the overview of what your agents are doing right now. It l
 <figcaption id="clip-swarm-follows-agent">A 13-second clip with no sound: sending an agent a message. Swarm turns it from idle to working, then shows its subagent task and the file it reads, while the reply streams in.</figcaption>
 </figure>
 
-:::note[This page used to be "Subagent Watcher"]
-Earlier releases had a separate **Subagent** pane and a Swarm pane with Overview, History and Search tabs. Both are gone. The Swarm pane's tabs are now its [sections](#sections), and subagent activity expands inline in the tree instead of opening its own pane.
-:::
-
 ## Opening Swarm
 
 - Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@swarm`).

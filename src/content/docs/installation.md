@@ -173,7 +173,7 @@ Agents need their CLI tools, and most of those need Node.js and npm. The Toolcha
 
 A **Local models** section, between the core tools and the agent CLIs, looks for tools for running models on your own machine: Ollama, llama.cpp, LM Studio and llmfit. Each row shows the version and path it found, or "Not installed (optional)", with an install command to copy and a link. There is no one-click install for these (`frontend/app/store/toolchain-catalog.ts`, `LOCAL_MODEL_TOOLS`).
 
-The coding agents OpenCode, goose, Crush and Aider used to be listed there too. They are harnesses now, so they're listed with the other agent CLIs, with the version AgentMux was tested with, and you can launch them from the agent picker. See [Harnesses and providers](/first-agent/#harnesses-and-providers).
+OpenCode, goose, Crush and Aider are listed with the other agent CLIs, with the version AgentMux was tested with, and you can launch them from the agent picker. See [Harnesses and providers](/first-agent/#harnesses-and-providers).
 
 ### System tray
 

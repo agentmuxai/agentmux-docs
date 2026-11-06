@@ -33,8 +33,6 @@ Links elsewhere in the app open Connectors on the right section:
 
 - An agent pane that can't sign in shows **Connectors → Accounts** in its error row, and **Accounts (switch / upgrade)** when a usage limit is reached. See [First Agent Setup → Sign in](/first-agent/#sign-in).
 
-AgentMux moves panes saved under an earlier name, once, the first time it starts after updating: an Armory pane (the earlier pane that held both Connectors and Memory) becomes Connectors for Accounts and MCP servers and Memory for the rest, and a Remotes pane becomes **Connectors → Remotes**. A layout file that uses the old names opens the same way.
-
 ## Accounts
 
 The Accounts section shows every service AgentMux can connect to. Each entry displays the service logo, connection status, and the active credential type.

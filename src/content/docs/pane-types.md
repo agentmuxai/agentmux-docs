@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more**. See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. If you had customised the bar and pinned the Armory (the pane Connectors and Memory replaced), Knowledge (Memory's earlier name) or Remotes, AgentMux replaces those pins with the new panes the first time it starts after updating. A saved Media pin shows as the Editor (`frontend/app/window/action-widgets-config.ts`). Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more**. See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -36,7 +36,7 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
 | **Files** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Files](#files) |
-| **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). Formerly Knowledge |
+| **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
 | **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, the agents of other instances, a fleet toolbar and the Supervisor — see [Swarm](/subagent-watcher/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
@@ -60,7 +60,6 @@ These views exist in the codebase but are **not** opened directly from the widge
 | **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
 | **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
-| **Media** | No longer a pane of its own. Images, audio and video open in the Editor, and `media` opens an Editor (`frontend/app/view/editor/editor.tsx`) — see [Media](#media). |
 | **DevTools** | AgentMux logo menu in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
 
 The agent pane's header has no button for these. What belongs to one agent is reached from [Subsections](#subsections) below.
@@ -341,8 +340,6 @@ A viewer reloads when its file changes on disk. To open one of these files, open
 
 The Media pane's job was watching a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), and showing each new file as it lands. The Editor does this per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
 
-A saved Media pane opens as an Editor: each of its files becomes a tab that follows its folder (`frontend/app/view/editor/media-migration.ts`).
-
 ### Opening it programmatically
 
 Agents use the `Pane` MCP tool (action `open`, view `media`, a `file`) to show a file next to the conversation, optionally as a split or a floating pane, without the person having to browse for it. It opens in the Editor with **Follow newer files in this folder** on, as a new tab in an Editor pane already open in the agent's own tab if there is one (`crates/mcp/src/tools/panes.rs`, `crates/srv/src/server/app_api/pane.rs`). Files on an SSH connection can't be shown this way yet. Useful for "here's the image or video I just generated" moments mid-turn.
@@ -429,7 +426,7 @@ After each completed turn, if the composer is still empty, AgentMux may show a d
 
 ### Composer strip
 
-Mode, Model, and Effort (Claude panes only) render as pill-shaped **drop-up** controls in the composer strip — click one to open a small popup above it rather than a native dropdown; changes apply on the agent's next turn. The **Shell** button (formerly labeled "Log") toggles the resizable details drawer described below.
+Mode, Model, and Effort (Claude panes only) render as pill-shaped **drop-up** controls in the composer strip — click one to open a small popup above it rather than a native dropdown; changes apply on the agent's next turn. The **Shell** button toggles the resizable details drawer described below.
 
 The strip also shows the account the agent uses, as its login email (shortened to 22 characters; hover for the whole address). Click it to change the agent's account. The menu lists every signed-in account of the agent's provider, with the current one checked and a note beside an account that is out of quota ("out of quota until Sun 7:00 PM"). Choose one to move the agent to it. A signed-out agent's menu also has **Log in**, and a Claude agent's has **Sign in with another account…**, which adds an account and moves the agent to it. Accounts that share a provider and an email are numbered (`user@example.com ·2`). A container agent's strip has the same menu, even before an account is linked.
 

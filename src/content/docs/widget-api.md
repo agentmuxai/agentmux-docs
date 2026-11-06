@@ -70,7 +70,7 @@ Each pane is a view named `ext:<id>/<name>`, for example `ext:acme.pr-dashboard/
 | `agents:send` | Send messages to the user's agents |
 | `tasks:read` | List the Kanban's tasks (below) |
 
-An AgentMux older than 0.60.1 refuses a manifest that lists `links:open`, and one that has it refuses `am.ui.openUrl` to a widget that doesn't list it.
+AgentMux refuses `am.ui.openUrl` to a widget that doesn't list `links:open`.
 
 A **private or local address** (loopback, your network, link-local) is reachable only through a permission that names that address itself, port included: an IP address (`net:http://127.0.0.1:8188`) or `localhost` (`net:http://localhost:3000`). A public name that resolves to a private address is refused, and so is a wildcard.
 
@@ -207,7 +207,7 @@ useVisibility(am, { onActive: startPolling, onDormant: stopPolling });
 
 ## Commands and status bar items
 
-A widget can add entries to the command palette and items to the status bar, declared in `widget.json` (above). They need no permission, and they're there only while the widget is installed and turned on. An older AgentMux ignores them.
+A widget can add entries to the command palette and items to the status bar, declared in `widget.json` (above). They need no permission, and they're there only while the widget is installed and turned on.
 
 A command shows in the palette under **Widgets** as "PR Dashboard: Refresh pull requests". Running it focuses the widget's pane in the current tab, or opens one, and sends that pane the `command` event:
 

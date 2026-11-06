@@ -52,7 +52,7 @@ Clicking an agent (in the [Swarm](/subagent-watcher/), say) shows its pane, in w
 
 The mouse's Back and Forward side buttons re-select the panes you had selected before and after, in any tab (see [Pane selection history](/pane-types/#pane-selection-history)).
 
-**Hover tooltips** show once the pointer has rested on a button, pill or truncated label for 40 ms, and at once when you move along a row of them. Labels that used to be the browser's slow native hover text use the same tooltip.
+**Hover tooltips** show once the pointer has rested on a button, pill or truncated label for 40 ms, and at once when you move along a row of them.
 
 **Dates and times.** Relative times ("5 min. ago", "now") and dates follow your language and regional format, not fixed English wording or a US date order. This covers the update check's last-checked time, the input-history search, notifications (which show their date once they are over a week old), the history size panel's "measured" time and a LAN peer's last-seen time.
 

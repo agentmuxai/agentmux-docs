@@ -214,7 +214,6 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `window:opacity` | number | `0.8` | Default opacity for windows without their own, used only while `window:transparent` or `window:blur` is on. Settings allows 0.35–1. A window's own opacity is saved with the window. See [Window appearance](/window-appearance/). |
 | `window:bgcolor` | string | `""` | Custom background color (hex). Blank uses the theme's. |
 | `window:tilegapsize` | integer | `3` | Gap between panes in pixels (Settings allows 0–20) |
-| `window:reducedmotion` | boolean | `false` | Deprecated and ignored. Use [Animation Settings](#animation-settings). A settings file that still sets it loads without error. |
 | `window:magnifiedblockopacity` | number | `1` | Background opacity of a pane while it's hover-magnified (0–1) |
 | `window:magnifiedblocksize` | number | unset | Scale factor applied to a pane while it's hover-magnified. Unset, the layout uses its built-in size. |
 | `window:magnifiedblockblurprimarypx` | integer | `0` | Backdrop blur, in pixels, applied to the magnified pane itself |
@@ -606,7 +605,7 @@ For installed and portable release builds (v0.41.1+), state is split across **ve
 | Account-wide state (shared databases, provider logins, backups) | `~/.agentmux/shared/` | Account-wide |
 | Dev mode root | `~/.agentmux/dev/<branch>/<clone-id>/` | Per-(branch × clone), no version split |
 
-See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/multi-instance/) for the full layout and the historical migration from per-version → channels → channels-plus-version-scoped-runtime.
+See [Data layout](/internals/data-layout/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## See Also
 
