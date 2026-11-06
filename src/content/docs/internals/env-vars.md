@@ -7,11 +7,8 @@ description: Every AGENTMUX_* variable in the process tree — who sets it, who 
 
 This page covers the variables that matter to the process tree and to a pane's environment, not every `AGENTMUX_*` variable in the code (there are over two hundred; most are test, debug or build switches). Every variable named here exists.
 
-This document is the canonical reference for every `AGENTMUX_*` (and legacy
-`WAVEMUX_*`) environment variable that flows through the AgentMux process
-tree. Its absence was the direct cause of the Win11 focused-border
-invisibility bug (an agent colour of #000000 silently became the pane's
-focused-border colour, making it invisible against a dark background).
+This document is the canonical reference for every `AGENTMUX_*` (and `WAVEMUX_*` alias) environment variable that flows through the AgentMux process
+tree.
 
 ---
 
@@ -69,12 +66,12 @@ focused-border colour, pane title, and jekt auto-registration.
 
 **Priority chain** (`shell.rs`):
 1. Block metadata `cmd:env["AGENTMUX_AGENT_ID"]`
-2. Legacy compat: `WAVEMUX_AGENT_ID` in the same block `cmd:env` (read-only fallback for jekt registration)
+2. Alias: `WAVEMUX_AGENT_ID` in the same block `cmd:env` (read-only fallback for jekt registration)
 
 Global settings `cmd_env["AGENTMUX_AGENT_ID"]` and the srv process env are deliberately not consulted.
 
 **Strip logic** (`shell.rs`): if none of the above sources provides
-a value, `AGENTMUX_AGENT_ID` and the legacy `WAVEMUX_AGENT_ID` and
+a value, `AGENTMUX_AGENT_ID` and the `WAVEMUX_AGENT_ID` and
 `WAVEMUX_AGENT_COLOR` are _actively removed_ from the
 PTY child's environment so a parent AgentMux pane's identity does not bleed into
 a new plain terminal pane.
@@ -91,17 +88,6 @@ value on every prompt via an OSC sequence that the srv parses. If you
 triggers an identity update that the frontend applies immediately. This is
 intentional (live agent re-binding), but setting the var to an empty string
 emits `{}` rather than nothing, which clears the pane's displayed identity.
-
----
-
-### AGENTMUX_AGENT_COLOR / AGENTMUX_AGENT_TEXT_COLOR (decommissioned)
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | Decommissioned on 2026-09-20. srv no longer injects either variable into a pane, and neither is on `PANE_ENV_KEEP`. |
-| **Who reads them** | Nothing. The shell integration scripts no longer send them in the OSC 16162;E payload, and the pane header and border use the agent's persisted `ui:color`. |
-
-A value set in a block's `cmd:env` has no effect on the pane's colours. Set the agent's colour in its definition instead.
 
 ---
 
@@ -122,21 +108,6 @@ An agent's turn gets more variables than a plain pane, which srv sets when it st
 
 ---
 
-### WAVEMUX_AGENT_ID / WAVEMUX_AGENT_COLOR (legacy)
-
-| Attribute | Value |
-|-----------|-------|
-| **Status** | Deprecated — read-only backward-compat bridge |
-| **Who reads them** | `shell.rs` reads `WAVEMUX_AGENT_ID` as the lowest-priority fallback for jekt registration only |
-| **Strip logic** | Both are removed from PTY children when no explicit agent identity is configured (`shell.rs`) |
-
-These variables were the pre-rebrand names from the WaveMux era. Do not
-set them in new configurations; use `AGENTMUX_*` equivalents instead.
-The only surviving use is as a read-only fallback in the jekt
-auto-registration path — they are never written by AgentMux.
-
----
-
 ## Group 2 — Path Variables
 
 All path variables are set by the launcher from `DataPaths::to_env_vars()`
@@ -151,7 +122,7 @@ single source of truth; downstream binaries must not recompute paths.
 │   ├── config/                           ← AGENTMUX_CONFIG_DIR
 │   ├── agents/                           ← AGENTMUX_AGENTS_DIR
 │   └── versions/<ver>/
-│       ├── data/                         ← AGENTMUX_DATA_DIR (+ legacy AGENTMUX_DATA_HOME)
+│       ├── data/                         ← AGENTMUX_DATA_DIR (+ alias AGENTMUX_DATA_HOME)
 │       ├── logs/                         ← AGENTMUX_LOG_DIR
 │       ├── cef-cache/                    ← AGENTMUX_CEF_CACHE_DIR
 │       └── runtime/                      ← AGENTMUX_INSTANCE_RUNTIME_DIR
@@ -178,8 +149,7 @@ single source of truth; downstream binaries must not recompute paths.
 | **Who reads it** | srv for SQLite database location (`objects.db`, `sagas.db`); `DataPaths::from_env()` |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.60.10\data` |
 
-**Legacy alias:** srv also publishes `AGENTMUX_DATA_HOME` for any
-code path that pre-dates the unification (`crates/srv/src/bootstrap/stores.rs`). New code
+**Alias:** srv also publishes `AGENTMUX_DATA_HOME` (`crates/srv/src/bootstrap/stores.rs`). New code
 should read `AGENTMUX_DATA_DIR`.
 
 ---
@@ -192,7 +162,7 @@ should read `AGENTMUX_DATA_DIR`.
 | **Who reads it** | srv `config.rs`, which re-exports it as `AGENTMUX_CONFIG_HOME` for `config_watcher_fs.rs` (`settings.json` and related config files) |
 | **Example** | `C:\Users\<name>\.agentmux\channels\stable\config` |
 
-**Legacy alias:** `AGENTMUX_CONFIG_HOME` (`base.rs`). Same caveats as
+**Alias:** `AGENTMUX_CONFIG_HOME` (`base.rs`). Same caveats as
 DATA_DIR/DATA_HOME above.
 
 ---
@@ -413,13 +383,13 @@ resolve the `current-host-v<AGENTMUX_VERSION>.path` pointer file.
 
 ---
 
-### AGENTMUX_DEV (legacy sentinel)
+### AGENTMUX_DEV
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | Deprecated — no longer set by the launcher |
-| **Who reads it** | `base.rs` defines the constant; some legacy code paths (`config.rs`) note it is no longer emitted |
-| **Replacement** | `AGENTMUX_RUNTIME_MODE=dev:<branch>` |
+| **Who sets it** | You, before launch. The launcher doesn't set it |
+| **Who reads it** | The CEF host (`crates/cef/src/app/mod.rs`, `crates/cef/src/commands/window/gpu_trace.rs`), to turn on dev-only switches such as the GPU tier and the GPU trace |
+| **See also** | `AGENTMUX_RUNTIME_MODE=dev:<branch>` carries the runtime mode |
 
 ---
 
@@ -532,13 +502,13 @@ the IPC bridge.
 
 | Attribute | Value |
 |-----------|-------|
-| **Who sets it** | Launcher on the host env, on every platform (`crates/launcher/src/host_spawn.rs`; Windows too since v0.58.0) |
+| **Who sets it** | Launcher on the host env, on every platform (`crates/launcher/src/host_spawn.rs`) |
 | **Who reads it** | CEF host (`launcher_is_genuine_parent`, `crates/cef/src/parent_process.rs`) to verify the launcher is still alive and is genuinely the current parent |
 | **Example** | `5432` |
 
 Used to distinguish a genuine launcher hand-off from an inherited stale
 `AGENTMUX_BACKEND_WS` value (when the host is launched inside an agent
-pane). The host compares its real parent process id to this value (`getppid()` on Unix, the process snapshot on Windows). A dev host on Windows used to ignore the hand-off and start a second srv on the same data directory; it now adopts the launcher's srv, as on macOS and Linux.
+pane). The host compares its real parent process id to this value (`getppid()` on Unix, the process snapshot on Windows).
 
 ---
 
@@ -655,10 +625,7 @@ Variables set by the `shellintegration.rs` / `get_shell_startup()` logic
 | **Set to** | `1` |
 | **Purpose** | Presence-check sentinel for shell integration scripts. Scripts test `[[ -n "$AGENTMUX" ]]` to confirm they are running inside AgentMux |
 
-**History:** In WaveMux/Waveterm, `AGENTMUX` (then `WAVETERM`) held the
-path to the `wsh` binary. Since `wsh` was retired (`docs/specs/archive/SPEC_RETIRE_WSH_2026_04_12.md`),
-the variable is now a plain `1` sentinel. Shell integrations no longer
-prepend anything to `$PATH` based on its value.
+Shell integrations prepend nothing to `$PATH` based on its value.
 
 ---
 
@@ -675,13 +642,25 @@ preserve user configuration.
 
 ---
 
-## Group 7 — Legacy / Transition Variables
+## Group 7 — Aliases
+
+### WAVEMUX_AGENT_ID / WAVEMUX_AGENT_COLOR
+
+| Attribute | Value |
+|-----------|-------|
+| **Status** | Alias: a read-only fallback for the `AGENTMUX_*` identity variables |
+| **Who reads them** | `shell.rs` reads `WAVEMUX_AGENT_ID` as the lowest-priority fallback for jekt registration only |
+| **Strip logic** | Both are removed from PTY children when no explicit agent identity is configured (`shell.rs`) |
+
+AgentMux never writes them. Use the `AGENTMUX_*` variables in new configurations.
+
+---
 
 ### AGENTMUX_DATA_HOME
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | Deprecated alias for `AGENTMUX_DATA_DIR` |
+| **Status** | Alias for `AGENTMUX_DATA_DIR` |
 | **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs` re-publishes it for backward compatibility if `config.data_home` is non-empty |
 | **Who reads it** | `crates/srv/src/backend/base.rs` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs`; `sidecar.rs` (pre-unification path) |
 
@@ -693,7 +672,7 @@ Use `AGENTMUX_DATA_DIR` in new code.
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | Deprecated alias for `AGENTMUX_CONFIG_DIR` |
+| **Status** | Alias for `AGENTMUX_CONFIG_DIR` |
 | **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs` |
 | **Who reads it** | `base.rs`; `config_watcher_fs.rs` |
 
@@ -706,12 +685,10 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | Variable | Group | Set By | Available In Pane? |
 |----------|-------|--------|--------------------|
 | `AGENTMUX_AGENT_ID` | Identity | block metadata / settings | Yes |
-| `AGENTMUX_AGENT_COLOR` | Identity (decommissioned) | — | No |
-| `AGENTMUX_AGENT_TEXT_COLOR` | Identity (decommissioned) | — | No |
 | `AGENTMUX_AGENT_SLUG`, `AGENTMUX_AGENT_DISPLAY`, `AGENTMUX_INSTANCE_SLUG` | Identity | srv | Yes |
 | `AGENTMUX_BUILD`, `AGENTMUX_INSTANCE_CHANNEL` | Runtime | srv | Yes |
-| `WAVEMUX_AGENT_ID` | Identity (legacy) | user config | Yes (stripped if no identity) |
-| `WAVEMUX_AGENT_COLOR` | Identity (legacy) | user config | Yes (stripped if no identity) |
+| `WAVEMUX_AGENT_ID` | Identity (alias) | user config | Yes (stripped if no identity) |
+| `WAVEMUX_AGENT_COLOR` | Identity (alias) | user config | Yes (stripped if no identity) |
 | `AGENTMUX_INSTANCE_DIR` | Paths | launcher | No |
 | `AGENTMUX_DATA_DIR` | Paths | launcher | No |
 | `AGENTMUX_CONFIG_DIR` | Paths | launcher | No |
@@ -730,7 +707,7 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX_BUILD_CACHE_CLEAN` | Runtime | user (pre-launch) | No |
 | `AGENTMUX_VERSION` | Runtime | shell controller | Yes |
 | `AGENTMUX_BUILD_CHANNEL_DEFAULT` | Runtime (build-time) | build script | No |
-| `AGENTMUX_DEV` | Runtime (legacy) | deprecated | No |
+| `AGENTMUX_DEV` | Runtime | user (pre-launch) | No |
 | `AGENTMUX_LOCAL_URL` | IPC | srv (after bind) | Yes |
 | `AGENTMUX_AUTH_KEY` | IPC | launcher | Yes (on `PANE_ENV_KEEP`; stripped from srv's own environment) |
 | `AGENTMUX_BACKEND_WS` | IPC | launcher → host | No |
@@ -750,8 +727,8 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX` | Shell integration | shell controller | Yes |
 | `ZDOTDIR` | Shell integration (zsh) | shell controller | Yes |
 | `AGENTMUX_ZDOTDIR` | Shell integration (zsh) | shell controller | Yes |
-| `AGENTMUX_DATA_HOME` | Legacy | srv (compat re-publish) | No |
-| `AGENTMUX_CONFIG_HOME` | Legacy | srv (compat re-publish) | No |
+| `AGENTMUX_DATA_HOME` | Alias | srv | No |
+| `AGENTMUX_CONFIG_HOME` | Alias | srv | No |
 
 ---
 

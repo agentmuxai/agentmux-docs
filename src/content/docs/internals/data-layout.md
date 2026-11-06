@@ -9,7 +9,7 @@ The on-disk layout is keyed by **channel** and, within a channel, by **version**
 
 ## Channels: what they replace
 
-Earlier builds isolated by **version** — each new build got a fresh, empty `~/.agentmux/versions/<version>/`, and `task package` bumped the version on every build, so each portable reset My Agents and discarded conversation history. Channels collapse the per-version dirs into one per-channel dir, and `task package` no longer bumps at all — local builds carry an ephemeral *label*, not a new version (see [Building → local build labels](/internals/building/)). Agent definitions and auth then moved further still, into the account-wide `shared/` tree, so they survive across **every** channel — including each per-build `local-<branch>-<hash>-<build-id>` channel.
+`task package` doesn't bump the version: local builds carry an ephemeral *label*, not a new version (see [Building → local build labels](/internals/building/)). Agent definitions and auth live in the account-wide `shared/` tree, so they survive across **every** channel, including each per-build `local-<branch>-<hash>-<build-id>` channel.
 
 ## Runtime modes, channels, and data directories
 
@@ -47,7 +47,7 @@ Each `task dev` derives its `clone-id` from `current_exe()` at launch, hashes th
 
 `task dev` also derives a per-clone **Vite port** the same way (`5173 + cksum(workspace-root) % 200`), so the dev server doesn't fight `--strictPort` on a single hardcoded port either. Override with `AGENTMUX_VITE_PORT=<n> task dev` if you need a specific port.
 
-Legacy `dev/<branch>/` data from before [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) is left in place — it isn't auto-migrated into a clone-id subdir. If you launch a binary that doesn't supply `AGENTMUX_CLONE_ID`, path resolution falls back to the pre-PR two-level `dev/<branch>/` layout for back-compat.
+If you launch a binary that doesn't supply `AGENTMUX_CLONE_ID`, path resolution uses the two-level `dev/<branch>/` layout.
 
 ### Schema safety lock + snapshots
 
@@ -62,7 +62,7 @@ channels/<channel>/versions/<v>/data/snapshots/<channel>-pre-v<code-version>-<IS
   └── filestore.db
 ```
 
-(Dev builds: `dev/<branch>/<clone-id>/data/snapshots/`. Older versions wrote them to `~/.agentmux/snapshots/`.)
+(Dev builds: `dev/<branch>/<clone-id>/data/snapshots/`.)
 
 The snapshot is a `VACUUM INTO` copy of each of the per-version SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption). Snapshots don't cover the shared stores. Separately, before running migrations, `store.db`, `identity-store.db` and `objects.db` are copied with `VACUUM INTO` to `~/.agentmux/shared/backups/pre-migration-<version>-<time>/`, kept for 30 days (`objects.db` is left out right after a copy-forward).
 
@@ -91,7 +91,7 @@ As of v0.41.1, installed and portable release builds split channel contents into
 | `updates/<version>/` | An unpacked update, when it can't be placed beside the running install |
 | `agents/` | Created, but agent working folders are not here: they live at `~/.agentmux/agents/<slug>/`, shared by every channel |
 
-Older docs and shell-integration scripts use `<data-dir>` as a single placeholder; treat it as the version-scoped root `channels/<channel>/versions/<v>/` when the context is runtime state (DB, logs, cache, IPC), and the channel root `channels/<channel>/` when the context is agents or settings. The distinction is resolved automatically by `agentmux-common::DataPaths` and exported as `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR` — you don't need to manage it manually.
+Some scripts use `<data-dir>` as a single placeholder; treat it as the version-scoped root `channels/<channel>/versions/<v>/` when the context is runtime state (DB, logs, cache, IPC), and the channel root `channels/<channel>/` when the context is agents or settings. The distinction is resolved automatically by `agentmux-common::DataPaths` and exported as `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR` — you don't need to manage it manually.
 
 See [Persistence](/internals/persistence/) for what each SQLite file holds and which process writes it.
 
@@ -131,8 +131,6 @@ tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-host-v$AGENTMUX_VERS
 tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-srv-v$AGENTMUX_VERSION.path")"
 ```
 
-Older versions wrote srv's log and both pointers to `~/.agentmux/logs/`; files there from those versions are left in place.
-
 ### `muxlog` helper
 
 The shell-integration scripts shipped to AgentMux's own terminals expose a `muxlog` helper that wraps the pointer-file dance:
@@ -144,7 +142,7 @@ muxlog host '\[fe\]' # filter the host log to frontend [fe] lines
 muxlog host cat      # full file contents (instead of tailing)
 ```
 
-The helper detects whether the pointer holds a basename (legacy) or an absolute path (newer versions), so the same command works against any version.
+The helper accepts a pointer that holds a basename or an absolute path.
 
 ## In-memory ring + disk overflow
 

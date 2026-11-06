@@ -112,7 +112,7 @@ Objects point at each other by oid inside the JSON (client → windows → works
 |---|---|
 | `db_agent_tokens` | Each agent's identity token |
 | `db_agent_jekt_keys` | Per-agent key for signing host-tier messages |
-| `db_agent_lan_keys_by_uid`, `db_agent_wan_keys_by_uid` | Per-agent signing keys, keyed by uid (the older name-keyed `db_agent_lan_keys` / `db_agent_wan_keys` are being replaced) |
+| `db_agent_lan_keys_by_uid`, `db_agent_wan_keys_by_uid` | Per-agent signing keys, keyed by uid |
 | `db_agent_key_tombstones` | Names of deleted agents, so a name can't silently inherit an old key |
 | `db_lan_peer_uid_pins`, `db_lan_peer_pubkey_pins` | Keys first seen for remote agents (trust on first use) |
 | `db_jekt_held` | Messages held for an agent that isn't running |
@@ -122,7 +122,7 @@ Objects point at each other by oid inside the JSON (client → windows → works
 
 ### Fallback copies
 
-`objects.db` also has `db_accounts`, `db_agent_identity_links`, `db_bundles`, `db_bundle_versions`, `db_drone_definitions`, `db_skills`, `db_mcp_servers`, `db_mcp_server_reach`, `db_muxbus_credentials`, `db_agent_credentials` and `db_agent_native_memory(_versions)`. srv uses them only when it can't open the shared stores, which normally hold this data. `db_drone_runs` is live here: drone runs are per version. `db_bundle_mcp_ref` has been empty since migration m0036 and is kept for older builds.
+`objects.db` also has `db_accounts`, `db_agent_identity_links`, `db_bundles`, `db_bundle_versions`, `db_drone_definitions`, `db_skills`, `db_mcp_servers`, `db_mcp_server_reach`, `db_muxbus_credentials`, `db_agent_credentials` and `db_agent_native_memory(_versions)`. srv uses them only when it can't open the shared stores, which normally hold this data. `db_drone_runs` is live here: drone runs are per version.
 
 `db_migrations` records which channel-scope migrations have run on this file (see [Migrations](#schema-versions-and-migrations)).
 
@@ -139,7 +139,7 @@ Source: `run_shared_store_schema` in [`migrations.rs`](https://github.com/agentm
 | `db_muxbus_credentials` | MuxBus sign-in metadata; the tokens themselves are in the OS keychain |
 | `db_agent_credentials` | Per-agent cloud credentials |
 | `db_agent_native_memory`, `db_agent_native_memory_versions` | A mirror of each agent's native memory files, with history |
-| `db_agent_identity_links` | Legacy: the live links are in `identity-store.db` |
+| `db_agent_identity_links` | A fallback copy: the live links are in `identity-store.db` |
 | `db_migrations` | Which global-scope migrations have run |
 
 ## `identity-store.db` (shared)
@@ -238,7 +238,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `data/attachments/` | Files attached to agent messages; 30 days by default (`attachments:retentiondays`) |
 | `data/updates/<version>/` | Update downloads and installers |
 | `data/agents/`, `data/shell/` | Reactive registry for this instance; shell helper scripts |
-| `data/*.flag` | Markers left by old one-time migrations |
+| `data/*.flag` | Markers left by one-time migrations |
 | `logs/` | `agentmux-host-v<v>.log.<date>`, `agentmuxsrv-v<v>.log.<date>` (7 days), `cef-debug.log`, pointer files |
 | `cef-cache/` | Chromium user data: `Default/`, `profile-<id>/` (named browser profiles), `Local State`, dictionaries |
 | `runtime/` | Created, currently unused |
