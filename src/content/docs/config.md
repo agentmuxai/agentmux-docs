@@ -87,9 +87,9 @@ AgentMux respects these environment variables:
 
 ## MCP Server Configuration
 
-MCP servers are configured **per-agent**, not in `settings.json` — either baked into a [Bundle](/bundles/)'s `mcp_servers` field, or managed live via the [MCP Server primitive](/connectors/#mcp-servers) (**Connectors → MCP servers**, where you bind a server to an agent). The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent**, not in `settings.json`: you bind a server to an agent in [Connectors → MCP servers](/connectors/#mcp-servers). The agent runtime writes the agent's servers into its `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Bundles](/bundles/) for the full bundle schema (including the `mcp_servers` field).
+See [Connectors](/connectors/#mcp-servers) for binding servers to agents.
 
 ## See Also
 

@@ -73,7 +73,7 @@ A bundle holds no MCP servers and no account requirements: MCP servers belong to
 | `components` | What the archive holds, as paths inside it. `instructions` is an object with a `default` list and one list per provider. A key AgentMux doesn't know is ignored. |
 | `metadata` | Free-form, empty on export. |
 
-The JSON Schemas are published at [`/schemas/agent-bundle/v0.3/bundle.schema.json`](/schemas/agent-bundle/v0.3/bundle.schema.json) and [`/schemas/agent-bundle/v0.3/requirements.schema.json`](/schemas/agent-bundle/v0.3/requirements.schema.json).
+The JSON Schema is published at [`/schemas/agent-bundle/v0.3/bundle.schema.json`](/schemas/agent-bundle/v0.3/bundle.schema.json).
 
 An agent-scoped export adds `components.memory` (the `memory/` files), `components.projectInstructions` (entries with the file's original `path`, a `contentHash` and an `owner`) and, with history, `components.history`.
 
