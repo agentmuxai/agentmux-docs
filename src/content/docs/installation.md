@@ -165,7 +165,7 @@ The **widget bar** at the top right opens panes. By default it pins **Agent**, *
 
 ![The top bar: the AgentMux logo menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
-The **AgentMux logo menu** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools, Online Docs and Exit (`frontend/app/window/hamburger-menu.tsx`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
+The **AgentMux logo menu** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools, Online Docs and Exit (`frontend/app/window/logo-menu.tsx`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
 
 ![The AgentMux logo menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-logo-menu.png)
 
