@@ -2,4 +2,17 @@
 # page, code blocks too.
 .tar.gz => the Linux portable build is a .tar.xz
 agent.run-command => removed, see the code
-defwidget@warden => the Warden has no widgets.json entry
+defwidget@warden => no such widgets.json entry
+# In alpha the docs describe only the current release (CLAUDE.md, "Docs for alpha"). These are the
+# unambiguous markers of narrated history. "previously", "no longer" and "older" are not denied:
+# many of their uses are fine (a limit, the user's own older data), so review catches those.
+Warden => removed; the Vault, History, Audit, Jobs and Swarm are panes of their own
+Armory => removed; say Connectors or Memory
+armory.json => the bundle manifest is bundle.json
+Knowledge pane => the pane is Memory
+formerly => in alpha the docs describe only the current release
+Formerly => in alpha the docs describe only the current release
+used to be => in alpha the docs describe only the current release
+was renamed => in alpha the docs describe only the current release
+renamed from => in alpha the docs describe only the current release
+Earlier names => in alpha the docs describe only the current release

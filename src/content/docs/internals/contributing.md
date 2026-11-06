@@ -105,6 +105,7 @@ agentmux/
 ## Style
 
 - **Language:** American English
+- **Docs:** the docs describe only the current release while AgentMux is in alpha. A renamed or removed thing leaves no note, and a page doesn't narrate its history. The past stays in the repository's `docs/` folder and in code comments. See the agentmux-docs repository's `CLAUDE.md`, "Docs for alpha"
 - **Formatting:** Prettier + EditorConfig (`npx prettier --write <files>`; there is no `task format`)
 - **TypeScript:** strict mode; prefer narrow return types; avoid `any`
 - **Rust:** `cargo fmt` + `cargo clippy --workspace -- -D warnings` before pushing
