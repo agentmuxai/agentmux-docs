@@ -21,7 +21,7 @@ Two modules own everything LAN-facing:
 | `LanInstance` | `crates/srv/src/backend/lan/discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `first_seen`, `last_seen`, `other_ttl_secs` |
 | `LanDiscovery` | `crates/srv/src/backend/lan/discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
 | `LanDiscoveryController` | `crates/srv/src/backend/lan/discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
-| `mdns_hostname()` | `crates/srv/src/backend/lan/discovery.rs` | Appends `.local.` to a bare hostname, as `mdns-sd` requires |
+| `mdns_host_record()` | `crates/srv/src/backend/lan/discovery.rs` | Builds the host record this instance announces its addresses under: its unique instance label plus `.local.`, as `mdns-sd` requires |
 
 The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) crate, version 0.12.
 
@@ -63,14 +63,13 @@ The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux
 
 A peer is kept until its `last_seen` is older than its own advertised record TTL, clamped to between 300 and 9,000 seconds. `ServiceRemoved` events don't delete peers: they fired on ordinary TTL churn, and re-resolution after a removal came back with an empty TXT record.
 
-## Hostname normalization
+## Host record
 
-`mdns-sd` requires the host name passed to `ServiceInfo::new()` to end in `.local.`. `mdns_hostname()` normalizes any input:
+`mdns-sd` requires the host name passed to `ServiceInfo::new()` to end in `.local.`. `mdns_host_record()` builds it from the same instance label the service uses (`agentmux-<host>-<port>`, with any character that is not a letter, digit, `-` or `_` replaced by `_`), so it is one label under `.local.` and unique per instance:
 
-- appends `.local.` to a bare name (`claudius` → `claudius.local.`);
-- passes an already-normalized name through (`claudius.local.` → `claudius.local.`);
-- adds the trailing dot if it's missing (`claudius.local` → `claudius.local.`);
-- strips a stray trailing dot first, so it never doubles the suffix.
+- `narko` on port 29700 → `agentmux-narko-29700.local.`;
+- two instances on one host get different records, so they never conflict and `mdns-sd` never renames the host;
+- a fully qualified hostname (`box.corp.example`) cannot add dots to the label.
 
 It is unit-tested in the same file.
 

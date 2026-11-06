@@ -475,7 +475,7 @@ and Claude's bash output does not stream to the drone/log pane.
 
 **SECURITY:** Do not log this value. It authenticates all WebSocket connections to the srv instance for the lifetime of that srv process.
 
-**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/container_routes.rs`; the `amxc_` prefix is `TOKEN_PREFIX` in `crates/srv/src/backend/container_credential.rs`). See [Trust model](/security/trust-model/#container-agents).
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/route_audience.rs`; the `amxc_` prefix is `TOKEN_PREFIX` in `crates/srv/src/backend/container/credential.rs`). See [Trust model](/security/trust-model/#container-agents).
 
 ---
 
