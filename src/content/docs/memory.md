@@ -207,6 +207,6 @@ Memory is app-wide, and each of its sections has a way in for one agent:
 
 - [Connectors](/connectors/) — Accounts, MCP servers and Remotes
 - [Bundles](/bundles/) — full bundle reference, and how an agent's bundles are picked
-- [Agent Bundle Format (ABF)](/abf/) — beta spec for portable, exportable bundles
+- [Agent Bundle Format (ABF)](/abf/) — the file format for moving a bundle between installs
 - [MuxAPI](/internals/muxapi/) — `skill.*`, `bundle.*` and `memory.*` RPC catalogs
 - `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo — the memory record, adoption and folder claims
