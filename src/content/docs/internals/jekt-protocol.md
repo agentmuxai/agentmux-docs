@@ -385,4 +385,5 @@ Not normative. These are known differences between the protocol as built and wha
 - `crates/common/src/jekt_files.rs`, `crates/srv/src/server/jekt_files.rs`: files
 - `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/server/jekt_hold.rs`, `crates/srv/src/server/jekt_cold.rs`, `crates/srv/src/backend/storage/jekt_held.rs`: the hold
 - `crates/srv/src/backend/ack_policy.rs`: refused replies; `crates/srv/src/backend/bulletin.rs`, `crates/srv/src/server/bulletin_handlers.rs`, `crates/srv/src/backend/quota_mode.rs`: bulletins and quota mode
-$1- `docs/specs/SPEC_JEKT_*` and `SPEC_WAN_JEKT_*` in the `agentmux` repository: the design records, the reason behind each rule
+- `crates/mcp/src/tools/fleet.rs`, `crates/mcp/src/identity.rs`, `crates/mcp/src/tool_helpers.rs`: the `Message` tool, signing, results
+- `docs/specs/SPEC_JEKT_*` and `SPEC_WAN_JEKT_*` in the `agentmux` repository: the design records, the reason behind each rule
