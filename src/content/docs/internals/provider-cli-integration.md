@@ -43,7 +43,7 @@ Provider definitions live in `frontend/app/view/agent/providers/catalog.ts` (fro
 
 ## Provider (harness) vs. model vendor
 
-"Provider" throughout this page — and "harness" in some older code/specs, the same axis under a different name — means *which CLI tool is driving the session*: Claude Code, Codex, Gemini, and so on. That is a distinct concept from **model vendor**: the underlying LLM backend actually serving responses for that session.
+"Provider" throughout this page (also called "harness" in code) means *which CLI tool is driving the session*: Claude Code, Codex, Gemini, and so on. That is a distinct concept from **model vendor**: the underlying LLM backend actually serving responses for that session.
 
 Each provider declares its default vendor(s) via `supported_vendors` in `crates/srv/src/backend/providers.rs` — most-default-first, e.g. Claude Code → `["anthropic"]`, Codex → `["openai"]`, OpenClaw → `["openai", "anthropic", "google"]` since it's model-agnostic. This is purely descriptive/display data (drives the dual-icon vendor badge and the agent picker's default-vendor inference); it doesn't gate anything at spawn time.
 

@@ -14,7 +14,7 @@ description: How focus, layout, and pane state flow in the frontend — layout t
 3. [Reducer-Stack Initiative — Discussion #707](#3-reducer-stack-initiative)
 4. [Focus / Selection Visual Highlight — 3-Source Color Resolution](#4-focus--selection-visual-highlight)
 5. [MuxObject Store (MOS) — Block and Tab Persistence](#5-muxobject-store-mos)
-6. [SRV-02 Finding — One Writer for LayoutState](#6-srv-02-finding--one-writer-for-layoutstate)
+6. [One Writer for LayoutState](#6-one-writer-for-layoutstate)
 7. [Boundary Summary](#7-boundary-summary)
 
 ---
@@ -54,7 +54,7 @@ The shape of `LayoutTreeState` (`frontend/layout/lib/types.ts`):
 
 **Write path:** all mutations flow through `treeReducer()` (`frontend/layout/lib/layoutModel.ts`), which calls one of the pure tree functions in `layoutTree.ts`, then calls `this.localTreeStateAtom._set({ ...this.treeState })` (`frontend/layout/lib/layoutModel.ts`).
 
-**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`frontend/layout/lib/layoutModel.ts`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-srv-02-finding--one-writer-for-layoutstate) for who writes each field.
+**Persistence:** the frontend never writes the layout row. `treeReducer()` applies a tree edit to the local tree at once and also queues it as a layout *intent* (`frontend/layout/lib/layoutModel.ts`). The intent goes to srv, whose reducer applies the same edit to its own copy of the tree and stores the result. The frontend then shows what srv stored. See [§5.3](#53-how-layoutstate-is-persisted) for the steps and [§6](#6-one-writer-for-layoutstate) for who writes each field.
 
 ### 1.3 focusedNodeId and the Focus Stack
 
@@ -231,7 +231,7 @@ This reducer does **not** model streaming state, token counts, or focus.
 
 **Files:** `frontend/app/store/browser-pane-state/types.ts`, `frontend/app/store/browser-pane-state/reducer.ts`, `browser-pane-state-store.ts`
 
-Models the multi-tab Browser pane. Phase 1A migrated from a single-URL flat state to a `tabs[]` array.
+Models the multi-tab Browser pane.
 
 | Pane-level field | Description |
 |---|---|
@@ -285,10 +285,10 @@ GitHub Discussion **#707** ("Reducer-stack architecture: long-term tracking thre
 The reducer-stack is a cross-process architecture where each process layer owns a canonical reducer for its domain:
 
 ```
-Launcher (L1)  → OS process/window/pool/monitor facts        ✅ DONE
-Host (L2)      → CEF browser/pane/drag/pool/quit state       ✅ 6/7 migrated
-Srv (L3)       → workspace/tab/block/layout app domain       ✅ mostly done (E.4.B phases 5-7 open)
-Frontend       → per-pane ephemeral state                    ✅ 8 slice reducers live
+Launcher (L1)  → OS process/window/pool/monitor facts
+Host (L2)      → CEF browser/pane/drag/pool/quit state
+Srv (L3)       → workspace/tab/block/layout app domain
+Frontend       → per-pane ephemeral state
 ```
 
 Cross-process dispatch (CPD-1 through CPD-5) is shipped for launcher→host communication.
@@ -300,21 +300,21 @@ The "reducer-stack initiative" as it applies to the **pane-state reducer** (`age
 - **Phase 0:** Pure slice core, store, and tests implemented (`issue #1235`, PRs `#1231/#1233/#1234`). No render-path wiring.
 - **Phase 1:** Render wiring — not yet started.
 
-This slice (Slice #11, agent-pane-layout) unifies three previously uncoordinated sources of truth for row heights in the agent document virtual list: TanStack's size cache, per-component expansion signals, and CSS `zoom`. Phases 0–1 are the dormant foundation.
+This slice (Slice #11, agent-pane-layout) unifies three sources of truth for row heights in the agent document virtual list: TanStack's size cache, per-component expansion signals, and CSS `zoom`. Phases 0–1 are the dormant foundation.
 
 The existing `agent-pane-state` reducer (Slice #4) and `agent-document` reducer (Slice #1) are **fully live and wired** with all turn-phase PRs A–G merged. The "dormant" label applies only to the **agent-pane-layout** reducer (Slice #11).
 
 ### 3.4 SRV-Side Layout Reducer — Phases 5–7
 
-The master status (`MASTER_REDUCER_STACK_STATUS_2026-05-05.md §0`) still lists `E.4.B` layout phases 6 and 7 as open. That document is older than the work; at the pinned commit all three phases are in the code:
+Phases 5 to 7 of the srv layout reducer are in the code:
 
-| Phase | What | Status at the pin |
+| Phase | What | Status |
 |---|---|---|
 | 5 | Reducer arms calling pure helpers | ✅ shipped, including `LayoutApplyIntent` (`crates/srv/src/reducer/layout/intent.rs`) |
 | 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv/src/persist_subscriber.rs`) |
-| 7 | Migrate legacy `rootnode` writers off wcore-direct | ✅ for every edit a window makes; srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`). One direct write is left: the default layout a first launch seeds before the reducer has loaded. |
+| 7 | Move `rootnode` writers off wcore-direct | ✅ for every edit a window makes; srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`). One direct write is left: the default layout a first launch seeds before the reducer has loaded. |
 
-`docs/specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` records the same, phase by phase. This retired the SRV-02 dual write path (see §6 below).
+`docs/specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` records the same, phase by phase. §6 below describes the single writer.
 
 ---
 
@@ -400,7 +400,7 @@ export function isUsableFocusRingColor(color: string | null | undefined): boolea
 
 ### 4.5 Tab Color System
 
-Tabs no longer get a color automatically at creation; a user picks one from the shared 16-color palette (`PALETTE` in `frontend/app/theme/palette.ts`, read from `schema/color-palette.json`), the same hues panes, agents, widgets and browser profiles use:
+Tabs get no color at creation; a user picks one from the shared 16-color palette (`PALETTE` in `frontend/app/theme/palette.ts`, read from `schema/color-palette.json`), the same hues panes, agents, widgets and browser profiles use:
 
 | Name | Hex |
 |---|---|
@@ -486,7 +486,7 @@ It has no setter: the row changes only through srv. A layout edit travels the ot
 
 Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `crates/srv/src/server/service/layout_intents.rs`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `frontend/layout/lib/layoutPersistence.ts`). The queue keeps the latest 32 actions, and an action older than 10 minutes is dropped; a window that missed one shows srv's stored tree anyway (`crates/srv/src/persist_subscriber/layout_queue.rs`).
 
-*Removed:* `LayoutModel.persistToBackend()` used to copy the whole tree back to the row with a debounced `UpdateObject`. It is gone, and srv now refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`).
+The window never writes the layout row back: srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`).
 
 ### 5.4 How Blocks and Tabs Are Persisted
 
@@ -516,20 +516,11 @@ Only srv writes these fields; §6 lists which code writes each.
 
 ---
 
-## 6. SRV-02 Finding — One Writer for LayoutState
+## 6. One Writer for LayoutState
 
-### 6.1 What It Was
+### 6.1 The Writer
 
-When this page was first written, `LayoutState` had two writers that didn't coordinate:
-
-- **The frontend**, through `LayoutModel.persistToBackend()`: a debounced (100 ms) write of the whole row (`rootnode`, `focusednodeid`, `magnifiednodeid`, `leaforder`, `pendingbackendactions`) with `ObjectService.UpdateObject`.
-- **srv's persist subscriber**, through `apply_focused_node_changed`, which wrote only `focusednodeid` on `FocusedNodeChanged`.
-
-A focus change could reach the row both ways, and a whole-row write could land against a version srv had already bumped.
-
-### 6.2 One Writer Now
-
-The dual path is gone. persistToBackend() no longer exists, srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`), and every write to the row comes from srv:
+Every write to the layout row comes from srv, which refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`):
 
 | Writer | Fields | When |
 |---|---|---|
@@ -540,7 +531,7 @@ The dual path is gone. persistToBackend() no longer exists, srv refuses a whole-
 | `resync_tab` (`crates/srv/src/persist_subscriber/resync.rs`) | `rootnode`, focus and magnify, from the reducer's own state | The event bus lagged and dropped events |
 | `write_default_three_pane_layout` (`crates/srv/src/backend/wcore/mod.rs`) | The whole row | A first launch, before the reducer has loaded |
 
-`apply_focused_node_changed` is still how a focus change reaches `focusednodeid`, but it is now the only way. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it. The function's doc comment (`persist_subscriber.rs`) still says the other fields "stay on their existing wcore-direct path until Option B lands". That is out of date: the tree arrives on `LayoutTreeReplaced`.
+`apply_focused_node_changed` is how a focus change reaches `focusednodeid`. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it.
 
 ```
 User clicks pane
@@ -554,9 +545,9 @@ User clicks pane
 
 Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv/src/persist_subscriber.rs`, `persist_subscriber.rs`).
 
-### 6.3 What Is Left of the Old Concerns
+### 6.2 Consistency
 
-- **Version races:** gone with the second writer. The frontend still ignores an update older than the value it holds (`mos.ts`), and compares its tree with the stored one only once the row's version includes every intent it sent (`layoutVersionFloor`, `layoutIntents.ts`).
+- **Version races:** there is one writer. The frontend ignores an update older than the value it holds (`mos.ts`), and compares its tree with the stored one only once the row's version includes every intent it sent (`layoutVersionFloor`, `layoutIntents.ts`).
 - **Two tree implementations:** the frontend predicts each edit with its own tree functions, and srv computes it with its Rust port. When they disagree, srv's tree wins at the next quiet moment (§5.3, step 4), and the console logs "the local layout differs from srv's stored one" (`layoutIntents.ts`).
 
 ---

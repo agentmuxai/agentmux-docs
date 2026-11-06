@@ -382,8 +382,6 @@ Newline-delimited JSON. One message per line.
 - `{"kind":"event","event":"<name>",...}` — launcher-emitted `Event` broadcast
 - `{"kind":"command","cmd":"<name>",...}` — saga-issued `Command` dispatched to host
 
-Backward-compat: Pre-CPD-2 launchers emit bare `Event` JSON without the `HostFrame` wrapper; the host falls back to parsing as raw `Event` (`crates/cef/src/launcher_ipc/mod.rs`).
-
 ### Command Variants (Host → Launcher)
 
 | Command | Fields | Purpose |
@@ -534,7 +532,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 |------|--------|---------|
 | `bus:register` | `agent_id` | Register pane as a bus agent |
 | `bus:send` | `from, to, payload, priority?` | Send message to agent |
-| `bus:inject` | `target, bus_message` | Deliver a jekt to an agent on this instance (legacy; agents use the `Message` tool). Structured agents get it in their conversation; terminal agents as typed input |
+| `bus:inject` | `target, bus_message` | Deliver a jekt to an agent on this instance (agents use the `Message` tool). Structured agents get it in their conversation; terminal agents as typed input |
 
 ---
 

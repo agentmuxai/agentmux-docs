@@ -55,7 +55,7 @@ Everything a recipient relies on is computed by the receiving instance. Nothing 
 | `Message` tool, actions `bulletin`, `read_bulletin`, `quota_mode` | agents | Not jekts: a short post read at an agent's next turn (Section 4.8). |
 | `POST /agentmux/reactive/inject` | the tool above, other instances, scripts | The full request (Section 3.2). Authenticated with the instance auth key or the LAN key ([who may call](/security/reactive-event-bus/#who-may-call-the-bus)). |
 | `POST /agentmux/reactive/inject-files` | the tool, when files are attached | Section 4.6. |
-| WebSocket `bus:inject`, `POST /api/bus/inject` | legacy local callers | Delivered on this instance only, as `host`. |
+| WebSocket `bus:inject`, `POST /api/bus/inject` | local callers | Delivered on this instance only, as `host`. |
 | Scheduler (`Schedule`) | AgentMux | Sender `cron`. Never held. |
 | Slack, Discord, Telegram and WhatsApp bridges | AgentMux | Sender named after the bridge, delivered locally, no signature. |
 | Widgets (`agents.send`) | widgets with the `agents:send` permission | Sender `widget:<id>`, at most 8 KB. |
@@ -250,7 +250,7 @@ Only installs signed in to the **same** MuxBus Cloud account can verify each oth
 | | |
 |---|---|
 | Material | the base material, with `reagent_msg_id` and `reagent_ts_secs` |
-| Keys | built into AgentMux. Only `reagent-v1` is trusted. A signature that is valid only under the retired `reagent-v1-dev` key **fails**. |
+| Keys | built into AgentMux. Only `reagent-v1` is trusted. A signature that is valid only under the `reagent-v1-dev` key **fails**. |
 | Window | 600 seconds |
 | Applies | to `wan` jekts carrying all four `reagent_*` fields |
 
@@ -373,16 +373,12 @@ Not normative. These are known differences between the protocol as built and wha
 - **A missing sender renders as `FROM=unknown`** with a reply line, though `unknown` is not an agent.
 - **No threads.** A reply is a new jekt; nothing links it to the one it answers.
 
-## 11. History
-
-This page replaces the jekt design documents in the `agentmux` repository, written between July and October 2026, as the description of current behaviour. They remain as the record of why each rule exists. The main ones: the security and visibility design (`docs/specs/SPEC_JEKT_SECURITY_AND_VISIBILITY_2026_07_01.md`), the trust layer (`SPEC_JEKT_TRUST_LAYER_COMPLETION_2026_08_13.md`), the narrowing of the sensitive tier (`SPEC_JEKT_SENSITIVE_TIER_NARROWING_2026_08_15.md`, `SPEC_JEKT_SENSITIVE_TIER_VERIFIED_SENDER_NO_STOP_2026_08_17.md`), LAN signing (`SPEC_JEKT_LAN_TIER_SIGNING_2026_08_15.md`), cross-channel trust (`SPEC_JEKT_CROSS_CHANNEL_TRUST_2026_09_02.md`), WAN verification (`SPEC_WAN_JEKT_VERIFICATION_2026_09_24.md`, `SPEC_WAN_JEKT_SIGNED_BY_SRV_2026_10_14.md`), immediate delivery (`SPEC_JEKT_IMMEDIATE_DELIVERY_2026_09_28.md`), delivery states (`SPEC_JEKT_DELIVERY_STATES_AND_MAILBOX_2026_10_01.md`), files (`SPEC_JEKT_FILE_TRANSFER_2026_10_05.md`), transcript requests (`SPEC_JEKT_TRANSCRIPT_REQUEST_TIER_RULES_2026_08_22.md`) and former slugs (`SPEC_FORK_SLUG_MIGRATION_2026_10_22.md`).
-
 ---
 
 **Source of truth in the code**
 
 - `crates/srv/src/backend/reactive/sanitize.rs`: the marker (`wrap_jekt_message_with_files`), escaping, sanitizing, keywords
-- `crates/srv/src/backend/reactive/handler.rs`: target resolution, the tier and escalation rules, and (from 0.59.39) the former-slug sender rule
+- `crates/srv/src/backend/reactive/handler.rs`: target resolution, the tier and escalation rules, and the former-slug sender rule
 - `crates/srv/src/server/reactive.rs`: delivery order and the signature checks
 - `crates/common/src/jekt_sign.rs` and `crates/common/src/jekt_sign/`: signature material and keys
 - `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/relay.rs`: WAN signing
@@ -390,3 +386,4 @@ This page replaces the jekt design documents in the `agentmux` repository, writt
 - `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/server/jekt_hold.rs`, `crates/srv/src/server/jekt_cold.rs`, `crates/srv/src/backend/storage/jekt_held.rs`: the hold
 - `crates/srv/src/backend/ack_policy.rs`: refused replies; `crates/srv/src/backend/bulletin.rs`, `crates/srv/src/server/bulletin_handlers.rs`, `crates/srv/src/backend/quota_mode.rs`: bulletins and quota mode
 - `crates/mcp/src/tools/fleet.rs`, `crates/mcp/src/identity.rs`, `crates/mcp/src/tool_helpers.rs`: the `Message` tool, signing, results
+- `docs/specs/SPEC_JEKT_*` and `SPEC_WAN_JEKT_*` in the `agentmux` repository: the design records, the reason behind each rule

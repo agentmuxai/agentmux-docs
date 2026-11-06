@@ -5,7 +5,7 @@ description: How state flows through AgentMux — the 4-layer launcher / host / 
 
 AgentMux is built on a strict reducer model. Every cross-process state mutation goes through a single layer's reducer, emits events that other layers project, and is persisted by the layer that owns the truth. This page is the entry point into that model.
 
-The migration was tracked in [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) in the source repo, with [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) as the rolling thread. Where either disagrees with the code, the code is current.
+The design is recorded in [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) in the source repo, with [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) as the rolling thread. Where either disagrees with the code, the code is current.
 
 ## Why a reducer stack?
 
@@ -110,7 +110,7 @@ The TypeScript slice surface is documented in the [TypeScript API reference](/ap
 For deep design docs:
 
 - [`docs/architecture/DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/architecture/DECISION_SAGA_REDUCER_TWO_FRAMEWORKS_2026_09_07.md) — why the launcher and srv saga and reducer frameworks stay separate
-- [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) — the migration's status tracker, layer by layer
+- [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) — the status tracker, layer by layer
 - [`docs/specs/frontend-reducer-architecture-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-architecture-2026-05-03.md) — frontend slice model
 - [`docs/specs/frontend-reducer-conventions-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-conventions-2026-05-03.md) — Command/event types, slot lifecycle, audit, echo-loop guard
 - [`docs/specs/frontend-reducer-implementation-plan-2026-05-03.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/frontend-reducer-implementation-plan-2026-05-03.md) — slice ordering and PR boundaries

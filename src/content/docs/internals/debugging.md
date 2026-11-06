@@ -26,7 +26,7 @@ tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-host-v$AGENTMUX_VERS
 
 Both pointers (`current-host-v<version>.path`, `current-srv-v<version>.path`) sit in the version's `logs/` folder and hold the log's file name. The host also writes a copy holding the absolute path to `channels/<channel>/logs/` (`~/.agentmux/dev/logs/` for dev builds). Both pointers are rewritten on each launch and on every rotation.
 
-The shipped `muxlog` shell helper does this lookup for you and also handles the legacy basename-only pointer format used by older instances. See [Multi-instance & dev mode](/multi-instance/) for the full pointer story.
+The shipped `muxlog` shell helper does this lookup for you and also handles a pointer that holds only a file name. See [Multi-instance & dev mode](/multi-instance/) for the full pointer story.
 
 ## muxlog — multi-instance log discovery
 

@@ -189,7 +189,7 @@ The initial paint is tiny, the resize is upward, and the modal panel never sees 
 
 Compact behavior is independent of the modal stack. A `window`-scope modal inside a narrow window still gets compact treatment (its mount node — `document.body` — is the narrow window). A `tab`-scope modal in a narrow window gets compact. A `pane`-scope modal in a narrow pane gets compact. The `@container` selector resolves against the nearest containing-query ancestor (`.modal-layer-mount`) regardless of scope.
 
-Design history: `MODAL_COMPACT_VARIANT_ARCHITECTURE_2026_05_26.md` documents the six failure modes the variant addresses (per-body opt-in fragility, flex-shrink traps, content-managed widths, `size="fit"` content-driven sizing, bootstrap timing races, wasted edge padding) and the two-phase migration (Phase 1 = structural CSS + xterm deferral; Phase 2 = JS class-toggle → container queries).
+Design record: `MODAL_COMPACT_VARIANT_ARCHITECTURE_2026_05_26.md` documents the six failure modes the variant addresses (per-body opt-in fragility, flex-shrink traps, content-managed widths, `size="fit"` content-driven sizing, bootstrap timing races, wasted edge padding) and the two-phase migration (Phase 1 = structural CSS + xterm deferral; Phase 2 = JS class-toggle → container queries).
 
 ## Modal stack — how nested modals behave
 
