@@ -86,6 +86,23 @@ Hover an item for a short description. Each panel closes with `Esc` or a click o
 
 AgentMux watches MuxBus and the model API of each provider your agents use: the **Anthropic API** (Claude), the **OpenAI API** (Codex) and the **Google AI API** (Gemini). Codex and Gemini join once one of their turns has reported. If an agent's CLI is pointed at a proxy or gateway, that address is watched as a service of its own, named with its host. On Windows, a change of network (a Wi-Fi switch, a VPN) is checked at once. Messages you type to an agent while its model API is out are held and sent when it answers; the agent's row in the [Swarm](/subagent-watcher/) says how many are held.
 
+### The token pill
+
+The token count at the right of the status bar (the **↑ ↓ (right)** row above) opens a popover with the tokens agents have used. Its **AgentMux internal** row counts the model requests AgentMux makes on its own (session titles, subagent and workflow names, prompt suggestions, agent previews, narration, running summaries and Supervisor verdicts), not your agents' turns. Open it for one line per purpose with a count of failures; open a purpose for how its requests ended:
+
+| Column | Meaning |
+|---|---|
+| **Requests** | All requests, including ones that never reached the model |
+| **Accepted** | The model's answer passed AgentMux's checks and was taken. The pane can still keep the old title if the new one only rewords it |
+| **Kept** | The model chose to leave things as they were. This is a normal answer, not a failure |
+| **Refused** | The answer was rejected: blank, the wrong shape (several lines, too long, no letters), a non-answer such as "none" or "untitled", or a refusal |
+| **Skipped** | No answer was needed: there was nothing to send, or a newer request replaced this one |
+| **Failed** | The model's CLI couldn't run, failed, timed out, or the request was dropped before it ran |
+
+A purpose is failing when its refused and failed requests together outnumber the accepted and kept ones, and the token indicator then shows a small red dot. The counts start again when AgentMux's server restarts.
+
+These requests write the line under each agent in the [Swarm](/subagent-watcher/) and in the pane tab's tooltip, so this is where you see whether that line is working.
+
 ### Backend
 
 The backend's status, process id, uptime and endpoint, and how the window is drawn: whether graphics are hardware accelerated, the WebGL version, and the graphics driver.

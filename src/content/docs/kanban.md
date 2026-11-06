@@ -9,7 +9,7 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 The **Kanban** shows what work there is and where it stands. Each card is one **task** in the shared task queue that agents use through their `Tasks` tool. Agents file tasks, take them, report progress, ask you questions and hand them in. AgentMux moves a card on what it already knows: an agent waiting on a question, failing or closing. You start tasks on agents, answer, accept or send work back.
 
-The Kanban is a pane of its own (`frontend/app/view/kanban/`). The [Swarm](/subagent-watcher/) shows what each agent is doing right now; the Kanban shows the work. It used to be the Warden's first section, and then the Swarm's third; neither has it now.
+The Kanban is a pane of its own (`frontend/app/view/kanban/`). The [Swarm](/subagent-watcher/) shows what each agent is doing right now; the Kanban shows the work.
 
 ## Where to find it
 
@@ -17,7 +17,7 @@ The Kanban is a pane of its own (`frontend/app/view/kanban/`). The [Swarm](/suba
 - **Open Kanban** in the command palette (`open:kanban`).
 - On a [Swarm](/subagent-watcher/) row, the chip of the task an agent is on opens the Kanban with that task shown.
 
-The button and the command bring back the Kanban already open in the tab, or open one if the tab has none; Shift-click the button to open another. A widget-bar button, pin, saved pane or widget call from before the move that names the Warden's or the Swarm's Kanban section opens the Kanban pane too.
+The button and the command bring back the Kanban already open in the tab, or open one if the tab has none; Shift-click the button to open another.
 
 The pane's title counts the tasks that need you: **Kanban · 2 need you**. The board loads tasks only while the pane is shown.
 
@@ -125,6 +125,5 @@ A sandboxed [widget](/widgets/) with the `tasks:read` permission can list the Ka
 
 ## See also
 
-- [Warden](/warden/): where the Kanban used to be
 - [Swarm](/subagent-watcher/): what each agent is doing right now
 - [Widgets from widgets.json](/widgets/): how the Kanban button is declared, and how to add your own

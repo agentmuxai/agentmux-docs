@@ -65,7 +65,7 @@ A visual automation builder: drag Variables, Agent, API, Condition and Response 
 
 ## Vault, History and Audit
 
-Three panes for overseeing agents, each in the widget bar's **more** menu. The [Vault](/vault/) keeps your secrets, which agents use by name without seeing them. [History](/history/) is every agent's kept conversation, and [Audit](/audit/) is the record of messages between agents and of what agents did with your secrets. They replace the Warden pane: see [Warden](/warden/).
+Three panes for overseeing agents, each in the widget bar's **more** menu. The [Vault](/vault/) keeps your secrets, which agents use by name without seeing them. [History](/history/) is every agent's kept conversation, and [Audit](/audit/) is the record of messages between agents and of what agents did with your secrets.
 
 ## Sysinfo
 

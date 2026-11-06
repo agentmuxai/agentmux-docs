@@ -65,7 +65,7 @@ Registered commands are grouped by category:
 
 After the commands the palette lists your agents, found by name, seat or state. Choosing one brings its pane forward, in whichever tab or window it is, or opens it if it has none.
 
-Searching for "accounts", "mcp" or "remotes" also finds **Connectors**, and "skills" or "bundles" finds **Memory**. The older **Identity & Memory** command is gone; Connectors replaces it.
+Searching for "accounts", "mcp" or "remotes" also finds **Connectors**, and "skills" or "bundles" finds **Memory**.
 
 The palette is **not exhaustive** — most navigation shortcuts (Connect Remote, Focus Block N, raw tab-switching, etc.) are reachable only via [keybindings](/keybindings/), not from the palette.
 

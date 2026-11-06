@@ -16,7 +16,7 @@ The History widget (icon: `clock-rotate-left`) is **not pinned** to the widget b
 - Click **more** at the end of the widget bar and choose **History**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open History** in the command palette (`open:history`).
 
-A tab holds one History: choosing it again brings back the one already open instead of opening a second. A segmented control along the top switches between the three views. The History pane was for a while a section of the Warden pane: see [Warden](/warden/).
+A tab holds one History: choosing it again brings back the one already open instead of opening a second. A segmented control along the top switches between the three views.
 
 ## Agents
 
@@ -55,4 +55,3 @@ If the shared history store is found damaged, AgentMux tells you once. The next 
 
 - [Audit](/audit/): the record of messages between agents and what agents did with your secrets
 - [Swarm](/subagent-watcher/): what agents are doing now
-- [Warden](/warden/): where this pane used to be a section

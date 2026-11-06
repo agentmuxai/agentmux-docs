@@ -36,6 +36,8 @@ export default defineConfig({
 		'/knowledge': '/memory',
 		'/trust-center': '/connectors',
 		'/armory': '/connectors',
+		'/warden': '/pane-types',
+		'/internals/warden': '/pane-types',
 	},
 	integrations: [
 		// Fails the build on a link into the agentmux source that doesn't resolve.
@@ -109,7 +111,6 @@ export default defineConfig({
 								{ label: 'History', slug: 'history' },
 								{ label: 'Audit', slug: 'audit' },
 								{ label: 'Jobs', slug: 'jobs' },
-								{ label: 'Warden (split up)', slug: 'warden' },
 								{ label: 'Kanban', slug: 'kanban' },
 								{ label: 'The Vault', slug: 'vault' },
 								{ label: 'Tower', slug: 'tower' },
@@ -174,7 +175,6 @@ export default defineConfig({
 								{ label: 'Provider CLI integration', slug: 'internals/provider-cli-integration' },
 								{ label: 'Conversation overhead', slug: 'internals/conversation-overhead' },
 								{ label: 'LAN discovery', slug: 'internals/lan-discovery' },
-								{ label: 'Warden architecture', slug: 'internals/warden' },
 								{ label: 'Data layout', slug: 'internals/data-layout' },
 								{ label: 'Platform support', slug: 'internals/platform-support' },
 							],

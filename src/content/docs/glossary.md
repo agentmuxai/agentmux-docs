@@ -17,7 +17,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="agent-pane"></a>**agent pane** — A pane that runs an AI agent session. Streams the agent's tool calls, reasoning, and file diffs into a structured view. See [Pane types](/pane-types/).
 
-<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage; how each request ended is in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)). "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
+<a id="ambient"></a>**ambient** — A model call AgentMux makes on its own, not one you asked for: pane titles, activity summaries, ghost-text prompt suggestions, narration and the continuity summary. These use a small, fast model and are counted as "AgentMux internal" in token usage; how each request ended is in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)). "Ambient" says how something was produced, never where it goes: text sent into the agent is a [context delivery](#context-delivery). (The same word also appears in *ambient login*, the host's own CLI login; that's unrelated.)
 
 <a id="area"></a>**area** — One line, up to 120 characters, saying what an agent owns ("user docs, changelog"). One of the four parts of a [seat](#seat), shown after its [lead](#lead) in My Agents and the pane tab tooltip. A label only: AgentMux doesn't refuse work outside it. See [Seats](/first-agent/#seats).
 
@@ -53,7 +53,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="jekt"></a>**jekt** — A message one agent sends another through AgentMux, and the verb for sending one. AgentMux checks the sender's signatures, wraps the text in a `[JEKT:…]` marker that says how far the sender's identity was proven, and puts it into the recipient's conversation at once, even mid-turn; a message for an agent that isn't running is held for up to 24 hours. Sent with the `Message` MCP tool (action `send`). See [Jekt protocol](/internals/jekt-protocol/).
 
-<a id="kanban"></a>**Kanban** — A pane of its own (it used to be a section of the Warden, then of the Swarm): one card per task in the shared task queue ([Muxqueue](#muxqueue)), in the columns Backlog, In progress, Needs you, Review and Done. Agents file and update tasks with their `Tasks` tool; you start, answer, accept or send back. In the widget bar's **more** menu and opened by **Open Kanban** (`open:kanban`). See [Kanban](/kanban/).
+<a id="kanban"></a>**Kanban** — A pane of its own: one card per task in the shared task queue ([Muxqueue](#muxqueue)), in the columns Backlog, In progress, Needs you, Review and Done. Agents file and update tasks with their `Tasks` tool; you start, answer, accept or send back. In the widget bar's **more** menu and opened by **Open Kanban** (`open:kanban`). See [Kanban](/kanban/).
 
 <a id="knowledge"></a>**Knowledge** — The former name of the [Memory](#memory) pane. Panes, widget-bar pins and keybindings (`app:knowledge`) saved under it are moved to Memory the first time it starts after updating; layout files that use it still open Memory, and `/knowledge/` links redirect.
 
