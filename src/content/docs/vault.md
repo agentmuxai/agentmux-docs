@@ -21,7 +21,6 @@ The Vault is a pane of its own (icon: `lock`, view `vault`). It is **not pinned*
 
 A tab holds one Vault: each of these brings back the Vault already open in the tab instead of opening a second. The pane's title reads **Vault · Cards and banks**, naming the Vault's own section.
 
-
 The Vault reads its entries only while it is shown. Opening the Audit or any other pane never reads them.
 
 ## What it holds

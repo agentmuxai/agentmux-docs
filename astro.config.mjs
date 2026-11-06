@@ -36,8 +36,8 @@ export default defineConfig({
 		'/knowledge': '/memory',
 		'/trust-center': '/connectors',
 		'/armory': '/connectors',
-'/warden': '/pane-types',
-'/internals/warden': '/pane-types',
+		'/warden': '/pane-types',
+		'/internals/warden': '/pane-types',
 	},
 	integrations: [
 		// Fails the build on a link into the agentmux source that doesn't resolve.

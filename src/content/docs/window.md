@@ -88,7 +88,7 @@ AgentMux watches MuxBus and the model API of each provider your agents use: the 
 
 ### The token pill
 
-The token counts in the status bar (the ↑ and ↓ numbers) open a popover with the tokens agents have used. Its **AgentMux internal** row counts the model requests AgentMux makes on its own (session titles, subagent and workflow names, prompt suggestions, agent previews, narration, running summaries and Supervisor verdicts), not your agents' turns. Open it for one line per purpose with a count of failures; open a purpose for how its requests ended:
+The token count at the right of the status bar (the **↑ ↓ (right)** row above) opens a popover with the tokens agents have used. Its **AgentMux internal** row counts the model requests AgentMux makes on its own (session titles, subagent and workflow names, prompt suggestions, agent previews, narration, running summaries and Supervisor verdicts), not your agents' turns. Open it for one line per purpose with a count of failures; open a purpose for how its requests ended:
 
 | Column | Meaning |
 |---|---|
