@@ -94,7 +94,7 @@ Earlier versions had a Launch Agent dialog with one account dropdown per provide
 
 ## Persistence
 
-Accounts and their agent bindings live in two SQLite tables (not the per-channel `objects.db` — see [Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/) for the full split between per-channel and shared databases), but as of `SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md` **the two tables no longer live in the same physical store**:
+Accounts and their agent bindings live in two SQLite tables (not the per-channel `objects.db` — see [Persistence](/internals/persistence/) and [Data layout](/internals/data-layout/) for the full split between per-channel and shared databases), but, per `SPEC_IDENTITY_STORE_SPLIT_2026_08_17.md`, **the two tables live in different physical stores**:
 
 | Table | Owns | Where it lives |
 |---|---|---|

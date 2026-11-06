@@ -22,22 +22,16 @@ Memory is a regular pane (icon: `brain`), opened from the widget bar like any ot
 
 Memory opens on **Global**. The pane title names the section, for example "Memory · Skills". In a narrow pane the tabs show only their icons; in a wide one they stop growing and sit at the left. `Ctrl` + mouse wheel zooms the pane.
 
-:::note[Earlier names]
-This pane was called **Knowledge**, and before that its sections were tabs of the **Armory**. AgentMux moves panes, widget-bar pins and keybindings saved under either name here, once, the first time it starts after updating. Layout files that use them still open here, and links to `/knowledge/` redirect.
-:::
-
 ## Opening Memory
 
 - **Widget bar:** click **Memory**. It is pinned by default. If a Memory pane is already open in the tab, the click focuses it instead of opening another.
 - **Command palette:** run **Memory**. Searching for "skills" or "bundles" also finds it.
 - **macOS app menu:** **Memory…**.
-- **Keybinding:** bind `app:memory`. A binding to the old `app:knowledge` is changed to `app:memory` the first time it starts after updating.
+- **Keybinding:** bind `app:memory`.
 
 Links elsewhere in the app open Memory on the right section:
 
 - An agent pane's right-click menu has **Personal memory**, which opens **Personal** on that agent. Its **Bundles…** dialog links to **Memory → Bundles**.
-
-An Armory pane (the earlier pane that held both Connectors and Memory) is moved to the matching new pane: Memory, Skills and Bundles to Memory, the rest to Connectors.
 
 ## Global
 
@@ -106,14 +100,14 @@ See [MuxAPI](/internals/muxapi/#memory-native-memory--brain) for the full parame
 
 ### The memory record: memory follows the agent
 
-A provider keeps an agent's memory files in a folder tied to its account and working directory (for Claude Code, `$CLAUDE_CONFIG_DIR/projects/<cwd>/memory`), so switching account, working directory or channel used to leave them behind. AgentMux keeps its own **memory record** for each agent, keyed by the agent's ID rather than by account, folder or channel, and treats it as the source of truth (`crates/srv/src/backend/memory/record.rs`). The record keeps every version of every file, which is what the history, diff and revert views show.
+A provider keeps an agent's memory files in a folder tied to its account and working directory (for Claude Code, `$CLAUDE_CONFIG_DIR/projects/<cwd>/memory`), so the provider's folder alone doesn't follow an agent across accounts, working directories or channels. AgentMux keeps its own **memory record** for each agent, keyed by the agent's ID rather than by account, folder or channel, and treats it as the source of truth (`crates/srv/src/backend/memory/record.rs`). The record keeps every version of every file, which is what the history, diff and revert views show.
 
 - **At each launch**, before the provider CLI starts, AgentMux reconciles the agent's memory folder with the record: files missing from the folder are written back, and changes found on disk are recorded (`crates/srv/src/backend/memory/reconcile.rs`). If a file changed on both sides, the disk version wins and the other is kept beside it as a `<name>__conflict_<id>.md` file. This is how memory follows an agent into a new account, working directory or channel.
 - **While the agent runs**, AgentMux watches its memory folder and records a file Claude writes once it has been unchanged for about 2 seconds, with a periodic sweep as a backup (`crates/srv/src/backend/memory/native_drift.rs`).
 - **AgentMux's own writes** — `Memory` `write`, edits in Memory → Personal, revert — go into the record first, then to the file.
 - **Shared folders:** two agents can end up with the same memory folder (same account and working directory, for example). AgentMux only syncs the record with a folder it can show belongs to this agent alone; a shared folder is left as it is (`crates/srv/src/backend/memory/dir_claims.rs`). The first time an agent's record meets a folder, a file whose content another agent's record already has is held for you to review instead of being taken over; it shows up in the adoption panel above.
 
-The older `db_agent_native_memory` mirror is still written through on list, read and write, but it is no longer the main mechanism. See `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo for the design.
+AgentMux also writes each file through to the `db_agent_native_memory` mirror on list, read and write. See `docs/specs/SPEC_MEMORY_FOLLOWS_THE_AGENT_2026_09_24.md` in the main repo for the design.
 
 ## Skills
 

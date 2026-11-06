@@ -9,9 +9,9 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="abf"></a>**ABF (Agent Bundle Format)** — The file format for moving a [bundle](#bundle) between AgentMux installs as a single `.abf` file: instructions, context files, skills and, if you choose, widgets, composing existing standards (Agent Skills, AGENTS.md). See [Agent Bundle Format (ABF)](/abf/).
 
-<a id="agent-operating-environment"></a>**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [MuxAPI](#agent-app-api). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
+<a id="agent-operating-environment"></a>**agent operating environment** — How AgentMux positions itself: more than a workspace, it's an environment where agents are first-class residents with stable identity, memory, a streaming parser, lifecycle management, and access to the [MuxAPI](#muxapi). An agent running inside AgentMux can open panes, rename tabs, discover peers, and send messages — not just process text.
 
-<a id="muxapi"></a><a id="agent-app-api"></a>**MuxAPI** (formerly the Agent App API) — The typed RPC surface an agent uses to call back into AgentMux — spawn panes, set titles, render dashboards, update status. See [/internals/muxapi](/internals/muxapi/).
+<a id="muxapi"></a>**MuxAPI** — The typed RPC surface an agent uses to call back into AgentMux — spawn panes, set titles, render dashboards, update status. See [/internals/muxapi](/internals/muxapi/).
 
 <a id="appimage"></a>**AppImage** — The Linux distribution format for AgentMux. A single self-contained executable (`.AppImage`) that bundles the app, the Chromium runtime, and all shared libraries. Run directly: `chmod +x AgentMux_amd64.AppImage && ./AgentMux_amd64.AppImage`. On first launch it extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts. See [Installation](/installation/#linux).
 
@@ -31,13 +31,13 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="channel"></a>**channel** — A named on-disk data-dir scope that groups AgentMux builds for shared agent definitions and settings. Key channels: `stable` (installed + released portables), `local-<branch>` (locally built portables), `dev-<branch>-<clone>` (dev-mode builds). Agent definitions and `settings.json` persist within a channel across version upgrades; runtime databases (SQLite, CEF cache, IPC artifacts) are scoped per `(channel, version)`. See [Multi-instance & dev mode](/multi-instance/).
 
-<a id="connectors"></a>**Connectors** — The app-wide pane for what agents connect to outside AgentMux, in three sections: **Accounts** (sign-ins to providers and services such as Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack and AgentMux Cloud, bound to agents), **MCP servers** and **Remotes** (SSH hosts and WSL distributions). Opened from the widget bar or the command palette. Together with [Memory](#memory) it replaced the Armory. See [Connectors](/connectors/).
+<a id="connectors"></a>**Connectors** — The app-wide pane for what agents connect to outside AgentMux, in three sections: **Accounts** (sign-ins to providers and services such as Claude, Codex, GitHub, Google Workspace, AWS, OpenAI, Anthropic, Slack and AgentMux Cloud, bound to agents), **MCP servers** and **Remotes** (SSH hosts and WSL distributions). Opened from the widget bar or the command palette. See [Connectors](/connectors/).
 
 <a id="container-agent"></a>**container agent** — An agent that runs inside a Docker container that sees only its own workspace, chosen as **Container (runs in Docker)** when you create the agent. The other choice is a [Native agent](#native-agent). See [Container agents](/container-agents/).
 
 <a id="context-delivery"></a>**context delivery** — Content an agent is given without you typing it: its memory at a new session, after `/clear` or after a compaction, and Claude Code's conversation summary after a compaction. The agent pane shows each one as a card that lists what was given, one row per item; a summary card also shows a one-line excerpt, and opens to the full text. See [Memory](/memory/) and [Conversation overhead](/internals/conversation-overhead/).
 
-<a id="document-tab"></a>**document tab** — One file inside one [block](#block), shown in a tab strip under the pane header: the Editor's files, including the images, audio and video its viewers show (Media is no longer a pane of its own). The innermost of the three kinds of tab, after [window tabs](#window-tab) and [pane tabs](#pane-tab). A document tab is another document in the same pane; Agent, Terminal and Browser panes have none.
+<a id="document-tab"></a>**document tab** — One file inside one [block](#block), shown in a tab strip under the pane header: the Editor's files, including the images, audio and video its viewers show. The innermost of the three kinds of tab, after [window tabs](#window-tab) and [pane tabs](#pane-tab). A document tab is another document in the same pane; Agent, Terminal and Browser panes have none.
 
 <a id="global-memory"></a>**Global Memory** — Entries composed into every agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …) at launch, as `# [Workspace] <name>` sections, after AgentMux's own Operator Config entries (`# [AgentMux System]`). Managed in [Memory → Global](/memory/#global); agents use the `Memory` MCP tool with `scope: "global"`. Shared by the channels that share your main accounts.
 
@@ -55,13 +55,11 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="kanban"></a>**Kanban** — A pane of its own: one card per task in the shared task queue ([Muxqueue](#muxqueue)), in the columns Backlog, In progress, Needs you, Review and Done. Agents file and update tasks with their `Tasks` tool; you start, answer, accept or send back. In the widget bar's **more** menu and opened by **Open Kanban** (`open:kanban`). See [Kanban](/kanban/).
 
-<a id="knowledge"></a>**Knowledge** — The former name of the [Memory](#memory) pane. Panes, widget-bar pins and keybindings (`app:knowledge`) saved under it are moved to Memory the first time it starts after updating; layout files that use it still open Memory, and `/knowledge/` links redirect.
-
 <a id="launcher"></a>**launcher** — The 325 KB shim process (`agentmux-launcher`) that boots AgentMux. Spawns the host and sidecar, holds the IPC auth-key, tracks window reality. See [Architecture overview](/internals/architecture/).
 
 <a id="lead"></a>**lead** — The agent another agent reports to, set in its [seat](#seat) (**Reports to**), or the operator (you) when it names none. Must be an agent on the same computer, not the agent itself, and following the leads up must end at you. A spawned worker with no seat of its own has the agent that spawned it as its lead. Swarm can group agents by lead, and the Kanban filters tasks by it. See [Seats](/first-agent/#seats).
 
-<a id="memory"></a>**Memory** — The app-wide pane for what agents know and carry, in four sections: **Global** ([Global Memory](#global-memory)), **Personal** ([Personal Memory](#personal-memory)), **Skills** and **Bundles**. Opened from the widget bar or the command palette. Formerly [Knowledge](#knowledge); together with [Connectors](#connectors) it replaced the Armory. "Memory" on its own means this pane; the other kinds are always qualified as Global or Personal Memory. See [Memory](/memory/).
+<a id="memory"></a>**Memory** — The app-wide pane for what agents know and carry, in four sections: **Global** ([Global Memory](#global-memory)), **Personal** ([Personal Memory](#personal-memory)), **Skills** and **Bundles**. Opened from the widget bar or the command palette. "Memory" on its own means this pane; the other kinds are always qualified as Global or Personal Memory. See [Memory](/memory/).
 
 <a id="message"></a>**message** — The MCP tool agents use to talk to each other. Its `send` and `broadcast` actions deliver [jekts](#jekt); `post` and `read` use the per-repository coordination channel, which agents read when they choose and which is never pushed into a conversation.
 
@@ -73,7 +71,7 @@ AgentMux has its own vocabulary. This page is the authoritative source — when 
 
 <a id="my-agents"></a>**My Agents** — The list in an empty [agent pane](#agent-pane) of every agent you have created, with each one's runtime state, account and seat, and a panel that opens under each tile with **Open** (or **Switch to existing** and **Fork…** for an agent that is open elsewhere) and the agent's actions (**Rename**, **Duplicate**, **View History**, **Seat…**, **Bundles…**, **Environment…**, **Shut down**, **Delete**). An agent running with no pane has a **no pane** tag. See [My Agents](/first-agent/#my-agents).
 
-<a id="native-agent"></a>**Native agent** — An agent that runs directly on your computer, with your files, environment and credentials, chosen as **Native (runs on this computer)** when you create the agent. The other choice is a [container agent](#container-agent). Older notes and settings call this runtime `host`; that is only the stored name, and it is not the [host](#host) process. See [Native and container agents](/first-agent/#native-and-container-agents).
+<a id="native-agent"></a>**Native agent** — An agent that runs directly on your computer, with your files, environment and credentials, chosen as **Native (runs on this computer)** when you create the agent. The other choice is a [container agent](#container-agent). Its stored name is `host`; that is not the [host](#host) process. See [Native and container agents](/first-agent/#native-and-container-agents).
 
 <a id="oac"></a>**OAC** — Origin Access Control. The AWS CloudFront mechanism that restricts S3-bucket access to a specific distribution. Used by the docs and landing infrastructure; not a runtime AgentMux concept.
 

@@ -7,7 +7,7 @@ description: The API that lets agents operate the AgentMux workspace — open pa
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-**MuxAPI** (formerly the Agent App API) is what makes AgentMux an *operating* environment, not just a workspace. Every agent running inside a pane has access to a typed API that lets it drive the environment itself: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. No human in the loop required.
+**MuxAPI** is what makes AgentMux an *operating* environment, not just a workspace. Every agent running inside a pane has access to a typed API that lets it drive the environment itself: open new panes, rename tabs and windows, navigate between tabs, discover and message peer agents. No human in the loop required.
 
 The API has two equivalent surfaces — **MCP tools** (for agents that use MCP-capable providers) and a **REST API** (direct HTTP, for any language). Both authenticate with the same key and express the same capabilities. The MCP tools are what most agents will reach for; the REST endpoints are there for scripts, webhooks, and advanced use.
 
@@ -126,7 +126,7 @@ The backend also registers a large set of management RPCs that the frontend (and
 | Import / export / seed | `importagentfromclaw`, `importagents`, `exportagents`, `reseedagents` |
 | Identity accounts | `listidentityaccounts`, `getidentityaccount`, `upsertidentityaccount`, `deleteidentityaccount`, `account.key.verify`, `account.oauth.start`, `account.oauth.poll`, `account.oauth.cancel` |
 | Agent ↔ identity junction | `linkagentidentity`, `unlinkagentidentity`, `listagentidentities` |
-| Bundles (formerly presets) | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
+| Bundles | `listmemories`, `getmemory`, `upsertmemory`, `deletememory`, `reorderglobalbrain` |
 | Agent instances | `listagentinstances`, `getagentinstance`, `createagentinstance`, `updateagentinstance`, `deleteagentinstance`, `listnamedagents`, `hidenamedagent`, `listrecentsessions` |
 | Container runtime | `containerruntimeavailable` |
 | Drones | `listdrones`, `getdrone`, `upsertdrone`, `deletedrone`, `rundrone`, `listdroneruns` |
