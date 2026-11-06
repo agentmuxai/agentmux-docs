@@ -109,7 +109,7 @@ The catalog of MCP Server primitives available to agents:
 - **Global servers** — visible to and bindable by any agent. Created/edited here via the catalog (`mcp.catalog.upsert`/`mcp.catalog.delete`).
 - **Private servers** — created by a specific agent (`mcp.upsert`), visible only to that agent until bound elsewhere.
 
-Open a server to see who gets it. **All agents** gives it to every agent at launch, and **Containers too** extends that to container agents. **Bound to** lists the agents it is bound to, each with **Unbind**, and **Bind to agent** binds another. A server reaches an agent when that agent next starts. A [bundle](/bundles/) can also include MCP servers. See [MuxAPI](/internals/muxapi/#mcp) for the full RPC reference.
+Open a server to see who gets it. **All agents** gives it to every agent at launch, and **Containers too** extends that to container agents. **Bound to** lists the agents it is bound to, each with **Unbind**, and **Bind to agent** binds another. A server reaches an agent when that agent next starts. See [MuxAPI](/internals/muxapi/#mcp) for the full RPC reference.
 
 ![Connectors → MCP servers: the servers AgentMux comes with, how many agents use each, + Browse catalog and + New MCP server](../../assets/screenshots/memory/connectors-mcp.png)
 

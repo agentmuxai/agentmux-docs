@@ -485,7 +485,7 @@ The agent pane has no drawer of its own. What belongs to one agent is reached fr
 | What | Where |
 |---|---|
 | **Seat** (role, lead and area, and **Import roster…**) | **Seat…**, from the My Agents panel or the pane's right-click menu. See [Seats](/first-agent/#seats). |
-| **Bundles** the agent starts with, in order, its own bundle first | **Bundles…**, from either menu; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
+| **Bundles** the agent starts with, in order | **Bundles…**, from either menu; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
 | **Environment** variables it starts with | **Environment…** in the My Agents panel. See [Environment variables](/first-agent/#environment-variables). |
 | **Personal Memory** | **Personal memory** in the pane's right-click menu opens [Memory → Personal](/memory/#personal) on this agent. There you can browse its files, see history and diffs, revert, and add a **New file** or **Create MEMORY.md**. |
 | **Account** | The login email in the composer strip (see [Composer strip](#composer-strip)). Which agents use an account is in [Connectors → Accounts](/connectors/#accounts). |

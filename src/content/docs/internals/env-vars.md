@@ -343,7 +343,7 @@ pane's environment unless you know exactly what you are doing.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs`) from channel resolution; also a user override for `Installed`/`Portable` modes |
-| **Who reads it** | `crates/srv/src/bootstrap/stores.rs` for pre-migration snapshot naming; `DataPaths::from_env()` (required field — missing value causes `from_env()` to return `None`) |
+| **Who reads it** | `crates/srv/src/bootstrap/stores.rs` for pre-migration snapshot naming; `DataPaths::from_env()` in `crates/common/src/data_paths.rs` (required field — missing value causes `from_env()` to return `None`) |
 | **Example** | `stable`, `beta`, `local-main`, `experiment` |
 | **Constraints** | Max 64 chars; cannot be `shared`, `snapshots`, `dev`, `versions`, `channels`, `runtime`; `default` maps to `stable` |
 

@@ -1,41 +1,33 @@
 ---
 title: "Bundles"
-description: Reusable packages of an agent's instructions, MCP servers, memory and skills, managed in Memory → Bundles. An agent takes several, in order.
+description: Reusable sets of instructions and skills, managed in Memory → Bundles. An agent takes several, in order.
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-A **Bundle** packages what an agent starts with: its instructions (system prompt, "Soul"), context files, MCP servers, skills and memory. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** panel or its pane's right-click menu. A bundle can be exported as, and imported from, an [Agent Bundle Format (ABF)](/abf/) file.
-
-:::note[Earlier names]
-Bundles were called "Presets". This page was at `/memory/`, which is now the [Memory](/memory/) pane's page. See [MuxAPI](/internals/muxapi/#bundle) for the `bundle.*` RPC surface; the older `preset.*` compatibility aliases have been retired (`crates/srv/src/backend/rpc_types/commands.rs`).
-:::
+A **Bundle** is a reusable set of what an agent starts with: instructions (a system prompt, the "Soul"), per-provider instruction overrides and skills. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** panel or its pane's right-click menu. You can import a bundle from an [Agent Bundle Format (ABF)](/abf/) file.
 
 ## What goes in a bundle
 
-The New/Edit Bundle form has Name, Description, an optional **Suggested for** (provider and vendor), Instructions and per-provider instruction overrides. After a bundle is saved, its detail view adds **MCP Servers** and **Skills** sections. See [First Agent Setup → Bundles](/first-agent/#bundles) for the form, field by field.
+The New/Edit Bundle form has Name, Description, an optional **Suggested for** (provider and vendor), Instructions and per-provider instruction overrides. After a bundle is saved, its detail view adds a **Skills** section. See [First Agent Setup → Bundles](/first-agent/#bundles) for the form, field by field.
 
 | Field | Purpose | Editable in the UI today? |
 |---|---|---|
 | `instructions` | System prompt / Soul. Long-form text describing the agent's personality, priorities, and behavior, delivered through the provider's startup instructions file. | Yes |
 | `instructions_by_provider` | Per-provider overrides that replace `instructions` when the bundle runs on that provider. | Yes |
 | `provider` / `model` | **Suggested for**: the provider and vendor the bundle was made with in mind. A hint only; the agent's own provider decides which harness runs. Optional. | Yes |
-| `context_files` | Array of `{path, content}` entries — files (typically project-scoped, like `AGENTS.md` or `CLAUDE.md`) loaded into context on launch. | Not yet — persisted as JSON |
-| `mcp_servers` | MCP servers for the bundle: servers from the [MCP servers](/connectors/#mcp-servers) catalog, or servers private to the bundle. | Yes, after saving |
-| `skills` | **Skill primitive IDs** — see [Memory → Skills](/memory/#skills). | Yes, after saving |
+| `context_files` | Array of `{path, content}` entries, such as an `AGENTS.md` or `CLAUDE.md` for a project. They travel in an [`.abf` file](/abf/); AgentMux doesn't deliver them to an agent at launch. | No, stored as JSON |
+| `skills` | **Skill primitive IDs**: see [Memory → Skills](/memory/#skills). | Yes, after saving |
 
-An agent with no bundles picked runs the harness as it comes ("vanilla CLI"), plus Global Memory, and its own bundle if it has one. The singleton `is_blank` bundle that once stood for this is never offered in a picker.
+A bundle holds no MCP servers. Those are bound to agents in [Connectors](/connectors/#mcp-servers).
 
 ## An agent's bundles
 
-An agent starts with an ordered list of bundles:
+An agent starts with an ordered list of the bundles you pick for it. With none, it runs the harness as it comes ("vanilla CLI"), plus [Global Memory](/memory/#global).
 
-1. **Its own bundle** comes first, when the agent has one, and can't be removed from the list. A new agent doesn't get one: AgentMux no longer creates an empty "&lt;agent&gt; — ABF" bundle with it. An agent that already has one with something in it keeps it, and the empty ones nothing used are removed. See [every agent gets its own ABF](/abf/#every-agent-gets-its-own-abf).
-2. **The bundles you pick** follow, in the order you put them.
-
-You pick them in these places, all with the same control: each picked bundle has **Move up**, **Move down** and **Remove**, and **Add a bundle…** lists the rest.
+You pick bundles in these places, all with the same control: each picked bundle has **Move up**, **Move down** and **Remove**, and **Add a bundle…** lists the rest.
 
 | Where | When it's saved |
 |---|---|
@@ -46,18 +38,9 @@ You pick them in these places, all with the same control: each picked bundle has
 
 - **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv/src/backend/storage/agent_bundles.rs`). The instructions are no longer sent as the agent's first message. A bundle deleted since it was picked is skipped.
 - **Skills** from every bundle in the list are added to the agent's own. When two bundles name the same skill, the first one wins.
-- **MCP servers** from the bundles are added when the agent is opened through MuxAPI (`agent.open`). The Launch button in the agent pane doesn't add a bundle's MCP servers yet.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
 
-The list is kept per [channel](/glossary/#channel), like the agent's own bundle, if it has one. Deleting a bundle takes it out of this channel's lists.
-
-## Session zones and default-continue
-
-A bundle keeps a sequence of **session zones** — one per agent-anchored conversation thread. When you re-launch the same bundle, the agent defaults to **continuing the most recent session** rather than starting fresh: previous turns load into the new pane, the agent's context carries over, and you pick up mid-thread.
-
-If you want a brand-new conversation instead, use **Start a new session** on the agent's card, which archives the current one. The default is "continue most recent" because that matches the workflow people actually have — close a pane, reopen, keep going.
-
-Session zones are anchored to the agent's identity (`agent_id`), not the pane that hosts the conversation. Moving an agent to a new pane preserves its zones; deleting the pane preserves them too.
+The list is kept per [channel](/glossary/#channel). Deleting a bundle takes it out of this channel's lists.
 
 ## Where bundles are managed
 
@@ -101,30 +84,9 @@ It has no account field: the agent takes the provider's first account, which you
 
 ## Persistence
 
-Bundles live in the `db_bundles` table:
+Bundles live in the `db_bundles` table of the shared store. A row has a name, a description, the suggested `provider` and `model`, `instructions`, `instructions_by_provider` and `context_files` (both JSON), the `skills` it references, a `sort_order`, and the flags `is_blank` (the "vanilla CLI session" bundle), `is_global` (a [Global Memory](/memory/#global) entry) and `is_system`. The table is defined in `crates/srv/src/backend/storage/migrations.rs`.
 
-```
-id                        TEXT PRIMARY KEY
-name                      TEXT NOT NULL UNIQUE
-description               TEXT
-is_blank                  INTEGER  -- the "vanilla CLI session" bundle
-is_global                 INTEGER  -- a Global Memory entry
-provider                  TEXT
-model                     TEXT
-instructions              TEXT
-instructions_by_provider  TEXT  -- JSON
-context_files             TEXT  -- JSON
-mcp_servers               TEXT  -- JSON
-skills                    TEXT  -- JSON
-sort_order                INTEGER
-created_at                INTEGER
-updated_at                INTEGER
-is_system                 INTEGER
-```
-
-The table is defined in `crates/srv/src/backend/storage/migrations.rs`, both in `objects.db`'s flat schema (`run_object_schema`) and in the shared store's schema (`run_shared_store_schema`). [Global Memory](/memory/#global) entries are rows in the same table with `is_global` set.
-
-An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`). Its own bundle is `db_agents.default_memory_id`. Memory replaced the earlier "Forge" concept; the agent-definition catalog ("Forge agents") is now one `db_agents` row per agent (the separate `db_agent_definitions` table was merged into it).
+An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`).
 
 ## Bundles and per-instance overrides
 

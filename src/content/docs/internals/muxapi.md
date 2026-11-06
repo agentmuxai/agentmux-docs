@@ -192,9 +192,16 @@ The reusable agent-definition primitive (see [Bundles](/bundles/)):
 |---|---|---|
 | `bundle.list` | List all bundles | — |
 | `bundle.get` | Fetch one bundle by `id` or `name` | `id` or `name` |
-| `bundle.upsert` | Create/update a bundle (the `Memory` row shape — provider, model, instructions, `context_files`, `mcp_servers`, `skills`) | bundle fields |
+| `bundle.upsert` | Create/update a bundle (provider, model, instructions, `instructions_by_provider`, `context_files`, `skills`) | bundle fields |
 | `bundle.delete` | Delete a bundle | `id` |
 | `bundle.self.get` | Resolve the calling agent's currently-bound bundle (or the blank singleton) | `agent_id` |
+| `bundle.validate` | Check a bundle draft for unsafe paths and malformed JSON, without saving it | bundle fields |
+| `bundle.export` | Serialize one bundle to an [ABF](/abf/) archive. `format: "zip"` returns it base64-encoded; `widgets` adds installed sandboxed widgets | `id`, `format`, `widgets` |
+| `bundle.export_for_agent` | `bundle.export` plus one agent's Personal Memory and project instructions | `bundle_id`, `agent_id`, `format` |
+| `bundle.export_for_agent_with_history` | The same, plus the agent's session transcripts; always a zip | `bundle_id`, `agent_id` |
+| `bundle.import` | Create a bundle and its skills from a zip or a file list | `zip_base64` or `files` |
+| `bundle.import.preview`, `bundle.import.commit` | The import review: parse an archive without writing, then write only what was chosen | |
+| `bundle.import_for_agent` | Write an archive's Personal Memory into one agent that has none | |
 
 `bundle.*` is backed by `crates/srv/src/backend/storage/bundles.rs` (table `db_bundles`). The old WebSocket `preset.*` aliases are retired; the `Identity` tool's `presets` and `preset` actions still reach bundles through the REST routes `/api/v1/agent/preset/list` and `/api/v1/agent/preset/get`.
 

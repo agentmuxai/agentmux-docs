@@ -553,9 +553,9 @@ The keys `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `telemetry:
 
 ## MCP Servers
 
-MCP servers are configured **per-agent** in a [bundle](/bundles/), not via a global `settings.json` key. The agent runtime materializes the bundle's `mcp_servers` field into the agent's `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
+MCP servers are configured **per-agent** in [Connectors → MCP servers](/connectors/#mcp-servers), not via a global `settings.json` key. The agent runtime writes the agent's servers into its `.mcp.json` at launch and the AgentMux MCP server is auto-injected alongside any user-defined entries.
 
-See [Bundles](/bundles/) for the bundle schema (including the `mcp_servers` field).
+See [Connectors](/connectors/#mcp-servers) for binding servers to agents.
 
 ## Environment Variables
 
