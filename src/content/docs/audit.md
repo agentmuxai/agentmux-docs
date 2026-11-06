@@ -16,7 +16,7 @@ The Audit widget (icon: `list-check`) is **not pinned** to the widget bar by def
 - Click **more** at the end of the widget bar and choose **Audit**. Right-click it there and choose **Pin to bar** to keep it on the bar.
 - **Open Audit** in the command palette (`open:audit`).
 
-A tab holds one Audit: choosing it again brings back the one already open. Audit was for a while a section of the Warden pane: see [Warden](/warden/). An old Warden pane, or an old pin for the whole Warden, opens the Audit.
+A tab holds one Audit: choosing it again brings back the one already open.
 
 ## The feed
 
@@ -68,4 +68,3 @@ Below the feed is **Secrets**: every use of a [Vault](/vault/) entry by an agent
 - [History](/history/): what agents did, as a conversation
 - [Swarm](/subagent-watcher/): registered agents, the fleet toolbar and the Supervisor
 - [Interagent communication](/internals/interagent-comms/): how jekts are delivered
-- [Warden](/warden/): where this pane used to be a section

@@ -11,7 +11,7 @@ The **Jobs** pane lists everything that runs by itself: scheduled jobs, [Drone](
 
 ## Where to find it
 
-Open it with **Open Jobs** in the command palette (`open:jobs`). The pane's title reads **Jobs**, and **Jobs · N failing** when N jobs are failing. Jobs was for a while a section of the Warden pane: see [Warden](/warden/).
+Open it with **Open Jobs** in the command palette (`open:jobs`). The pane's title reads **Jobs**, and **Jobs · N failing** when N jobs are failing.
 
 An agent creates a job with the `Schedule` tool (action `create`, with `cron`), and you create one yourself with **New job**. A Drone graph appears in the list once it has run, and a cloud job once you approve its template.
 
@@ -84,4 +84,3 @@ A failed run raises one alert per streak of failures, not one per run: a [Kanban
 - [Audit](/audit/): messages between agents, including the messages a job sends
 - [Kanban](/kanban/): where a failure's task goes
 - [Swarm](/subagent-watcher/): cron jobs shown under each agent
-- [Warden](/warden/): where this pane used to be a section

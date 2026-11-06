@@ -21,7 +21,6 @@ The Vault is a pane of its own (icon: `lock`, view `vault`). It is **not pinned*
 
 A tab holds one Vault: each of these brings back the Vault already open in the tab instead of opening a second. The pane's title reads **Vault · Cards and banks**, naming the Vault's own section.
 
-The Vault was for a while a section of the Warden pane, which has been split up: see [Warden](/warden/). Saved panes, widget-bar pins, `widgets.json` entries and layout files that opened the Vault, or the Warden's Vault section, open the Vault pane the first time AgentMux starts after updating.
 
 The Vault reads its entries only while it is shown. Opening the Audit or any other pane never reads them.
 
@@ -145,6 +144,5 @@ The Vault is shared by every AgentMux on this computer, installed and developmen
 ## See also
 
 - [Audit](/audit/): what agents did with your entries, and where they may use them without asking
-- [Warden](/warden/): where the Vault's old home went
 - [Identity & credential storage](/security/identity-credential-storage/): every secret AgentMux keeps, and how
 - [Identity & Accounts](/identity/): the accounts agents run as, which are not Vault entries

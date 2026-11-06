@@ -272,7 +272,7 @@ See [MuxAPI](/internals/muxapi/) for the full tool reference.
 
 ## Supervisor
 
-The **Supervisor** keeps an agent working until it is done or needs you. Agents often end a turn with "shall I continue?", or stop short of work they had planned, and then sit idle until you notice. With the Supervisor on, each time the agent ends a turn AgentMux reads the end of its conversation, asks a small model (Haiku) whether it should go on, and either sends the agent a message to continue or stops and tells you why. You set it and watch it in Swarm (`frontend/app/view/swarm/`); the decisions are made by AgentMux's server. It used to be a section of the [Warden](/warden/).
+The **Supervisor** keeps an agent working until it is done or needs you. Agents often end a turn with "shall I continue?", or stop short of work they had planned, and then sit idle until you notice. With the Supervisor on, each time the agent ends a turn AgentMux reads the end of its conversation, asks a small model (Haiku) whether it should go on, and either sends the agent a message to continue or stops and tells you why. You set it and watch it in Swarm (`frontend/app/view/swarm/`); the decisions are made by AgentMux's server.
 
 ### Turning it on
 
@@ -363,7 +363,7 @@ The Supervisor never:
 - **The row's line** reads **Needs you:** and the reason while a paused agent is idle, and the row ranks like one with a pending question. When the agent starts a turn again, the pause is over.
 - **The Supervisor group**, first under an expanded row, lists the last 10 decisions, newest first: the time, what it did (**continued**, **paused**, **done**, **waiting**, **no verdict**, **set**, **stopped by you**) and the reason. They are kept in the pane's metadata (`supervisor:state`), so they survive a restart of AgentMux's server. The group is hidden while the mode is Off.
 - **Notifications:** when it pauses, you get a notification that the agent needs you, "Supervisor paused:" and the reason. When the judge finds the work done, or can't judge, you get the usual "finished" notification. A continuation, and a turn you stopped, send none. A supervised agent never gets the generic "finished" notification on top of these.
-- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
+- **Stats:** each verdict is a small model request, counted under **Supervisor verdicts** in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
 
 To turn it off for one agent, or for a selection with the toolbar, set the mode to **Off**; to turn it off for every agent, switch **Supervisor** off. To halt a single run, press Stop in the agent's pane: the Supervisor waits for your next message, which starts a fresh run.
 
@@ -378,12 +378,11 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 - **No history or search.** Swarm shows live state only. Subagent activity is held in memory; when an agent pane is reopened, AgentMux reloads that session's subagent activity from Claude Code's transcript files.
 - **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For the instances themselves, see the [network pill](/lan-discovery/#the-network-pill).
 - **No subagent tracking for providers other than Claude Code.**
-- **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the token popover's **AgentMux internal** row (see [Warden](/warden/#the-token-pill)).
+- **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
 
 ## See also
 
 - [Pane Types](/pane-types/) — every pane type, including the agent pane's dispatch cards
 - [Kanban](/kanban/) — the work agents are doing
 - [Audit](/audit/) and [History](/history/) — the delivery feed, and agents' kept conversations
-- [Warden](/warden/) — where the Warden's sections went
 - [Interagent Communication](/internals/interagent-comms/) — how jekts are delivered
