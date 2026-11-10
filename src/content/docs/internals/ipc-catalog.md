@@ -302,10 +302,7 @@ This catalog is generated from the `match cmd` of `route_command` and from `is_s
 | `browser_pane_auth_submit` | `browser_pane::auth::take` | inline | yes |  |
 | `browser_pane_auth_cancel` | `browser_pane::auth::take` | inline | yes |  |
 | `browser_pane_auth_save` | `credential_broker::save_credential` | async | yes |  |
-| `memory_adoption_request` | `memory_adoption::request` | inline | yes |  |
-| `memory_release_request` | `memory_adoption::request_release` | inline | yes |  |
 | `ssh_approval_decide` | `ssh_approval::decide` | inline | yes |  |
-| `memory_adoption_decide` | `memory_adoption::decide` | async | yes |  |
 | `credential_approval_decide` | `credential_broker::approval::take` | async | yes |  |
 | `browser_panes_set_overlay_clip` | in the arm | inline | yes |  |
 | `pane_media_revoke` | `browser_panes::media_prompt::cancel_pane_any_thread` | inline | yes |  |

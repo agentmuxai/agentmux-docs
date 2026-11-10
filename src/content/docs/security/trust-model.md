@@ -22,7 +22,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 | UI → CEF host | A bearer token generated at each start of the host, passed to the UI in the page URL. The host returns the server auth key to the UI over this channel. |
 | UI → server | The auth key, in the `X-AuthKey` header or, for the WebSocket, the `?authkey=` query parameter. |
 | Terminal panes and agents → server | **The same auth key**, as `AGENTMUX_AUTH_KEY`, with the server URL as `AGENTMUX_LOCAL_URL`. See the next section. Container agents get a narrower per-agent token instead; see [Container agents](#container-agents). |
-| CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker, adopting or releasing an agent's earlier memory folders (confirmed in a host window), and the host's registration for UI automation. |
+| CEF host → server, host-only services | The host-registration secret. Panes and agents don't receive it. It guards the browser-password broker and the host's registration for UI automation. |
 | Agent → server, UI automation | The agent's own signing key (`AGENTMUX_JEKT_KEY`) proves which pane the agent may automate. |
 | Other instances on this machine | Each other's auth keys, read from registry files under `~/.agentmux/` (mode `0600` on Unix). |
 | LAN peers | The `lan_key`, which opens a short list of routes: messaging, agent names and states, and whether an agent is running on this machine. It is broadcast on the LAN while LAN discovery is on. A request for a [remote operation](#remote-operations-on-another-machine) must also be signed by a pinned agent key. See [Network exposure](/security/network-exposure/). |
@@ -39,7 +39,7 @@ The key grants the same local API the AgentMux UI uses. With it, a process can, 
 - send messages into any agent's conversation, stop agents, and close panes;
 - change settings.
 
-A few things need more than the auth key. The browser-password broker, memory-folder adoption and host registration require the host-registration secret. UI automation of a pane (`UI` `screenshot`, `click` and `query`, and the `Browser` tool) requires that pane's agent signing key. `Agents` `search_history` searches only the history of the agent whose identity token the request carries (see the next section).
+A few things need more than the auth key. The browser-password broker and host registration require the host-registration secret. Adopting or releasing an agent's earlier memory folders, and answering a question AgentMux asks you in a pane, are accepted only from the AgentMux window (the operator connection, below). UI automation of a pane (`UI` `screenshot`, `click` and `query`, and the `Browser` tool) requires that pane's agent signing key. `Agents` `search_history` searches only the history of the agent whose identity token the request carries (see the next section).
 
 **Implication:** anything you run inside AgentMux (an agent, a tool call, a package install script, a command you paste into a terminal pane) can control AgentMux as fully as you can, and through it act as you. The MCP tool list shows what an agent is *offered*, not a limit on what it can do.
 
@@ -205,7 +205,7 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 - `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` — the 30-second override window (`OVERRIDE_WINDOW`)
 - `crates/srv/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv/src/muxbus/wan_lease.rs` — one live instance per agent
 - `crates/mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
-- `crates/srv/src/server/service/credential.rs`, `crates/srv/src/server/service/memory_adopt.rs` — host-only services
+- `crates/srv/src/server/service/credential.rs` — the host-only service
 - `crates/common/src/data_paths.rs` (`ensure_owner_only_dir`) — owner-only data root on Unix
 - `crates/cef/src/dev_authfile.rs` — `authkey.dev` permissions
 - `crates/srv/src/backend/account_login_guard.rs` (`strip_account_login`) — the MuxBus login kept out of agent environments
