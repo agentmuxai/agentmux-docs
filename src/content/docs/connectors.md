@@ -119,7 +119,7 @@ The hosts AgentMux can open terminals, file browsers and agents on: the SSH host
 
 ![Connectors → Remotes when it first opens](../../assets/screenshots/widgets/widget-remotes-small.png)
 
-- **Toolbar:** **Filter remotes**, **Refresh** and **+ Add remote**. Add remote takes the destination as you'd type it after `ssh` (`user@host:port`, the port optional); **Advanced** sets a **Name**, an **Identity file** and a host to **Connect through**. Writing a new host into your ssh config waits for you to confirm it in a separate AgentMux window.
+- **Toolbar:** **Filter remotes**, **Refresh** and **+ Add remote**. Add remote takes the destination as you'd type it after `ssh` (`user@host:port`, the port optional); **Advanced** sets a **Name**, an **Identity file** and a host to **Connect through**. Writing a new host into your ssh config waits for you to confirm it, in a question over the Remotes pane.
 - **Sections:** **Pinned**, **SSH hosts**, **Recent**, **WSL** and **Hidden**, each collapsible. With none yet, it reads "No remotes yet. Hosts in `~/.ssh/config` appear here…".
 - **A row** shows the host's colour and connection status, its nickname, platform and helper state, how many sessions and agents use it, and buttons for **New terminal** and **Browse files**. Right-click a row for the same actions as a menu.
 - **Click a row** to expand it: **Connect** / **Disconnect**, **Sessions…** (the host's durable terminal sessions), **Pin**, **Hide**, **Forget**, **Remove helper**, **Test connection** and **Edit in ssh config**; settings for **Nickname**, **Colour**, **Keep sessions alive** and **Install the helper**; and the agents **always allowed here (as you, with your SSH keys)**, each with **Revoke**.
@@ -128,7 +128,7 @@ The hosts AgentMux can open terminals, file browsers and agents on: the SSH host
 
 An SSH terminal can be **durable**: its shell keeps running on the host, inside AgentMux's small helper there, so a dropped link, your computer sleeping or an AgentMux restart reconnects to the same shell instead of ending it.
 
-Durable terminals need the helper on the host. The first terminal you open on a host without it asks first, in a separate AgentMux window: **Install AgentMux's helper on *host*?** The helper is about 500 KB, goes in `~/.agentmux-remote` on that machine and needs no root. It also lets [Files](/pane-types/#files) browse the host's files.
+Durable terminals need the helper on the host. The first terminal you open on a host without it asks first, in a question over the pane that needs it: **Install AgentMux's helper on *host*?** The helper is about 500 KB, goes in `~/.agentmux-remote` on that machine and needs no root. It also lets [Files](/pane-types/#files) browse the host's files.
 
 - **Install** installs it, and the terminal is durable.
 - **Not now** opens a plain SSH terminal, as before. AgentMux doesn't ask again for that host until it restarts.
