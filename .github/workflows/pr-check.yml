@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Deploy script tests
-        run: node --test scripts/publish-html.test.mjs
+        run: node --test scripts/publish-html.test.mjs scripts/check-third-party.test.mjs
 
       - name: Checkout the docs reference checker (agentmux scripts)
         # The checker lives in agentmux (scripts/check-doc-references.mjs), not in the src/agentmux pin,
@@ -82,6 +82,9 @@ jobs:
       - name: Links (every page link and #anchor in the built site)
         # External URLs are fetched too, as warnings only.
         run: node scripts/check-links.mjs --skip-target /api/rust/ --external
+
+      - name: No third-party loads (built pages and stylesheets load only from agentmux.ai and its subdomains)
+        run: node scripts/check-third-party.mjs
 
       - name: Line links after a src/agentmux bump
         # Lists each link to a source line whose code changed with the new pin.
