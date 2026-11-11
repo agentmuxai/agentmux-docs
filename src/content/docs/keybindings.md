@@ -122,7 +122,6 @@ The keys zoom the focused pane. `Ctrl`+scroll (`⌘`+scroll on macOS) zooms the 
 | Cut | ⌘X | Ctrl+X |
 | Paste | ⌘V | Ctrl+V |
 | Undo | ⌘Z | Ctrl+Z |
-| Mention in agent | ⌥K | Alt+K |
 
 ## Your own shortcuts
 
