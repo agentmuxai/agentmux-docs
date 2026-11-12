@@ -55,7 +55,7 @@ To remove a closed window without reopening it, right-click its row and choose *
 
 By default, closing a window doesn't stop its agents, so it doesn't ask. It asks first only when the close would stop an agent that is mid-turn: closing the last window, or any close with `agents:always_available` turned off. The question is "Korp is working. Close this window?", "This stops 1 agent. The window stays in Default Workspace, and you can reopen it from the version panel." For the last window it says "AgentMux closes; the window stays in Default Workspace and opens again at the next launch." instead.
 
-Tick **Don't ask again**, or turn off **Warn before closing a window with working agents** in [Settings → Window & Panes](/settings/#window--panes) (`window:confirmcloseworking`), to close without asking. A close the operating system starts (`Alt+F4`, the taskbar) and the tray's **Quit** don't ask.
+Tick **Don't ask again**, or turn off **Warn before closing a window with working agents** in [Settings → Window & Panes](/settings/#window--panes) (`window:confirmcloseworking`), to close without asking. On Windows and Linux a close the operating system starts (`Alt+F4`, the taskbar) asks the same question, and the tray's **Quit AgentMux** asks one of its own (see [Quitting AgentMux](/closing-and-shutting-down/#quitting-agentmux)); the setting turns both off too. On macOS, quitting from the app menu or with Cmd+Q doesn't ask.
 
 ## The Workspaces menu
 
