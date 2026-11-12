@@ -26,6 +26,8 @@ Closing doesn't ask about working agents while they keep running. These closes s
 - **Switching workspace.**
 - **Any close, with `agents:always_available` turned off.** Closing then ends the agents in it, as it did before.
 
+On Windows and Linux the question is the same however a window's close arrives: its close button, Alt+F4, the taskbar's **Close window**, or the window manager.
+
 From your click on **Close** until the pane is gone, the pane is dimmed and ignores clicks, and its header reads **Closing…** (**Closing 3 tabs…** for a pane that holds three).
 
 A browser pane whose page may have unsaved changes (one that would ask "Leave site?") asks first, in AgentMux's own dialog: "Close this pane?" with "*site* may have unsaved changes.", **Keep open** and **Close anyway**. Only a close you make asks. A close an agent makes, or quitting AgentMux, just closes.
@@ -68,3 +70,5 @@ The question has a box, **Also stop its background tasks (dev servers)**. Leave 
 ## Quitting AgentMux
 
 Quitting AgentMux winds the agents down with it, but doesn't shut them down: the agents that were running come back when AgentMux starts again, a few seconds apart. One you shut down stays down.
+
+The tray's **Quit AgentMux** asks first when an agent is mid-turn, in a dialog of its own: "Korp and Loap are working. Quit AgentMux?", "This stops 5 agents. Your windows open again at the next launch.", with **Keep running** (the default) and **Quit**. With no agent mid-turn it quits at once. Turning off **Warn before closing a window with working agents** in [Settings → Window & Panes](/settings/#window--panes) (`window:confirmcloseworking`) turns this question off too. On macOS, quitting from the app menu or with Cmd+Q doesn't ask.
