@@ -86,7 +86,13 @@ When the route's cap is the one used, the card reads **Stopped: the cap for Open
 
 ## When the key itself runs out
 
-AgentMux counts what agents use; it doesn't know your balance with the provider. When OpenRouter refuses a request because the key's credit or its own limit is used, the refusal reaches the agent as an error and its turn ends. Add credit at the provider, then send the agent a message. An agent whose key or entry is gone is told that the route has no usable key.
+AgentMux counts what agents use; it doesn't know your balance with the provider. When OpenRouter refuses a request because the key has no credit left (HTTP 402), the route is out of credits for every agent on it, not only the one that hit it:
+
+- Every agent with an open pane on the route shows **Route out of credits**, and its messages wait. Hovering its chip on the Swarm card says it is stopped because the route has no credits left, not by a cap.
+- Each of those agents' leaders on this computer gets one note naming them, and you get one notification: **OpenRouter is out of credits, so 3 agents can't work. Add credits to the route's key in the provider's account; they start again by themselves.** Nothing more is said about the route until it works again.
+- Add credit at the provider. The agents try the route again every few minutes; once one request works, the notice comes off every pane and the agents carry on, with no restart and no message from you.
+
+An agent on its own provider key, with no route, is told the same way for itself alone. An agent whose key or entry is gone is told that the route has no usable key.
 
 ## See also
 
