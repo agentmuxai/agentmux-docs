@@ -156,3 +156,4 @@ The Vault is shared by every AgentMux on this computer, installed and developmen
 - [Audit](/audit/): what agents did with your entries, and where they may use them without asking
 - [Identity & credential storage](/security/identity-credential-storage/): every secret AgentMux keeps, and how
 - [Identity & Accounts](/identity/): the accounts agents run as, which are not Vault entries
+- [Model routes](/model-routes/): the API key a route needs, and how an agent spends it
