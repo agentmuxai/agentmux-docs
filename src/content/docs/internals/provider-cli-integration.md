@@ -17,21 +17,21 @@ AgentMux does not call AI provider APIs directly. Instead, it manages a provider
 | Codex | `codex` | `@openai/codex` | `subprocess` | JSONL — `codex exec --json` (NDJSON, one JSON object per line; not a single JSON blob) |
 | Gemini | `gemini` | `@google/gemini-cli` | `subprocess` | `stream-json` (NDJSON) |
 | Qwen Code | `qwen` | `@qwen-code/qwen-code` | `subprocess` | `stream-json` (NDJSON) in Claude Code's frame shape, read by the Claude translator as `qwen-stream-json` |
-| Kimi | `kimi` | — (PyPI `kimi-cli`, installed by you) | `subprocess` | `stream-json` (NDJSON) |
+| Kimi | `kimi` | — (PyPI `kimi-cli`, installed by AgentMux into a private Python environment) | `subprocess` | `stream-json` (NDJSON) |
 | Muxcode | `muxcode` | `@agentmuxai/muxcode` | `subprocess` | `stream-json` (NDJSON) — reuses the Claude translator |
-| Antigravity | `agy` | — (Google's installer) | `subprocess` | `stream-json` (NDJSON) in its own schema, with its own translator (`agy-stream-json`) |
+| Antigravity | `agy` | — (the pinned release, downloaded by AgentMux) | `subprocess` | `stream-json` (NDJSON) in its own schema, with its own translator (`agy-stream-json`) |
 | OpenClaw | `openclaw` | `openclaw` | `acp` | ACP: JSON-RPC 2.0 over stdio |
 | GitHub Copilot CLI | `copilot` | `@github/copilot` | `acp` | ACP |
 | Pi | `pi-acp` | `pi-acp`, with `@earendil-works/pi-coding-agent` | `acp` | ACP |
 | Kilo Code CLI | `kilo` | `@kilocode/cli` | `acp` | ACP |
 | Cline CLI | `cline` | `cline` | `acp` | ACP |
 | OpenCode | `opencode` | `opencode-ai` | `acp` | ACP |
-| goose | `goose` | — (GitHub release, installed by you) | `acp` | ACP |
-| Grok Build | `grok` | — (xAI's installer) | `acp` | ACP |
+| goose | `goose` | — (the pinned GitHub release, downloaded by AgentMux) | `acp` | ACP |
+| Grok Build | `grok` | — (the pinned release, downloaded by AgentMux) | `acp` | ACP |
 | DeepSeek Harness | `dsh` | `@deepseek-ai/dsh` | `acp` | ACP |
-| Aider | `aider` | — (PyPI `aider-chat`, through Aider's installer) | `terminal` | None: its own UI in a terminal pane |
+| Aider | `aider` | — (PyPI `aider-chat`, installed by AgentMux into a private Python environment) | `terminal` | None: its own UI in a terminal pane |
 | Crush | `crush` | `@charmland/crush` | `terminal` | None: its own UI in a terminal pane |
-| Muse Code | `muse` | — (Meta's installer) | `msp` | MSP: JSON-RPC 2.0 over stdio (`muse serve`), with its own translator |
+| Muse Code | `muse` | — (the pinned release, downloaded by AgentMux) | `msp` | MSP: JSON-RPC 2.0 over stdio (`muse serve`), with its own translator |
 
 The **controller type** determines the spawn strategy: `persistent` keeps the CLI process alive between turns (Claude Code); `subprocess` spawns a fresh process per turn; `acp` keeps one process speaking the Agent Client Protocol over stdio; `msp` keeps one `muse serve` process speaking Muse Code's own protocol (MSP) over stdio; `terminal` opens a terminal pane that runs the CLI's own UI (see [The terminal tier](#the-terminal-tier)).
 
@@ -55,8 +55,10 @@ The **effective vendor** an agent is actually using is computed, not stored: a n
 
 Before spawning, AgentMux resolves the CLI binary path via the `ResolveCliCommand` RPC. The resolution order is:
 
-1. **AgentMux-managed install**, for a provider with an npm package: `~/.agentmux/shared/cli/<provider>/<pinned version>/`, shared by every AgentMux version and channel on the machine. AgentMux installs it there at the pinned version the first time it's needed, so agents run a known, tested version regardless of what the user has globally installed.
-2. **System PATH, then the installer's own folder**, for a provider with no npm package (Kimi, Antigravity, goose, Grok Build, Aider, Muse Code). AgentMux never runs their installers. It looks on `PATH`, then in the folder each vendor's installer uses by default, because a running AgentMux keeps the `PATH` it started with. If neither has the CLI, the launch fails with the vendor's install command as a hint.
+1. **Your own copy**, only for a provider you switched on **Use the CLI on my PATH** for in the Toolchain pane (`cli:usepath`): the CLI on `PATH`, else in the folder its own installer uses by default (a running AgentMux keeps the `PATH` it started with). AgentMux uses it as it is.
+2. **AgentMux-managed install**, for every provider: `~/.agentmux/shared/cli/<provider>/<pinned version>/`, shared by every AgentMux version and channel on the machine. AgentMux installs it there at the pinned version the first time it's needed (`npm install` for the npm packages; a checksum-checked download for Antigravity, goose, Grok Build and Muse Code; a private Python environment for Aider and Kimi), so agents run a known, tested version regardless of what the user has globally installed. AgentMux never runs a vendor's installer script. A copy on `PATH` is never used unless the setting above is on, so it can't make a missing install read as found.
+
+If neither finds the CLI, the launch fails with the install step as a hint.
 
 Source: `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/backend/cli_install.rs`, and `known_install_paths` in `crates/srv/src/backend/providers.rs`.
 

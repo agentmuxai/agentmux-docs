@@ -124,7 +124,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 - For every other provider, AgentMux has no base-URL setting and rejects one. An agent definition's environment block can set extra variables, but not ones AgentMux already sets.
 - AgentMux has no setting of its own for a local model with Mux Code or any other provider. Whether a CLI can use a local model is up to that CLI.
 
-**Agent CLIs must be installed first.** AgentMux installs them from npm. On an isolated network, point npm at an internal mirror, which AgentMux's installs honor. Alternatively, install on a connected machine running the same AgentMux version: CLIs live in `~/.agentmux/shared/cli/<provider>/<pinned version>/`. The harnesses that aren't on npm come from their vendors' installers, which need those vendors' sites, or a copy of the installed CLI on your `PATH`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
+**Agent CLIs must be installed first.** AgentMux installs them itself, at the version it was tested with, from the public npm registry and from the vendors' release addresses; it ignores your own npm configuration, so a mirror you name there is not used. On an isolated network, install on a connected machine running the same AgentMux version and copy the folders: CLIs live in `~/.agentmux/shared/cli/<provider>/<pinned version>/`. Or switch on **Use the CLI on my PATH** for a CLI in the Toolchain pane and put your own copy on `PATH`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
 
 ## Verifying the claims
 
