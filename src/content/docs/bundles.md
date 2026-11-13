@@ -84,7 +84,7 @@ It has no account field: the agent takes the provider's first account, which you
 
 ## Persistence
 
-Bundles live in the `db_bundles` table of the shared store. A row has a name, a description, the suggested `provider` and `model`, `instructions`, `instructions_by_provider` and `context_files` (both JSON), the `skills` it references, a `sort_order`, and the flags `is_blank` (the "vanilla CLI session" bundle), `is_global` (a [Global Memory](/memory/#global) entry) and `is_system`. The table is defined in `crates/srv/src/backend/storage/migrations.rs`.
+Bundles live in the `db_bundles` table of the shared store. A row has a name, a description, the suggested `provider` and `model`, `instructions`, `instructions_by_provider` and `context_files` (both JSON), the `skills` it references, a `sort_order`, and the flags `is_blank` (the "vanilla CLI session" bundle), `is_global` (a [Global Memory](/memory/#global) entry) and `is_system`. A row is the `Bundle` struct in `crates/srv/src/backend/storage/bundles.rs`.
 
 An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`).
 

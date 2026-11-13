@@ -22,6 +22,8 @@ A tab holds one History: choosing it again brings back the one already open inst
 
 **Agents** lists every agent that has a kept history, including agents whose pane is closed and agents that were deleted (marked **Deleted agent**). Type in **Filter agents** to narrow the list.
 
+The list updates by itself while an agent's conversation grows, when a conversation is archived and when an agent changes, so you don't need to refresh it.
+
 | Column | What |
 |---|---|
 | **Agent** | The agent's name. A conversation forked from another says `fork of` and the other's name |

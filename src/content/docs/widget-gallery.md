@@ -59,7 +59,7 @@ The SSH hosts AgentMux knows: the hosts in `~/.ssh/config` and any you've connec
 
 ## Drone
 
-A visual automation builder: drag Variables, Agent, API, Condition and Response blocks onto the canvas and wire them together.
+A visual automation builder: drag Variables, Agent, Message, Task, API, Condition and Response blocks onto the canvas and wire them together. **Message** sends an agent a note and **Task** files a Kanban task; each puts every `{{...}}` value in as quoted data, so text that came from outside can't pass as an instruction.
 
 ![The Drone widget when it first opens](../../assets/screenshots/widgets/widget-drone-small.png)
 

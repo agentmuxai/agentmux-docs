@@ -131,10 +131,10 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | Your agents' model providers | Made by the agent CLIs, not by AgentMux |
 | `api.anthropic.com/v1/models` | At each launch, when a Claude login token is found |
 | `muxbus.agentmux.ai`, `muxbus-ws.agentmux.ai` | Only after you sign in to MuxBus Cloud |
-| `registry.npmjs.org` (or your configured npm registry) | Installing an agent CLI; checking CLI versions in the Toolchain pane |
+| `registry.npmjs.org` | Installing an agent CLI; checking CLI versions in the Toolchain pane |
 | `github.com`, `api.github.com` | Only when you ask for an update check (**Check for update**, or an agent's `App` tool), and when you download a release |
 | `github.com` release downloads | Installing jq or ripgrep from the tool catalog; Crush's npm install script fetches its binary there |
-| `github.com` release downloads (goose), `x.ai` (Grok Build), `aider.chat` and `pypi.org` (Aider), `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com` (Muse Code), `antigravity.google` (Antigravity) | Made by the vendor's installer when you install one of these harnesses, not by AgentMux |
+| `github.com` release downloads (goose, and the pinned `uv`), `x.ai` (Grok Build), `storage.googleapis.com` (Antigravity), `lookaside.facebook.com` (Muse Code), `pypi.org` (Aider and Kimi Code CLI) | Made by AgentMux when you install one of these harnesses |
 | `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
 | `agentmux.ai` | Opening a browser pane with no URL (its default Home page) |
 | Your default search engine (Google) | Typing in a browser pane's address bar: each edit is sent for suggestions before Enter, unless **Search suggestions while typing** (`browser:searchsuggestions`) is off; text that isn't a URL is searched on Enter |

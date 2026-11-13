@@ -78,8 +78,8 @@ The command palette has **New Workspace…**, **Open Workspace…** (the same li
 
 Opening another workspace (from **Open Workspace**, **New Workspace…** or **Import…**) closes the one that's open first:
 
-1. If an agent in the open workspace is mid-turn, AgentMux asks: "Korp and Loap are working. Close Default Workspace?", "This stops 2 agents. Default Workspace keeps its windows, and they open again, agents resuming, when you go back to it." **Close and switch** goes ahead. This is the same warning as closing a window, with the same **Don't ask again** and setting.
-2. The open workspace is saved, its agents and shells stop, and its other windows close. Nothing is deleted: its windows stay open in its record, so they all come back when you open it again.
+1. With `agents:always_available` on, the default, AgentMux doesn't ask: no agent is stopped. With it off, and an agent in the open workspace mid-turn, AgentMux asks: "Korp and Loap are working. Close Default Workspace?", "This stops 2 agents. Default Workspace keeps its windows, and they open again, agents resuming, when you go back to it." **Close and switch** goes ahead. This is the same warning as closing a window, with the same **Don't ask again** and setting.
+2. The open workspace is saved. Its agents keep running with no window, its shells and other panes stop, and its other windows close. Nothing is deleted: its windows stay open in its record, so they all come back when you open it again, with its agents back in their tabs.
 3. The other workspace's open windows open. The window you switched from shows its first window, so the screen doesn't go empty; the rest open beside it. Its closed windows are listed closed.
 
 The next launch opens the workspace that was open last. **New Window** opens a window with the starting panes in the open workspace.

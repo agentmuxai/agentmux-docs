@@ -75,7 +75,7 @@ Pane block ids in headers (a debugging aid), the view a new tab or pane opens wi
 
 **Pause all agent browsing**: an emergency stop. While it is on, every browser pane an agent drives refuses every call the agent makes, and the clocks of Auto-approve grants stand still. It stays on after a restart until you turn it off here, in the status bar or from the command palette. See [Pause all agent browsing](/browser-pane/#pause-all-agent-browsing).
 
-**Agents on sites**: the standing powers you have given an agent on a site, from an **Always** answer to its auto-approve request or added here. Each row has **Revoke**, a **Terminal** checkbox for running commands in a web terminal there, and the agent and site it covers. Under it, add a row with an agent, a site and **Allow**, or use the **Google Cloud Shell** and **Azure Cloud Shell** presets. See [Standing powers](/browser-pane/#standing-powers).
+**Agents on sites**: the standing powers you have given an agent on a site, from an **Always** answer to its auto-approve request or added here. Each row has **Revoke**, a **Terminal** checkbox for running commands in a web terminal there, and the agent and site it covers. Under it, add a row with an agent, a site and **Allow**, or use the **Google Cloud Shell** and **Azure Cloud Shell** presets. Under it, **Page permissions** lists the sites where a page may use the camera, the microphone, the location or notifications in a pane an agent drives; add one with an agent, a site and **Allow on this site**. See [Standing powers](/browser-pane/#standing-powers).
 
 ![Settings, Browser tab: browser profiles, Pause all agent browsing and Agents on sites](../../assets/screenshots/settings/settings-browser.png)
 
@@ -96,6 +96,16 @@ The first row of the Terminal tab picks the shell new local terminals open with.
 The line under the list says which shell new terminals open with, and why. If the shell you chose can't be found, terminals open with the automatic one instead, and the line says so as a warning. **Open a terminal with it** opens a terminal in the current tab so you can try it.
 
 The choice is saved as `term:localshellpath` (and `term:localshellopts` for Custom… arguments). It applies to new terminals; open ones keep their shell. It doesn't change agents' shells or SSH and WSL terminals, which keep their own.
+
+### Keyboard shortcuts
+
+Every command with its keys and its default, in a list you can filter. **Search by action or key** finds a command by name or by its keys, the category list narrows it to one group, and **Changed only** shows what you've changed. To find a shortcut by pressing it, use the key filter and press the keys to look for.
+
+To set a command's shortcut, choose its **Set the shortcut** button and press the new keys. AgentMux names anything the keys would clash with. If another command already has them, the panel says "<keys> is taken by <command>. Replace it, or choose where this shortcut works." **Replace** takes the keys over, and **Works** limits the shortcut to one place so both can keep theirs. **Keep the current keys too** adds the new keys beside the old ones instead of replacing them. A plain key with no modifier is allowed only outside text fields and terminals, with **Allow plain keys** switched on. A key that the system or the app reserves is refused, or asks you to switch on **Use it anyway**. **Save** (or **Replace**) writes it; **Cancel** leaves things as they were.
+
+A command you changed shows **Changed**, and one you unbound shows **Not set**. Each row has **Reset** to go back to the default and **Unbind** to remove the keys. **Reset all** goes back to the defaults for every command; it asks you to click again. **Export** copies your changes as the `keybindings` list, and **Import…** takes such a list pasted in, shows what it would change, and merges it, or replaces all of yours after a second click. Entries that can't be used are listed under **Other entries**, where you can remove them.
+
+The changes are saved as the `keybindings` setting, which you can also edit by hand: see [Keybindings](/keybindings/#your-own-shortcuts).
 
 ### Sounds
 
@@ -136,6 +146,8 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 ### Agents
 
 **Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`). If an agent's new id is already taken, its row says "Not now: *reason* (the next free id is *id*)" with **Use *id*** and **Choose another id**; type an id and click **Use this id**. Update the other agents first.
+
+**Agents may start agents**: off by default. The first time an agent starts another agent, its pane shows a card with a 30 second countdown that goes ahead on its own, with **Stop it**, **Start now** and **Always allow** for that agent. Turn the switch on to skip the card for every agent; the pane still shows a one-line notice (`agent:maystartagents`).
 
 ### Advanced
 
@@ -203,6 +215,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `animation:speed` | integer | `100` | Animation duration as a percent of the designed length, used by `custom`. `0`, or 25 to 300 in steps of 5 (other values are corrected). |
 | `animation:polish` | integer | `100` | Length of hover and focus fades and hover lifts as a percent, used by `custom`. Same range. |
 | `animation:reducemovement` | boolean | `false` | Replace slides, zooms and bounces with fades, used by `custom`. |
+| `layout:livereflow` | boolean | `true` | While you drag a pane by its header, the other panes glide to where the drop would leave them, and close over the pane's own slot when releasing there would tear it off into a window. `false` shows the landing rectangle instead. |
 
 ## Window Settings
 
@@ -250,6 +263,8 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once. A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
 | `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. No agent is stopped when stopping one idle agent could not bring it down to the limit: the start is refused and the reason says how much has to be freed. A start that is refused leaves a message for that agent held (`not_running, capacity`) until it can start. `0`: off. |
 | `agents:start_per_minute` | integer | `5` | The most agent starts one sender (an agent, or a job) may make in any 60 seconds, so two agents can't start each other in a loop. A refusal names the limit. `0`: no limit. |
+| `agent:maystartagents` | boolean | `false` | Skip the 30 second countdown card an agent's pane shows the first time it starts another agent. Settings ▸ Agents ▸ **Agents may start agents**. |
+| `agents:defaultruntime` | string | `"container"` | Where a new agent made with `Agents` `spawn` or `create` runs when the call does not say: `container` (when the harness has a container image and Docker answers) or `native` (on the host). |
 | `agent:askquestiontimeoutms` | integer | `30000` | How long an AskUserQuestion panel waits for you before choosing the recommended option(s) and submitting, in milliseconds (at least 1000). Settings shows it in seconds, as **Auto-answer timeout**. |
 | `agent:container_memory` | number or `auto` | `auto` | Megabytes of memory each [container agent](/container-agents/#cpu-and-memory-limits) may use, unless the agent has its own limit. `auto`: half of what Docker has (at least 2 GB; the developer image asks for 16 GB), never more than Docker has. `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' memory**. |
 | `agent:container_cpus` | number or `auto` | `auto` | CPUs each container agent may use, unless the agent has its own limit. `auto`: all but a quarter of what Docker has (at least one). `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' CPUs**. |

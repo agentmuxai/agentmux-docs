@@ -23,20 +23,20 @@ Most harnesses run in the agent pane: AgentMux reads the CLI's structured output
 | **Mux Code** | `muxcode run -p`, once per turn | npm `@agentmuxai/muxcode` | API key or local model |
 | **Gemini CLI** | `gemini --output-format stream-json --yolo -p ""`, once per turn | npm `@google/gemini-cli` | OAuth |
 | **Qwen Code** | `qwen --output-format stream-json --include-partial-messages --yolo -p ""`, once per turn | npm `@qwen-code/qwen-code` | API key |
-| **Kimi Code CLI** | `kimi --print --output-format stream-json --yolo`, once per turn, with the prompt on stdin | You install it: `pip install kimi-cli` | API key |
+| **Kimi Code CLI** | `kimi --print --output-format stream-json --yolo`, once per turn, with the prompt on stdin | PyPI `kimi-cli`, in a private Python environment | API key |
 | **OpenClaw** | `openclaw acp`, the Agent Client Protocol (ACP) over stdio. It needs OpenClaw's own Gateway daemon running. | npm `openclaw` | OAuth |
 | **GitHub Copilot CLI** | `copilot --acp` (ACP) | npm `@github/copilot` | OAuth |
 | **Pi** | `pi-acp` (ACP), an adapter that runs the `pi` CLI installed beside it | npm `pi-acp` and `@earendil-works/pi-coding-agent` | The CLI's own sign-in |
-| **Antigravity (AGY)** | `agy --output-format stream-json --dangerously-skip-permissions -p <prompt>`, once per turn | You install it: Google's installer | The CLI's own sign-in (Google, once per machine) |
+| **Antigravity (AGY)** | `agy --output-format stream-json --dangerously-skip-permissions -p <prompt>`, once per turn | Google's release of `agy` | The CLI's own sign-in (Google, once per machine) |
 | **Kilo Code CLI** | `kilo acp` (ACP) | npm `@kilocode/cli` | The CLI's own sign-in (`kilo auth login`). It runs signed out on Kilo's free models. |
 | **Cline CLI** | `cline --acp` (ACP) | npm `cline` | The CLI's own sign-in (`cline auth`) |
 | **OpenCode** | `opencode acp` (ACP) | npm `opencode-ai` | The CLI's own sign-in (`opencode auth login`). It runs signed out on OpenCode's free models. |
-| **goose** | `goose acp` (ACP) | You install it: goose's installer (a GitHub release) | A model provider and key, set once with `goose configure` |
-| **Grok Build** | `grok agent stdio` (ACP) | You install it: xAI's installer | The CLI's own sign-in (`grok login`), or `XAI_API_KEY` |
+| **goose** | `goose acp` (ACP) | A GitHub release of `aaif-goose/goose` | A model provider and key, set once with `goose configure` |
+| **Grok Build** | `grok agent stdio` (ACP) | xAI's release of `grok` | The CLI's own sign-in (`grok login`), or `XAI_API_KEY` |
 | **DeepSeek Harness** (preview) | `dsh --profile acp` (ACP) | npm `@deepseek-ai/dsh` (a prerelease) | A DeepSeek API key, set in its web UI (`dsh web`) or as `DEEPSEEK_API_KEY` |
-| **Aider** | `aider --read AGENTS.md --analytics-disable …` in a terminal pane | You install it: Aider's installer (Python, through uv) | Your model provider's key in the environment, such as `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` |
+| **Aider** | `aider --read AGENTS.md --analytics-disable …` in a terminal pane | PyPI `aider-chat`, in a private Python environment | Your model provider's key in the environment, such as `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` |
 | **Crush** | `crush` in a terminal pane | npm `@charmland/crush` | The CLI's own sign-in (`crush login`), or a key set in its UI |
-| **Muse Code** | `muse serve --trust-workspace` (MSP) | You install it: Meta's installer | The CLI's own sign-in (`muse login`, a Meta account), or `META_API_KEY` |
+| **Muse Code** | `muse serve --trust-workspace` (MSP) | Meta's release of `muse` | The CLI's own sign-in (`muse login`, a Meta account), or `META_API_KEY` |
 
 DeepSeek Harness is marked **preview**: upstream ships only prereleases and says to expect breaking changes. Its ACP mode can't replay an earlier session, so resuming one reopens it without its history.
 
@@ -46,28 +46,17 @@ See [Auth flows](/auth/) for each provider's login command and credential locati
 
 ## You don't need to preinstall the agent CLIs
 
-AgentMux manages its own agent CLIs. It installs every npm-based CLI itself: it runs `npm install <package>@<version>` (never a global install), at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed globally, and it keeps each agent's login and settings in its own folders rather than in your `~/.claude`, `~/.codex` and similar.
+AgentMux manages its own agent CLIs and installs every one of them itself, at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. The npm-based CLIs come from `npm install <package>@<version>` (never a global install). AgentMux uses the public npm registry for it and ignores your own `.npmrc`. Six harnesses aren't on npm. AgentMux downloads the pinned release of Antigravity, goose, Grok Build and Muse Code from the vendor and checks it against a checksum built into AgentMux, and it sets up Aider and Kimi Code CLI in a private Python environment from hash-checked packages. It never runs a vendor's installer script. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed yourself, and it keeps each agent's login and settings in its own folders rather than in your `~/.claude`, `~/.codex` and similar. To run your own copy of a CLI instead, switch on **Use the CLI on my PATH** for it in the Toolchain pane (the widget bar's **more** → **Toolchain**). AgentMux then runs the copy it finds on your `PATH`, or in the folder the CLI's own installer uses, and never changes it.
 
 This isolates the tools, not what an agent can do: a Native agent still runs on your computer, with your files, your `HOME` and your `PATH`.
 
-When a harness's CLI isn't installed, its card shows **Click to install**, and the panel that opens under the card starts with the install. It shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**; the agent's fields follow when it finishes. If it fails, click **Retry**. The install needs an internet connection. Closing the panel doesn't stop it: the card shows **Installing…**, and a notification says when it has finished. **Cancel install** stops it.
+When a harness's CLI isn't installed, its card shows **Click to install**, and the panel that opens under the card starts with the install. For an npm-based CLI it shows plain steps (**Check requirements**, **Download packages**, **Set up files**, **Run setup scripts**, **Check &lt;harness&gt; is installed**); the raw npm output sits under **Details**, which opens by itself if the install fails. Click **Install now**; the agent's fields follow when it finishes. If it fails, click **Retry**. The install needs an internet connection. Closing the panel doesn't stop it: the card shows **Installing…**, and a notification says when it has finished. **Cancel install** stops it.
 
-Six harnesses aren't on npm, so you install them yourself with the vendor's own installer. These are the vendors' full installers, not isolated by AgentMux: each installs into your user account and puts the CLI on your `PATH`, and a login you make with it is the CLI's own. The Toolchain pane (the widget bar's **more** → **Toolchain**) marks such a copy **your install**. AgentMux then finds the CLI on your `PATH`. For all of them but Kimi Code CLI it also looks in the folder the installer uses, so you don't need to restart AgentMux after installing. If it can't find the CLI, its card shows **Click to install**, and the panel under it shows the install command for your system, with **Copy**, a link to the vendor's instructions, and **Check again**:
-
-| Harness | Windows (PowerShell) | macOS and Linux |
-|---|---|---|
-| Kimi Code CLI | `pip install kimi-cli` | `pip install kimi-cli` |
-| Antigravity (AGY) | `irm https://antigravity.google/cli/install.ps1 \| iex` | `curl -fsSL https://antigravity.google/cli/install.sh \| bash` |
-| goose | `irm https://github.com/aaif-goose/goose/releases/download/stable/download_cli.ps1 \| iex` | `curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh \| CONFIGURE=false bash` |
-| Grok Build | `irm https://x.ai/cli/install.ps1 \| iex` | `curl -fsSL https://x.ai/cli/install.sh \| bash` |
-| Aider | `irm https://aider.chat/install.ps1 \| iex` | `curl -LsSf https://aider.chat/install.sh \| sh` |
-| Muse Code | `irm https://dev.meta.ai/install.ps1 \| iex` | `curl -fsSL https://dev.meta.ai/install.sh \| sh` |
-
-AgentMux runs whatever version of these you have installed. It turns off their self-update where the CLI allows it (Grok Build and Muse Code), so a working version doesn't change under a running agent. For Muse Code on Windows, AgentMux runs the native binary the installer downloaded, not its launcher script.
+The Toolchain pane lists each agent CLI with its version, where it runs from and its status. **Install** (or **Update to** the version AgentMux was tested with, when yours is behind) puts AgentMux's copy in place. **Uninstall** removes AgentMux's copy after you confirm, and leaves your own copy and your sign-in alone.
 
 ### System prerequisites
 
-The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gemini CLI 20 or later, Claude Code and Qwen Code 22, Pi and DeepSeek Harness 22.19, OpenClaw 24.16, and Mux Code 24.18.1. Claude Code and OpenClaw also need **Git**. The harnesses you install yourself bring what they need, except Kimi Code CLI, which needs Python. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. They show as the first step of the panel under the card; click **Check again** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Continue anyway** moves on. The Toolchain pane (the widget bar's **more** → **Toolchain**, or **Open Toolchain** in the command palette) shows the same information for all tools at any time.
+The npm-based CLIs need **Node.js** and **npm**. Some need a recent Node.js: Gemini CLI 20 or later, Claude Code and Qwen Code 22, Pi and DeepSeek Harness 22.19, OpenClaw 24.16, and Mux Code 24.18.1. Claude Code and OpenClaw also need **Git**. The other CLIs bring what they need: Aider and Kimi Code CLI carry their own private Python. If one of these is missing when you pick a harness, AgentMux lists it with an install link, and for Git, Node.js, npm and Python a one-click install. The one-click install uses winget on Windows or Homebrew on macOS (if you have them), or your distribution's package manager on Linux. They show as the first step of the panel under the card; click **Check again** once the tool is installed. A tool installed with one click may show "installed, restart AgentMux to use it" until you restart AgentMux. If the tool is installed somewhere AgentMux can't see on `PATH`, **Continue anyway** moves on. The Toolchain pane (the widget bar's **more** → **Toolchain**, or **Open Toolchain** in the command palette) shows the same information for all tools at any time.
 
 ## Create an agent
 

@@ -84,11 +84,11 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 |---|---|
 | Checking for an AgentMux update (**Check for update** in the instance panel, or an agent's `App` tool) | `github.com` (the releases page and API) |
 | Downloading an AgentMux update | `github.com` release downloads: the file and its signed manifest |
-| Installing an agent CLI | Your npm registry (`registry.npmjs.org` by default) |
+| Installing an agent CLI | `registry.npmjs.org`; your own npm configuration is ignored |
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
 | Installing Crush | npm, then Crush's install script downloads its binary from GitHub release downloads |
-| Installing a harness that isn't on npm | Not AgentMux: you run the vendor's installer, which downloads from the vendor. goose: `github.com` release downloads. Grok Build: `x.ai`. Aider: `aider.chat`, then uv, which fetches Python and the `aider-chat` package from `pypi.org`. Muse Code: `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com`. Antigravity: `antigravity.google`. Kimi Code CLI: `pypi.org`. |
+| Installing a harness that isn't on npm | AgentMux downloads it, never the vendor's installer script. goose: `github.com` release downloads. Grok Build: `x.ai`. Antigravity: `storage.googleapis.com`. Muse Code: `lookaside.facebook.com`. Aider and Kimi Code CLI: `github.com` for the pinned `uv`, then `uv` fetches its private Python, and `pypi.org` serves the packages. |
 | One-click Node.js, Git or Python install | winget, Homebrew, or your Linux package manager |
 | Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `Identity` tool (action `validate`). |
 | Signing in to MuxBus Cloud | AgentMux's sign-in service (`auth.agentmux.ai`) and `muxbus.agentmux.ai` |
