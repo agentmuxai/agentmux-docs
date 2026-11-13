@@ -251,7 +251,8 @@ Only installs signed in to the **same** MuxBus Cloud account can verify each oth
 |---|---|
 | Material | the base material, with `reagent_msg_id` and `reagent_ts_secs` |
 | Keys | built into AgentMux. Only `reagent-v1` is trusted. A signature that is valid only under the `reagent-v1-dev` key **fails**. |
-| Window | 600 seconds |
+| Window | signed at most 600 seconds before MuxBus Cloud accepted the message, and delivered within 6 hours 10 minutes of being signed; with no acceptance time from MuxBus Cloud, 600 seconds before delivery. A message held for an install that was off is judged by when it was accepted. |
+| Repeat | a signed message is delivered once to each agent. A second copy, even under another delivery, is dropped. |
 | Applies | to `wan` jekts carrying all four `reagent_*` fields |
 
 ## 6. Trust, tier and escalation
@@ -272,7 +273,7 @@ The first matching row wins:
 | `unverified` | `host` or `channel`, and the host check failed |
 | `self-declared` | `host` or `channel`, and there was nothing to check against (bridges, the scheduler, a name with no key here) |
 
-`SIG=verified` or `SIG=invalid` reports the muxreview signature separately. A WAN jekt from muxreview still reads `TRUST=network-claimed`.
+`SIG=verified`, `SIG=expired` or `SIG=invalid` reports the muxreview signature separately: `expired` is a genuine signature under the trusted key that failed only the age rules in Section 5.5, `invalid` is any other failure. A WAN jekt from muxreview still reads `TRUST=network-claimed`.
 
 ### 6.2 TIER
 
@@ -281,7 +282,7 @@ The first matching row wins:
 1. **A host check failed**, on any tier. This includes a sender claiming a former slug (a former slug can receive, never speak) and a request that claims the name of an agent of this instance without that agent's key or token.
 2. **A LAN check failed** (`DELIVERY=lan`).
 3. **A WAN check failed, or the sending install is `revoked`** (`DELIVERY=wan`).
-4. **The muxreview signature failed** (`SIG=invalid`).
+4. **The muxreview signature failed** (`SIG=invalid`), **or is genuine but outside its window** (`SIG=expired`). An expired notice is held to the same tier and the same `ESCALATE=required` as an invalid one; only the word differs.
 5. **The sender declared `sensitive`.** Over MuxBus Cloud the declared tier travels with the jekt, and the receiver takes only `sensitive` from it.
 6. **The body or a file name matches a keyword**, for every sender, verified or not (Section 7.4).
 7. **The body is a transcript request**: JSON with `"type": "transcript_request"`, a `request_id` and `max_lines`.
