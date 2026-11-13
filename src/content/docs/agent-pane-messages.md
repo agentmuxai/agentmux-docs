@@ -277,7 +277,7 @@ A switch only hides routine work that finished, or plumbing. Never hidden, whate
 
 **Alt+V** cycles the focused pane through Full, Standard and Replies (a Custom view goes to Full first), and **Alt+Shift+V** gives the pane back to the default. The palette has **Agent view: Full**, **Standard**, **Replies** and **Follow default**.
 
-A pane follows the default view until you change it, and then keeps its own, shown as **· this pane** on the chip. **Follow default** puts it back. **Make this the default** in the popover stores the view in the `agent:view` setting ([Agent settings](/settings/#agent-settings)): every pane that follows the default then shows it. Changing a switch also clears the folds and holds you made by hand on the rows it governs (pins are kept), so the switch does what it says.
+A pane follows the default view until you change it, and then keeps its own, shown as **· this pane** on the chip. **Follow default** puts it back. **Make this the default** in the popover stores the view in the `agent:view` setting ([Agent settings](/settings/#agent-settings)): every pane that follows the default then shows it. **Settings** → **Agents** → **Agent view** sets the same default with the same presets and switches, without opening a pane. Changing a switch also clears the folds and holds you made by hand on the rows it governs (pins are kept), so the switch does what it says.
 
 ## What else you can do with a row
 

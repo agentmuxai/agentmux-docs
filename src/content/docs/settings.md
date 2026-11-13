@@ -145,6 +145,8 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ### Agents
 
+**Agent view**: the default for what an agent pane shows (`agent:view`). Pick **Full**, **Standard** or **Replies** at the top; **Custom** lights when the switches below match none of them. Below are the switches, one row per kind of row: **Thinking**, **Tool calls**, **Jekts and agent messages**, **AgentMux notes** and **Context and setup**. Each change is saved at once. Panes that follow the default pick it up, and a pane with its own view keeps it. See [Choosing what the pane shows](/agent-pane-messages/#choosing-what-the-pane-shows).
+
 **Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`). If an agent's new id is already taken, its row says "Not now: *reason* (the next free id is *id*)" with **Use *id*** and **Choose another id**; type an id and click **Use this id**. Update the other agents first.
 
 **Agents may start agents**: off by default. The first time an agent starts another agent, its pane shows a card with a 30 second countdown that goes ahead on its own, with **Stop it**, **Start now** and **Always allow** for that agent. Turn the switch on to skip the card for every agent; the pane still shows a one-line notice (`agent:maystartagents`).
