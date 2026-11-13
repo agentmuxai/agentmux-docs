@@ -130,6 +130,14 @@ A jekt is shown as a bubble, not as the raw message. Its header line shows the d
 
 Open it for the message, its attachments, and the details: who it is from and to, its message id, how far the sender is trusted (`host-verified`, `channel-verified`, `lan-verified`, `wan-verified`, `self-declared`, `unverified` or `network-claimed`), its priority and time, and how long it was held if the agent could not take it (it was stopped, signed out, out of quota or idle). A jekt whose sender asked for no answer carries `REPLY=none` in its marker; a reply to it is refused. **Raw payload** shows the marker block exactly as the agent received it. See [Interagent communication](/internals/interagent-comms/) and the [trust model](/security/trust-model/).
 
+#### The Messages panel
+
+Incoming jekts don't sit in the conversation: the pane holds them in a **Messages** panel. It is on by default for every agent pane, closed until you open it. A **Messages** button in the pane's header opens and closes it, shows how many messages are unread, and marks the pane when one needs you. Open, it covers the conversation at 95% of the pane's surface, so the conversation shows faintly behind it. It lists the messages with **Needs you** at the top, a **Show** filter, **Mark all read**, and "No messages" when there is nothing. It opens closed after a restart.
+
+A jekt that is `sensitive`, or whose sender nothing proved (a trust level that doesn't end in `-verified`), keeps its row in the conversation and doesn't go only to the panel, and a sensitive jekt that needs your confirmation shows a card above the message box and marks the pane as waiting for you. Search in the pane (`Ctrl+F`) opens the panel when a match is inside a message only the panel holds.
+
+The command palette has **Agent: Show messages panel**, **Agent: Open messages panel** and **Agent: Hide messages panel**. Hiding it for a pane puts that pane's incoming jekts back in its conversation. The choice is kept with the pane.
+
 ### System notes
 
 A system note starts with `[AgentMux] ` and states a fact about AgentMux itself. AgentMux's own notes do not start a turn: it holds them and attaches them after the next message the agent's pane receives (yours, a jekt, a broadcast or a scheduled prompt), or joins them to the turn in flight, and AgentMux splits them into their own rows. A pane holds at most eight at a time, the oldest dropped first. A note the agent must have at once, such as a worker's report to its lead, is delivered as input. The notes about cloud delivery are:
@@ -231,6 +239,10 @@ The agent pane reads each provider's output with a provider-specific reader in t
 | **Aider**, **Crush** | A terminal | No | No | No translator: the pane shows the program's own terminal output, and none of the rows above except the ones AgentMux adds itself (banners, notes) |
 
 Tool names a provider uses that AgentMux doesn't recognise are shown as **Other** with the provider's own name.
+
+### Finding text in the conversation
+
+Press `Ctrl+F` (`⌘F`) in an agent pane to open the find bar in the pane's top band, with the field **Search messages...** in focus. `Enter` or `F3` goes to the next match and `Shift+Enter` or `Shift+F3` to the previous one; `Esc` closes the bar. The counter reads "3 of 12", "No matches", or "Searching…" while a long conversation is still being read. The search covers messages, tool rows, session dividers, errors, day dividers and ambient notes, and the matching words are highlighted. The **Dim rows that do not match** button fades every other row while the bar has a query; nothing moves or is removed, and the message box, header and working row are never dimmed.
 
 ## Choosing what the pane shows
 

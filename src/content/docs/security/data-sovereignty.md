@@ -84,11 +84,11 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 |---|---|
 | Checking for an AgentMux update (**Check for update** in the instance panel, or an agent's `App` tool) | `github.com` (the releases page and API) |
 | Downloading an AgentMux update | `github.com` release downloads: the file and its signed manifest |
-| Installing an agent CLI | Your npm registry (`registry.npmjs.org` by default) |
+| Installing an agent CLI | `registry.npmjs.org`; your own npm configuration is ignored |
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
 | Installing Crush | npm, then Crush's install script downloads its binary from GitHub release downloads |
-| Installing a harness that isn't on npm | Not AgentMux: you run the vendor's installer, which downloads from the vendor. goose: `github.com` release downloads. Grok Build: `x.ai`. Aider: `aider.chat`, then uv, which fetches Python and the `aider-chat` package from `pypi.org`. Muse Code: `dev.meta.ai`, `api.meta.ai` and `lookaside.facebook.com`. Antigravity: `antigravity.google`. Kimi Code CLI: `pypi.org`. |
+| Installing a harness that isn't on npm | AgentMux downloads it, never the vendor's installer script. goose: `github.com` release downloads. Grok Build: `x.ai`. Antigravity: `storage.googleapis.com`. Muse Code: `lookaside.facebook.com`. Aider and Kimi Code CLI: `github.com` for the pinned `uv`, then `uv` fetches its private Python, and `pypi.org` serves the packages. |
 | One-click Node.js, Git or Python install | winget, Homebrew, or your Linux package manager |
 | Validating a credential in Connectors → Accounts | `api.github.com/user`, `api.openai.com/v1/models`, `api.anthropic.com/v1/models`, or Slack `auth.test`, carrying the credential. An agent can also trigger this with the `Identity` tool (action `validate`). |
 | Signing in to MuxBus Cloud | AgentMux's sign-in service (`auth.agentmux.ai`) and `muxbus.agentmux.ai` |
@@ -124,7 +124,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 - For every other provider, AgentMux has no base-URL setting and rejects one. An agent definition's environment block can set extra variables, but not ones AgentMux already sets.
 - AgentMux has no setting of its own for a local model with Mux Code or any other provider. Whether a CLI can use a local model is up to that CLI.
 
-**Agent CLIs must be installed first.** AgentMux installs them from npm. On an isolated network, point npm at an internal mirror, which AgentMux's installs honor. Alternatively, install on a connected machine running the same AgentMux version: CLIs live in `~/.agentmux/shared/cli/<provider>/<pinned version>/`. The harnesses that aren't on npm come from their vendors' installers, which need those vendors' sites, or a copy of the installed CLI on your `PATH`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
+**Agent CLIs must be installed first.** AgentMux installs them itself, at the version it was tested with, from the public npm registry and from the vendors' release addresses; it ignores your own npm configuration, so a mirror you name there is not used. On an isolated network, install on a connected machine running the same AgentMux version and copy the folders: CLIs live in `~/.agentmux/shared/cli/<provider>/<pinned version>/`. Or switch on **Use the CLI on my PATH** for a CLI in the Toolchain pane and put your own copy on `PATH`. Remove or pre-install the default MCP servers, which are otherwise downloaded on first use.
 
 ## Verifying the claims
 

@@ -125,7 +125,7 @@ The keys zoom the focused pane. `Ctrl`+scroll (`⌘`+scroll on macOS) zooms the 
 
 ## Your own shortcuts
 
-Add a `keybindings` list to your settings file (command palette → Open Settings File). Your entries come before the defaults, so they win, and they apply as soon as you save.
+Set shortcuts in Settings → **Keyboard shortcuts** (see [Settings](/settings/#keyboard-shortcuts)), or add a `keybindings` list to your settings file (command palette → Open Settings File). Your entries come before the defaults, so they win, and they apply as soon as you save.
 
 ```json
 "keybindings": [

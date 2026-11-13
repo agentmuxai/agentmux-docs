@@ -79,6 +79,8 @@ These shortcuts are handled by AgentMux itself (`crates/cef/src/client/handlers.
 | `Alt+Home` | Home page |
 | `Ctrl+Shift+N` (`Cmd+Shift+N` on macOS) | Open a new [Incognito tab](#profiles-and-incognito) in this pane |
 
+A key you have bound in **Settings ▸ Keyboard shortcuts** is forwarded out of a focused browser pane and does what the binding says in AgentMux; a key you have unbound goes back to the page.
+
 `Ctrl+Shift+N` opens an Incognito tab whether the page, the address bar or the toolbar has the keyboard. Outside a browser pane, the same keys open a new AgentMux window. Apart from `Ctrl+Shift+N`, with `Shift` held (for example `Ctrl+Shift+R`), AgentMux doesn't intercept these keys and leaves them to Chromium. There is no find-in-page (`Ctrl+F`), and the browser has no page tabs of its own; use [pane tabs](/pane-types/) instead.
 
 A new browser pane that opens as the selected pane puts the keyboard straight into the page as soon as the page is created, unless you have already clicked into its address bar. Clicking in the page gives it the keyboard; clicking AgentMux's own interface takes it back. On macOS, typing into a browser pane works this way since AgentMux 0.57.5.
@@ -130,6 +132,8 @@ When a page asks for the camera, microphone or screen, AgentMux shows a prompt i
 - The prompt reads "*site* wants to use your camera" (or microphone, screen contents, system audio), with **Allow** and **Don't allow**. `Esc` or clicking outside it means Don't allow.
 - A prompt left unanswered for 60 seconds is denied.
 - A grant covers one site in one pane, and only the devices it asked for. It lasts until the pane is closed or moved to another window; nothing is saved to disk.
+
+In a pane an agent drives, a page's camera, microphone, location or notification request doesn't show this prompt. The request is denied at once and the agent is told. AgentMux files it as a sensitive operation, with a countdown you can veto and the super agent reviews. When the countdown ends unvetoed, the site is allowed for 30 minutes, and the page's next request goes through without asking again. Screen and system-audio sharing aren't offered in such a pane.
 
 While a page is capturing, a red **Camera in use**, **Microphone in use** or **Camera and microphone in use** indicator appears at the bottom-right of the window. Its **Stop** button asks you to confirm ("Stop camera and microphone access?", **Stop and reload**), then removes all of that pane's grants and reloads the page to end the capture.
 
@@ -184,7 +188,9 @@ If a page hasn't loaded after 20 seconds, the pane stops waiting and shows an er
 
 ## Downloads
 
-A download starts the operating system's **Save As** dialog, named after the file, in the folder you saved to last (the Downloads folder the first time). The page never chooses where a file goes. Cancel the dialog and nothing is saved.
+A download starts the operating system's **Save As** dialog, named after the file, in the folder you saved to last (the Downloads folder the first time). The page never chooses where a file goes. Cancel the dialog and nothing is saved. On Linux the dialog is AgentMux's own, not the system's. A page that starts several downloads at once gets one dialog at a time, one file after another; each still asks.
+
+In a pane an agent opened, a download is saved without a dialog into the `downloads` folder of the agent's workspace, and the agent is told what was saved or why it wasn't. This stops once you take the pane over, and a pane of your own always asks. Turn it off with `browser:downloadagentsave` (on by default) to be asked in the dialog there too.
 
 Once you save, a strip under the toolbar lists the download (`crates/cef/src/client/downloads.rs`, `frontend/app/view/browser/download-strip.tsx`):
 
@@ -192,7 +198,7 @@ Once you save, a strip under the toolbar lists the download (`crates/cef/src/cli
 - when it is saved, the word "saved" and **Show in folder**, which reveals the file in your file manager;
 - if it fails, the reason in words. Nothing is retried; the page's link is still there.
 
-A finished line folds away after about 20 seconds, and **Hide** removes any line that has ended. A page that starts many downloads at once gets one line saying the extras were ignored. The strip is part of AgentMux's pane, outside the page, so a page can't imitate it.
+A finished or cancelled line folds away after about 20 seconds, and **Hide** removes any line that has ended. The strip keeps at most six lines: past that the oldest line that has ended goes, and a download that is still running is never dropped. When more downloads than a pane can queue for a dialog are waiting, the extras are ignored and one line says so. The strip is part of AgentMux's pane, outside the page, so a page can't imitate it.
 
 ## Context menu
 
@@ -200,7 +206,7 @@ Right-clicking inside a page shows AgentMux's menu instead of Chromium's (`front
 
 1. **Back**, **Forward**, **Reload**
 2. **Cut**, **Copy**, **Paste**, when you right-click a selection or a text field
-3. **Copy Link Address**, over a link
+3. **Copy Link Address** and **Save link as…**, over a link; **Save image as…**, over an image. Both start a download of that address in the pane, which asks where to save it like any other
 4. **Print**
 5. **View Page Source** and **Inspect Element**, only with **Dev mode** on (**Settings ▸ Advanced**; on by default in a development build, off in the installed app)
 6. The standard pane items: **Copy**, **Split Right**, **Split Down**, **Magnify Pane**, **Minimize to Header** (when the tab has other panes), **Close Pane**, and, with Dev mode on, a second **Inspect Element**
@@ -220,7 +226,7 @@ When you drag a pane, a pane tab or a window tab over a browser pane, the page i
 
 ## Closing a pane with unsaved changes
 
-If a page may have unsaved changes (it would ask "Leave site?"), closing its pane asks first in AgentMux's own dialog, not in a box from the page. The dialog reads "Close this pane?" with "*site* may have unsaved changes.", and **Keep open** and **Close anyway** buttons. Only a close you make asks. A close by an agent, or by quitting AgentMux, just closes.
+If a page may have unsaved changes (it would ask "Leave site?"), closing its pane asks first in AgentMux's own dialog, not in a box from the page. The dialog covers that pane only: the rest of the tab and the window stay usable while it waits. It reads "Close this pane?" with "*site* may have unsaved changes.", and **Keep open** and **Close anyway** buttons. Only a close you make asks. A close by an agent, or by quitting AgentMux, just closes.
 
 ## What a pane keeps
 
@@ -242,7 +248,9 @@ An agent's pane that the agent has left alone for that long goes to sleep like a
 
 ## Driving the browser from an agent
 
-Agents control a browser pane with the `Browser` MCP tool. It works on a browser pane the agent opened itself (`Browser` `open`) and on the agent's own pane when that is a browser pane, never on a pane the agent didn't open or one you took over. An agent reads a page as a snapshot, an accessibility tree with a reference on each element it can act on, and acts by reference: click, fill, select, check, upload files, navigate, wait for text or for the page to settle, and close the pane when it is done. These actions drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
+Agents control a browser pane with the `Browser` MCP tool. It works on a browser pane the agent opened itself (`Browser` `open`) and on the agent's own pane when that is a browser pane. A pane the agent didn't open, it takes with `Browser` `take_control`, naming the pane (**Pane layout** shows who drives each browser pane), and lets go with `release`. AgentMux asks you first, in the pane, when the pane shows your own sign-ins (the Personal profile), when another agent drives it, or when you used it a moment ago; you have 120 seconds to answer. A container agent can't take a pane that shows your Personal sign-ins. An agent reads a page as a snapshot, an accessibility tree with a reference on each element it can act on, and acts by reference: click, fill, select, check, upload files, navigate, wait for text or for the page to settle, and close the pane when it is done.
+
+These actions drive Chromium's DevTools protocol inside the AgentMux process, not over the remote-debugging port, so they work with that port off (`crates/cef/src/browser_api/cdp.rs`). Each pane resolves to its own page even when two browser panes show the same URL (`crates/cef/src/browser_api/resolver.rs`). See [MuxAPI](/internals/muxapi/) for the tool reference.
 
 ### The strip over a driven pane
 
@@ -253,14 +261,14 @@ A pane an agent drives shows a strip under the toolbar: **Driven by** the agent'
 | **Log (n)** | Lists what the agent did here, newest first: each action, how it went (allowed, approved, auto-approved, declined, refused) and the page. It works while the pane is paused, and stays after you take over. |
 | **Pause** / **Resume** | Holds the agent's actions in this pane until you resume. Auto-approve's clock stops too. |
 | **Auto-approve** | Lets the agent's clicks go through without asking, for a while. See below. |
-| **Take over** | Ends the agent's control of this pane; its next action here fails. |
+| **Take over** | Ends the agent's control of this pane; its next action here fails. Once you have left the pane alone for 60 seconds, the agent can take it back with `take_control` without asking. |
 
 In a pane limited to some sites, a page that goes to another site is stopped, and a banner asks you to **Allow** or **Block** it. If the stopped address is the pane's very first page, or a redirect on the way to it, the pane shows a page headed "AgentMux stopped this page" instead of staying blank. It names the address and lists the pane's sites, and has **Reload** and **Open in system browser**; answer the banner above it to allow the address, or open it yourself.
 
 ### Asking you, and Auto-approve
 
 - **Hand-offs.** For a sign-in, a two-factor code, a CAPTCHA, payment details or any field marked secret, the agent hands the pane to you. A banner says what it needs; click **Done** when you have finished.
-- **Committing clicks.** A click that submits a form or is named like Submit, Send, Pay, Delete or Confirm waits for you in the pane. The banner shows what the agent wants to do, the form's fields and where they go, with **Approve** and **Cancel**.
+- **Committing clicks.** A click that submits a form or is named like Submit, Send, Pay, Delete or Confirm waits for you in the pane. The name is the element's accessible name as well as its own text, so a button named by its title, an image or a child's label asks too, and so does a click whose name can't be read. The banner shows what the agent wants to do, the form's fields and where they go, with **Approve** and **Cancel**.
 - **Auto-approve.** For a run of clicks you have asked for, choose **Auto-approve** in the strip, then **15 min**, **1 hour** or **4 hours** and **Turn on auto-approve**. Only a pointer click turns it on. For that time, on the sites the pane shows, the agent's clicks that submit, delete or send go through without asking, and so does the page's own "Are you sure?" that follows one. It still can't run scripts, and payments still ask; what it may type into password and card fields doesn't change (see [Secrets on a page](#secrets-on-a-page)). The strip turns red and reads **Auto-approve on** with the time left; **Stop auto-approve** ends it. If the page leaves the granted sites, auto-approve pauses until it returns.
 - **The agent can ask.** An agent can ask you to turn auto-approve on, with a reason, for 15, 60 or 240 minutes. The banner offers **Allow auto-approve**, **Always for *agent* on this site** and **No**.
 
@@ -270,9 +278,13 @@ In a pane limited to some sites, a page that goes to another site is stopped, an
 
 **Agents on sites** lists each row with the agent, the site, when you granted it, and its powers: **Committing clicks** (always on) and, as a checkbox, **Terminal: type and run commands**. **Revoke** ends a row at once, and a call in flight stops. To add one, choose an agent, type a site such as `shell.example.com`, tick **Terminal** if you want it, and click **Allow**. Under **Consoles, with the terminal**, **Google Cloud Shell** and **Azure Cloud Shell** add the sites those consoles use for the agent you chose. Only your own window writes these rows (or your answer **Always** on a request); no agent can.
 
+Under **Page permissions** in the same place, a row lets a page on a site use the camera, the microphone, the location or notifications in a pane that agent drives, without a countdown each time, until you revoke it. Tick the permissions you mean, choose the agent and site, and click **Allow on this site**; **Revoke** ends the row. A row of this kind does not allow committing clicks, and each first use in a pane is in the [Audit](/audit/) view. Without a row, the page's request is held and filed for you to veto.
+
 ### Web terminals
 
-With the **Terminal** power on a site, an agent can type into a web terminal there, such as Google Cloud Shell, and read what it prints (`Browser` `terminal`). It types real keys, one at a time, and presses Enter after each line, with no question per line, so nobody checks each command: you can read every line in the pane's Log, and **Pause** and **Take over** end it at once. It works only on a site that has the grant, and only with terminals built on xterm.js. AgentMux won't type text that looks like a credential. Passwords and codes stay yours to type, so run commands that may ask for one (an `ssh` to another host, say) yourself. What the terminal prints goes back to the agent only and is not written to the Log.
+With the **Terminal** power on a site, an agent can type into a web terminal there, such as Google Cloud Shell, and read what it prints (`Browser` `terminal`). It types real keys, one at a time, and presses Enter after each line. Unless the grant asks about each line, there is no question per line, so nobody checks each command: you can read every line in the pane's Log, and **Pause** and **Take over** end it at once. It works only on a site that has the grant, and only with terminals built on xterm.js. AgentMux won't type text that looks like a credential. Passwords and codes stay yours to type, so run commands that may ask for one (an `ssh` to another host, say) yourself. What the terminal prints goes back to the agent only and is not written to the Log.
+
+A grant can ask about each line instead: tick **Terminal** and then **and show me each line first** when you add it in **Settings ▸ Browser ▸ Agents on sites**. Then the agent's line is typed without its Enter, and the pane shows "*agent* typed a line in the terminal on *site* and wants to run it" with **Run it** and **Don't run**. Enter goes in only after you click **Run it**, and only if the terminal still shows the line you were shown. If you click **Don't run**, don't answer within 3 minutes, take over, pause, or the grant ends, what the agent typed is erased.
 
 ### Secrets on a page
 

@@ -21,7 +21,7 @@ An agent is a container agent when you pick **Container (runs in Docker)** in th
 - The pane shows a **CONTAINER** tag next to the model selector.
 - **The new-agent panel skips the steps that are about your computer.** Checking the tools the agent's CLI needs and installing the CLI are for Native agents; a container agent's CLI is installed in its container on the first turn. With **Container (runs in Docker)** chosen, the panel goes straight to the form. When a Native agent's panel is stuck on one of those steps and a container can run, it offers **Run it in a container instead**.
 
-An agent can also make one. `Agents` `create` (a named agent from a template) and `Agents` `spawn` (a worker) take `runtime: container`, plus `container_image`, `memory_mb` and `cpus`; they are refused, with the reason, when Docker isn't available. An agent that is itself a container agent can start only container agents, and can't set limits. A container leader's workers use the leader's image, each with its own container and workspace.
+An agent can also make one. `Agents` `create` (a named agent from a template) and `Agents` `spawn` (a worker) take `runtime: container`, plus `container_image`, `memory_mb` and `cpus`; they are refused, with the reason, when Docker isn't available. When the call does not say, a new agent runs in a container if its harness has a container image and Docker answers; set `agents:defaultruntime` to `native` to run them on the host instead. An agent that is itself a container agent can start only container agents, and can't set limits. A container leader's workers use the leader's image, each with its own container and workspace.
 
 ## Choosing the image
 

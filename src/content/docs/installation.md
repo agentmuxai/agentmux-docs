@@ -143,11 +143,13 @@ AgentMux uses hardware Vulkan when it's available. Otherwise, before using hardw
 
 ### Sandbox blocked by AppArmor (Ubuntu)
 
-AgentMux sandboxes its browser engine with unprivileged user namespaces. Recent Ubuntu releases restrict these through AppArmor, which blocks Chromium-based apps. AgentMux checks for this before starting the browser engine. If it's blocked, a dialog offers three choices:
+AgentMux sandboxes its browser engine with unprivileged user namespaces. Recent Ubuntu releases restrict these through AppArmor, which blocks Chromium-based apps. AgentMux checks for this before starting the browser engine. If it's blocked, a dialog offers three choices for an install the exception covers (the AppImage, including its extracted copy under `~/.local/share/agentmux/extracted/`, and the `.deb`/`.rpm` install under `/opt/agentmux/`):
 
 - **Fix it now (one-time, needs your password):** installs a narrow AppArmor exception at `/etc/apparmor.d/agentmux-userns` through `pkexec`, then relaunches. The exception grants only the `userns` rule to AgentMux's own browser binary. It covers the AppImage (current and future versions) and the `.deb`/`.rpm` install path.
 - **Continue without sandbox this time:** runs this session unsandboxed. The window title shows "— Sandbox Disabled".
 - **Cancel:** exits.
+
+For any other build, such as the portable tarball, a development build or a home folder that isn't `/home/<user>`, the exception can't cover it, so the dialog offers only **Continue without sandbox this time** and **Cancel**.
 
 The dialog needs `zenity` or `kdialog`. Without either, AgentMux prints the explanation to the terminal and exits. You can run one session without the sandbox by setting `AGENTMUX_UNSAFE_NOSANDBOX=1`. See `crates/cef/src/linux_sandbox.rs` (`build_apparmor_profile`) for the exact profile.
 

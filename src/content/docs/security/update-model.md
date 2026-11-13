@@ -91,27 +91,27 @@ The pins live in `crates/srv/src/backend/providers.rs` and change with AgentMux 
 What this does and doesn't guarantee:
 
 - Only the top-level package version is pinned. Its dependencies resolve fresh at install time; there is no lockfile.
-- **AgentMux checks no hash.** Integrity is whatever npm provides: TLS to the registry and the registry's own integrity metadata. npm uses your configured registry, so an internal mirror works.
+- **AgentMux checks no hash.** Integrity is whatever npm provides: TLS to the registry and the registry's own integrity metadata. AgentMux installs from the public registry, `https://registry.npmjs.org/`, with empty user and global npm configuration, so your own `.npmrc` and any mirror it names are ignored.
 - Packages' install scripts run. AgentMux removes its own `AGENTMUX_*` variables from their environment. Some packages download their native binary in that step: Crush's fetches it from GitHub releases.
 - Node.js is not bundled. If npm is missing, AgentMux points you to nodejs.org, or offers a one-click install through winget (`OpenJS.NodeJS.LTS`), Homebrew, or your Linux package manager via `pkexec`. Those package managers do their own verification.
 - Kilo Code CLI, Cline CLI and OpenCode can update themselves. AgentMux turns that off when it launches them, so the pinned version is the one that runs.
 
 The Toolchain pane also asks the npm registry for each npm CLI's latest version, to show whether yours is behind. It only displays the result; nothing is installed.
 
-### Harnesses you install yourself
+### Harnesses that aren't on npm
 
-Six harnesses aren't on npm: Kimi Code CLI, Antigravity, goose, Grok Build, Aider and Muse Code. AgentMux never runs their installers. It shows the vendor's own install command, you run it, and AgentMux finds the CLI on your `PATH` or, for all but Kimi Code CLI, in the folder that installer uses by default. Integrity is whatever the vendor's installer provides.
+Six harnesses aren't on npm: Kimi Code CLI, Antigravity, goose, Grok Build, Aider and Muse Code. AgentMux installs each one itself, into the same `~/.agentmux/shared/cli/<provider>/<pinned version>` folder, and never runs a vendor's installer script. Antigravity, goose, Grok Build and Muse Code are downloaded as the pinned release file straight from the vendor's address, checked against a SHA-256 built into AgentMux, and unpacked; a file that doesn't match is not installed. Aider and Kimi Code CLI are installed into a private Python environment with a pinned copy of `uv` (a release downloaded from `github.com/astral-sh/uv` and checked the same way), and every package in that environment is checked against a SHA-256 built into AgentMux.
 
-| Provider | Published as | Version AgentMux was tested with |
+| Provider | Published as | Pinned version |
 |---|---|---|
-| Kimi Code CLI | PyPI `kimi-cli` (`pip install kimi-cli`) | Not pinned |
-| Antigravity | Google's installer, which keeps `agy` up to date itself | Not pinned |
-| goose | GitHub releases of `aaif-goose/goose`, through goose's installer | 1.54.0 |
-| Grok Build | xAI's installer and its stable release channel | 1.0.52 |
-| Aider | PyPI `aider-chat`, through Aider's installer (uv) | 0.86.2 |
-| Muse Code | Meta's installer and its stable release channel | 1.4.7-R6101.1 |
+| Kimi Code CLI | PyPI `kimi-cli`, installed with `uv` | 1.52.0 |
+| Antigravity | Google's release of `agy` | 1.5.2 |
+| goose | GitHub releases of `aaif-goose/goose` | 1.54.0 |
+| Grok Build | xAI's release of `grok` | 1.0.52 |
+| Aider | PyPI `aider-chat`, installed with `uv` | 0.86.2 |
+| Muse Code | Meta's release of `muse` | 1.4.7-R6101.1 |
 
-AgentMux runs whatever version you have installed; the pin records the version it was tested with. It turns off self-update where the CLI allows it, so that version doesn't change under a running agent: Grok Build gets `GROK_DISABLE_AUTOUPDATER=1`, Muse Code `MUSE_NO_AUTO_UPDATE=1`, and Aider `--no-check-update`. On Windows, AgentMux runs Muse Code's native binary rather than its launcher, which would otherwise update itself.
+AgentMux runs its own copy at the pinned version, never one you installed yourself, unless you switch on **Use the CLI on my PATH** for that CLI in the Toolchain pane. It turns off self-update where the CLI allows it, so the pinned version doesn't change under a running agent: Grok Build gets `GROK_DISABLE_AUTOUPDATER=1`, Muse Code `MUSE_NO_AUTO_UPDATE=1`, and Aider `--no-check-update`. On Windows, AgentMux runs Muse Code's native binary rather than its launcher, which would otherwise update itself.
 
 AgentMux's maintainers track every pin against its upstream releases on npm, PyPI, GitHub releases or the vendor's release channel, and raise it in a later AgentMux release. The app itself asks only npm, for the Toolchain pane.
 
@@ -125,7 +125,7 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 
 ## Offline and managed deployment
 
-- To run offline, install AgentMux and the agent CLIs you need while connected, or from an internal npm mirror. The harnesses you install yourself need their vendor's download sites, or a copy of the installed CLI. See [Data sovereignty](/security/data-sovereignty/#offline-and-air-gapped-use).
+- To run offline, install AgentMux and the agent CLIs you need while connected. The six harnesses that aren't on npm need their vendor's download sites, and PyPI for Aider and Kimi Code CLI. See [Data sovereignty](/security/data-sovereignty/#offline-and-air-gapped-use).
 - For managed fleets, distribute the installer or packages through your own software-delivery tooling (Intune, Jamf, Ansible and the like). The Windows installer's per-user default fits unprivileged deployment.
 
 ## What we don't promise
