@@ -113,6 +113,7 @@ export default defineConfig({
 								{ label: 'Jobs', slug: 'jobs' },
 								{ label: 'Kanban', slug: 'kanban' },
 								{ label: 'The Vault', slug: 'vault' },
+								{ label: 'Model routes', slug: 'model-routes' },
 								{ label: 'Tower', slug: 'tower' },
 								{ label: 'Window appearance', slug: 'window-appearance' },
 							],
