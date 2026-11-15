@@ -116,7 +116,7 @@ Objects point at each other by oid inside the JSON (client → windows → works
 | `db_agent_key_tombstones` | Names of deleted agents, so a name can't silently inherit an old key |
 | `db_lan_peer_uid_pins`, `db_lan_peer_pubkey_pins` | Keys first seen for remote agents (trust on first use) |
 | `db_jekt_held` | Messages held for an agent that isn't running |
-| `db_conversation_trust_grants` | Which peers may request an agent's transcript |
+| `db_conversation_trust_grants` | Which peers may request an agent's transcript when its visibility is `trusted_peers`. Nothing in the app adds a grant yet |
 | `db_viewer_devices` | Paired viewer devices |
 | `db_widget_storage` | Widgets' key/value storage |
 
@@ -209,7 +209,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `shared/browser-bookmarks.json`, `browser-profiles.json`, `browser-start-page.json` | JSON | Browser pane bookmarks, named profiles, start page |
 | `agents/<slug>/` | Folder | An agent's working folder: its startup instructions file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), `.mcp.json`, `.claude/` settings and skills. AgentMux clears Rust build caches inside these folders; see [Build Cache Settings](/settings/#build-cache-settings) |
 | `widgets/<id>/` | Folder | Installed widgets: `widget.json`, signature, files |
-| `shell/<hash>/` | Scripts | Shell integration files each terminal sources, one folder per instance |
+| `shell/<hash>/` | Scripts | Shell integration files each terminal sources, one folder per instance. A folder records its instance's data folder in `.instance`, and AgentMux removes it at start once that folder is gone |
 | `tools/`, `cache/scratch/`, `state/`, `tmp/` | Mixed | Tool store, editor scratch buffers (30 days), command-wrapper state, window captures (1 hour) |
 | `logs/agentmux-launcher.log` | Text | Launcher log; rotates at 50 MB, keeps 3 |
 | `logs/migration-error.log` | Text | The last failed `migrate` run |
