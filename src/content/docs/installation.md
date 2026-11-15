@@ -8,24 +8,24 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 AgentMux runs on Windows (x64), macOS (Apple Silicon only) and Linux (x86_64 only). There is no Intel Mac build and no Linux ARM build.
 
-Every release is published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases), which is the source of truth for downloads. The download buttons on [agentmux.ai](https://agentmux.ai) link to the same files, plus the Microsoft Store listing for Windows.
+Every release is published on [GitHub Releases](https://github.com/agentmuxai/agentmux/releases), which is the source of truth for downloads. [All Downloads](https://agentmux.ai/downloads) on agentmux.ai lists every file and install command of the current release for every platform, with each file's size and SHA-256 and how to check it. The download buttons on [agentmux.ai](https://agentmux.ai) link to the same files, plus the Microsoft Store listing for Windows.
 
 AgentMux bundles its own Chromium runtime (CEF), so it doesn't use a system browser engine such as WebKitGTK.
 
 ## Downloads
 
-Release files carry the version in their name. The sizes below are for v0.60.10 and change a little from release to release.
+Release files carry the version in their name. Each file's size and SHA-256, and the command-line installs (the install scripts, the Linux package repositories, and the Store and WinGet commands), are on [All Downloads](https://agentmux.ai/downloads); they change with every release, so they are not repeated here.
 
-| Platform | File | Download size |
-|---|---|---|
-| Windows | `AgentMux-<version>-x64-setup.exe` (installer) | 154.7 MB |
-| Windows | `agentmux-<version>-x64-portable.7z` (portable) | 132.3 MB |
-| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) | 218.3 MB |
-| macOS | `AgentMux_<version>_arm64.dmg` | 229.2 MB |
-| Linux | `AgentMux_<version>_amd64.AppImage` | 186.8 MB |
-| Linux | `AgentMux_<version>_amd64.deb` | 144.4 MB |
-| Linux | `AgentMux-<version>-1.x86_64.rpm` | 144.3 MB |
-| Linux | `AgentMux_<version>_amd64-portable.tar.xz` | 144.6 MB |
+| Platform | File |
+|---|---|
+| Windows | `AgentMux-<version>-x64-setup.exe` (installer) |
+| Windows | `agentmux-<version>-x64-portable.7z` (portable) |
+| Windows | `AgentMux_<version>_x64.msix` (Store package, see [below](#msix-file)) |
+| macOS | `AgentMux_<version>_arm64.dmg` |
+| Linux | `AgentMux_<version>_amd64.AppImage` |
+| Linux | `AgentMux_<version>_amd64.deb` |
+| Linux | `AgentMux-<version>-1.x86_64.rpm` |
+| Linux | `AgentMux_<version>_amd64-portable.tar.xz` |
 
 ## Windows
 
@@ -64,7 +64,7 @@ The portable build keeps no data in its own folder. Like the installed app, it s
 
 The `.msix` on the Releases page is the package submitted to the Microsoft Store. It is unsigned (the Store signs it on ingest), so Windows won't install it if you download and open it directly. Use the [Store listing](https://apps.microsoft.com/detail/9p9qcxnncrk3) instead.
 
-AgentMux is not in the WinGet repository yet, so `winget install` won't find it.
+Whether AgentMux is in the WinGet catalogue yet, and the command for each way to install it, are on [All Downloads](https://agentmux.ai/downloads).
 
 ## macOS (Apple Silicon)
 
