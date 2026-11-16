@@ -635,8 +635,8 @@ Note this "tab" is scoped to the pane — a different concept from a window
 [Tab tear-off](#tab-tear-off) below, which is about the browser-style strip
 at the very top of the whole window, not a pane's own strip.
 
-Inspired by [cmux](https://github.com/manaflow-ai/cmux)'s
-`Workspace → Pane → Surface → Panel` model — see
+Tabs inside each pane, so every pane holds several, come from
+[cmux](https://github.com/manaflow-ai/cmux). See
 [GitHub: SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PANE_TABS_UNIVERSAL_CMUX_REDESIGN_2026_09_17.md)
 for the full design rationale.
 
