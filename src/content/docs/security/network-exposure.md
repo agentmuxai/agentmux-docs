@@ -27,7 +27,7 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 ## The AgentMux server
 
-`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv/src/backend/lan/listeners.rs`); no setting changes it.
+`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv-core/src/backend/lan/listeners.rs`); no setting changes it.
 
 Authentication (`auth_middleware` in `crates/srv/src/server/auth.rs`):
 
@@ -74,13 +74,13 @@ Neither channel has confidentiality or authentication. Anyone on the broadcast d
 While LAN discovery is on, the server also contacts every peer it discovers, presenting that peer's advertised `lan_key`:
 
 - every 30 seconds it asks each peer for its agent names; responses are capped at 64 KiB;
-- before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent (`GET /agentmux/agent/holding?uid=<uid>`, 1.5-second timeout), so one agent doesn't run on two computers (`crates/srv/src/backend/agent_admission.rs`).
+- before an agent starts, and every 30 seconds while it runs, it asks each peer whether it is running that agent (`GET /agentmux/agent/holding?uid=<uid>`, 1.5-second timeout), so one agent doesn't run on two computers (`crates/srv-core/src/backend/agent_admission.rs`).
 
 A device that fakes an mDNS advertisement can make the server send these requests to an address of its choosing. Its answers aren't authenticated either: by claiming to hold an agent, it can make this instance refuse to start that agent, or stop it.
 
 ## Dev proxy
 
-`agentmux-srv` always starts a reverse proxy on `127.0.0.1:8090` (`crates/srv/src/backend/dev_proxy.rs`). It routes a request whose `Host` is `<key>.localhost` to a dev server an agent registered with the `RegisterDevServer` tool (a port inside that agent's container). Unregistered hosts get 404. It has no authentication: any local process, including other users' processes, can reach a registered dev server through it. If port 8090 is taken, the proxy logs a warning and doesn't start.
+`agentmux-srv` always starts a reverse proxy on `127.0.0.1:8090` (`crates/srv-core/src/backend/dev_proxy.rs`). It routes a request whose `Host` is `<key>.localhost` to a dev server an agent registered with the `RegisterDevServer` tool (a port inside that agent's container). Unregistered hosts get 404. It has no authentication: any local process, including other users' processes, can reach a registered dev server through it. If port 8090 is taken, the proxy logs a warning and doesn't start.
 
 ## Host IPC server
 
@@ -144,6 +144,8 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 
 There is no telemetry endpoint, crash-report upload or license check, and no update check unless you (or an agent) ask for one.
 
+The server's own HTTPS requests (models, updates, connected accounts) check a server's certificate against your operating system's trusted certificates, not a list bundled with AgentMux. On Linux the server reads them once, when it starts. When none are found (no `ca-certificates` package, and `SSL_CERT_FILE` or `SSL_CERT_DIR` point at nothing), the server still starts, a warning goes to its log, and those requests fail with a message that says to install the `ca-certificates` package or point `SSL_CERT_FILE` at a bundle, then restart AgentMux. `agentmux doctor` reports the same under **certificates**. The `.deb` and `.rpm` packages require `ca-certificates`.
+
 The live connections to MuxBus Cloud, Slack (Socket Mode) and Discord (gateway) go through the HTTP proxy named by `HTTPS_PROXY` (then `ALL_PROXY`) when there is one, and honour `NO_PROXY`. AgentMux sends `CONNECT host:port` and runs TLS end to end with the real host, so the proxy only carries bytes. If a proxy is set and can't be used, the connection fails; it never goes direct. Only `http://` proxy addresses are supported.
 
 ## Firewall configuration
@@ -163,13 +165,13 @@ Restrict these to your LAN subnet or to known peers.
 
 **Source-of-truth references**:
 - `crates/srv/src/bootstrap/network.rs` (`bind_listeners_and_network`) — loopback startup listeners
-- `crates/srv/src/backend/lan/listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
-- `crates/srv/src/backend/lan/discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
+- `crates/srv-core/src/backend/lan/listeners.rs` (`LanListenerSupervisor`, `lan_bind_addresses`) — LAN listeners
+- `crates/srv-core/src/backend/lan/discovery.rs` — mDNS record (`LanDiscovery::start`), UDP responder (`udp_responder_loop`, `probe_response_json`, `is_lan_source`)
 - `crates/srv/src/server/routes.rs` (`build_router`, `build_routers_with`) and `crates/srv/src/server/auth.rs` (`auth_middleware`, `lan_or_full_auth_middleware`) — routes, auth, CORS
-- `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `crates/srv/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
+- `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`), `crates/srv-core/src/backend/agent_admission.rs` (`lan_holders`) — the LAN agent-holding query
 - `crates/srv/src/config.rs` — `lan_key` generation
-- `crates/srv/src/backend/dev_proxy.rs` — dev proxy
-- `crates/srv/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
+- `crates/srv-core/src/backend/dev_proxy.rs` — dev proxy
+- `crates/srv-core/src/identity/oauth_client.rs` (`start_code_flow`) — OAuth callback
 - `crates/cef/src/ipc.rs` — host IPC server
 - `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs`, `crates/cef/src/app/mod.rs` — remote-debugging port and switches; `crates/cef/src/browser_api/cdp.rs` — in-process DevTools Protocol for the browser API
 - `crates/launcher/src/ipc/server.rs`, `crates/launcher/src/ipc/mod.rs`, `crates/srv/src/srv_ipc/server.rs`, `crates/srv/src/crash_monitor.rs` — local IPC

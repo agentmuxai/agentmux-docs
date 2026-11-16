@@ -86,7 +86,7 @@ Every AgentMux version and channel on the machine shares that folder.
 | DeepSeek Harness | `@deepseek-ai/dsh` | 0.2.0-rc.2 (a prerelease) |
 | Crush | `@charmland/crush` | 0.98.1 |
 
-The pins live in `crates/srv/src/backend/providers.rs` and change with AgentMux releases.
+The pins live in `crates/srv-core/src/backend/providers.rs` and change with AgentMux releases.
 
 What this does and doesn't guarantee:
 
@@ -117,11 +117,11 @@ AgentMux's maintainers track every pin against its upstream releases on npm, PyP
 
 ## Tool catalog
 
-The tool catalog (`crates/srv/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`crates/srv/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
+The tool catalog (`crates/srv-core/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`crates/srv-core/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
 
 ## Default MCP servers
 
-AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, playwright, context7) starts its servers with `uvx` and `npx` without pinned versions (`crates/srv/src/config/starter-mcp-servers.json`). Those packages are downloaded from PyPI or npm, at their current versions, when an agent starts them. If that matters to you, remove them or replace them with pinned versions.
+AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, playwright, context7) starts its servers with `uvx` and `npx` without pinned versions (`crates/srv-core/src/config/starter-mcp-servers.json`). Those packages are downloaded from PyPI or npm, at their current versions, when an agent starts them. If that matters to you, remove them or replace them with pinned versions.
 
 ## Offline and managed deployment
 
@@ -136,11 +136,11 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 ---
 
 **Source-of-truth references**:
-- `crates/srv/src/backend/update/check.rs`, `crates/srv/src/backend/update/download.rs`, `crates/srv/src/backend/update/install.rs` — checking, downloading and installing an update
-- `crates/common/src/update_manifest.rs`, `crates/srv/src/backend/update/signature.rs` — the signed manifest
+- `crates/srv-core/src/backend/update/check.rs`, `crates/srv-core/src/backend/update/download.rs`, `crates/srv-core/src/backend/update/install.rs` — checking, downloading and installing an update
+- `crates/common/src/update_manifest.rs`, `crates/srv-core/src/backend/update/signature.rs` — the signed manifest
 - `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
 - `packaging/windows/agentmux.iss` — Windows installer
 - `crates/launcher/src/autostart/mod.rs` — start-at-login
-- `crates/srv/src/backend/providers.rs`, `crates/srv/src/backend/cli_install.rs`, `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs` — agent CLI installs, pins and the install folders the vendors' installers use
+- `crates/srv-core/src/backend/providers.rs`, `crates/srv-core/src/backend/cli_install.rs`, `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs` — agent CLI installs, pins and the install folders the vendors' installers use
 - `crates/srv/src/server/system_install_handlers.rs` — one-click Node.js, Git and Python installs
-- `crates/srv/src/backend/tool_store.rs`, `crates/srv/src/config/tool-catalog.json` — SHA-256-checked tool downloads
+- `crates/srv-core/src/backend/tool_store.rs`, `crates/srv-core/src/config/tool-catalog.json` — SHA-256-checked tool downloads

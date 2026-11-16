@@ -15,13 +15,13 @@ Two modules own everything LAN-facing:
 
 | Item | File | Role |
 |---|---|---|
-| `LanListenerSupervisor` | `crates/srv/src/backend/lan/listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
-| `STARTUP_BIND_ADDR` | `crates/srv/src/backend/lan/listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
-| `SERVICE_TYPE` | `crates/srv/src/backend/lan/discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
-| `LanInstance` | `crates/srv/src/backend/lan/discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `first_seen`, `last_seen`, `other_ttl_secs` |
-| `LanDiscovery` | `crates/srv/src/backend/lan/discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
-| `LanDiscoveryController` | `crates/srv/src/backend/lan/discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
-| `mdns_host_record()` | `crates/srv/src/backend/lan/discovery.rs` | Builds the host record this instance announces its addresses under: its unique instance label plus `.local.`, as `mdns-sd` requires |
+| `LanListenerSupervisor` | `crates/srv-core/src/backend/lan/listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
+| `STARTUP_BIND_ADDR` | `crates/srv-core/src/backend/lan/listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
+| `SERVICE_TYPE` | `crates/srv-core/src/backend/lan/discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
+| `LanInstance` | `crates/srv-core/src/backend/lan/discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `install_id` (the install's WAN instance id as the peer advertises it, an identifier and never proof), `first_seen`, `last_seen`, `other_ttl_secs` |
+| `LanDiscovery` | `crates/srv-core/src/backend/lan/discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
+| `LanDiscoveryController` | `crates/srv-core/src/backend/lan/discovery.rs` | The toggleable wrapper stored in `AppState.lan_discovery`: start arguments, a swappable daemon slot, and the agent and public-key lookup caches |
+| `mdns_host_record()` | `crates/srv-core/src/backend/lan/discovery.rs` | Builds the host record this instance announces its addresses under: its unique instance label plus `.local.`, as `mdns-sd` requires |
 
 The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) crate, version 0.12.
 
@@ -94,7 +94,7 @@ The controller also answers the two lookups the reactive bus needs:
 - `find_agent(agent_id)` asks every peer's `GET /agentmux/reactive/agent?id=<agent_id>` concurrently and takes the first 2xx. Positive and negative answers are cached for 60 seconds.
 - `find_agent_lan_pubkey(agent_id)` makes the same query for a sender's LAN public key, used to verify LAN signatures. It is rate-limited to 10 peer fan-outs per second; a rate-limited lookup is reported as `RateLimited`, and a name that is a former agent id as `Renamed`; the verifier treats both as a failed signature, not as "no key". See [Jekt protocol](/internals/jekt-protocol/#52-lan-ed25519).
 
-The peer list also serves one live instance per agent. `crates/srv/src/bootstrap/network.rs` hands the controller to `agent_admission::set_lan_discovery` (`crates/srv/src/backend/agent_admission.rs`), and `agent_admission::lan_holders(uid)` asks every peer's `GET /agentmux/agent/holding?uid=<uid>` concurrently, with the peer's `lan_key` and a 1.5-second timeout. It runs before an agent starts and every 30 seconds while it runs (every sixth 5-second lease renewal). Answers from this host are ignored, unreachable peers and peers without the route are skipped, and `peer_wins` decides between two hosts running the same agent: the earlier start wins, and starts within 10 seconds of each other go to the lower hostname. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
+The peer list also serves one live instance per agent. `crates/srv/src/bootstrap/network.rs` hands the controller to `agent_admission::set_lan_discovery` (`crates/srv-core/src/backend/agent_admission.rs`), and `agent_admission::lan_holders(uid)` asks every peer's `GET /agentmux/agent/holding?uid=<uid>` concurrently, with the peer's `lan_key` and a 1.5-second timeout. It runs before an agent starts and every 30 seconds while it runs (every sixth 5-second lease renewal). Answers from this host are ignored, unreachable peers and peers without the route are skipped, and `peer_wins` decides between two hosts running the same agent: the earlier start wins, and starts within 10 seconds of each other go to the lower hostname. See [one live instance per agent](/security/trust-model/#one-live-instance-per-agent).
 
 ### Live disable
 
@@ -138,11 +138,15 @@ The frontend handlers are in `frontend/app/store/global.ts` (`setLanInstancesAto
 
 `GET /api/lan-instances` returns the current peer list as JSON, **including each peer's `lan_key`**. It sits behind the normal full-key `auth_middleware`, like every other route except the health check, the WhatsApp webhook and the `lan_key` routes. The network pill in the status bar reads the same list.
 
+## The Swarm's cloud tier
+
+The Swarm and the Atlas also list your account's other machines that are not on this network. Their agents come from the presence records MuxBus Cloud holds for the account, not from this peer list, and the peer list decides what is left out: a record is dropped when it is this install's own, when it is another channel of this computer, or when a LAN peer is the same machine. A peer is the same machine when its host name and channel match the record's and, if the peer advertises an `install_id`, that matches the record's instance id; the id only narrows a host-and-channel match and never makes one, so a peer that claims another install's id under another name hides nothing. A record that has gone quiet for 3 minutes is stale and one quiet for 10 minutes is not shown; a fresh record of a machine that has since come back on the LAN under a new id stays until it goes stale. The tier is display only: it has no route, so a broadcast or a stop skips it.
+
 ## Remote operations and fleet sync
 
 The same peer list carries typed requests between machines (`crates/srv/src/server/remote_ops/`). The door is `POST /agentmux/remote/op`, one of the `lan_key` routes, but it is opened by a signature, not by the key (`receive.rs`). It checks, in order, that the call came with the `lan_key`, that `network:remote_ops` is not `false`, the shape and size of the request, that the audience is this instance's `lan_key`, that the timestamp is within 60 seconds and after this srv started, that the requesting agent's key is pinned here, the signature, and the certificate that names the hosting install. Then it looks the operation up (`lookup` in `mod.rs`): `app.version`, `app.health`, `app.activity`, `app.logs.tail`, `app.history_reclaim`, `agents.start`, `agents.open`, `agents.stop`, `agents.set_seat`, `agents.env_get`, `agents.env_set`, `tasks.enqueue`, `tasks.list`, `identity.accounts`, `identity.switch`, `identity.signin.start`, `.notice` and `.finish`, and `memory.global.put`, `.remove` and `.list`. A change, and a read of personal data, also needs an install this instance trusts (`lan_continuity::instance_trust`). An operation runs for at most 25 seconds, and the nonce store answers a repeated request with the first answer. The sending half is `send.rs` (`POST /api/v1/agent/remote/op`): it resolves the `host` to one LAN peer, signs with the asking agent's LAN key and writes `remote.request` to the audit trail.
 
-`crates/srv/src/server/remote_ops/fleet_sync.rs` keeps fleet-scoped Global Memory in step over the same transport. Every 15 seconds it fingerprints what this machine holds for the fleet and, for each proven peer whose last sync saw another fingerprint (or that has just appeared, which is how a machine that was offline catches up), lists what the peer holds and sends what it lacks or has older. A peer is synced again after 10 minutes in any case, and a peer that failed is left alone for 5 minutes. The merge rule (newest `updated_at` wins, a larger content hash on a tie, a removal being a write) is in `crates/srv/src/backend/memory/fleet.rs`.
+`crates/srv/src/server/remote_ops/fleet_sync.rs` keeps fleet-scoped Global Memory in step over the same transport. Every 15 seconds it fingerprints what this machine holds for the fleet and, for each proven peer whose last sync saw another fingerprint (or that has just appeared, which is how a machine that was offline catches up), lists what the peer holds and sends what it lacks or has older. A peer is synced again after 10 minutes in any case, and a peer that failed is left alone for 5 minutes. The merge rule (newest `updated_at` wins, a larger content hash on a tie, a removal being a write) is in `crates/srv-core/src/backend/memory/fleet.rs`.
 
 ## Boot semantics
 
@@ -157,13 +161,13 @@ Turning LAN discovery on exposes the full server API on the network, broadcasts 
 
 ## Source
 
-- `crates/srv/src/backend/lan/discovery.rs` — daemon, controller, UDP responder, lookups, tests
-- `crates/srv/src/backend/lan/listeners.rs` — LAN listener supervisor
+- `crates/srv-core/src/backend/lan/discovery.rs` — daemon, controller, UDP responder, lookups, tests
+- `crates/srv-core/src/backend/lan/listeners.rs` — LAN listener supervisor
 - `crates/srv/src/bootstrap/mod.rs`, `crates/srv/src/main.rs` — boot wiring
 - `crates/srv/src/server/websocket.rs` (`setconfig` handler) — live toggle
 - `crates/srv/src/server/routes.rs` — the `/api/lan-instances` route and the `lan_key` routes (`lan_forward_routes`)
-- `crates/srv/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
-- `crates/srv/src/server/remote_ops/` — typed requests between machines; `crates/srv/src/backend/memory/fleet.rs` — the fleet Global Memory merge
+- `crates/srv-core/src/backend/agent_admission.rs` (`lan_holders`, `peer_wins`), `crates/srv/src/server/agent_takeover.rs` (`handle_agent_holding`) — the LAN tier of one live instance per agent
+- `crates/srv/src/server/remote_ops/` — typed requests between machines; `crates/srv-core/src/backend/memory/fleet.rs` — the fleet Global Memory merge
 - `crates/srv/src/config.rs` — `lan_key`
 - `frontend/app/statusbar/HostPopover.tsx` — toggle and peer list
 - `frontend/app/store/global.ts` — `lanInstancesAtom`, `lanDiscoveryErrorAtom`, event handlers

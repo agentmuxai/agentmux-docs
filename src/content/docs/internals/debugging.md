@@ -112,6 +112,8 @@ node ~/.agentmux/shell/muxspect.mjs watch <block_id>
 node ~/.agentmux/shell/muxspect.mjs help
 ```
 
+`muxspect instances [--json]` lists every live AgentMux instance on this machine. `muxspect --channel <name> <command>` runs a read against another instance, named as `instances` shows it, for `list`, `describe`, `watch`, `dock`, `layout` and `verify-sender`; it never runs `dock clear`.
+
 :::caution[Known gap — call the core directly for now]
 The bare `muxspect` shell function only loads in an *interactive* terminal pane (sourced from the shell rcfile). Tool-spawned shells — the primary intended use, an agent's own tool calls — don't source the rcfile, so `muxspect` is undefined there even though the env vars it needs (`$AGENTMUX_LOCAL_URL`, `$AGENTMUX_AUTH_KEY`) are present. **Until this is fixed**, call the deployed core directly instead of the shell function: `node ~/.agentmux/shell/muxspect.mjs <command>`. The wire protocol and commands are identical either way.
 :::

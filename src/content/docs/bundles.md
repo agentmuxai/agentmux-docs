@@ -36,7 +36,7 @@ You pick bundles in these places, all with the same control: each picked bundle 
 
 **At launch,** in list order:
 
-- **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv/src/backend/storage/agent_bundles.rs`). The instructions are no longer sent as the agent's first message. A bundle deleted since it was picked is skipped.
+- **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv-core/src/backend/storage/agent_bundles.rs`). The instructions are no longer sent as the agent's first message. A bundle deleted since it was picked is skipped.
 - **Skills** from every bundle in the list are added to the agent's own. When two bundles name the same skill, the first one wins.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
 
@@ -84,7 +84,7 @@ It has no account field: the agent takes the provider's first account, which you
 
 ## Persistence
 
-Bundles live in the `db_bundles` table of the shared store. A row has a name, a description, the suggested `provider` and `model`, `instructions`, `instructions_by_provider` and `context_files` (both JSON), the `skills` it references, a `sort_order`, and the flags `is_blank` (the "vanilla CLI session" bundle), `is_global` (a [Global Memory](/memory/#global) entry) and `is_system`. A row is the `Bundle` struct in `crates/srv/src/backend/storage/bundles.rs`.
+Bundles live in the `db_bundles` table of the shared store. A row has a name, a description, the suggested `provider` and `model`, `instructions`, `instructions_by_provider` and `context_files` (both JSON), the `skills` it references, a `sort_order`, and the flags `is_blank` (the "vanilla CLI session" bundle), `is_global` (a [Global Memory](/memory/#global) entry) and `is_system`. A row is the `Bundle` struct in `crates/srv-core/src/backend/storage/bundles.rs`.
 
 An agent's picked bundles are rows of the per-channel `db_agent_bundles` table (`agent_id`, `bundle_id`, `position`).
 

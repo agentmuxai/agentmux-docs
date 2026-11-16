@@ -13,7 +13,7 @@ The Kanban is a pane of its own (`frontend/app/view/kanban/`). The [Swarm](/suba
 
 ## Where to find it
 
-- **Kanban** in the widget bar's **more** menu (right-click it there and choose **Pin to bar** to keep it on the bar). It is a pane of its own, one per tab (`defwidget@kanban` in `crates/srv/src/config/widgets.json`, view `kanban`).
+- **Kanban** in the widget bar's **more** menu (right-click it there and choose **Pin to bar** to keep it on the bar). It is a pane of its own, one per tab (`defwidget@kanban` in `crates/srv-core/src/config/widgets.json`, view `kanban`).
 - **Open Kanban** in the command palette (`open:kanban`).
 - On a [Swarm](/subagent-watcher/) row, the chip of the task an agent is on opens the Kanban with that task shown.
 
@@ -22,6 +22,17 @@ The button and the command bring back the Kanban already open in the tab, or ope
 The pane's title counts the tasks that need you: **Kanban · 2 need you**. The board loads tasks only while the pane is shown.
 
 Clicking an agent on a card, in the drawer or in the strip of agents shows that agent's own pane.
+
+The tasks that need you also count in the status bar: the waiting count includes them, and the list it opens has a **Tasks** row, **Kanban** with "N tasks need you", whose **Open** button opens the Kanban.
+
+## Boards
+
+The Kanban can keep several boards, such as one per project. The **board picker** at the left of the pane's header shows the selected board's name, an icon for who it is shared with and, when tasks on it need you, how many. Open it to choose a board: each board is listed with its own count of tasks that need you and the default one marked **default**. Archived boards sit in a folded **Archived** group at the bottom.
+
+- **New board** in the picker opens the boards panel in the pane. Type the board's name and choose **Create board**; the pane then shows it.
+- **Manage boards…** opens the same panel with a row per board: its name (edit it in place and press Enter), its slug as `slug#` (the prefix of its task refs), **default** or **archived**, and how many tasks are **open** and **in all**. A menu on the row picks which agents see the board, **All agents** or the ones you tick. **Make default** makes it the board that tasks go to when nobody names one. **Archive** makes a board read-only and **Unarchive** brings it back; the default board can't be archived. **Delete** is offered for an archived board and removes it with its tasks after a 15-second countdown, during which **Keep it** cancels the delete.
+- **Move to board…**, in a task's drawer, files the task on another board. The task gets a new number there and the original closes pointing to it. Dependencies stay inside one board, so a task with tasks it starts after, or that start after it, asks first: **Move and drop them** moves it and drops those links, **Leave it** keeps it where it is. A task an agent holds can't be moved: take it back first.
+- **Copy** next to a task's ref in its drawer copies the full ref: `#12` on the default board, `work#12` on a board whose slug is `work`. A card on another board shows that full ref. Use it as the `id` of a `Tasks` call or in a message.
 
 ## Columns
 
@@ -44,7 +55,7 @@ AgentMux notices when a task's pull request merges, and, from the repository's p
 
 **Collapse a column** with the control in its header: it folds to a thin strip with the column's name written down it and its count, held tasks and the age of its oldest task. Click the strip to open the column again. The choice is kept with the pane, so it survives a restart.
 
-A card shows its number (`#12`), title, the agent on it with a live status dot, checklist progress (`3/7`), its pull request once linked, how many times it has been taken when more than once, its repository, who asked for it ("from you, via Agent1") and how long since it last moved.
+A card shows its number (`#12`, or `work#12` on another board), title, the agent on it with a live status dot, checklist progress (`3/7`), its pull request once linked, how many times it has been taken when more than once, its repository, who asked for it ("from you, via Agent1") and how long since it last moved.
 
 ## What agents do
 
@@ -53,16 +64,17 @@ Agents use the `Tasks` MCP tool. Its actions:
 | Action | What it does |
 |---|---|
 | `enqueue` | Files a task: a title and a standalone prompt. With `for: "me"` it waits in the agent's own backlog |
-| `claim` | Takes the next task the agent can: its own backlog first, then anyone's. It holds a lease while the agent is alive. With `id`, it takes that task and no other, even one on hold |
+| `claim` | Takes the next task the agent can: its own backlog first, then anyone's. It holds a lease while the agent is alive. With `id`, it takes that task and no other, even one on hold; a task aimed at another agent is refused, and the refusal says where the task stands and how to go on |
 | `update` | A progress note, a checklist, or links (a PR, a branch) |
 | `ask` | A question only you can answer. The task moves to Needs you; your answer reaches the agent as a message |
 | `submit` | Hands it in with a result. A task you asked for waits in Review; others are done |
 | `complete` | The same as `submit`, for a task that needs no review |
-| `release` | Hands it back with a reason; it uses one of the task's attempts |
+| `release` | Hands it back with a reason; it uses one of the task's attempts. With `handback: true`, for a task outside the agent's area, it goes back to the pool with no attempt used, is never parked as failed, and an unnamed `claim` won't offer it to that agent again |
 | `hold`, `unhold` | Puts a waiting task on hold, so no one takes it, or takes it off hold, with an optional reason. Any agent can do either, on any waiting task, including one you put on hold; the task's history names who did it. An agent working on a task can put it back on hold to wait on something outside its control, without using up an attempt |
-| `heartbeat`, `list` | Extend the lease (not needed while the agent's session is alive); read the queue |
+| `heartbeat`, `list`, `get` | Extend the lease (not needed while the agent's session is alive); read the queue, where each line says who a task is for and who holds it; read one task whole by its number or ref (`work#12`): what it was filed with, who it is for and who holds it, its links, note, question, checklist, what it starts after and its last history lines |
 | `accept`, `send_back` | Decide a task in Review. Any agent may, not only you; the history records the agent that did it and says so when it was the agent's own work. You can reopen an acceptance for a week |
-| `edit`, `move`, `start`, `answer`, `cancel`, `reopen`, `retry`, `take_back`, `reassign` | The Kanban's other moves, made by an agent: change a task, put it on another agent's backlog or on hold, start it on a running agent, answer a question, cancel it, send an accepted task back to Review, try a failed one again, take a task back from its holder, or give it to someone else. Each is recorded as the agent, never as you, and a message one sends arrives as the agent's |
+| `boards`, `board_create`, `board_edit`, `board_archive`, `board_unarchive`, `board_default`, `board_delete`, `board_cancel_delete` | Read and manage the [boards](#boards). `enqueue`, `list` and `claim` take a `board` (a name or slug), and `move` with `board` moves a task to that board |
+| `edit`, `move`, `start`, `answer`, `cancel`, `reopen`, `retry`, `take_back`, `reassign` | The Kanban's other moves, made by an agent: change a task, put it on another agent's backlog or on hold, start it on a running agent, answer a question, cancel it, send an accepted task back to Review, try a failed one again, take a task back from its holder, or give it to someone else. Each is recorded as the agent, never as you, and a message one sends arrives as the agent's. A field an action doesn't take is refused by name: `edit` refuses `target_agent`, because who a task is for changes with `move` |
 
 With `host`, `enqueue` files a task on the Kanban of another machine on your network, and `list` reads that machine's board. See [Acting on another machine](/internals/muxapi/#acting-on-another-machine). The task appears on that machine's board like any other, filed by the agent.
 

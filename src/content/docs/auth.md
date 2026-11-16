@@ -11,7 +11,7 @@ AgentMux supports nineteen providers: `claude`, `codex`, `muxcode`, `gemini`, `q
 
 `muxcode` ("Mux Code") is AgentMux's own agentic coding CLI (npm: `@agentmuxai/muxcode`). It emits Claude-compatible stream-JSON, so AgentMux reuses the Claude translator for it.
 
-The per-provider values come from `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`: `authType`, `authCheckCommand`, `authLoginCommand`, `authConfigDirEnvVar`, `authExtraEnv`) and `crates/srv/src/backend/providers.rs`.
+The per-provider values come from `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`: `authType`, `authCheckCommand`, `authLoginCommand`, `authConfigDirEnvVar`, `authExtraEnv`) and `crates/srv-core/src/backend/providers.rs`.
 
 ## Per-provider summary
 
@@ -45,7 +45,7 @@ AgentMux checks whether a CLI is signed in by running its own status command (fo
 
 Five providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
 
-All five are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`).
+All five are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv-core/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv-core/src/identity/resolver/inject.rs`).
 
 AgentMux does not pass an API-key environment variable to these CLIs as a fallback.
 
@@ -141,7 +141,7 @@ An agent's account is chosen from the agent: click the login email in its compos
 | Kimi | `MOONSHOT_API_KEY` |
 | AWS | `AWS_ACCESS_KEY_ID` |
 
-These mappings are in `crates/srv/src/identity/resolver/provider.rs` (`provider_class`). Keys for other services are not put in the environment. The Add Account form has no Kimi option.
+These mappings are in `crates/srv-core/src/identity/resolver/provider.rs` (`provider_class`). Keys for other services are not put in the environment. The Add Account form has no Kimi option.
 
 ## Accounts vs the ambient directory
 

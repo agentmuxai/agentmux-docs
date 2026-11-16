@@ -121,7 +121,7 @@ Desktop notifications: when to notify, and for which events (an agent has a ques
 
 ### Recording
 
-Voice input: the microphone button on agent and terminal panes, the transcription engine (whisper.cpp runs offline; Groq sends audio to Groq's API, with your own API key), the input device, and a microphone test. See [Voice input](/pane-types/#voice-input).
+Voice input: the microphone button on agent and terminal panes, the transcription engine (whisper.cpp runs offline; Groq sends audio to Groq's API, with a key from your Vault), the input device, and a microphone test. With the Groq engine, **Groq API key** is a list of the API keys in your [Vault](/vault/) plus **Add a key to the Vault…**; settings.json holds only the name of the entry you chose. See [Voice input](/pane-types/#voice-input).
 
 ![Settings, Recording tab](../../assets/screenshots/settings/settings-recording.png)
 
@@ -153,7 +153,7 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 
 ### Advanced
 
-Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Preview scroll skid**, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
+Power-user settings, in groups. **Developer**: **Dev mode**. **Terminal (power user)**: WebGL terminal rendering. **Agent panes**: the auto-answer timeout, when Claude agents compact (**Compact agents at** and **Suggest compacting**), the **Model route daily cap**, the memory and CPU limits of container agents, the models of Claude's sub-agents and Explore sub-agents, overlap notes between agents, **Preview scroll skid**, **Retry after the API is back**, and **Remind idle agents of their backlog**. **Sysinfo widget**: the sample interval and history. **Drag & drop**. **Environment**: environment variables for every shell.
 
 ![Settings, Advanced tab: the agent panes group, with the compaction and container limit settings](../../assets/screenshots/settings/settings-advanced.png)
 
@@ -272,6 +272,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `agent:container_cpus` | number or `auto` | `auto` | CPUs each container agent may use, unless the agent has its own limit. `auto`: all but a quarter of what Docker has (at least one). `0`: no limit. Reaches running containers without restarting them. Settings shows it as **Container agents' CPUs**. |
 | `agent:climessaging` | boolean | `false` | Leave Claude Code's own cross-session messaging on. Off by default: AgentMux agents message each other through jekt. |
 | `agent:compactat` | integer | `600000` | The context size, in tokens, at which Claude agents compact by themselves (Settings ▸ Advanced ▸ **Compact agents at**, shown in thousands). `0` leaves Claude Code's own point. Takes effect when each agent next starts. |
+| `model:spend_cap_usd:openrouter` | number or `"none"` | `100` | The most all agents together may use through the OpenRouter [model route](/model-routes/#spend-caps) in one UTC day, in dollars (Settings ▸ Advanced ▸ Agent panes ▸ **Model route daily cap**). When it is used, every agent on the route stops until you raise it or the UTC day ends. `0` or `"none"` is no cap. Read at each request. |
 | `agent:compacthints` | boolean | `true` | At the end of a turn whose context is at least `agent:compacthintat` tokens, give the agent one note suggesting it compact itself. Once per crossing. |
 | `agent:compacthintat` | integer | `400000` | The context size, in tokens, from which that note suggests compacting. Keep it below `agent:compactat`. |
 | `agent:freshhintat` | integer | `150000` | The context size, in tokens, from which a turn that finished a Kanban task gets a note suggesting a fresh session if the next work is unrelated. |
@@ -499,7 +500,7 @@ See [Voice input](/pane-types/#voice-input).
 |---------|------|---------|-------------|
 | `voice:enabled` | boolean | `true` | Show the microphone button on panes. `false` hides it everywhere. |
 | `voice:engine` | string | `"groq"` | Speech-to-text engine: `"groq"` sends the recording to Groq's hosted Whisper; `"whisper-local"` runs a local whisper.cpp program; `"webspeech"` uses the browser's speech API and doesn't work in packaged builds. |
-| `voice:groqApiKey` | string | — | Your Groq API key, for the `groq` engine. Read only by the AgentMux server, never sent to the window. The `AGENTMUX_GROQ_API_KEY` environment variable takes precedence. |
+| `voice:groqApiKey` | string | — | The Vault entry that holds your Groq API key, for the `groq` engine, written as `vault:<entry id>`. Choose it under Settings ▸ Recording ▸ **Groq API key**: choosing an entry also allows this setting to read it, and an entry named only in the file reads nothing. Only the AgentMux server opens the entry, when it sends a recording to Groq; the key is never written to settings.json or sent to the window. A key that sits in settings.json as plain text is moved into the Vault, with a notice under the field. Only one entry is allowed for the setting at a time. The `AGENTMUX_GROQ_API_KEY` environment variable takes precedence. |
 | `voice:whisperCliPath` | string | — | Path to the whisper.cpp command-line program, for `whisper-local`. `AGENTMUX_WHISPER_CLI` overrides it. |
 | `voice:whisperModel` | string | `"base.en"` | The model `whisper-local` downloads on first use. Ignored when `voice:whisperModelPath` is set. |
 | `voice:whisperModelPath` | string | — | A model file to use instead, skipping the download |

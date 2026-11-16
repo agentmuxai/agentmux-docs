@@ -378,13 +378,13 @@ Not normative. These are known differences between the protocol as built and wha
 
 **Source of truth in the code**
 
-- `crates/srv/src/backend/reactive/sanitize.rs`: the marker (`wrap_jekt_message_with_files`), escaping, sanitizing, keywords
-- `crates/srv/src/backend/reactive/handler.rs`: target resolution, the tier and escalation rules, and the former-slug sender rule
+- `crates/srv-core/src/backend/reactive/sanitize.rs`: the marker (`wrap_jekt_message_with_files`), escaping, sanitizing, keywords
+- `crates/srv-core/src/backend/reactive/handler.rs`: target resolution, the tier and escalation rules, and the former-slug sender rule
 - `crates/srv/src/server/reactive.rs`: delivery order and the signature checks
 - `crates/common/src/jekt_sign.rs` and `crates/common/src/jekt_sign/`: signature material and keys
-- `crates/srv/src/muxbus/wan_verify.rs`, `crates/srv/src/muxbus/relay.rs`: WAN signing
+- `crates/srv-core/src/muxbus/wan_verify.rs`, `crates/srv-core/src/muxbus/relay.rs`: WAN signing
 - `crates/common/src/jekt_files.rs`, `crates/srv/src/server/jekt_files.rs`: files
-- `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/server/jekt_hold.rs`, `crates/srv/src/server/jekt_cold.rs`, `crates/srv/src/backend/storage/jekt_held.rs`: the hold
-- `crates/srv/src/backend/ack_policy.rs`: refused replies; `crates/srv/src/backend/bulletin.rs`, `crates/srv/src/server/bulletin_handlers.rs`, `crates/srv/src/backend/quota_mode.rs`: bulletins and quota mode
+- `crates/srv/src/server/jekt_held.rs`, `crates/srv/src/server/jekt_hold.rs`, `crates/srv/src/server/jekt_cold.rs`, `crates/srv-core/src/backend/storage/jekt_held.rs`: the hold
+- `crates/srv-core/src/backend/ack_policy.rs`: refused replies; `crates/srv-core/src/backend/bulletin.rs`, `crates/srv/src/server/bulletin_handlers.rs`, `crates/srv-core/src/backend/quota_mode.rs`: bulletins and quota mode
 - `crates/mcp/src/tools/fleet.rs`, `crates/mcp/src/identity.rs`, `crates/mcp/src/tool_helpers.rs`: the `Message` tool, signing, results
 - `docs/specs/SPEC_JEKT_*` and `SPEC_WAN_JEKT_*` in the `agentmux` repository: the design records, the reason behind each rule

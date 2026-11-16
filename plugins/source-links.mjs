@@ -27,14 +27,14 @@ export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '
  */
 export const aliases = {
     // Rust / shell (env-vars page)
-    'shell.rs': 'crates/srv/src/backend/blockcontroller/shell/lifecycle.rs',
+    'shell.rs': 'crates/srv-core/src/backend/blockcontroller/shell/lifecycle.rs',
     'data_paths.rs': 'crates/common/src/data_paths.rs',
     'runtime_mode.rs': 'crates/common/src/runtime_mode.rs',
     'srv_spawner.rs': 'crates/launcher/src/srv_spawner.rs',
     'launcher/main.rs': 'crates/launcher/src/main.rs',
-    'shellintegration.rs': 'crates/srv/src/backend/shellintegration.rs',
-    'bash.sh': 'crates/srv/src/backend/shellintegration/bash.sh',
-    'pwsh.ps1': 'crates/srv/src/backend/shellintegration/pwsh.ps1',
+    'shellintegration.rs': 'crates/srv-core/src/backend/shellintegration.rs',
+    'bash.sh': 'crates/srv-core/src/backend/shellintegration/bash.sh',
+    'pwsh.ps1': 'crates/srv-core/src/backend/shellintegration/pwsh.ps1',
     'websocket.rs': 'crates/srv/src/server/websocket.rs',
     // Layout model (state-model page)
     'layoutModel.ts': 'frontend/layout/lib/layoutModel.ts',
@@ -45,7 +45,7 @@ export const aliases = {
     'layoutNodeModels.ts': 'frontend/layout/lib/layoutNodeModels.ts',
     'layoutIntents.ts': 'frontend/layout/lib/layoutIntents.ts',
     'layout_intents.rs': 'crates/srv/src/server/service/layout_intents.rs',
-    'persist_subscriber.rs': 'crates/srv/src/persist_subscriber.rs',
+    'persist_subscriber.rs': 'crates/srv-core/src/persist_subscriber.rs',
     // Agent-pane-state store (state-model page §3)
     'types.ts': 'frontend/app/store/agent-pane-state/types.ts',
     'reducer.ts': 'frontend/app/store/agent-pane-state/reducer.ts',

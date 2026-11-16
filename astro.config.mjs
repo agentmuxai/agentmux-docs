@@ -82,6 +82,7 @@ export default defineConfig({
 							items: [
 								{ label: 'Introduction', slug: 'getting-started' },
 								{ label: 'Installation', slug: 'installation' },
+								{ label: 'Headless server', slug: 'headless-server' },
 								{ label: 'Quickstart', slug: 'quickstart' },
 								{ label: 'First Agent Setup', slug: 'first-agent' },
 							],
@@ -111,7 +112,9 @@ export default defineConfig({
 								{ label: 'History', slug: 'history' },
 								{ label: 'Audit', slug: 'audit' },
 								{ label: 'Jobs', slug: 'jobs' },
+								{ label: 'Drone', slug: 'drone' },
 								{ label: 'Kanban', slug: 'kanban' },
+								{ label: 'Atlas', slug: 'atlas' },
 								{ label: 'The Vault', slug: 'vault' },
 								{ label: 'Model routes', slug: 'model-routes' },
 								{ label: 'Tower', slug: 'tower' },

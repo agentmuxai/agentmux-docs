@@ -28,9 +28,9 @@ AgentMux counts what each agent uses, in dollars, and stops an agent that reache
 | **Kimi K3** | 1M | yes |
 | **Kimi K3.1 Pro** | 1M | yes |
 
-Every model on the route calls tools and thinks. A model that can't read images is refused for a conversation that already holds some. The prices AgentMux counts spend with are shown beside each model in the agent's **Model** popup, in dollars per million tokens in and out (`crates/srv/src/backend/model_gateway/catalog.rs`).
+Every model on the route calls tools and thinks. A model that can't read images is refused for a conversation that already holds some. The prices AgentMux counts spend with are shown beside each model in the agent's **Model** popup, in dollars per million tokens in and out (`crates/srv-core/src/backend/model_gateway/catalog.rs`).
 
-An agent on a 1M-token model compacts its conversation at 300K tokens rather than near the end of the window, so it doesn't re-read a million tokens on every turn. If you set a smaller `CLAUDE_CODE_AUTO_COMPACT_WINDOW` in the agent's environment in My Agents, that one is kept.
+An agent on a 1M-token model compacts its conversation at 300K tokens rather than near the end of the window, so it doesn't re-read a million tokens on every turn. If you set a smaller `CLAUDE_CODE_AUTO_COMPACT_WINDOW` in the agent's environment in My Agents, that one is kept. If the context is still more than 1.5 times that point, AgentMux sends the agent `/compact` itself, between turns and never in the middle of one. If two tries leave it over, the agent's pane shows a warning line and its leader gets one note.
 
 ## Add the route's key
 
@@ -65,7 +65,7 @@ The figure is the provider's own charge for each response when it carries one, o
 |---|---|
 | **50%** of the agent's cap | its leader gets one note |
 | **80%** | a line above the composer: **$16 of $20 used today: the agent stops at its cap.** The chip below turns to a warning tone. |
-| **100%** | AgentMux refuses the agent's next request, ends the turn in flight, shows the card below, and tells the leader |
+| **100%** | AgentMux refuses the agent's next request, ends the turn in flight (the agent's process stays up), shows the card below, and tells the leader |
 
 Each of these happens once per agent per UTC day. An agent whose cap is **none** has no 50% note, and the route's cap still applies.
 
@@ -82,7 +82,7 @@ When the route's cap is the one used, the card reads **Stopped: the cap for Open
 ### Set a cap
 
 - **An agent's cap:** use **Raise to** on the card, or ask its leader. A leader sets it with `Agents` `update` and `spend_cap_usd` (a number of dollars, at least $0.01; `0` or `none` for no cap) and zeroes today's figure with `reset_spend_today`. An agent may lower its own cap, never raise or lift it, and can't reset its figure.
-- **The route's cap:** there is no field for it in the Settings pane. Open **Open raw settings.json** at the bottom of Settings and add `"model:spend_cap_usd:openrouter": 250` (dollars; `"none"` or `0` for no cap). AgentMux reads it at each request, so a raise lets the next one through.
+- **The route's cap:** in **Settings ▸ Advanced ▸ Agent panes**, **Model route daily cap** is the most all agents together may use through OpenRouter in a UTC day, in dollars; `0` is no cap. The field writes `model:spend_cap_usd:openrouter`, which you can also set in settings.json (`"none"` works there too). AgentMux reads it at each request, so a raise lets the next one through. The card an agent shows when the route's cap is used says to raise it in **Settings (Advanced)**.
 
 ## When the key itself runs out
 
@@ -99,4 +99,4 @@ An agent on its own provider key, with no route, is told the same way for itself
 - [The Vault](/vault/): where the route's key lives, and its activity
 - [Pane Types](/pane-types/#composer-strip): the **Model** popup in the agent pane
 - [The `Agents` tool](/internals/muxapi/#agents): `routes`, `spawn`, `create`, `update` with `route`, `model` and `spend_cap_usd`
-- `crates/srv/src/backend/model_gateway/cap.rs`: the caps, and `frontend/app/view/agent/spend-stopped.ts`: the card and the chip
+- `crates/srv-core/src/backend/model_gateway/cap.rs`: the caps, and `frontend/app/view/agent/spend-stopped.ts`: the card and the chip

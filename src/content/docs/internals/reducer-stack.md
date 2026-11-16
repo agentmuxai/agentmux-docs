@@ -23,7 +23,7 @@ There are three reducers in Rust, one per process, each a pure `update` function
 
 | | Launcher | Host (cef) | Sidecar (srv) |
 |---|---|---|---|
-| Source | `crates/launcher/src/reducer/` | `crates/cef/src/reducer/` | `crates/srv/src/reducer.rs` + `crates/srv/src/reducer/` |
+| Source | `crates/launcher/src/reducer/` | `crates/cef/src/reducer/` | `crates/srv-core/src/reducer.rs` + `crates/srv-core/src/reducer/` |
 | Commands | the shared `agentmux_common::ipc::Command` | its own `HostCommand` (34 variants), host-internal, never on a pipe | the shared `agentmux_common::ipc::Command` |
 | Output | `Vec<Event>`, which the saga coordinator subscribes to | a `DispatchOutput` whose Win32/CEF effects the caller applies | `Vec<Event>`, which the persist subscriber writes to SQLite |
 
@@ -39,7 +39,7 @@ CEF-side coordination, in `crates/cef/src/reducer/`: pending window creations, b
 
 ### Layer 3 — Sidecar (srv)
 
-Owns the app domain: workspaces, tabs, block ids, which workspace each window shows, and each tab's layout tree with its focus and magnify. Lives in `crates/srv/src/reducer.rs` plus the per-domain modules in `crates/srv/src/reducer/` (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Multi-step commands (tear-off, restore, redock, delete) run as srv sagas. An idempotent persist subscriber writes the events back to SQLite. **Status:** done.
+Owns the app domain: workspaces, tabs, block ids, which workspace each window shows, and each tab's layout tree with its focus and magnify. Lives in `crates/srv-core/src/reducer.rs` plus the per-domain modules in `crates/srv-core/src/reducer/` (`block.rs`, `tab.rs`, `layout.rs`, `lifecycle.rs`, `snapshot.rs`, `window.rs`, `workspace.rs`). Multi-step commands (tear-off, restore, redock, delete) run as srv sagas. An idempotent persist subscriber writes the events back to SQLite. **Status:** done.
 
 ### Layer 4 — Frontend slices
 
@@ -61,7 +61,7 @@ Pure state machines that aren't slices: the document-tab model (`doc-tabs`), the
 
 **Conventions.** A slice follows the same few rules, and there is no shared framework for them: the reducer is pure and does no I/O; a command carries a `source` (`"user"`, `"system"`, or an agent); a slice that has two writers for the same value guards against the echo loop between them (the Browser pane's `source: "backend"` above); and a closed pane's later commands are dropped and logged, not applied.
 
-**What is not a frontend slice.** The layout tree and the tabs are srv's (Layer 3: `crates/srv/src/reducer/layout.rs` and `tab.rs`), and the window has no reducer of its own for them. A layout edit is applied to the window's local tree at once, so it shows with no round trip, and sent to srv as an intent (`frontend/layout/lib/layoutIntents.ts`). srv applies the same action to its own tree, and what srv stores is the layout: when nothing of the window's is in flight, the window compares its tree with the stored one and takes srv's if they differ. Pane-tab commands go to srv the same way, in the same queue.
+**What is not a frontend slice.** The layout tree and the tabs are srv's (Layer 3: `crates/srv-core/src/reducer/layout.rs` and `tab.rs`), and the window has no reducer of its own for them. A layout edit is applied to the window's local tree at once, so it shows with no round trip, and sent to srv as an intent (`frontend/layout/lib/layoutIntents.ts`). srv applies the same action to its own tree, and what srv stores is the layout: when nothing of the window's is in flight, the window compares its tree with the stored one and takes srv's if they differ. Pane-tab commands go to srv the same way, in the same queue.
 
 ## The pattern, end-to-end
 
@@ -105,7 +105,7 @@ Each can be backed up independently. None of them depend on a single point of fa
 
 ## Reading the source
 
-The TypeScript slice surface is documented in the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the upstream Rust source in the [agentmux repo](https://github.com/agentmuxai/agentmux): the reducers in `crates/launcher/src/reducer/`, `crates/cef/src/reducer/`, and `crates/srv/src/reducer.rs` with `crates/srv/src/reducer/`; the sagas in `crates/launcher/src/saga/` and `crates/srv/src/sagas/`.
+The TypeScript slice surface is documented in the [TypeScript API reference](/api/typescript/) on this site (the four slice store files). For the host and sidecar reducer code, see the upstream Rust source in the [agentmux repo](https://github.com/agentmuxai/agentmux): the reducers in `crates/launcher/src/reducer/`, `crates/cef/src/reducer/`, and `crates/srv-core/src/reducer.rs` with `crates/srv-core/src/reducer/`; the sagas in `crates/launcher/src/saga/` and `crates/srv/src/sagas/`.
 
 For deep design docs:
 

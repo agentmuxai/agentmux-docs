@@ -24,6 +24,7 @@ Click the AgentMux logo at the start of the tab bar (at the far right of the tit
 | **Command Palette** | `Ctrl+Shift+P` / `⇧⌘P` | Opens the command palette (see below). |
 | **DevTools** | — | Toggles Chromium DevTools. It appears only while [Dev mode](/settings/#app-settings) is on (`app:devmode`; **Toggle Dev Mode** in the command palette switches it). |
 | **Online Docs** | — | Opens this documentation site (docs.agentmux.ai) in your default browser. |
+| **Reload Window** | — | Reloads this window at once. It is the way out when a window shows nothing or has stopped following its tabs. |
 | **Exit** | — | Closes the current window. Other windows stay open, and this one stays in the workspace as a closed window you can reopen from the status bar's instance panel. Closing the last window quits AgentMux. Its agents keep running; it asks first only when closing would stop a working agent (the last window, or `agents:always_available` turned off). See [Closing a window keeps it](/workspaces/#closing-a-window-keeps-it). |
 
 **New Window** appears only where AgentMux can open several windows, and **Opacity** only where windows can be see-through (`frontend/app/window/logo-menu.tsx`).
@@ -54,12 +55,12 @@ Registered commands are grouped by category:
 |----------|----------|
 | **Open** | Open Terminal, Open Agent, Open System Info, Open Tower (Task Manager), Open Kanban, Open Vault, Open History, Open Audit, Open Jobs, Open Help, Open Swarm, Open Files, Open Remotes, Open Toolchain. Open Tower, Kanban, Vault, History, Audit, Jobs, Help and Swarm bring back the pane that is already open in this tab (with it in another tab, they open a new one here); New Tower, New Kanban, New Help and New Swarm always open another. |
 | **Split** | Split Right, Split Down |
-| **Window** | New Window, Close Window, Minimize Window, Toggle Maximize, Reload Window (Free Memory), Hibernate Hidden Browser Panes, Wake Sleeping Browser Panes, Restart Backend, Open Settings File |
+| **Window** | New Window, Close Window, Minimize Window, Toggle Maximize, Reload Window, Reload Window (Free Memory), Sign Out of This Browser (only in a browser signed in to a [headless server](/headless-server/)), Hibernate Hidden Browser Panes, Wake Sleeping Browser Panes, Restart Backend, Open Settings File, Open Widgets File, Open Settings File in System Editor |
 | **Workspace** | New Workspace…, Open Workspace…, Rename Workspace…, Delete Workspace…, Export Workspace…, Import Workspace… |
 | **Tab** | New Tab, Close Tab, Next Tab, Previous Tab |
 | **Pane** | Close Pane, Toggle Magnify, Back to Previous Pane, Forward to Next Pane, Focus Pane Right / Left / Up / Down, Redock floating pane |
 | **View** | Command Palette, Toggle Status Bar, Toggle Dev Mode, Zoom In, Zoom Out, Actual Size |
-| **App** | Connectors, Memory, Settings, Pause all agent browsing, Resume agent browsing (only the one that applies shows) |
+| **App** | Connectors, Memory, Settings, Customize keyboard shortcuts, Pause all agent browsing, Resume agent browsing (only the one that applies shows) |
 | **Dev** | Toggle DevTools (only while Dev mode is on) |
 | **Help** | Online Docs |
 

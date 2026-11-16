@@ -10,7 +10,7 @@ AgentMux organizes your workspace into panes — individual views that can be sp
 
 ## Available Pane Types
 
-By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more**. See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
+By default the widget bar pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order; Atlas, Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit are under **more**. See [Sections](/widgets/#sections) to give any section a button. These are the defaults for a widget bar you haven't customised; one you have keeps its pins, and **Reset widget bar** (below) brings back the defaults. Right-click a widget to pin or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more** (`crates/srv-core/src/config/widgets.json`, `frontend/app/window/action-widgets.tsx`). The `widget:icononly` setting drops the labels at any width.
 
 ### Pin, keep in More, or hide
 
@@ -38,7 +38,8 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 | **Files** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Files](#files) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
-| **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, the agents of other instances, a fleet toolbar and the Supervisor — see [Swarm](/subagent-watcher/) |
+| **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, the agents of other instances and of your account's other machines, a fleet toolbar and the Supervisor — see [Swarm](/subagent-watcher/) |
+| **Atlas** | map | `atlas` | Every agent on every machine as a map, with who reports to whom and the messages, tasks and pull requests passing between them — see [Atlas](/atlas/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
 | **History** | clock-rotate-left | `history` | Every agent's kept conversation, what was typed to each agent, and where the history is stored — see [History](/history/) |
@@ -143,6 +144,10 @@ The host exposes the browser pane's lifecycle via these CEF commands (invoked th
 
 If you need to drive the browser pane from an agent or saga, those are the commands. The frontend [BrowserViewModel](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/browser/browser-model.ts) shows the canonical sequencing.
 
+### Windows pane type
+
+On macOS and Linux a browser pane is an overlay in the window's own compositor. On Windows, panes are child windows by default. To use overlay panes on Windows too, start AgentMux with `AGENTMUX_PANE_BACKEND=views` (see [Environment variable contract](/internals/env-vars/#agentmux_pane_backend)). With overlay panes the page stays inside the pane's border while you resize the window. A pane opened in a floating window is a child window either way.
+
 ### Default URL
 
 A new browser pane opens its configured URL, otherwise your Home page, otherwise `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly. (Spec: `SPEC_BROWSER_PANE_DEFAULT_URL_AND_POPUP_2026_04_21.md`.)
@@ -170,7 +175,7 @@ The editor pane is a [CodeMirror 6](https://codemirror.net/) workspace with a fi
 
 Languages currently get syntax highlighting via lazy-loaded extensions: TypeScript / JavaScript, Python, Rust, HTML, CSS, JSON, Markdown. Other extensions fall back to plain text.
 
-`Ctrl+S` / `Cmd+S` saves the current file. When **no file is open** (scratch buffer mode), `Ctrl+S` opens an inline **Save As** path entry at the bottom of the editor — type an absolute path and press Enter to write the buffer to disk. Unsaved changes mark the pane title with `*`.
+`Ctrl+S` / `Cmd+S` saves the current file. When **no file is open** (scratch buffer mode), `Ctrl+S` opens an inline **Save As** path entry at the bottom of the editor — type an absolute path and press Enter to write the buffer to disk. Unsaved changes mark the pane title with `*`. An untitled document can also be saved by naming its tab (see [Renaming a file from its tab](#renaming-a-file-from-its-tab)).
 
 ### File tree
 
@@ -290,8 +295,20 @@ The Editor keeps its open files, text or [media](#media), as **document tabs** i
 - **Drag a tab** along the bar to reorder it.
 - **Drop it on another Editor pane** to move it there. It keeps its unsaved changes and undo history. A document tab lands only in another Editor: dropping it anywhere else, near a pane's edge included, doesn't open a new pane.
 - **Right-click a tab** and choose **Move to New Pane** to open it in a new pane to the right of its own.
+- **Right-click a tab** for **Rename…** (**Save As…** on an untitled document) and **Show As**, the other viewers the file can be shown in (see [Hex viewer](#hex-viewer)).
 
 A new pane made this way is an Editor on the same connection, holding just that tab. A tab that is being saved stays where it is.
+
+#### Renaming a file from its tab
+
+Double-click a document tab, press **F2** with the Editor focused (not in the file tree, where F2 renames the row), or choose **Rename…** in the tab's right-click menu. The tab's name turns into a text box with the current name. Type the new name and press **Enter**, or press **Escape**, or click elsewhere, to leave the file as it is. Nothing is written to disk until you press Enter.
+
+- **A saved file** is renamed in its own folder. The new name can't hold control characters, and a rename never replaces a file that already has that name: the box stays open with the reason under it. It works the same for a file on an SSH host. A name that another tab of this Editor already has open is refused too.
+- **An untitled document** is saved under the name you type, as with **Save As**. A bare name goes into the folder of the file the pane showed last, else the folder of your last save, else your home folder, and a line under the box says where it will save (**Saves to …**). A full path, or one starting with `~`, saves there. A name can't contain `..`.
+- **Every Editor tab on that file follows**, in any pane or window, with its unsaved text and undo history kept. Renaming a folder from the tree moves the tabs of the files inside it.
+- A file dropped into the Editor from outside has no file on disk to rename, so its tab has no name box.
+
+An agent can rename a file or folder in its own folder with the `Pane` tool (action `rename`, target `file`), and the open Editor tabs follow in the same way.
 
 #### Merging Editor panes
 
@@ -323,12 +340,13 @@ Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
 
 ## Media
 
-There is no separate Media pane any more. Images, audio and video open in the [Editor](#editor), as tabs like any other file. The Editor picks a viewer for each file from its content, and from its extension only where the content leaves it open (`frontend/app/view/editor/viewers/viewer-choice.ts`). PDFs get a PDF viewer, and other binary files a card with the file's details.
+There is no separate Media pane any more. Images, audio and video open in the [Editor](#editor), as tabs like any other file. The Editor picks a viewer for each file from its content, and from its extension only where the content leaves it open (`frontend/app/view/editor/viewers/viewer-choice.ts`). PDFs get a PDF viewer, files of a kind with no viewer of its own (an archive, a font, an Office document) a card with the file's details, and other binary files hex. **Show As** in a tab's menu switches a file to any viewer that can show it.
 
 | Viewer | Files | What it does |
 |---|---|---|
 | **Image** | png, jpg, gif, webp, svg, avif, bmp, ico and other images | The wheel zooms about the cursor (`Ctrl`+wheel still zooms the pane). A click zooms in a step; `Alt`+click, or `Ctrl`+click except on macOS, zooms out. A drag pans, and the image itself can't be dragged out of the viewer. `+` and `-` zoom, `0` fits the image to the pane, `1` shows it at 100%, and `[` and `]` show the previous and next image in the folder. The toolbar has fit, 100% and a background choice, and shows the image's size and type (`frontend/app/view/editor/viewers/image/image-viewer.tsx`). |
 | **Audio and video** | webm, mp4, mov and m4v video; wav, mp3, ogg, opus, flac, m4a and aac audio | The player's own controls, and a **Loop** button (`L`), **Slower** (`<`) and **Faster** (`>`) buttons around a speed readout, and for video **Back one frame** (`,`) and **Forward one frame** (`.`) (see below). Nothing plays on its own, and a video stops when another tab comes to the front. A file that won't play says whether a codec is missing or the file is damaged (`frontend/app/view/editor/viewers/media/av-viewer.tsx`). |
+| **Hex** | Any file | Its bytes as rows of an offset, the bytes in hex and their text (see [Hex viewer](#hex-viewer)). |
 
 **Loop, speed and frame step.** The toolbar of an audio or video tab has a **Loop** button that repeats the file until you turn it off. **Slower** and **Faster** change the speed in steps of 0.25, from 0.25× to 4×, and the readout between them shows the speed (**1×** at normal speed); click it to go back to normal speed. A video also has **Back one frame** and **Forward one frame**, which pause it and move one frame at a time. The keys are `L` for loop, `<` and `>` for speed, and `,` and `.` for a frame back and forward, while the viewer has the focus (`.`/`,` do nothing in an audio file). A new file starts at normal speed with the loop off.
 
@@ -336,9 +354,24 @@ There is no separate Media pane any more. Images, audio and video open in the [E
 
 A viewer reloads when its file changes on disk. To open one of these files, open it in the Editor as you would any file, or drop it on an Editor pane (see [Dropping files onto panes](#dropping-files-onto-panes)).
 
+### Hex viewer
+
+Any file can be shown as hex: choose **Show As** → **Hex** in the file's tab menu, or **Hex** in the viewer bar above a non-text file. A binary file the Editor has no other viewer for opens as hex. The bytes are read in parts as you scroll, so a file of any size opens at once. The viewer is read-only.
+
+Each row has an **offset** column, the bytes in hex, and a **Text** column with the bytes as characters (a dot for a byte that isn't printable ASCII). The bar above the grid has:
+
+- **Go to offset** (`Ctrl+G`, `⌘G`): type a decimal number, or hex as `0x1F`, and press Enter. The box shows the offset of the cursor.
+- **8 / 16 / 32** bytes in a row.
+- **Copy the selection…**: **Copy as hex**, **Copy as a C array**, **Copy as base64**, **Copy as text** or **Copy the offset**. A copy takes up to 1 MiB of the selection.
+- **Data inspector** (`I`): the bytes at the cursor read as binary, octal, 8-, 16-, 32- and 64-bit integers (signed and unsigned), float16, float32 and float64, ULEB128 and a UTF-8 character, in **Little endian** or **Big endian** order. A value shows a dash when the file ends before the type does.
+- **Find** (`Ctrl+F`, `⌘F`): a pattern as **Hex** (`DE AD ?? EF`, where `??` matches any byte), **UTF-8** or **UTF-16** text, with **Previous match** (`Shift+Enter`) and **Next match** (`Enter`). A pattern can be up to 256 bytes long. A file dropped in with no path on disk can't be searched.
+- At the end of the bar, the offset of the cursor, how many bytes are selected, and the file's size.
+
+Click a byte to put the cursor there, drag or `Shift`+click to select, and use the arrow keys to move. The keys are listed in [Keybindings → Hex viewer](/keybindings/#hex-viewer). The width, the inspector and its byte order are kept for the tab.
+
 ### Following a folder
 
-The Media pane's job was watching a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), and showing each new file as it lands. The Editor does this per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
+The Media pane's job was watching a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), and showing each new file as it lands. The Editor does this per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv-core/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
 
 ### Opening it programmatically
 
@@ -436,7 +469,7 @@ If the agent is idle, it switches at once and restarts, keeping its session. If 
 
 ### Attaching files
 
-You can attach any kind of file to a message: images, PDFs, Word, Excel and PowerPoint files, text, code, archives and more (`frontend/app/view/agent/attachments/`, `crates/srv/src/backend/attachments/`). To attach files:
+You can attach any kind of file to a message: images, PDFs, Word, Excel and PowerPoint files, text, code, archives and more (`frontend/app/view/agent/attachments/`, `crates/srv-core/src/backend/attachments/`). To attach files:
 
 - drop them anywhere on the agent pane (see [Dropping files onto panes](#dropping-files-onto-panes)); a dropped folder adds the files in it, skipping folders such as `node_modules`, `target`, `dist` and `.venv`;
 - paste them with `Ctrl+V` (`Cmd+V`), for example a screenshot or files copied in your file manager;
@@ -496,50 +529,15 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 ## Swarm
 
-The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network. Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection: select agents, then send one message to all of them from **Broadcast**, or stop them or set their Supervisor mode from **Supervisor**. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
+The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network, then your account's other machines that are not on this network (the cloud tier, display only). Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection: select agents, then send one message to all of them from **Broadcast**, or stop them or set their Supervisor mode from **Supervisor**. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own, and the [Atlas](/atlas/) draws the same agents as a map. A row whose agent ended its turn with a [Browser](/browser-pane/) request still open (a click to allow, a hand-off) shows the **question** chip and "Waiting for you in a browser pane", and counts in the status bar's list of what waits on you. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
 
 ![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 
 ## Drone
 
-The Drone pane is a visual **DAG-of-blocks** automation engine — compose a directed graph where each node is a reusable block, run it, and inspect results per block. Open it from the widget bar.
+The Drone pane builds and runs automations as a graph of blocks: variables, agents, API requests, conditions and loops, waits and joins, tasks and messages. Open it from the widget bar. You run a drone with **▶ Run**, or unattended from a [job](/jobs/). The blocks, their fields, the limits and the shipped templates are on the [Drone](/drone/) page.
 
 ![The Drone widget when it first opens](../../assets/screenshots/widgets/widget-drone-small.png)
-
-The name signals the pane's autonomous nature: a drone runs unattended on triggers, distinct from the interactive Agent pane.
-
-### Block types
-
-| Block | Purpose |
-|---|---|
-| **Variables** | Declare drone-scoped variables, read elsewhere via `{{var.name}}`. |
-| **Agent** | Run an agent with a task prompt. Supports identity, memory, named-agent continuation, and working directory — the same controller the interactive Agent pane uses, invoked headlessly. |
-| **API** | Make HTTP requests (GET/POST/PUT/PATCH/DELETE). URL and body support `{{...}}` interpolation. |
-| **Condition** | Evaluate a boolean expression (e.g. `{{var.x}} > 10`); branches into true / false outputs. |
-| **Response** | Terminal output block. Exactly one is required per drone — execution pauses until a Response is reached or an error occurs. |
-
-### Authoring a drone
-
-1. Click **New** to start a blank drone.
-2. Click a block in the palette to add it to the canvas.
-3. Shift-click a source node, then a target node, to connect them.
-4. Click a node to open the inspector and configure its parameters.
-5. **Save** to persist the drone to the backend.
-
-### Running a drone
-
-Click **Run**. The engine performs a topological sort over the DAG and executes blocks in dependency order, publishing `block_started` / `block_done` / `block_error` events on the `dronerun:<id>` SSE topic. The bottom **Runs** panel shows recent executions; the right-hand inspector shows the last result for whichever block is selected (for Agent blocks, the final response text and cost in USD if available).
-
-### Known limitations
-
-The Drone pane is on a Phase 2 roadmap that adds the following — they are **not** available yet:
-
-- Drag-and-drop canvas (current canvas is click-to-add + Shift-click to connect)
-- Triggers (cron / webhook / dependency / schedule)
-- Subdrone invocation (one drone calling another)
-- Function blocks (sandboxed JS via `quickjs-rs`)
-- Streaming agent output live into the inspector (Phase 1.5 shows aggregated result only)
-- Run cancellation / abort
 
 ## Sysinfo
 
@@ -572,7 +570,7 @@ Each supporting pane shows a microphone button in the **top-right of the pane he
 - **Terminal panes** — the recognized text is streamed character-by-character into the PTY, exactly as if typed
 - **Agent panes** — the recognized text appends to the composer textarea (interim phrases preview as you speak; finalized phrases commit). You still press Enter to send
 
-The mic button pulses while listening. Clicking the mic on a **different** pane retargets the voice stream to that pane — only one pane receives output at a time. Clicking the active pane's mic again stops listening.
+The mic button pulses while listening, and shows how loud AgentMux hears you. If the transcription engine has nothing to work with, the mic doesn't record: an Agent pane shows **Voice input isn't set up** above the composer, naming what is missing (a Groq key, or the local Whisper program or model), with an **Open Recording settings** button that goes to Settings ▸ Recording. Clicking the mic on a **different** pane retargets the voice stream to that pane — only one pane receives output at a time. Clicking the active pane's mic again stops listening.
 
 ### Keyboard shortcut
 
@@ -588,13 +586,11 @@ The shortcut does nothing on pane types without voice (Browser and so on). In an
 |---|---|---|---|
 | `voice:enabled` | bool | `true` | When `false`, hides the mic button across all panes |
 
-Set in your [settings.json](/settings/) (the path varies by install vs dev mode — see the Settings page for the exact location). Useful if your browser blocks the Web Speech API or you don't want voice input enabled by default.
+The engine and the rest of the voice settings are in Settings ▸ **Recording** and in [Voice Input Settings](/settings/#voice-input-settings). The default engine, Groq, needs a key: choose an API key from your [Vault](/vault/) under **Groq API key**, or add one there. Set in your [settings.json](/settings/) if you don't want voice input enabled by default.
 
 ### Browser permission
 
-Voice input uses the browser's built-in [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API). The first time you click the mic, Chromium prompts for microphone permission. If you deny it (or revoke it later), AgentMux shows a notification — re-enable it in browser settings to recover.
-
-The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so this works for all users; in non-Chromium browsers the mic button would simply not appear (`voice.isAvailable()` returns false).
+The first time you click the mic, Chromium prompts for microphone permission. If you deny it (or revoke it later), AgentMux shows a notification — re-enable it in browser settings to recover.
 
 ## Pane Management
 
@@ -609,7 +605,7 @@ The Web Speech API is currently Chromium-only. AgentMux is built on Chromium so 
 
 A widget is either a **singleton**, where one pane is the point, or a widget you can have many of:
 
-- **Brought back:** Swarm, Memory, Connectors, Settings, Vault, History, Audit, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, brings it to the front of its pane's tabs, and gives it focus. This looks in the tab you are on only: if the pane you have is in another tab or another window, the click opens a new one here and leaves yours where it is. It never switches tabs or windows. If there is none, it opens one.
+- **Brought back:** Atlas, Swarm, Memory, Connectors, Settings, Vault, History, Audit, Tower, Kanban, Help, Toolchain and Drone. Clicking one in the widget bar, in **more**, in a group's flyout or in the command palette shows the pane you already have: it restores it if it was minimized, un-magnifies another pane that covered it, brings it to the front of its pane's tabs, and gives it focus. This looks in the tab you are on only: if the pane you have is in another tab or another window, the click opens a new one here and leaves yours where it is. It never switches tabs or windows. If there is none, it opens one.
 - **Opened each time:** Agent, Terminal, Browser, Editor, Files and System info. Every click opens a new pane.
 
 **Shift-click** an entry (or press Shift with it in the palette) to open a new pane even for a singleton. The command palette also lists a **New …** entry for each singleton (**New Tower (Task Manager)**, **New Kanban**, **New Help**, and so on). An installed [widget](/widgets/) says which it is with `singleton` on its pane (see [The package](/widget-api/#the-package)); the default is a new pane each time.
@@ -675,11 +671,11 @@ Right-click a pane's header for its menu: **Paste** (in a pane that takes typed 
 
 **Magnify Pane** (`⌘M` / `Ctrl+Shift+M`, the maximize button in the header, or a double-click on the header) enlarges the pane to fill the tab, hiding the others behind it, and the header's maximize button becomes **Restore**. Do it again, or click **Restore**, to put it back.
 
-**Minimizing a pane merges its tabs into a neighbour.** When you minimize a pane in a split, its tabs join a minimized pane next to it, if there is one: the nearest one before it (above or to the left) with no expanded pane in between, else the nearest after it, with a landing animation on the tabs that arrive. In a row, minimized panes stacked over the same pane count as next to each other. If there is none, the tabs join the nearest expanded pane, after it (to the right or below) else before it, as background tabs; if that neighbour is itself a split, the pane nearest to the one you minimized takes them. Either way the minimized pane's own space goes to the others, and the pane you minimized is gone as a pane. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore, and not a locked pane, a floating pane or the last expanded one.
+**Minimizing a pane merges its tabs into a neighbour.** When you minimize a pane in a split, its tabs join a minimized pane next to it, if there is one: the nearest one before it (above or to the left) with no expanded pane in between, else the nearest after it, with a landing animation on the tabs that arrive. In a row, minimized panes stacked over the same pane count as next to each other. If there is none, the tabs are dealt out one by one to the tab's open panes as background tabs, round robin: the first goes to the nearest expanded pane (after it, to the right or below, else before it; if that neighbour is itself a split, the pane nearest to the one you minimized), the next to the following pane, and so on round again. Either way the minimized pane's own space goes to the others, and the pane you minimized is gone as a pane. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore, and not a locked pane, a floating pane or the last expanded one.
 
 To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, drag its pill out onto a pane's body; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
 
-The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
+The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. A pane that is alone in its tab has no **Maximize**, since it already fills the tab. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
 
 From the click on **Close** until the pane is gone, the pane is dimmed and ignores clicks, and its header reads **Closing…** (**Closing 3 tabs…** when the pane holds three tabs). A pane with nothing to ask you, such as an editor or a terminal, closes without waiting on the backend.
 
@@ -702,6 +698,8 @@ From the click on **Close** until the pane is gone, the pane is dimmed and ignor
 
 Each window remembers the panes you selected, in any tab. The mouse's Back and Forward side buttons walk through that list: Back selects the pane you had selected before (switching to its tab, with its highlight and caret), Forward the one after. A pane you moved to another tab is found there. A press does nothing while a menu or dialog is open, or with `Shift`, `Alt` or the left button held. Over a browser pane, `Ctrl` + a side button is the page's own back or forward. The list is kept in memory, so it starts empty when AgentMux does. Turn the buttons off with **Settings ▸ Window & Panes ▸ Mouse side buttons select the previous / next pane** (`mouse:sidebuttons`); the page then keeps its own history on those buttons.
 
+Panes glide into place when a pane opens, closes, is minimized or restored, or when two panes are swapped, and a new or restored pane fades in. The glide follows the [Animations](/settings/#animations) setting.
+
 ### Drag and Drop
 
 Rearrange panes by dragging their headers. You can:
@@ -710,9 +708,9 @@ Rearrange panes by dragging their headers. You can:
 - Move panes across tabs
 - Drag panes between windows (cross-window drag supported on all platforms)
 
-While you drag a pane by its header, the other panes move live to show where it will land. Hold it over its own slot and the layout closes over the slot, to show that releasing there tears the pane off into a window. `layout:livereflow` set to `false` turns this off and shows the landing rectangle instead (see [Animation settings](/settings/#animation-settings)).
+While you drag a pane by its header, the other panes move live to show where it will land. Hold it over its own slot and the layout closes over the slot, to show that releasing there tears the pane off into a window. A pane dragged out of the window shows **TEAR OFF**, in red, in its own place, and the other panes close over its slot; they open again if the pointer comes back or the drag is cancelled. A browser pane in the tab moves with the other panes during the drag. A pane dropped on, or opened in, a tab whose panes are all minimized arrives expanded there. `layout:livereflow` set to `false` turns the live layout off and shows the landing rectangle instead (see [Animation settings](/settings/#animation-settings)).
 
-Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. A pane with two or more tabs can place one of its own tabs this way. `Ctrl`+click (`Cmd`+click on macOS) on a pane tab picks it; pick as many as you like, in different panes too. Dragging any picked tab moves all of them into the pane you drop on, and several picked tabs always join the pane under the pointer. `Esc` or a plain click on a tab clears the pick. A plain click on a tab of a collapsed pane expands the pane; dropping a tab on one does not.
+Dragging a pane's **tab pill** works two ways, by where you hold it. Over another pane's **header**, the header glows at its edges in that pane's colour, and dropping adds the tab to that pane. Over a pane's **body** you get the same placement ghost as when dragging a whole pane, and dropping places the tab as a pane of its own there; the middle of the body adds it to that pane's tabs. While you hold a single tab over another pane's body, the other panes move live to show where it will land, as they do for a whole pane, and the tab lands where the layout showed it. A pane with two or more tabs can place one of its own tabs this way. `Ctrl`+click (`Cmd`+click on macOS) on a pane tab picks it; pick as many as you like, in different panes too. Dragging any picked tab moves all of them into the pane you drop on, and several picked tabs always join the pane under the pointer. `Esc` or a plain click on a tab clears the pick. A plain click on a tab of a collapsed pane expands the pane; dropping a tab on one does not.
 
 Drop a pane tab's pill on another **window tab** in the top bar and that tab moves there (all the picked tabs, if you picked several). Drop a whole pane by its header on a window tab and the pane moves with all its pane tabs, the visible one kept in front.
 

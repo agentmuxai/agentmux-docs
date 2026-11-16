@@ -73,7 +73,7 @@ All eight use WAL journaling except the lock files. srv opens each with one writ
 
 ## `objects.db`
 
-Source: [`store.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/store.rs), schema in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/migrations.rs) (`run_object_schema`).
+Source: [`store.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/store.rs), schema in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/migrations.rs) (`run_object_schema`).
 
 ### Session objects
 
@@ -128,7 +128,7 @@ Objects point at each other by oid inside the JSON (client → windows → works
 
 ## `store.db` (shared)
 
-Source: `run_shared_store_schema` in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/migrations.rs). srv's handle for it is `id_store`.
+Source: `run_shared_store_schema` in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/migrations.rs). srv's handle for it is `id_store`.
 
 | Table | Holds |
 |---|---|
@@ -144,7 +144,7 @@ Source: `run_shared_store_schema` in [`migrations.rs`](https://github.com/agentm
 
 ## `identity-store.db` (shared)
 
-Source: `run_identity_store_schema` in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/migrations.rs). srv's handle for it is `identity_store`.
+Source: `run_identity_store_schema` in [`migrations.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/migrations.rs). srv's handle for it is `identity_store`.
 
 | Table | Holds |
 |---|---|
@@ -159,7 +159,7 @@ It also defines the bundle, drone, cron, credential and native-memory tables for
 
 ## `filestore.db` (per version and shared transcripts)
 
-Both files use one schema ([`filestore/core.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/filestore/core.rs)). A file is addressed by a **zone** and a **name**:
+Both files use one schema ([`filestore/core.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/filestore/core.rs)). A file is addressed by a **zone** and a **name**:
 
 - `db_wave_file` — one row per file: `(zoneid, name)`, size, times, options, meta, and line counters.
 - `db_file_data` — the content in 64 KB parts: `(zoneid, name, partidx)`. A file can be circular, with a maximum size.
@@ -181,7 +181,7 @@ Source: [`sagas/log.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates
 
 ## `wan.db`
 
-Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/backend/storage/wan_identity.rs). Channel-wide, so every version of a channel uses the same WAN identity, and two running versions open it together.
+Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/wan_identity.rs). Channel-wide, so every version of a channel uses the same WAN identity, and two running versions open it together.
 
 | Table | Holds |
 |---|---|
@@ -293,7 +293,7 @@ Everything else under `data/` starts empty: attachments, event logs, update down
 Two mechanisms change the schema:
 
 - **Schema setup** runs every time a database is opened: it creates missing tables and indexes and adds missing columns. It then stamps `PRAGMA user_version`. A build that finds a **higher** version than its own refuses to open the file (`SchemaTooNew`), so an older build never writes to a newer schema. `wan.db` has no such guard.
-- **Migrations** are numbered data changes, `m0000`–`m0048` ([`crates/srv/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
+- **Migrations** are numbered data changes, `m0000`–`m0048` ([`crates/srv-core/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv-core/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
 
 Before a batch of migrations, `migrate --prepare` takes `migrations.lock.db` (shared first, then the version's), so only one AgentMux on the computer migrates at a time; the splash shows a row while it waits. It then copies `store.db`, `identity-store.db` and `objects.db` to `shared/backups/pre-migration-<version>-<time>/` with `VACUUM INTO`, leaving out `objects.db` when it was just copied forward. A failed step stops srv from starting: the launcher shows the error, and the next start retries, running only the migrations that haven't completed. Nothing is restored automatically.
 

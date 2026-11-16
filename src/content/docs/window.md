@@ -46,11 +46,13 @@ A tab's close button (×) asks first, because the tab's panes close with it. Tic
 
 ## Panes
 
-Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Minimizing a pane in a split puts its tabs into a neighbouring pane as background tabs (hold `Shift` to keep a header chip instead); drag the tab's pill out onto a pane's body to bring it back as a pane of its own. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
+Each pane has a header that is also its tab strip: a pane can hold several tabs of any widget type. The buttons at the right of the header minimize the pane, maximize it to fill the tab, and close it. Minimizing a pane in a split puts its tabs into the other open panes as background tabs (hold `Shift` to keep a header chip instead); drag the tab's pill out onto a pane's body to bring it back as a pane of its own. Right-click the header for the pane's menu. See [Pane Management](/pane-types/#pane-management) for splitting, pane tabs, moving panes and floating them.
 
 Clicking an agent (in the [Swarm](/subagent-watcher/), say) shows its pane, in whichever window holds it. When the pane is in a [workspace](/workspaces/) that no window has open, AgentMux opens a window on that workspace and shows the pane there; if it can't open one, a notice says the pane is in a workspace no window has open.
 
 The mouse's Back and Forward side buttons re-select the panes you had selected before and after, in any tab (see [Pane selection history](/pane-types/#pane-selection-history)).
+
+**A window that stopped switching tabs.** If a window shows nothing or stops following its tabs, AgentMux first tries to repair it, and if that doesn't work, a notice at the bottom of the window says "This window stopped switching tabs." with a **Reload** button. **Reload Window** is also in the AgentMux logo menu and the command palette, for a window that shows nothing for another reason.
 
 **Hover tooltips** show once the pointer has rested on a button, pill or truncated label for 40 ms, and at once when you move along a row of them.
 
@@ -75,7 +77,7 @@ From left to right:
 | ↑ ↓ | Network upload and download | — |
 | **R** **W** | Disk reads and writes | — |
 | **GFX** | Whether the window is drawn by the GPU (`HW`), in software (`SW`), or without WebGL | — |
-| Agent count | A robot icon with **N running**, and **N waiting on you** in the warning colour when some of them wait for your answer. Shown only while an agent runs. An agent counts as running when it has a process, with or without a pane | The [Swarm](/subagent-watcher/) |
+| **Waiting on you** | One small button for each count above zero: a robot with the agents running (an agent counts as running when it has a process, with or without a pane), then, in the warning colour, the agents that ask you something, the Browser panes that need you, the Vault requests that wait on you, and the Kanban tasks that need you. A narrow bar shows one bell with the total instead. A bell-slash with a count shows asks that ended in the last 2 minutes | The list of what waits on you, one section each for **Asks**, **Browser**, **Vault** and **Tasks**, with who asks, what, how long it has waited and a button (**Go**, **Open** or **Answer**). With nothing waiting, it opens the [Swarm](/subagent-watcher/) |
 | **History** (clock icon) | How much agent history is kept on this computer. It sits just left of the token count | Where the history is kept |
 | ↑ ↓ (right) | Tokens your agents have sent and received this session | Token usage by service |
 | **Offline** or **Connection issues** | Shown only when a service AgentMux needs can't be reached. **Offline** (red): MuxBus or a model provider's API can't be reached at all. **Connection issues** (amber): some requests to one have kept failing for more than 30 seconds. Hover it for each service and since when. It clears when the service answers | — |
@@ -106,6 +108,8 @@ These requests write the line under each agent in the [Swarm](/subagent-watcher/
 ### Backend
 
 The backend's status, process id, uptime and endpoint, and how the window is drawn: whether graphics are hardware accelerated, the WebGL version, and the graphics driver.
+
+The dot in the status bar turns to the warning colour while the backend is connecting or has a performance signal active. The panel lists each signal at its top, worst first, with how long it has lasted and what to do: **Low RAM**, **Low page file**, **Slow backend**, **Low disk space** and **srv panics**. **srv panics** appears when the backend's server is panicking repeatedly, which can leave agents unable to hear each other; restarting AgentMux clears a stuck messaging path. It goes away when the backend restarts.
 
 ![The backend panel: status running, PID, uptime and endpoint, and the GPU section with WebGL and driver](../../assets/screenshots/chrome/chrome-status-backend.png)
 
