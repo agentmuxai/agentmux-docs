@@ -65,9 +65,53 @@ When an entry gets a new value (you change it, an agent captures or rotates it, 
 
 ## Machine copies and linked entries
 
-An entry can say where a copy of its value lives outside the Vault, for a service or a build to read. In the entry's form, **Machine copy** takes the kind of place (an AWS secret, a GitHub secret or another place), where it is, the key there, and for an AWS secret the **Region** and **AWS profile** a check reads it with. Only the place is kept, never the value. **Check the machine copy** reads the place with the AWS login of this computer (or of the profile you named), compares it inside AgentMux and says "same as the Vault's value", "different from the Vault's value" or that it "could not be read", with when. It shows neither value. Only an AWS secret can be read back; a GitHub secret or another place always answers "could not be read". Agents can ask for the same check with the `Vault` tool's `check`, 6 times an hour for one entry across all agents, and each check is a line in the entry's history. An agent that changes where an entry's copy lives asks you first, showing the place now and the place it asks for.
+An entry can say where a copy of its value lives outside the Vault, for a service or a build to read: its **machine copy**. Only the place is kept, never the value.
 
-A **linked** entry (the **Link only** switch, or `import_batch` with `link: true`) holds no value at all. It records where a key lives that a service or a build reads, who reads it (**Who reads it**, one line each, up to 8), when it last changed (**Last changed**) and **Other places it is kept** (up to 4). The list marks it **Linked**. **Check the place** reads only the place's description, never the key, and answers that it is there, **changed since recorded** or missing. A request, a fill or a command that names a linked entry is refused with the place the key is kept at, and you aren't asked.
+### Say where the copy is
+
+In the form of an API key, a login or a secret note, **Machine copy** takes the kind of place and where it is:
+
+| Kind | What you give |
+|---|---|
+| **AWS Secrets Manager** | **Secret**: its name or ARN (`staging/app`). **Key in the secret**: a field of a JSON secret as a dotted path (`db.password`), empty for the whole secret. **Region** and **AWS profile**: what a check reads it with, empty for this computer's default |
+| **GitHub Actions secret** | **Repository**: `acme/web`, or `acme/web@production` for an environment's secret. **Secret name**: `DEPLOY_TOKEN` |
+| **Somewhere else** | **Where**: a line of text, such as the build server's settings page. **Name there**, if it has one |
+
+**None** removes the record. The list then shows the place under the entry's other details, with what the newest check of it found:
+
+```text
+Machine copy: AWS secret staging/app, key db.password · not checked yet
+```
+
+### Check the machine copy
+
+**Check the machine copy**, the button beside that line, reads the place with the AWS login of this computer (or of the profile you named), compares it with the entry's value inside AgentMux, and writes the answer on the line with when it was checked:
+
+| The line says | What it means |
+|---|---|
+| same as the Vault's value, checked just now | The copy holds the entry's value |
+| different from the Vault's value, checked just now | The copy holds something else: one of the two was changed and the other was not |
+| could not be read, checked just now: *the reason* | Nothing is known about the copy; the reason follows on the line |
+
+Neither value is shown, and nothing about how they differ. A copy that differs and one that could not be read are in the warning colour. Only an AWS secret can be read back: a GitHub Actions secret or another place always answers "could not be read". Each check is a line in the entry's history, naming the place.
+
+### What agents can do with it
+
+Agents see the place and can ask for the same check, with the `Vault` tool:
+
+- `list` gives an entry's machine copy as `source`: the kind of place, its location and key, and what the newest check found. No value.
+- `check`, with the entry's `id` and a `reason`, answers same, different or could not read (with why), and when it was checked. AgentMux reads the place with the agent's own access and compares inside itself, so the agent gets neither value. A place that refuses the read is the answer. Agents together get 6 checks of one entry an hour.
+- `update` records or changes the place, in the fields `source_kind` (`aws-secret`, `github-secret` or `other`), `source_location`, `source_key`, and for an AWS secret `source_region` and `source_profile`. Because the place decides what a check reads, you are asked first: the question shows the place now and the place the agent asks for, with **Allow once** or **Deny**, and no answer is a no.
+
+### Linked entries
+
+A **linked** entry (the **Link only** switch, or `import_batch` with `link: true`) holds no value at all. It records where a key lives that a service or a build reads, who reads it (**Who reads it**, one line each, up to 8), when it last changed (**Last changed**) and **Other places it is kept** (up to 4). The list marks it **Linked**, shows "no value kept" where a value's last characters would be, and gives its place as **Kept at:**
+
+```text
+Kept at: AWS secret staging/app, key db.password · it is there, checked just now
+```
+
+**Check the place** reads only the place's description, never the key, and answers that it is there, **changed since recorded** (the place changed after the date in **Last changed**), missing, or that it could not be read. As with a machine copy, only an AWS secret can be read. Agents get the same answers from `check`. A request, a fill or a command that names a linked entry is refused with the place the key is kept at, and you aren't asked.
 
 ## Reveal and Copy
 
@@ -82,7 +126,7 @@ The Vault opens with a note, **What the Vault may ask you**, listing what your O
 
 ## How agents use entries
 
-Agents have a `Vault` MCP tool with twelve actions: `list` (each entry's id, label, kind, section, Vault and expiry date, no values), `request` (ask you for an entry, as above), `generate`, `rotate`, `import` and `import_batch` (below), and `history`, `check`, `show`, `update`, `verify` and `health` (below). None of them returns a value. An action that makes or changes an entry takes a `reason`: one line of 8 to 300 characters saying what and why. You see it on the approval, and it is kept in the entry's history. To use an entry they name its id:
+Agents have a `Vault` MCP tool with twelve actions: `list` (each entry's id, label, kind, section, Vault, expiry date and machine copy, no values), `request` (ask you for an entry, as above), `generate`, `rotate`, `import` and `import_batch` (below), and `history`, `check`, `show`, `update`, `verify` and `health` (below). None of them returns a value. An action that makes or changes an entry takes a `reason`: one line of 8 to 300 characters saying what and why. You see it on the approval, and it is kept in the entry's history. To use an entry they name its id:
 
 - **In a web form:** the `Browser` tool's `fill` with `vault: "<id>"`, or `"<id>.<part>"` for one part (`card-company.cvc`). You are asked where it may go (the site and the field). Once you approve, AgentMux sets the value on that approved field itself, in one step, after checking it is still that field on that site, so a page can't redirect it by moving the focus; the agent gets back only that the field was filled. From then on the field reads as secret to the agent in snapshots, read-backs and screenshots. An agent never fills a password or a one-time code from an entry this way: for a password it uses a saved sign-in (next), or a value you gave it for the task.
 - **A whole card in a payment form:** `fill` with `vault: "<card id>"`, or `vault: "card"` for your **Default card**, fills every card field the form has (number, expiry, security code, name and ZIP, including month and year lists) after one question. The question names the card and the parts, and the agent gets back which parts were filled and which the form wanted that were left. When the agent names no card and you have no default, or you have more than one card, the question has a **Card** list (**Choose a card…**) and you pick which card is filled. A card past its expiry month asks every time and never offers **Always**. A card field that sits in a payment provider's frame (Stripe, Braintree or Adyen, say) is filled inside that frame, and the question and an **Always** cover that frame on that page only (**Always on *page* (*frame* fields)**), so the same frame on another page asks again. A field that ignores a value set on it is typed into key by key.
@@ -129,6 +173,7 @@ The Vault's import and export buttons are in the Vault's header.
 |---|---|
 | **AgentMux Vault file** (`.vault`, recommended) | Every kind, part and detail, protected by a passphrase you type twice (at least 8 characters; **Suggest one** makes one from random words). It is an [age](https://age-encryption.org) file, so you can open your own export without AgentMux with `age -d`. |
 | **KeePass database** (`.kdbx`) | A KDBX 4.1 file protected by a password, for KeePassXC, KeePassDX or Strongbox. A KeePass app from before 2022 can't open it. |
+| **Linked entries only** (`.vault`) | Offered when the Vault has a linked entry. A passphrase-protected `.vault` file of the linked entries alone: where each key lives and who reads it. No value is in the file. |
 | **CSV, unencrypted** (`.csv`) | Bitwarden's layout, which most managers import. |
 | **JSON, unencrypted** (`.json`) | Every kind and detail; AgentMux imports it back. |
 
@@ -136,7 +181,7 @@ A `.vault` or `.kdbx` export holds every value, label and detail, but not permis
 
 **Import into the Vault** reads a file and works out its format from its contents:
 
-- an AgentMux `.vault` file, with its passphrase;
+- an AgentMux `.vault` file, with its passphrase (a linked entry in it comes in as a linked entry, and one whose place matches a linked entry you have counts as one you already have);
 - a KeePass database (`.kdbx`, KDBX 3.1 and 4), with its master password, its key file, or both (**Choose a key file…**);
 - LastPass's CSV export;
 - 1Password's `.1pux` or CSV export;
