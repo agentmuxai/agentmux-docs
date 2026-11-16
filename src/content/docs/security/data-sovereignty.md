@@ -57,7 +57,7 @@ What AgentMux doesn't change:
 
 | Call | Destination | What is sent | When |
 |---|---|---|---|
-| Claude model list | `https://api.anthropic.com/v1/models` | Your Claude login token | At each launch, if a Claude login is found in `~/.agentmux/shared/providers/claude/` or in `CLAUDE_CODE_OAUTH_TOKEN` (`crates/srv/src/backend/model_catalog.rs`) |
+| Claude model list | `https://api.anthropic.com/v1/models` | Your Claude login token | At each launch, if a Claude login is found in `~/.agentmux/shared/providers/claude/` or in `CLAUDE_CODE_OAUTH_TOKEN` (`crates/srv-core/src/backend/model_catalog.rs`) |
 | Background model calls | Anthropic, through the Claude agent's own CLI | Excerpts of that agent's conversation | See [Background model calls](#background-model-calls) |
 | Link favicons | `https://www.google.com/s2/favicons?domain=<host>` | The hostname of each result | Whenever an agent's web-search or web-fetch results are shown |
 | Markdown images | The image's own server | An ordinary image request | Whenever rendered Markdown contains an image URL |
@@ -71,9 +71,9 @@ MuxBus Cloud is AgentMux's hosted relay for agent-to-agent messages across machi
 
 ### Background model calls
 
-For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-4-5-20251001`, `invoke_haiku` and `AMBIENT_MODEL` in `crates/srv/src/ambient/cli.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
+For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-4-5-20251001`, `invoke_haiku` and `AMBIENT_MODEL` in `crates/srv-core/src/ambient/cli.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
 
-- a running **continuity summary** of the conversation, written after the first completed turn and refreshed once three new user turns have accumulated, or after ten minutes with at least one new turn (`crates/srv/src/backend/continuity_state.rs`). Set `agent:continuity` to `off` on an agent pane to stop it;
+- a running **continuity summary** of the conversation, written after the first completed turn and refreshed once three new user turns have accumulated, or after ten minutes with at least one new turn (`crates/srv-core/src/backend/continuity_state.rs`). Set `agent:continuity` to `off` on an agent pane to stop it;
 - activity summaries, agent-definition summaries, names for subagents and dispatches, next-prompt suggestions, and narration.
 
 Obvious secrets are redacted from the continuity-summary prompt, but it is still your conversation.
@@ -120,7 +120,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 
 **Agents need a model endpoint.** Without network access to a provider, an agent can't work. What AgentMux itself supports:
 
-- A **Claude Code** agent can be pointed at another Anthropic-compatible endpoint, for example one inside your network, with the agent definition's model vendor base URL. AgentMux passes it as `ANTHROPIC_BASE_URL` (`crates/srv/src/backend/providers.rs`).
+- A **Claude Code** agent can be pointed at another Anthropic-compatible endpoint, for example one inside your network, with the agent definition's model vendor base URL. AgentMux passes it as `ANTHROPIC_BASE_URL` (`crates/srv-core/src/backend/providers.rs`).
 - For every other provider, AgentMux has no base-URL setting and rejects one. An agent definition's environment block can set extra variables, but not ones AgentMux already sets.
 - AgentMux has no setting of its own for a local model with Mux Code or any other provider. Whether a CLI can use a local model is up to that CLI.
 
@@ -136,11 +136,11 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 
 **Source-of-truth references**:
 - `crates/srv/src/server/service/client.rs` — `TelemetryUpdate` accepted and ignored
-- `crates/srv/src/backend/model_catalog.rs`, `crates/srv/src/server/providers_handlers.rs` — model-list call
-- `crates/srv/src/server/app_api/session.rs`, `crates/srv/src/backend/continuity_state.rs` — background model calls
-- `crates/srv/src/muxbus/cloud_subscriber.rs`, `crates/srv/src/muxbus/relay.rs`, `crates/srv/src/muxbus/pkce.rs`, `crates/srv/src/muxbus/wan_lease.rs`, `crates/srv/src/muxbus/wan_publish.rs` — MuxBus Cloud
-- `crates/srv/src/identity/key_validator.rs`, `crates/srv/src/identity/oauth_client.rs` — validation and OAuth
-- `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/backend/tool_store.rs`, `crates/srv/src/server/system_install_handlers.rs` — installs
+- `crates/srv-core/src/backend/model_catalog.rs`, `crates/srv/src/server/providers_handlers.rs` — model-list call
+- `crates/srv/src/server/app_api/session.rs`, `crates/srv-core/src/backend/continuity_state.rs` — background model calls
+- `crates/srv-core/src/muxbus/cloud_subscriber.rs`, `crates/srv-core/src/muxbus/relay.rs`, `crates/srv-core/src/muxbus/pkce.rs`, `crates/srv-core/src/muxbus/wan_lease.rs`, `crates/srv-core/src/muxbus/wan_publish.rs` — MuxBus Cloud
+- `crates/srv-core/src/identity/key_validator.rs`, `crates/srv-core/src/identity/oauth_client.rs` — validation and OAuth
+- `crates/srv/src/server/cli_handlers.rs`, `crates/srv-core/src/backend/tool_store.rs`, `crates/srv/src/server/system_install_handlers.rs` — installs
 - `crates/srv/src/server/voice.rs` — voice input
 - `crates/cef/src/app/mod.rs` — Chromium background networking switches
 

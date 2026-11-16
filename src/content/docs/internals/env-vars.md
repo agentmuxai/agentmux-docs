@@ -38,14 +38,14 @@ agentmux-launcher  (J0 Job Object owner)
 ```
 
 Source files cited throughout:
-- `shell.rs` = `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs`
+- `shell.rs` = `crates/srv-core/src/backend/blockcontroller/shell/lifecycle.rs`
 - `data_paths.rs` = `crates/common/src/data_paths.rs`
 - `runtime_mode.rs` = `crates/common/src/runtime_mode.rs`
 - `srv_spawner.rs` = `crates/launcher/src/srv_spawner.rs`
 - `launcher/main.rs` = `crates/launcher/src/main.rs`
-- `shellintegration.rs` = `crates/srv/src/backend/shellintegration.rs`
-- `bash.sh` = `crates/srv/src/backend/shellintegration/bash.sh`
-- `pwsh.ps1` = `crates/srv/src/backend/shellintegration/pwsh.ps1`
+- `shellintegration.rs` = `crates/srv-core/src/backend/shellintegration.rs`
+- `bash.sh` = `crates/srv-core/src/backend/shellintegration/bash.sh`
+- `pwsh.ps1` = `crates/srv-core/src/backend/shellintegration/pwsh.ps1`
 - `websocket.rs` = `crates/srv/src/server/websocket.rs`
 
 ---
@@ -93,7 +93,7 @@ emits `{}` rather than nothing, which clears the pane's displayed identity.
 
 ### The pane allow-list (`PANE_ENV_KEEP`)
 
-An `AGENTMUX_*` variable reaches a pane only if it is on the allow-list `PANE_ENV_KEEP` in `crates/srv/src/backend/pane_env.rs`. Everything else that srv holds (the instance's data, config and cache folders, the channel, the runtime mode) is removed from the pane's environment, so a build started from a pane can't adopt the launching instance's identity. The list is an allow-list on purpose: a variable added later is kept out until someone adds it with a reason.
+An `AGENTMUX_*` variable reaches a pane only if it is on the allow-list `PANE_ENV_KEEP` in `crates/srv-core/src/backend/pane_env.rs`. Everything else that srv holds (the instance's data, config and cache folders, the channel, the runtime mode) is removed from the pane's environment, so a build started from a pane can't adopt the launching instance's identity. The list is an allow-list on purpose: a variable added later is kept out until someone adds it with a reason.
 
 | Group | Variables |
 |-------|-----------|
@@ -104,7 +104,7 @@ An `AGENTMUX_*` variable reaches a pane only if it is on the allow-list `PANE_EN
 
 `AGENTMUX` itself (the nesting sentinel) is always set to `1` and never stripped. On Linux, the AppImage's own `APPIMAGE`, `APPDIR`, `OWD` and `ARGV0`, and this version's folder in `LD_LIBRARY_PATH`, are removed too.
 
-An agent's turn gets more variables than a plain pane, which srv sets when it starts the turn: `AGENTMUX_AGENT_UID`, `AGENTMUX_AGENT_TOKEN` (the agent's own token), the former names and slugs after a rename, the git author and committer identity, and the GitHub-broker switches. `crates/srv/src/backend/agent_env_scope.rs` lists each with the reason it reaches a container agent or doesn't. The MCP server entry in an agent's `.mcp.json` (`crates/srv/src/backend/mcp_json_identity.rs`) also carries the signing keys for jekts (`AGENTMUX_JEKT_KEY` and the LAN and WAN keys). Treat those as secrets and never log them.
+An agent's turn gets more variables than a plain pane, which srv sets when it starts the turn: `AGENTMUX_AGENT_UID`, `AGENTMUX_AGENT_TOKEN` (the agent's own token), the former names and slugs after a rename, the git author and committer identity, and the GitHub-broker switches. `crates/srv-core/src/backend/agent_env_scope.rs` lists each with the reason it reaches a container agent or doesn't. The MCP server entry in an agent's `.mcp.json` (`crates/srv-core/src/backend/mcp_json_identity.rs`) also carries the signing keys for jekts (`AGENTMUX_JEKT_KEY` and the LAN and WAN keys). Treat those as secrets and never log them.
 
 ---
 
@@ -257,7 +257,7 @@ on Unix (fallback to `current_exe().parent()` is reliable there).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | The test harness, and `task dev` (to its own home, `<clone>/.dev-home/<vite port>`, unless `AGENTMUX_DEV_USE_REAL_HOME=1`) |
-| **Who reads it** | `data_paths.rs`, `crates/srv/src/bootstrap/stores.rs`, `crates/srv/src/registry/paths.rs` |
+| **Who reads it** | `data_paths.rs`, `crates/srv/src/bootstrap/stores.rs`, `crates/srv-core/src/registry/paths.rs` |
 | **Purpose** | Replaces `~/.agentmux` root with another folder so tests and dev builds don't touch the real user data |
 
 **SECURITY:** Do not set this in production. Any process that sets this
@@ -357,7 +357,7 @@ sanitized value is empty, mode falls through to `Installed`.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | You, before AgentMux starts |
-| **Who reads it** | srv's build cache cleanup (`crates/srv/src/backend/build_cache_service.rs`) |
+| **Who reads it** | srv's build cache cleanup (`crates/srv-core/src/backend/build_cache_service.rs`) |
 | **Example** | `1`, `0` |
 
 `1`, `true` or `on` lets this srv clear idle agents' build folders; `0`,
@@ -409,6 +409,30 @@ so incremental compilation detects the change.
 
 ---
 
+### AGENTMUX_PANE_BACKEND
+
+| Attribute | Value |
+|-----------|-------|
+| **Who sets it** | You, before AgentMux starts |
+| **Who reads it** | The CEF host (`crates/cef/src/pane_backend.rs`), once at startup, for the whole process |
+| **Example** | `views` |
+
+Windows only. `views` makes the browser panes overlay panes, like those on macOS and Linux, so a page stays inside its pane's border while the window is resized. Anything else, or unset, keeps the default: child-window panes. A browser pane in a floating window is a child window either way. macOS and Linux always use overlay panes and ignore it. See [Browser pane type on Windows](/pane-types/#windows-pane-type).
+
+---
+
+### AGENTMUX_PANE_CLIP
+
+| Attribute | Value |
+|-----------|-------|
+| **Who sets it** | You, before AgentMux starts |
+| **Who reads it** | The CEF host (`crates/cef/src/browser_panes/views_clip.rs`), once at startup |
+| **Example** | `off` |
+
+Overlay browser panes (Linux, and Windows with `AGENTMUX_PANE_BACKEND=views`) stay live when a menu, tooltip or dialog covers part of them: the covered part is cut out and the rest of the page keeps running. `off`, `0` or `hide` turns that off, and a covered pane is hidden whole behind a still picture of its page instead.
+
+---
+
 ## Group 4 — IPC Variables
 
 These variables wire together the launcher, host, and srv processes.
@@ -438,14 +462,14 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | The launcher generates a UUID v4 per run (`srv_spawner.rs`) and sets it on both srv and host |
-| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment (security hardening, PR #801). Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP` (`crates/srv/src/backend/pane_env.rs`), and `crates/srv/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
+| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment (security hardening, PR #801). Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP` (`crates/srv-core/src/backend/pane_env.rs`), and `crates/srv-core/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv removes the key from its own environment so that children it spawns by other paths don't inherit the bearer token. A pane is different: the shell helpers (`muxsh`, `muxlog`, `muxopen` and the rest) need it, so a pane's process holds an authenticated handle to the instance that spawned it. Anything started from a pane can use it. The allow-list comments in `pane_env.rs` call this the largest remaining coupling.
 
 **SECURITY:** Do not log this value. It authenticates all WebSocket connections to the srv instance for the lifetime of that srv process.
 
-**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv/src/backend/route_audience.rs`; the `amxc_` prefix is `TOKEN_PREFIX` in `crates/srv/src/backend/container/credential.rs`). See [Trust model](/security/trust-model/#container-agents).
+**Container agents** don't get this value. Their `docker exec` environment carries a per-pane token starting `amxc_` in the same variable, which srv accepts on every route except the ones that run commands on the host, read host files or belong to the app itself (`crates/srv-core/src/backend/route_audience.rs`; the `amxc_` prefix is `TOKEN_PREFIX` in `crates/srv-core/src/backend/container/credential.rs`). See [Trust model](/security/trust-model/#container-agents).
 
 ---
 
@@ -662,7 +686,7 @@ AgentMux never writes them. Use the `AGENTMUX_*` variables in new configurations
 |-----------|-------|
 | **Status** | Alias for `AGENTMUX_DATA_DIR` |
 | **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs` re-publishes it for backward compatibility if `config.data_home` is non-empty |
-| **Who reads it** | `crates/srv/src/backend/base.rs` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs`; `sidecar.rs` (pre-unification path) |
+| **Who reads it** | `crates/srv-core/src/backend/base.rs` (`MUX_DATA_HOME_ENV`); `crates/srv/src/bootstrap/stores.rs`; `sidecar.rs` (pre-unification path) |
 
 Use `AGENTMUX_DATA_DIR` in new code.
 
@@ -708,6 +732,8 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX_VERSION` | Runtime | shell controller | Yes |
 | `AGENTMUX_BUILD_CHANNEL_DEFAULT` | Runtime (build-time) | build script | No |
 | `AGENTMUX_DEV` | Runtime | user (pre-launch) | No |
+| `AGENTMUX_PANE_BACKEND` | Runtime (Windows) | user (pre-launch) | No |
+| `AGENTMUX_PANE_CLIP` | Runtime | user (pre-launch) | No |
 | `AGENTMUX_LOCAL_URL` | IPC | srv (after bind) | Yes |
 | `AGENTMUX_AUTH_KEY` | IPC | launcher | Yes (on `PANE_ENV_KEEP`; stripped from srv's own environment) |
 | `AGENTMUX_BACKEND_WS` | IPC | launcher → host | No |
@@ -736,9 +762,9 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 
 | Topic | File |
 |-------|------|
-| PTY env injection (shell controller) | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` |
-| Identity strip logic | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` |
-| Jekt auto-registration | `crates/srv/src/backend/blockcontroller/shell/lifecycle.rs` |
+| PTY env injection (shell controller) | `crates/srv-core/src/backend/blockcontroller/shell/lifecycle.rs` |
+| Identity strip logic | `crates/srv-core/src/backend/blockcontroller/shell/lifecycle.rs` |
+| Jekt auto-registration | `crates/srv-core/src/backend/blockcontroller/shell/lifecycle.rs` |
 | DataPaths struct and env var names | `crates/common/src/data_paths.rs` |
 | DataPaths::to_env_vars() | `crates/common/src/data_paths.rs` |
 | DataPaths::from_env() | `crates/common/src/data_paths.rs` |
@@ -746,10 +772,10 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | AGENTMUX_LOCAL_URL set point | `crates/srv/src/bootstrap/network.rs` |
 | AUTH_KEY strip | `crates/srv/src/config.rs` |
 | AUTH_KEY re-inject for streaming bash | `crates/srv/src/server/agent_handlers/input.rs` |
-| Shell integration deployment | `crates/srv/src/backend/shellintegration.rs` |
-| Bash integration script | `crates/srv/src/backend/shellintegration/bash.sh` |
-| PowerShell integration script | `crates/srv/src/backend/shellintegration/pwsh.ps1` |
-| Zsh integration script | `crates/srv/src/backend/shellintegration/zsh.sh` |
+| Shell integration deployment | `crates/srv-core/src/backend/shellintegration.rs` |
+| Bash integration script | `crates/srv-core/src/backend/shellintegration/bash.sh` |
+| PowerShell integration script | `crates/srv-core/src/backend/shellintegration/pwsh.ps1` |
+| Zsh integration script | `crates/srv-core/src/backend/shellintegration/zsh.sh` |
 | Launcher → srv env vars | `crates/launcher/src/srv_spawner.rs` |
 | Launcher → host env vars (Windows) | `crates/launcher/src/host_spawn.rs` |
 | Launcher → host env vars (Unix) | `crates/launcher/src/host_spawn.rs` |

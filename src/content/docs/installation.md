@@ -60,6 +60,10 @@ The archive is a `.7z`, not a `.zip`, because it is much smaller. Windows 11 ope
 
 The portable build keeps no data in its own folder. Like the installed app, it stores everything under `%USERPROFILE%\.agentmux\` in the `stable` channel. A portable copy and an installed copy therefore share settings and agents. Each AgentMux version keeps its own runtime data (databases, logs, browser cache) in a separate folder. See [Multi-instance & dev mode](/multi-instance/) for how instances and channels are kept apart.
 
+### Browser panes on Windows
+
+Browser panes are child windows of the AgentMux window by default. To use overlay panes, as on macOS and Linux, start AgentMux with `AGENTMUX_PANE_BACKEND=views` set (see [Environment variable contract](/internals/env-vars/#agentmux_pane_backend)).
+
 ### MSIX file
 
 The `.msix` on the Releases page is the package submitted to the Microsoft Store. It is unsigned (the Store signs it on ingest), so Windows won't install it if you download and open it directly. Use the [Store listing](https://apps.microsoft.com/detail/9p9qcxnncrk3) instead.
@@ -83,8 +87,9 @@ Requirements:
 - **x86_64.** There is no ARM build.
 - **glibc 2.35 or newer.** Release builds are compiled on Ubuntu 22.04 (glibc 2.35). Older distributions such as Ubuntu 20.04 and Debian 11 are not supported.
 - **An X11 or Wayland desktop.** See [Display server](#display-server).
+- **The system's certificates** (the `ca-certificates` package). AgentMux checks https servers against them, so every request to a model, a connected account or an update fails on a machine that has none; the log says to install `ca-certificates`.
 
-The packages declare no package dependencies; they bundle the runtime libraries they need.
+The `.deb` and `.rpm` list the system libraries they need and require `ca-certificates`, so your package manager installs them with the package. The AppImage and the portable `.tar.xz` install no packages, so on a minimal system install `ca-certificates` yourself (`sudo apt install ca-certificates`, `sudo dnf install ca-certificates`).
 
 ### AppImage
 
@@ -161,9 +166,9 @@ The first window opens a starter layout of three panes:
 - **Sysinfo** (top right): live system metrics.
 - **Swarm** (bottom right): a live tree of your agent panes, with their subagents, todos and running tools.
 
-New windows start with the same layout (`crates/srv/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`). Your windows make up **Default Workspace**, which AgentMux saves as you work and reopens at the next launch. See [Workspaces](/workspaces/).
+New windows start with the same layout (`crates/srv-core/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`). Your windows make up **Default Workspace**, which AgentMux saves as you work and reopens at the next launch. See [Workspaces](/workspaces/).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order (`crates/srv/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order (`crates/srv-core/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
 ![The top bar: the AgentMux logo menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
@@ -198,6 +203,10 @@ The switches are in **Settings → Notifications & Tray**, under **System tray**
 **Start at login** starts AgentMux in the tray when you log in, without opening a window; click the tray icon or choose **New Window** to open one. An AgentMux started this way keeps running after you close its windows, whatever **Keep running after all windows are closed** says. If AgentMux is already running when you log in, the login start does nothing (`crates/launcher/src/start_at_login.rs`).
 
 On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window always quits AgentMux, and a login start opens a normal window instead of staying hidden.
+
+## Server package (no desktop app)
+
+On a Linux or macOS machine with no screen, or where agents should run with no window open, install the server package instead: AgentMux without the desktop app, whose window is a browser on the machine's own address. It is managed with the `agentmux` command (`setup`, `doctor`, `start`, `open` and more). See [Headless server](/headless-server/).
 
 ## Updating
 

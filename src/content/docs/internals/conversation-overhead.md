@@ -24,7 +24,7 @@ Before the provider CLI process starts, AgentMux assembles and writes a `CLAUDE.
 | Skills index | Installed skills | `# Available Skills` section listing callable skills |
 | Template vars | Runtime | `{{AGENT}}`, `{{AGENT_DISPLAY}}`, `{{AGENT_ID}}`, `{{DATE}}` substituted at write time. `{{WORKING_DIR}}` is a supported placeholder but is not currently wired up on this path — see the note below. |
 
-Source: `crates/srv/src/backend/agent_config.rs` `build_config_files()`, `crates/srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
+Source: `crates/srv-core/src/backend/agent_config.rs` `build_config_files()`, `crates/srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
 
 This file is written **once per agent launch**, not once per turn. AgentMux does not call the provider's API directly — it hands the file off to the CLI and steps back.
 
@@ -55,7 +55,7 @@ AgentMux tracks all three token types — `input_tokens`, `cache_creation_input_
 real_context_tokens = input_tokens + cache_creation_input_tokens + cache_read_input_tokens
 ```
 
-Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `crates/srv/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
+Source: `frontend/app/view/agent/providers/claude-translator.ts` (token accumulation), `docs/specs/SPEC_CONTEXT_VISIBILITY_2026_06_17.md`. The Rust-side struct is `TokenCounts` in `crates/srv-core/src/agents/types.rs` — it uses shortened field names (`input`, `output`, `cache_creation`, `cache_read`); the `_input_tokens`-suffixed wire names above only exist in the frontend's raw usage parsing, not as Rust struct fields.
 
 **Note:** these three fields are parsed per-turn for the live UI counters only — they are not persisted anywhere queryable. There is currently no way to check historically whether caching landed for a past session; only live, in the moment.
 
@@ -90,7 +90,7 @@ The provider's cached system prompt entry is invalidated whenever the system pro
 On invalidation, turn 1 of the next session pays full `cache_creation_input_tokens` again.
 
 :::note[Working directory and the cache]
-`build_config_files` (`crates/srv/src/backend/agent_config.rs`, called from `write_agent_config_files` in `crates/srv/src/server/app_api/agent_open.rs`) substitutes `{{WORKING_DIR}}` along with `{{AGENT}}`, `{{AGENT_SLUG}}`, `{{AGENT_ID}}` and `{{DATE}}`. The directory therefore changes the assembled instructions file only where the agent's soul or agentmd uses `{{WORKING_DIR}}`; an agent that doesn't use it keeps the same file, and the same cached prompt, when its directory changes.
+`build_config_files` (`crates/srv-core/src/backend/agent_config.rs`, called from `write_agent_config_files` in `crates/srv/src/server/app_api/agent_open.rs`) substitutes `{{WORKING_DIR}}` along with `{{AGENT}}`, `{{AGENT_SLUG}}`, `{{AGENT_ID}}` and `{{DATE}}`. The directory therefore changes the assembled instructions file only where the agent's soul or agentmd uses `{{WORKING_DIR}}`; an agent that doesn't use it keeps the same file, and the same cached prompt, when its directory changes.
 :::
 
 **Mitigation for cross-instance cache reuse:** the Claude Code provider's launch args include `--exclude-dynamic-system-prompt-sections`, which moves per-machine content (cwd, env info, memory paths, git status) out of the CLI's own dynamically-generated system-prompt sections and into the first user message instead — so the same assembled CLAUDE.md produces the same cached prompt prefix across different machines/instances, rather than each one minting its own cache entry. This only applies to content the CLI itself injects dynamically (separate from the CLAUDE.md-content invalidation triggers above), and is a no-op if an agent's `provider_flags` sets a custom `--system-prompt` (a free-form, user-configurable field), since that flag's own documented behavior only applies to the default system prompt.

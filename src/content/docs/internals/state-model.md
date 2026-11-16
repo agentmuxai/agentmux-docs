@@ -310,8 +310,8 @@ Phases 5 to 7 of the srv layout reducer are in the code:
 
 | Phase | What | Status |
 |---|---|---|
-| 5 | Reducer arms calling pure helpers | ✅ shipped, including `LayoutApplyIntent` (`crates/srv/src/reducer/layout/intent.rs`) |
-| 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv/src/persist_subscriber.rs`) |
+| 5 | Reducer arms calling pure helpers | ✅ shipped, including `LayoutApplyIntent` (`crates/srv-core/src/reducer/layout/intent.rs`) |
+| 6 | Persist subscriber arms for layout events | ✅ shipped: tree, focus, magnify and the backend-action queue (`crates/srv-core/src/persist_subscriber.rs`) |
 | 7 | Move `rootnode` writers off wcore-direct | ✅ for every edit a window makes; srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`). One direct write is left: the default layout a first launch seeds before the reducer has loaded. |
 
 `docs/specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` records the same, phase by phase. §6 below describes the single writer.
@@ -481,10 +481,10 @@ It has no setter: the row changes only through srv. A layout edit travels the ot
 
 1. **Apply it here, queue an intent.** `treeReducer()` applies the action to the local tree at once, as a prediction of srv's result, and pushes the matching intent onto the model's `layoutOutbox` (`frontend/layout/lib/layoutModel.ts`). `intentForAction` maps each tree action to one intent: `move`, `swap`, `resize`, `insert`, `insertatindex`, `delete`, `replace`, `splithorizontal`, `splitvertical`, `minimize`, `restore` or `clear`. `FocusNode` and `MagnifyNodeToggle` become a `view` intent, which changes no tree (`frontend/layout/lib/layoutIntentActions.ts`).
 2. **Send in order.** `flushLayoutOutbox` sends the outbox one item at a time (`frontend/layout/lib/layoutIntents.ts`). Each intent goes as `LayoutApplyIntentCommand` (`layout.applyIntent`), with the focused and magnified node as they are when it leaves. A failed send is tried up to three times, and a resend of the same action id is a no-op on srv (`layoutIntents.ts`). Pane-tab commands (activate, close or move a tab in a pane) go through the same queue with `queueLayoutCommand` (`layoutIntents.ts`, called by `sendStackCommand`, `frontend/layout/lib/layoutPersistence.ts`).
-3. **srv applies and stores it.** `apply_layout_intent` (`crates/srv/src/server/service/layout_intents.rs`) dispatches `Command::LayoutApplyIntent` while it holds the reducer lock. The reducer arm (`crates/srv/src/reducer/layout/intent.rs`) applies the intent to a copy of the tab's tree, normalizes it, takes the focused and magnified node from the request, and emits `LayoutTreeReplaced`, `FocusedNodeChanged` and `MagnifiedNodeChanged` for what changed. `apply_layout_intent` writes those events to SQLite before it lets go of the lock, so rows are written in the order intents are applied. A failed write puts the tab back as the row has it (`crates/srv/src/server/service/layout_intents.rs`). A refused intent changes nothing and answers `applied: false`.
+3. **srv applies and stores it.** `apply_layout_intent` (`crates/srv/src/server/service/layout_intents.rs`) dispatches `Command::LayoutApplyIntent` while it holds the reducer lock. The reducer arm (`crates/srv-core/src/reducer/layout/intent.rs`) applies the intent to a copy of the tab's tree, normalizes it, takes the focused and magnified node from the request, and emits `LayoutTreeReplaced`, `FocusedNodeChanged` and `MagnifiedNodeChanged` for what changed. `apply_layout_intent` writes those events to SQLite before it lets go of the lock, so rows are written in the order intents are applied. A failed write puts the tab back as the row has it (`crates/srv/src/server/service/layout_intents.rs`). A refused intent changes nothing and answers `applied: false`.
 4. **Show what srv stored.** When the model is quiet (nothing queued or sending, no drag or resize preview) and the row includes every intent it sent (`layoutVersionFloor`), `reconcileWithStoredLayout` compares the stored tree with the local one. If they differ, srv refused an edit or computed it differently, and the stored tree replaces the local one. Focus stays the frontend's while its pane exists (`layoutIntents.ts`).
 
-Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `crates/srv/src/server/service/layout_intents.rs`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `frontend/layout/lib/layoutPersistence.ts`). The queue keeps the latest 32 actions, and an action older than 10 minutes is dropped; a window that missed one shows srv's stored tree anyway (`crates/srv/src/persist_subscriber/layout_queue.rs`).
+Edits srv makes on its own, such as placing a new block, a tear-off or a redock, go the other way round. srv applies them to its own tree first, then queues them in the row's `pendingbackendactions` for the window to mirror (`place_block`, `crates/srv/src/server/service/layout_intents.rs`). The window applies them locally and sends nothing back (`processPendingBackendActions`, `frontend/layout/lib/layoutPersistence.ts`). The queue keeps the latest 32 actions, and an action older than 10 minutes is dropped; a window that missed one shows srv's stored tree anyway (`crates/srv-core/src/persist_subscriber/layout_queue.rs`).
 
 The window never writes the layout row back: srv refuses a whole-row `UpdateObject` of a layout row (`crates/srv/src/server/service/object_helpers.rs`).
 
@@ -524,12 +524,12 @@ Every write to the layout row comes from srv, which refuses a whole-row `UpdateO
 
 | Writer | Fields | When |
 |---|---|---|
-| `apply_layout_tree_replaced` (`crates/srv/src/persist_subscriber.rs`) | `rootnode`. Also clears focus or magnify when the tree empties or a delete removed that node, and writes every column when a seeding `LayoutSetTree` carries them | `LayoutTreeReplaced`, `LayoutNodeDeleted` |
-| `apply_focused_node_changed` (`crates/srv/src/persist_subscriber.rs`) | `focusednodeid` | `FocusedNodeChanged` |
-| `apply_magnified_node_changed` (`crates/srv/src/persist_subscriber.rs`) | `magnifiednodeid` | `MagnifiedNodeChanged` |
-| `apply_layout_backend_actions_queued` (`crates/srv/src/persist_subscriber/layout_queue.rs`) | `pendingbackendactions`, appended | `LayoutBackendActionsQueued` |
-| `resync_tab` (`crates/srv/src/persist_subscriber/resync.rs`) | `rootnode`, focus and magnify, from the reducer's own state | The event bus lagged and dropped events |
-| `write_default_three_pane_layout` (`crates/srv/src/backend/wcore/mod.rs`) | The whole row | A first launch, before the reducer has loaded |
+| `apply_layout_tree_replaced` (`crates/srv-core/src/persist_subscriber.rs`) | `rootnode`. Also clears focus or magnify when the tree empties or a delete removed that node, and writes every column when a seeding `LayoutSetTree` carries them | `LayoutTreeReplaced`, `LayoutNodeDeleted` |
+| `apply_focused_node_changed` (`crates/srv-core/src/persist_subscriber.rs`) | `focusednodeid` | `FocusedNodeChanged` |
+| `apply_magnified_node_changed` (`crates/srv-core/src/persist_subscriber.rs`) | `magnifiednodeid` | `MagnifiedNodeChanged` |
+| `apply_layout_backend_actions_queued` (`crates/srv-core/src/persist_subscriber/layout_queue.rs`) | `pendingbackendactions`, appended | `LayoutBackendActionsQueued` |
+| `resync_tab` (`crates/srv-core/src/persist_subscriber/resync.rs`) | `rootnode`, focus and magnify, from the reducer's own state | The event bus lagged and dropped events |
+| `write_default_three_pane_layout` (`crates/srv-core/src/backend/wcore/mod.rs`) | The whole row | A first launch, before the reducer has loaded |
 
 `apply_focused_node_changed` is how a focus change reaches `focusednodeid`. A click sends a `view` intent carrying the focused node; the reducer sets it on the tab and emits `FocusedNodeChanged`; the subscriber writes it.
 
@@ -543,7 +543,7 @@ User clicks pane
     → MOS update reaches the window; nothing to correct
 ```
 
-Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv/src/persist_subscriber.rs`, `persist_subscriber.rs`).
+Each event is applied twice on the normal path: once right after dispatch, by the code that dispatched it, so a follow-up read sees the write, and again when the subscriber gets the broadcast. Every arm compares before it writes, so the second apply changes nothing and doesn't bump the version (`crates/srv-core/src/persist_subscriber.rs`, `persist_subscriber.rs`).
 
 ### 6.2 Consistency
 
@@ -618,7 +618,7 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | Tree action → layout intent | `frontend/layout/lib/layoutIntentActions.ts` |
 | Intent outbox, send, compare with srv's tree | `frontend/layout/lib/layoutIntents.ts` |
 | srv: apply and store an intent | `crates/srv/src/server/service/layout_intents.rs` |
-| srv: `LayoutApplyIntent` reducer arm | `crates/srv/src/reducer/layout/intent.rs` |
+| srv: `LayoutApplyIntent` reducer arm | `crates/srv-core/src/reducer/layout/intent.rs` |
 | MOS getMuxObjectAtom | `frontend/app/store/mos.ts` |
 | LayoutState atom from tab | `frontend/layout/lib/layoutAtom.ts` |
 | AgentPaneState / TurnPhase types | `frontend/app/store/agent-pane-state/types.ts` |
@@ -628,7 +628,7 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 | blockAgentColor memo | `frontend/app/block/blockframe.tsx` |
 | isUsableFocusRingColor | `frontend/app/block/autotitle.ts` |
 | block-focused CSS (border) | `frontend/app/block/block.scss` |
-| Layout row writers (persist subscriber) | `crates/srv/src/persist_subscriber.rs` |
+| Layout row writers (persist subscriber) | `crates/srv-core/src/persist_subscriber.rs` |
 | Strong layout authority (design, status) | `docs/specs/SPEC_STRONG_REDUCER_AUTHORITY_LAYOUT_2026_06_30.md` |
 | Reducer-stack master status | `docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md` |
 | Discussion #707 ref | `docs/specs/SPEC_OBJ_UPDATE_BRIDGE_2026-05-14.md` |

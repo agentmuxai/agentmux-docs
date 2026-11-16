@@ -68,14 +68,14 @@ This is where the [reducer stack](/internals/reducer-stack/) lives. Briefly:
 
 - **Layer 1 — launcher reducer** (`crates/launcher/src/reducer/`) owns process, window-mirror, pool, monitor and instance-registry state. Single-writer; durable JSONL event log.
 - **Layer 2 — host reducer** (`crates/cef/src/reducer/`) owns CEF-side coordination: pending window creations, browser panes, the browser map, drag, both warm pools, quit and window opacity — 34 host-internal commands.
-- **Layer 3 — srv reducer** (`crates/srv/src/reducer.rs` and `crates/srv/src/reducer/`) owns the app domain: workspaces, tabs, blocks, layouts.
+- **Layer 3 — srv reducer** (`crates/srv-core/src/reducer.rs` and `crates/srv-core/src/reducer/`) owns the app domain: workspaces, tabs, blocks, layouts.
 - **Layer 4 — frontend slices** project the above into per-pane Solid signals via per-slice reducer modules.
 
 Multi-step work runs as sagas, on two separate frameworks: the launcher's coordinator (`crates/launcher/src/saga/`) and srv's async-function sagas (`crates/srv/src/sagas/`). The [reducer stack page](/internals/reducer-stack/#how-sagas-fit) explains the difference.
 
 The full layout, slice list, and migration plan are in the [reducer stack page](/internals/reducer-stack/).
 
-Outside this reducer stack sits one more piece of cross-process coordination: a file-per-session **session-ownership lease** (`LeaseStore`, `crates/srv/src/registry/leases.rs`) that guards which single process may currently drive turns for a given agent `instance_id` — relevant in host-mode, where more than one process could otherwise reach the same agent. Each lease is `<registry_root>/leases/<instance_id>.lease.json`, TTL-based (renewed every 5s on the same tick as the per-turn health watchdog; reclaimable once ~3 renewals are missed) and scoped to a `boot_id`, and the claim/renew/release sequence is guarded by a real OS advisory lock (`flock` / `LockFileEx`) rather than the atomic-rename-only pattern the rest of the registry uses, so two processes can never both believe they hold the same session. See [Persistence](/internals/persistence/#whats-not-here) for where the lease files live on disk.
+Outside this reducer stack sits one more piece of cross-process coordination: a file-per-session **session-ownership lease** (`LeaseStore`, `crates/srv-core/src/registry/leases.rs`) that guards which single process may currently drive turns for a given agent `instance_id` — relevant in host-mode, where more than one process could otherwise reach the same agent. Each lease is `<registry_root>/leases/<instance_id>.lease.json`, TTL-based (renewed every 5s on the same tick as the per-turn health watchdog; reclaimable once ~3 renewals are missed) and scoped to a `boot_id`, and the claim/renew/release sequence is guarded by a real OS advisory lock (`flock` / `LockFileEx`) rather than the atomic-rename-only pattern the rest of the registry uses, so two processes can never both believe they hold the same session. See [Persistence](/internals/persistence/#whats-not-here) for where the lease files live on disk.
 
 ## Data layout on disk
 

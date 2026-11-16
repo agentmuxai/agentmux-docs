@@ -9,24 +9,25 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 
 | Area | Windows | macOS | Linux |
 |---|---|---|---|
-| Launcher (`agentmux-launcher`) | ✅ ships | ✅ ships (`task dev` v0.41.0+; packaged DMG v0.42.x+) | ✅ ships (AppImage entry point A0 v0.42.x; Unix-socket IPC + reducer + saga A1 v0.42.x) |
-| Host (`agentmux-cef`) — Chromium embed | ✅ ships | ✅ ships (DMG, v0.42.x+) | ✅ ships (AppImage, v0.42.x+) |
+| Launcher (`agentmux-launcher`) | ✅ ships | ✅ ships | ✅ ships (AppImage entry point; Unix-socket IPC + reducer + saga) |
+| Host (`agentmux-cef`) — Chromium embed | ✅ ships | ✅ ships (DMG) | ✅ ships (AppImage, `.deb`, `.rpm`, `.tar.xz`) |
 | Sidecar (`agentmux-srv`) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | `agentmux-common` (path resolution, runtime mode) | ✅ ships | ✅ cross-platform | ✅ cross-platform |
 | Frontend / SolidJS renderer | ✅ ships | ✅ runs in any CEF | ✅ runs in any CEF |
 | **WRR (Window Reality Reconciliation)** | ✅ Win32 event hooks | ❌ not planned (by design) | ❌ not planned (by design) |
-| Browser pane (CefBrowserView) | ✅ ships | ✅ ships (v0.42.x+) | ✅ ships (v0.42.x+) |
+| Browser pane (CefBrowserView) | ✅ ships (child-window panes by default; overlay panes with `AGENTMUX_PANE_BACKEND=views`) | ✅ ships (overlay panes) | ✅ ships (overlay panes) |
+| Server package (`agentmux` command, no desktop app; see [Headless server](/headless-server/)) | ❌ | ✅ Apple Silicon | ✅ x86_64 and arm64 |
 | Terminal pane (PTY) | ✅ ConPTY | ✅ posix\_openpt | ✅ posix\_openpt |
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
-| Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so, v0.42.x+) |
-| Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Phase A, v0.41+, Wayland desktop) |
+| Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so) |
+| Floating-pane tear-off / redock | ✅ ships | ✅ ships | ✅ ships (Wayland desktop) |
 | Per-window opacity | ✅ ships (`WS_EX_LAYERED` alpha) | ✅ ships (`NSWindow` alpha) | ✅ ships (`_NET_WM_WINDOW_OPACITY` on X11/XWayland; the page fades itself on native Wayland) |
 | Native splash screen | ✅ ships | ✅ ships | ✅ ships (X11 window, centered under XWayland too; Wayland fallback when there is no X display) |
 | Crashpad reports | ✅ `<data-dir>/cef-cache/Crashpad/` | ✅ same path | ✅ same path |
 | Sidecar minidumps | ✅ crash monitor → `C:\CrashDumps\agentmuxsrv\` | ❌ uses macOS crash reporter (`~/Library/Logs/DiagnosticReports/`) | ❌ uses systemd-coredump or apport |
-| Portable distribution | ✅ `.7z` (`task package`) | ✅ DMG, notarized (v0.42.x+) | ✅ AppImage (`task package:linux`, v0.42.x+); also `.deb`, `.rpm` and `.tar.xz` |
+| Portable distribution | ✅ `.7z` (`task package`) | ✅ DMG, notarized | ✅ AppImage (`task package:linux`); also `.deb`, `.rpm` and `.tar.xz` |
 | Multi-instance isolation under `~/.agentmux/` | ✅ ships | ✅ same layout | ✅ same layout |
-| Version isolation (per-version single-instance domain + version-scoped runtime dirs) | ✅ v0.41.1+ | ✅ v0.42.x+ | ✅ v0.42.x+ |
+| Version isolation (per-version single-instance domain + version-scoped runtime dirs) | ✅ ships | ✅ ships | ✅ ships |
 
 ✅ — supported and tested · 🟡 — partial / in progress · ❌ — not supported
 
@@ -48,7 +49,7 @@ The architecture is designed cross-platform from the start:
 - Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
 - [MuxAPI](/internals/muxapi/) — every command in the catalog is OS-independent at the wire level.
-- **Version isolation** (v0.41.1+ Windows; v0.42.x+ macOS + Linux) — each release version has its own single-instance domain (the launcher's IPC socket/pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Agent definitions and settings are channel-wide under `channels/<channel>/`, so upgrading doesn't reset your agents or settings.
+- **Version isolation** — each release version has its own single-instance domain (the launcher's IPC socket/pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Agent definitions and settings are channel-wide under `channels/<channel>/`, so upgrading doesn't reset your agents or settings.
 
 ## Per-OS notes
 
@@ -61,15 +62,15 @@ The architecture is designed cross-platform from the start:
 
 ### macOS
 
-- Ships as a notarized `.dmg` (v0.42.x+). The launcher binary is `Contents/MacOS/AgentMux` inside the app bundle.
+- Ships as a notarized `.dmg`. The launcher binary is `Contents/MacOS/AgentMux` inside the app bundle.
 - WRR is Windows-only by design — no `NSWindow` observation layer is planned. The cross-platform safety net is the orphan reconciler ([#1569](https://github.com/agentmuxai/agentmux/issues/1569) tracks the remaining crash-orphan gap); see the WRR row in the table above.
 - Shell integration: bash, zsh, and fish ship by default. PowerShell support is opt-in.
 
 ### Linux
 
-- Ships as an **AppImage** (`task package:linux`) — one self-contained file, no installer. System requirements: glibc 2.31+ and FUSE (for the compressed SquashFS mount; pre-installed on most desktop distros — see [Installation → Linux](/installation/#linux) for the `--appimage-extract` fallback if FUSE is absent).
+- Ships as an **AppImage** (`task package:linux`) — one self-contained file, no installer. System requirements: glibc 2.35+ and FUSE (for the compressed SquashFS mount; pre-installed on most desktop distros — see [Installation → Linux](/installation/#linux) for the `--appimage-extract` fallback if FUSE is absent).
 - **Launch flow:** `AppRun` → `linux-apprun.sh` → `agentmux-launcher` (the AppImage entry point). The launcher supervises the sidecar and host as a process group. On first launch the AppImage extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts.
-- **Single-instance IPC:** Unix domain socket at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (fallback: `/tmp/agentmux-<uid>/<hash>.sock`). The full reducer + saga coordinator runs on Linux (A1, v0.42.x+) — same feature set as Windows.
+- **Single-instance IPC:** Unix domain socket at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (fallback: `/tmp/agentmux-<uid>/<hash>.sock`). The full reducer + saga coordinator runs on Linux — same feature set as Windows.
 - **Display server:** native Wayland when the session sets `WAYLAND_DISPLAY` (since CEF 148); otherwise Chromium's X11 default. Set `AGENTMUX_OZONE_PLATFORM=wayland` or `x11` to pin a backend.
 - **Window drag:** requires the patched `libcef.so` bundled in all release AppImages (`CefWindow::BeginWindowDrag()` dispatches `xdg_toplevel.move` / `_NET_WM_MOVERESIZE`).
 - **Wayland app\_id:** `agentmux`. Desktop file: `agentmux.desktop` (auto-registered by the AppImage on first launch).

@@ -12,7 +12,7 @@ This guide walks through creating and running an agent. In AgentMux an agent is 
 
 A **harness** is the CLI tool that runs an agent, such as Claude Code or Codex CLI. The UI and the code mostly call it a "provider". A harness is distinct from the **model vendor**, the LLM backend that actually serves its responses.
 
-AgentMux knows nineteen providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI, Antigravity (AGY), Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build, DeepSeek Harness, Aider, Crush and Muse Code. They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `crates/srv/src/backend/providers.rs`. The agent picker has a template for seventeen of them. Mux Code and Qwen Code don't have one yet.
+AgentMux knows nineteen providers: Claude Code, Codex CLI, Mux Code, Gemini CLI, Qwen Code, Kimi Code CLI, OpenClaw, Pi, GitHub Copilot CLI, Antigravity (AGY), Kilo Code CLI, Cline CLI, OpenCode, goose, Grok Build, DeepSeek Harness, Aider, Crush and Muse Code. They're defined in `frontend/app/view/agent/providers/catalog.ts` (`PROVIDERS`) and `crates/srv-core/src/backend/providers.rs`. The agent picker has a template for seventeen of them. Mux Code and Qwen Code don't have one yet.
 
 Most harnesses run in the agent pane: AgentMux reads the CLI's structured output and shows the conversation, tool calls and edits itself. Aider and Crush have no interface AgentMux can read that way yet. They run in the **terminal tier**: the card opens a terminal pane running the CLI's own UI in the agent's folder. AgentMux still writes the agent's startup file and points the CLI at its config folder, but it shows no transcript, token count or resume for them. The CLI's own UI does that. Muse Code isn't in that tier: AgentMux drives it in the agent pane over its own protocol, MSP.
 
@@ -125,7 +125,7 @@ An agent has one pane. Opening an agent that already has one, running or not, ta
 
 The filter bar narrows the list, and **Sort** orders it: **Recently used** (the default), **Name (A–Z)** or **Type**.
 
-The **status bar** shows how many agents are running and how many of those wait on you ("3 running", "1 waiting on you"), next to a robot icon. An agent counts as running in every state except stopped and error, so one that is out of quota or signed out still counts. Click it to open the [Swarm](/subagent-watcher/). It is hidden while no agent runs.
+The **status bar** shows a robot icon with how many agents are running, and icons with counts for what waits on you: questions and permissions, Browser panes, Vault requests and Kanban tasks. An agent counts as running in every state except stopped and error, so one that is out of quota or signed out still counts. Each icon is hidden while its count is zero. While anything waits, a click opens **Waiting on you**; with nothing waiting it opens the [Swarm](/subagent-watcher/). See [The window](/window/).
 
 ### The tile panel
 
@@ -179,7 +179,7 @@ A **bundle** is a reusable set of instructions and tools that you give to agents
 
 Click **Save**. After saving, a bundle's detail view also links **skills** from the catalog in Memory, or adds skills private to the bundle.
 
-An agent's MCP servers come from [Connectors](/connectors/#mcp-servers), not from a bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. Harnesses that run over ACP, and Muse Code over MSP, get the same servers from AgentMux when their session starts, so they don't need to read the file. The terminal-tier harnesses (Aider and Crush) don't get them from AgentMux. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
+An agent's MCP servers come from [Connectors](/connectors/#mcp-servers), not from a bundle. AgentMux writes an agent's MCP servers, plus its own `agentmux` server, to `.mcp.json` in the agent's working directory, the file Claude Code reads. If you launch an agent in your own project and it already has a `.mcp.json`, AgentMux merges its servers into that file instead of replacing it. Your own entries and other top-level keys are kept, and on a name clash AgentMux's entry wins. On each launch AgentMux replaces only the entries it wrote itself, so a server you unbind disappears from the file. A `.mcp.json` that isn't valid JSON is left untouched. Harnesses that run over ACP, and Muse Code over MSP, get the same servers from AgentMux when their session starts, so they don't need to read the file. The terminal-tier harnesses (Aider and Crush) don't get them from AgentMux. The file holds the agent's message-signing key, so on Linux and macOS it's written readable only by your user account (mode 0600). Consider adding it to your project's `.gitignore` (`crates/srv-core/src/backend/agent_config.rs`, `write_mcp_json_respecting_user_servers`).
 
 A bundle works with any agent: the agent's own provider decides which harness it launches with, and an agent's provider is fixed once it's created (fork the agent to run it on another). A bundle's instructions go into the agent's startup file after Global Memory. See [Bundles](/bundles/) for the full configuration surface.
 
@@ -220,7 +220,7 @@ Start a message with `!` to run it as a shell command in the agent's working dir
 !ls -la dist/
 ```
 
-The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes. They run with `sh -c`; on Windows that is Git for Windows' `sh`, which AgentMux finds even when Git Bash isn't on your `PATH` (set `AGENTMUX_BASH` to the path of a `bash` or `sh` to use a different one). A message with files attached is sent to the agent, not run (`crates/srv/src/backend/posix_shell.rs`).
+The pane's Shell drawer opens below the message box, and the command's output appears there when it finishes. The **Shell** button in the status strip above the message box also shows and hides the drawer. Commands time out after 5 minutes. They run with `sh -c`; on Windows that is Git for Windows' `sh`, which AgentMux finds even when Git Bash isn't on your `PATH` (set `AGENTMUX_BASH` to the path of a `bash` or `sh` to use a different one). A message with files attached is sent to the agent, not run (`crates/srv-core/src/backend/posix_shell.rs`).
 
 ### When the agent asks you a question
 
@@ -245,7 +245,7 @@ To go back to closing a pane stopping its agent, set `agents:always_available` t
 
 ## When an agent fails
 
-AgentMux classifies each failure (`crates/srv/src/agents/failure.rs`) and shows a row with the actions that fit it (`frontend/app/view/agent/failure/failure-accessory.ts`):
+AgentMux classifies each failure (`crates/srv-core/src/agents/failure.rs`) and shows a row with the actions that fit it (`frontend/app/view/agent/failure/failure-accessory.ts`):
 
 | Failure | Actions |
 |---|---|
@@ -291,7 +291,7 @@ See [Skills](/memory/#skills) for when to use a skill instead of Global Memory, 
 
 ![Memory → Skills: the skill list, with + New skill, Import a skill… and Agents and skills](../../assets/screenshots/memory/memory-skills.png)
 
-AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv/src/backend/agent_config.rs`, `build_config_files`).
+AgentMux writes skills into the agent's working directory as Claude Code slash commands (`.claude/commands/`) and skills (`.claude/skills/`), so they take effect for Claude Code agents (`crates/srv-core/src/backend/agent_config.rs`, `build_config_files`).
 
 ## Seats
 
@@ -344,7 +344,7 @@ Click **Preview**. Each agent, and each lead, is matched by uid or by exact name
 
 ### Spawned workers
 
-An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A leader's workers open together in a tab of their own, named `<Leader> team`, in the leader's workspace. The tab is made the first time and reused after, so a leader that lives in your main tab doesn't fill it with workers. A parked leader's workers open in the tab the leader was parked from (or where its workers already are), not in the tab you are looking at. If the team tab can't be made, the workers open in the leader's tab as before. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv/src/backend/agent_seat.rs`, `effective_seat`). The worker's seat editor marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
+An agent can open a worker, a new agent it coaches, with the `Agents` tool's `spawn`. A leader's workers open together in a tab of their own, named `<Leader> team`, in the leader's workspace. The tab is made the first time and reused after, so a leader that lives in your main tab doesn't fill it with workers. A parked leader's workers open in the tab the leader was parked from (or where its workers already are), not in the tab you are looking at. If the team tab can't be made, the workers open in the leader's tab as before. A worker with no seat of its own is shown with one anyway: **Worker · spawned**, reporting to the agent that spawned it. That seat is worked out each time it's read and never stored (`crates/srv-core/src/backend/agent_seat.rs`, `effective_seat`). The worker's seat editor marks it "From spawn"; save a seat there to give the worker one of its own, which then wins. Clearing it brings the spawned seat back.
 
 ### Agents on other computers
 

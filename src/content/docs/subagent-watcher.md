@@ -18,13 +18,13 @@ The **Swarm** pane is the overview of what your agents are doing right now. It l
 
 ## Opening Swarm
 
-- Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`crates/srv/src/config/widgets.json`, `defwidget@swarm`).
+- Click **Swarm** (bee icon) in the widget bar. It is pinned by default (`crates/srv-core/src/config/widgets.json`, `defwidget@swarm`).
 - Command palette (`Ctrl+P`): **Open Swarm**.
 - Click **+** on any pane's tab strip and pick **Swarm** to add it as a tab in that pane.
 - Click the agent count in the status bar (see below).
 - In an agent pane, click a subagent or workflow dispatch card (it reads **View in Swarm →**; `Enter` or `Space` also work). Each click opens a new Swarm pane (`frontend/app/view/agent/components/tool-renderers/DispatchCard.tsx`).
 
-**The status bar counts your agents.** While at least one agent runs, the status bar shows **N running**, and, when some are waiting on an answer from you, **N waiting on you** in the warning colour. An agent counts as running when it has a process, with or without a pane, so closing a pane doesn't remove it from the count. Click the count to open the Swarm.
+**The status bar counts your agents.** While at least one agent runs, the status bar shows a robot icon with how many run, and icons with counts for what waits on you (questions and permissions, Browser panes, Vault requests, Kanban tasks). An agent counts as running when it has a process, with or without a pane, so closing a pane doesn't remove it from the count. While anything waits, a click opens **Waiting on you**; otherwise it opens the Swarm. See [The window](/window/).
 
 **The command palette lists your agents.** Type an agent's name, its seat or its state (for example `limited`) in the palette (`Ctrl+P`); choosing one brings its pane forward, in whichever tab or window it is, or opens it if it has no pane.
 
@@ -81,7 +81,7 @@ An agent row shows:
 | Checkbox | Selects the agent for a fleet action |
 | Chevron (▸ / ▾) | Expands or collapses the row. Shown only when the agent has child rows. |
 | Provider logo and name | The pane's agent name, or "Agent" if it has none |
-| Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one. Hover over it for the whole seat. |
+| Role badge | The agent's [seat](/first-agent/#seats), such as "Leader · product", when it has one, right after the agent's name. Hover over it for the whole seat. With too little room it is cut with an ellipsis, then dropped, so the status word keeps its room. |
 | **No pane** tag | Shown on an agent that is running with no pane, because closing its pane, tab or window parked it. Hover it for how to bring it back: open the agent from **My Agents**. My Agents marks its row the same way. See [Closing and shutting down](/closing-and-shutting-down/) |
 | Child count | Number of child rows, shown while the row is collapsed |
 | Context size | The context-window reading from the agent's last turn, e.g. `45.2k` |
@@ -99,7 +99,7 @@ Under an expanded agent, child rows are grouped in this order. A group is hidden
 
 ### Todos
 
-The agent's current todo list, read from its transcript every few seconds (`crates/srv/src/backend/reactive/progress_watcher.rs`). AgentMux picks up `TodoWrite`, `TaskCreate` and `TaskUpdate` tool calls, and other tools whose name contains "Todo".
+The agent's current todo list, read from its transcript every few seconds (`crates/srv-core/src/backend/reactive/progress_watcher.rs`). AgentMux picks up `TodoWrite`, `TaskCreate` and `TaskUpdate` tool calls, and other tools whose name contains "Todo".
 
 - The header reads **Todos** with a done/total count, e.g. `1/3`.
 - Items keep the agent's own order and are marked ✓ (completed), ▸ (in progress) or ○ (pending).
@@ -110,7 +110,7 @@ The last list stays visible after the agent goes idle.
 
 ### Agent Tool
 
-One row per subagent the agent launched with its Agent/Task tool. Subagent tracking is **Claude Code only**: AgentMux reads the subagent transcripts Claude Code writes under its config directory (`crates/srv/src/backend/subagent_watcher/mod.rs`).
+One row per subagent the agent launched with its Agent/Task tool. Subagent tracking is **Claude Code only**: AgentMux reads the subagent transcripts Claude Code writes under its config directory (`crates/srv-core/src/backend/subagent_watcher/mod.rs`).
 
 - The label is a short generated name for the subagent, falling back to its slug and ID.
 - The status chip reads **working** or **idle**, like an agent's. A subagent whose agent went idle before the subagent finished is *interrupted*: its chip reads **idle**, and it has no countdown (see below).
@@ -141,7 +141,7 @@ Each row shows the command and elapsed time. This group only covers agent panes 
 
 ### Background
 
-Commands the agent started in the background (a `Bash` call with `run_in_background`), with the description the agent gave the command, or `Bash` if it gave none (`frontend/app/view/swarm/swarm-background-tasks.tsx`, `crates/srv/src/backend/background_task_feed.rs`). A background command a subagent started is shown under that subagent's row in **Agent Tool**, whether or not the row is expanded; it moves to this group once the subagent's row is gone.
+Commands the agent started in the background (a `Bash` call with `run_in_background`), with the description the agent gave the command, or `Bash` if it gave none (`frontend/app/view/swarm/swarm-background-tasks.tsx`, `crates/srv-core/src/backend/background_task_feed.rs`). A background command a subagent started is shown under that subagent's row in **Agent Tool**, whether or not the row is expanded; it moves to this group once the subagent's row is gone.
 
 Each row shows `$`, the description, a status and the elapsed time, which stops when the command ends:
 
@@ -188,12 +188,13 @@ An agent also starts when a message, a Job or a Kanban task is sent to it (see [
 
 ## Agents on other instances
 
-After this instance's own agents, Swarm lists the agents of other AgentMux instances (`frontend/app/view/swarm/swarm-remote.ts`, `frontend/app/view/swarm/swarm-view.tsx`, `RemoteAgentRows`; backend `crates/srv/src/backend/swarm_remote.rs`):
+After this instance's own agents, Swarm lists the agents of other AgentMux instances (`frontend/app/view/swarm/swarm-remote.ts`, `frontend/app/view/swarm/swarm-view.tsx`, `RemoteAgentRows`; backend `crates/srv-core/src/backend/swarm_remote.rs`):
 
 - **Other channels on this machine**, such as a dev build running next to the installed one. They come from the registry every instance on the machine shares.
 - **LAN peers**, while [LAN discovery](/lan-discovery/) is on. They come from its peer list.
+- **Your account's other machines that are not on this network**, while you are signed in to MuxBus Cloud: the cloud tier, badge **cloud**. Display only: Broadcast and Stop can't reach them. See [the cloud tier](/lan-discovery/#the-cloud-tier-in-the-swarm).
 
-Agents on other machines in the cloud are not listed yet. The rows are ordered this machine's other channels first, then LAN peers, then by machine and by name. Swarm loads them when it opens and again every 12 seconds.
+The rows are ordered this machine's other channels first, then LAN peers, then the cloud tier, then by machine and by name. Swarm loads them when it opens and again every 12 seconds.
 
 Each is one row with no children:
 
@@ -202,7 +203,7 @@ Each is one row with no children:
 | Checkbox | Selects the agent for a fleet action |
 | Provider logo and name | The agent's name, and its provider when its instance reports one |
 | Role badge | The agent's [seat](/first-agent/#seats), such as "Worker", when its instance reports one (LAN peers do). Hover over it for the whole seat. |
-| Where | The machine's name, with the channel when that machine runs more than one instance (for example "laptop · dev"); a badge, **this machine** or **LAN**; and the platform (Windows, macOS or Linux) when the instance reports it |
+| Where | The machine's name, with the channel when that machine runs more than one instance (for example "laptop · dev"); a badge, **this machine**, **LAN** or **cloud**; and the platform (Windows, macOS or Linux) when the instance reports it |
 | Status chip | The state its instance reports: **working**, waiting for an answer, **idle** (also for a stopped agent) or an error. Hover it for the exact state. No chip when the instance reports no state. |
 | Summary line | The agent's one-line summary, when its instance shares it. Each instance decides with **Share what my agents are working on** (`swarm:sharesummaries`); see [Swarm summary lines](/lan-discovery/#swarm-summary-lines). |
 
@@ -237,7 +238,7 @@ The **Broadcast** section has its own message box above the list. Select agents,
 
 The last ten broadcasts are listed under the box, newest first, each with its age and "N sent · N delivered" (and "· N failed"). Hover a row for the full text. The draft and this list are kept while the pane is open, so switching to the Supervisor section and back loses neither; a restart clears them.
 
-A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv/src/backend/reactive/sanitize.rs`, `broadcast_turn_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv/src/backend/lan/swarm_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
+A broadcast goes to each selected agent with no confirmation step. On this machine, including an agent of another channel, it arrives as your own message, under a one-line header that only AgentMux writes: `[BROADCAST:FROM=user VIA=swarm TO=<agent> RECIPIENTS=<n> MSGID=<id> TS=<time>]` (`crates/srv-core/src/backend/reactive/sanitize.rs`, `broadcast_turn_message`). An agent on a LAN peer gets it instead as a [jekt](/glossary/) signed by this AgentMux, which starts "Swarm broadcast from" and this computer's name. It is not its own user's message there, so it carries no user authority (`crates/srv-core/src/backend/lan/swarm_broadcast.rs`). An agent that is not live and registered for messages fails with an error in the result panel.
 
 ## Fleet toolbar
 
@@ -372,7 +373,7 @@ Swarm itself spends a small number of tokens: when you open it, AgentMux asks a 
 ## What Swarm doesn't do
 
 - **No history or search.** Swarm shows live state only. Subagent activity is held in memory; when an agent pane is reopened, AgentMux reloads that session's subagent activity from Claude Code's transcript files.
-- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. Agents in the cloud aren't listed. For the instances themselves, see the [network pill](/lan-discovery/#the-network-pill).
+- **Little about other instances.** Their agents are listed by name, place, status and summary line only: no subagents, todos or commands, and no Supervisor. For the instances themselves, see the [network pill](/lan-discovery/#the-network-pill).
 - **No subagent tracking for providers other than Claude Code.**
 - **No count of AgentMux's own model requests.** The toolbar's Stats panel moved to the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
 

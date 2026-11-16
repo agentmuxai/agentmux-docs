@@ -29,7 +29,7 @@ AgentMux runs a launcher, a CEF host (the window and UI), the server `agentmux-s
 
 ## The auth key is in every pane
 
-AgentMux puts `AGENTMUX_AUTH_KEY` and `AGENTMUX_LOCAL_URL` into the environment of **every terminal pane and every agent process on the host** (`crates/srv/src/backend/pane_env.rs`, `PANE_ENV_KEEP`). The helper CLIs (`muxsh`, `muxopen`) and each agent's `agentmux-mcp` need them to reach the server. Every child process inherits them too: a shell an agent starts, its MCP servers, build scripts, `npm install` lifecycle scripts.
+AgentMux puts `AGENTMUX_AUTH_KEY` and `AGENTMUX_LOCAL_URL` into the environment of **every terminal pane and every agent process on the host** (`crates/srv-core/src/backend/pane_env.rs`, `PANE_ENV_KEEP`). The helper CLIs (`muxsh`, `muxopen`) and each agent's `agentmux-mcp` need them to reach the server. Every child process inherits them too: a shell an agent starts, its MCP servers, build scripts, `npm install` lifecycle scripts.
 
 The key grants the same local API the AgentMux UI uses. With it, a process can, among other things:
 
@@ -45,11 +45,11 @@ A few things need more than the auth key. The browser-password broker and host r
 
 **Mitigation:** run code you don't trust outside AgentMux panes. A process's environment is also readable by other processes running as the same user (for example `/proc/<pid>/environ` on Linux), so the key is not secret from anything else running as you.
 
-Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` from every agent's environment on every spawn path, even when they come from a saved `cmd:env` (`crates/srv/src/backend/account_login_guard.rs`); the server makes every cloud call with its own stored login. That login is still on disk, so an agent that goes looking for it can read it like any other file of yours. This keeps it out of agents' hands by default; it isn't an OS boundary.
+Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` from every agent's environment on every spawn path, even when they come from a saved `cmd:env` (`crates/srv-core/src/backend/account_login_guard.rs`); the server makes every cloud call with its own stored login. That login is still on disk, so an agent that goes looking for it can read it like any other file of yours. This keeps it out of agents' hands by default; it isn't an OS boundary.
 
 ### Container agents
 
-A [container agent](/container-agents/)'s `AGENTMUX_AUTH_KEY` is not the instance auth key but a per-pane token starting `amxc_` (`crates/srv/src/backend/container/credential.rs`). The rule is that a container agent can do what a Native agent can, except directly change or run things on your computer. The server accepts the token on every route except those that:
+A [container agent](/container-agents/)'s `AGENTMUX_AUTH_KEY` is not the instance auth key but a per-pane token starting `amxc_` (`crates/srv-core/src/backend/container/credential.rs`). The rule is that a container agent can do what a Native agent can, except directly change or run things on your computer. The server accepts the token on every route except those that:
 
 - run commands on your computer: shells, PTYs, remote connections and the askpass helper;
 - drive your desktop;
@@ -57,7 +57,9 @@ A [container agent](/container-agents/)'s `AGENTMUX_AUTH_KEY` is not the instanc
 - write Global Memory (it can read it), or upgrade AgentMux;
 - belong to the app itself or to other AgentMux instances: approvals, the cloud relay, the WebSocket and RPC service, and the routes between instances.
 
-A refused route answers with 403, the reason and what to do instead (`crates/srv/src/backend/route_audience.rs` lists them). A route added later is open to container agents unless it is added to that list. Messaging, the work queue, Kanban, the Vault, Browser and UI tools, widgets, dev servers, and opening or creating agents all work. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
+A refused route answers with 403, the reason and what to do instead (`crates/srv-core/src/backend/route_audience.rs` lists them). A route added later is open to container agents unless it is added to that list. Messaging, the work queue, Kanban, the Vault, Browser and UI tools, widgets, dev servers, and opening or creating agents all work. The token is tied to the agent it was minted for, so a container can't claim another agent's identity with it. It lives only in the server's memory, and is revoked when the pane closes.
+
+A container agent's GitHub access is narrowed as well. On a computer with `gh-agent`, `git` gets a short-lived token for one repository that writes contents only, and `gh` a token that can't write contents; a `gh pr merge` is done by AgentMux on your computer, a raw `gh api` write to a ref, tag, release or file is refused, and a push to a public repository goes through the host's publish check first. See [Git and GitHub](/container-agents/#git-and-github).
 
 ## Per-agent identity
 
@@ -70,17 +72,17 @@ A quick-launch pane that has no definition gets neither. The server always overw
 
 The agent's MCP server sends the token as `X-Agent-Token`. The server then **attributes** the request to that UID in audit records, the work queue and cron (`crates/srv/src/server/caller.rs`). This is attribution, not authorization. A request with no token, or an unknown one, is still accepted; it is just unattributed. The exception is `Agents` `search_history` (`/agentmux/reactive/history/search`), which searches the history of the token's own agent and refuses a request without a token (`crates/srv/src/server/reactive.rs`). A token is only honored on requests that also carry the full auth key, never on `lan_key` requests. The agent's child processes inherit the token.
 
-**Name resolution refuses to guess.** Two agents can hold the same name. A message, lookup or unregister addressed to a name that two or more live agents hold is refused with the list of candidates (UID, pane, name), so the caller can retry by UID (`crates/srv/src/backend/reactive/handler.rs`). Before delivering, the server also checks the target pane's own identity and rejects a mismatch.
+**Name resolution refuses to guess.** Two agents can hold the same name. A message, lookup or unregister addressed to a name that two or more live agents hold is refused with the list of candidates (UID, pane, name), so the caller can retry by UID (`crates/srv-core/src/backend/reactive/handler.rs`). Before delivering, the server also checks the target pane's own identity and rejects a mismatch.
 
 Agent-to-agent messages carry a separate, signature-based trust label; see [Reactive event bus](/security/reactive-event-bus/).
 
 ### One live instance per agent
 
-An agent (its UID) runs in at most one place at a time, so two copies don't drive the same conversation and credentials (`crates/srv/src/backend/agent_admission.rs`):
+An agent (its UID) runs in at most one place at a time, so two copies don't drive the same conversation and credentials (`crates/srv-core/src/backend/agent_admission.rs`):
 
 - **This machine.** Before an agent's CLI process starts, its pane claims a lease on the agent's UID in a lease store shared by every AgentMux instance on the machine, and holds it while the process runs. A pane whose agent is running in another instance is refused, with a message naming that instance's channel and version; the user can choose **Take over**, which asks the other instance to stop its copy (`POST /agentmux/agent/release`, full auth key only). Registering the agent for messages is refused the same way (HTTP 409 from `/agentmux/reactive/register`).
 - **LAN** (LAN discovery on). The instance asks each peer `GET /agentmux/agent/holding?uid=<uid>` before starting the agent, and again every 30 seconds while it runs. A peer on another host that says it holds the agent refuses the start. If both hosts are already running it, the one that started later stops its copy (starts within 10 seconds of each other go to the lower hostname).
-- **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay (`/agents/lease`, keyed by agent name) before it pulls the agent's messages, and renews it every 20 seconds. While another instance holds the lease, the relay answers this instance's pulls with 409 and the local copy is stopped (`crates/srv/src/muxbus/wan_lease.rs`).
+- **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay (`/agents/lease`, keyed by agent name) before it pulls the agent's messages, and renews it every 20 seconds. While another instance holds the lease, the relay answers this instance's pulls with 409 and the local copy is stopped (`crates/srv-core/src/muxbus/wan_lease.rs`).
 
 This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
 
@@ -198,16 +200,16 @@ Report security issues privately to **security@agentmux.ai**, not in a public Gi
 **Source-of-truth references**:
 - `crates/launcher/src/srv_spawner.rs` — auth key and host-registration secret generation
 - `crates/srv/src/config.rs` — reading and scrubbing the keys; `lan_key` generation
-- `crates/srv/src/backend/pane_env.rs` (`PANE_ENV_KEEP`) — what reaches pane environments
+- `crates/srv-core/src/backend/pane_env.rs` (`PANE_ENV_KEEP`) — what reaches pane environments
 - `crates/srv/src/server/agent_handlers/input.rs` (`carry_agent_uid_env`) — agent UID and token
-- `crates/srv/src/server/caller.rs`, `crates/srv/src/backend/storage/agent_tokens.rs` — attribution
+- `crates/srv/src/server/caller.rs`, `crates/srv-core/src/backend/storage/agent_tokens.rs` — attribution
 - `crates/srv/src/server/ui_handlers.rs` (`verified_block_id`), `crates/srv/src/server/app_api/pane.rs` (`handle_close_pane`, `handle_quit_self`) — own-pane checks
 - `crates/srv/src/sagas/pending_shutdown.rs`, `crates/srv/src/server/app_api/fleet.rs` — the 30-second override window (`OVERRIDE_WINDOW`)
-- `crates/srv/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv/src/muxbus/wan_lease.rs` — one live instance per agent
+- `crates/srv-core/src/backend/agent_admission.rs`, `crates/srv/src/server/agent_takeover.rs`, `crates/srv-core/src/muxbus/wan_lease.rs` — one live instance per agent
 - `crates/mcp/src/window_capture.rs` (`CaptureTier`) — window capture scope
 - `crates/srv/src/server/service/credential.rs` — the host-only service
 - `crates/common/src/data_paths.rs` (`ensure_owner_only_dir`) — owner-only data root on Unix
 - `crates/cef/src/dev_authfile.rs` — `authkey.dev` permissions
-- `crates/srv/src/backend/account_login_guard.rs` (`strip_account_login`) — the MuxBus login kept out of agent environments
-- `crates/srv/src/backend/container/credential.rs` (`container_route_allowed`) — the container agent token
-- `crates/srv/src/backend/route_audience.rs` — the routes a container agent can't call
+- `crates/srv-core/src/backend/account_login_guard.rs` (`strip_account_login`) — the MuxBus login kept out of agent environments
+- `crates/srv-core/src/backend/container/credential.rs` (`container_route_allowed`) — the container agent token
+- `crates/srv-core/src/backend/route_audience.rs` — the routes a container agent can't call

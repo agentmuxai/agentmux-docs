@@ -46,11 +46,11 @@ An agent working directory outside `~/.agentmux` keeps its own permissions; of t
 
 ## Credentials, by kind
 
-A credential attached to an identity account is stored as a `SecretRef`, a pointer that says where the value is (`crates/srv/src/backend/storage/identities.rs`). Resolution is in `resolve_secret` (`crates/srv/src/identity/resolver/secret.rs`).
+A credential attached to an identity account is stored as a `SecretRef`, a pointer that says where the value is (`crates/srv-core/src/backend/storage/identities.rs`). Resolution is in `resolve_secret` (`crates/srv-core/src/identity/resolver/secret.rs`).
 
 ### `Keychain`: OS secret store
 
-API keys and tokens you add in Connectors → Accounts (a GitHub personal access token, an Anthropic or OpenAI API key, and so on) are stored in the OS secret store through the `keyring` crate: macOS Keychain, Windows Credential Manager, or Linux Secret Service. The entry uses service `agentmux` and account `acct:<account id>`; the database holds only this pointer and non-secret metadata (`crates/srv/src/identity/secret_store.rs`). The value is read at agent launch.
+API keys and tokens you add in Connectors → Accounts (a GitHub personal access token, an Anthropic or OpenAI API key, and so on) are stored in the OS secret store through the `keyring` crate: macOS Keychain, Windows Credential Manager, or Linux Secret Service. The entry uses service `agentmux` and account `acct:<account id>`; the database holds only this pointer and non-secret metadata (`crates/srv-core/src/identity/secret_store.rs`). The value is read at agent launch.
 
 On Linux you need a running Secret Service (GNOME Keyring, KWallet or similar). Without one, saving the key fails with an error; AgentMux has no plaintext fallback.
 
@@ -80,9 +80,9 @@ The variant exists, and resolving it always returns an "unsupported" error.
 
 | Credential | Where | At rest |
 |---|---|---|
-| MuxBus Cloud sign-in (access, refresh and ID tokens) | OS secret store; email and expiry in `shared/store.db`. On Windows the tokens are split into chunks across several Credential Manager entries, because one entry holds at most 2,560 bytes (`crates/srv/src/backend/storage/muxbus.rs`) | OS secret store |
+| MuxBus Cloud sign-in (access, refresh and ID tokens) | OS secret store; email and expiry in `shared/store.db`. On Windows the tokens are split into chunks across several Credential Manager entries, because one entry holds at most 2,560 bytes (`crates/srv-core/src/backend/storage/muxbus.rs`) | OS secret store |
 | Per-agent MuxBus machine credentials (client id, client secret, cached access token) | `shared/store.db`, table `db_agent_credentials` | **Plaintext** |
-| Passwords saved for HTTP Basic auth in browser panes | OS secret store, one entry per identity and site (`crates/srv/src/identity/browser_credential_store.rs`) | OS secret store |
+| Passwords saved for HTTP Basic auth in browser panes | OS secret store, one entry per identity and site (`crates/srv-core/src/identity/browser_credential_store.rs`) | OS secret store |
 | Browser-pane cookies and site storage | `cef-cache/` | Chromium is started with `--password-store=basic` (and, on macOS, `--use-mock-keychain`) so it never touches the OS keychain; by the code's own description the cookie store then has only obfuscation-level encryption. Treat it as plaintext. |
 | Agents' signing keys: HMAC key, LAN and WAN Ed25519 private keys | `objects.db` (HMAC, LAN, and WAN keys minted before `wan.db` existed), `wan.db` (WAN), and, for the HMAC and LAN keys only, the agent's `.mcp.json` in its working directory | **Plaintext** |
 | The install's WAN instance private key, which certifies its agents' WAN keys | `wan.db` | **Plaintext** |
@@ -92,7 +92,7 @@ The variant exists, and resolving it always returns an "unsupported" error.
 
 ### Signing keys in `.mcp.json`
 
-The agent's MCP server fetches its HMAC key and LAN private key from AgentMux with its identity token (`GET /agentmux/agents/self/keys`). As a fallback, AgentMux also writes them at every launch into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**. The WAN key stays in `wan.db`: AgentMux signs WAN messages itself, and removes any WAN key from `.mcp.json` (`inject_jekt_signing_keys_into_mcp_json` and `write_mcp_json_respecting_user_servers` in `crates/srv/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix). An existing `.mcp.json` is merged, not replaced: MCP server entries AgentMux didn't write, and other top-level keys, are kept; the `agentmux` entry is always AgentMux's. A file that can't be read or isn't a JSON object is left untouched, and the agent's MCP servers aren't written for that launch.
+The agent's MCP server fetches its HMAC key and LAN private key from AgentMux with its identity token (`GET /agentmux/agents/self/keys`). As a fallback, AgentMux also writes them at every launch into the `mcpServers.agentmux.env` block of `.mcp.json` in the agent's **working directory**. The WAN key stays in `wan.db`: AgentMux signs WAN messages itself, and removes any WAN key from `.mcp.json` (`inject_jekt_signing_keys_into_mcp_json` and `write_mcp_json_respecting_user_servers` in `crates/srv-core/src/backend/agent_config.rs`). The file is written owner-only (`0600` on Unix). An existing `.mcp.json` is merged, not replaced: MCP server entries AgentMux didn't write, and other top-level keys, are kept; the `agentmux` entry is always AgentMux's. A file that can't be read or isn't a JSON object is left untouched, and the agent's MCP servers aren't written for that launch.
 
 The default working directory, `~/.agentmux/agents/<slug>/`, is excluded from git by a `*` rule in `~/.agentmux/.gitignore`. **If you set an agent's working directory to a project repository, AgentMux writes the agent's signing keys into that project's `.mcp.json`. Add `.mcp.json` to the project's `.gitignore` and don't commit it.** Anyone holding these keys can sign messages as that agent; see [Reactive event bus](/security/reactive-event-bus/#signing-keys).
 
@@ -113,7 +113,7 @@ The same limits as the rest of this page apply: a process running as your user c
 
 ## How credentials reach agent processes
 
-At each agent launch (`inject_identity_env` in `crates/srv/src/identity/resolver/inject.rs`):
+At each agent launch (`inject_identity_env` in `crates/srv-core/src/identity/resolver/inject.rs`):
 
 1. AgentMux looks up the accounts linked to the agent's definition.
 2. For an **API-key** account it resolves the `SecretRef` and sets the provider's variables in the process environment: `GITHUB_TOKEN` and `GH_TOKEN` for GitHub, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `MOONSHOT_API_KEY` (Kimi), `AWS_ACCESS_KEY_ID`. A failed resolution is logged and skipped.
@@ -123,7 +123,7 @@ At each agent launch (`inject_identity_env` in `crates/srv/src/identity/resolver
 
 AgentMux adds its own variables to every agent process as well: `AGENTMUX_AUTH_KEY` (full control of the local AgentMux server; a container agent gets a narrower per-agent token in it instead) and `AGENTMUX_AGENT_TOKEN`. Your MuxBus Cloud login is not passed to agents: `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` are removed from every agent's environment. See the [trust model](/security/trust-model/#the-auth-key-is-in-every-pane).
 
-It also sets `GH_CONFIG_DIR` in every Native agent process (not in container agents), and in commands run on an agent's behalf, to a per-agent directory under AgentMux's config directory that holds no `gh` login; a login made there is removed at the next spawn (`crates/srv/src/backend/gh_guard.rs`). A plain `gh` command in an agent therefore can't act as the `gh` login you made on the machine. A GitHub token from the agent's own account (`GH_TOKEN`) still works.
+It also sets `GH_CONFIG_DIR` in every Native agent process (not in container agents), and in commands run on an agent's behalf, to a per-agent directory under AgentMux's config directory that holds no `gh` login; a login made there is removed at the next spawn (`crates/srv-core/src/backend/gh_guard.rs`). A plain `gh` command in an agent therefore can't act as the `gh` login you made on the machine. A GitHub token from the agent's own account (`GH_TOKEN`) still works.
 
 ## Rotation
 
@@ -146,15 +146,15 @@ These follow from running agents as you. If you need stronger isolation, use OS-
 
 **Source-of-truth references**:
 - `crates/common/src/data_paths.rs` — data root, `ensure_dirs`, `ensure_owner_only_dir`, `wan_identity_dir`, `identities_dir`, `provider_auth_dir`, `isolated_auth_enabled`
-- `crates/srv/src/backend/storage/wan_identity.rs` — `wan.db`
-- `crates/srv/src/backend/gh_guard.rs` — `GH_CONFIG_DIR` in agent processes
-- `crates/srv/src/backend/storage/identities.rs` — `SecretRef`
-- `crates/srv/src/identity/resolver/secret.rs` (`resolve_secret`), `crates/srv/src/identity/resolver/inject.rs`, `crates/srv/src/identity/resolver/provider.rs` — resolution and injection
-- `crates/srv/src/identity/secret_store.rs`, `crates/srv/src/identity/browser_credential_store.rs`, `crates/srv/src/backend/storage/muxbus.rs` — OS secret store use
-- `crates/srv/src/backend/storage/agent_credentials.rs` — per-agent MuxBus machine credentials
-- `crates/srv/src/backend/vault/` — the Vault: its key, sealing, export and import
-- `crates/srv/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`, `write_mcp_json_respecting_user_servers`) — signing keys in `.mcp.json`
-- `crates/srv/src/backend/reactive/registry.rs`, `crates/cef/src/dev_authfile.rs`, `crates/launcher/src/ipc/mod.rs` — the explicitly restricted files
+- `crates/srv-core/src/backend/storage/wan_identity.rs` — `wan.db`
+- `crates/srv-core/src/backend/gh_guard.rs` — `GH_CONFIG_DIR` in agent processes
+- `crates/srv-core/src/backend/storage/identities.rs` — `SecretRef`
+- `crates/srv-core/src/identity/resolver/secret.rs` (`resolve_secret`), `crates/srv-core/src/identity/resolver/inject.rs`, `crates/srv-core/src/identity/resolver/provider.rs` — resolution and injection
+- `crates/srv-core/src/identity/secret_store.rs`, `crates/srv-core/src/identity/browser_credential_store.rs`, `crates/srv-core/src/backend/storage/muxbus.rs` — OS secret store use
+- `crates/srv-core/src/backend/storage/agent_credentials.rs` — per-agent MuxBus machine credentials
+- `crates/srv-core/src/backend/vault/` — the Vault: its key, sealing, export and import
+- `crates/srv-core/src/backend/agent_config.rs` (`inject_jekt_signing_keys_into_mcp_json`, `write_mcp_json_respecting_user_servers`) — signing keys in `.mcp.json`
+- `crates/srv-core/src/backend/reactive/registry.rs`, `crates/cef/src/dev_authfile.rs`, `crates/launcher/src/ipc/mod.rs` — the explicitly restricted files
 - `crates/cef/src/app/mod.rs` — Chromium password-store switches
 
 **Related**: [Identity & Accounts](/identity/) (the feature), [Data sovereignty](/security/data-sovereignty/), [Trust model](/security/trust-model/).

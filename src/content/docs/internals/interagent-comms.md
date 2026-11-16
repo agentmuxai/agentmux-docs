@@ -75,7 +75,7 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 | Result | Meaning |
 |---|---|
 | `Delivered to <to> — injected into their running conversation.` | Delivered on the Host, Channel or LAN tier. A live agent gets it at once, even mid-turn. |
-| `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's AgentMux has it and delivers it as soon as the agent is up. Don't resend it. |
+| `QUEUED for <to> — their agent cannot take it yet` | The agent is starting up, restarting or stopping, or it handles one turn at a time, as a container agent does, and is in one now. The recipient's AgentMux has it and delivers it as soon as the agent can. Don't resend it. |
 | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. The recipient's AgentMux fetches it on its next sync, which never happens if that instance is offline, and the relay drops it after 30 minutes. **An agent name that exists nowhere gets this same answer**, so treat it as unconfirmed; the answer adds "No agent of that name has signed in from your account" when the relay says the name isn't one of your agents. |
 | `HELD for <to> (not_running, starting)` | The agent was stopped. This AgentMux is starting it now and delivers the message as soon as it is up, normally within seconds. Don't resend it. |
 | `HELD for <to> (not_running, capacity)` | The agent was stopped and this AgentMux did not start it, because a limit would refuse the start (the answer says which, and what has to be freed). The message is kept for up to 24 hours and delivered once the agent can start. |
@@ -83,6 +83,7 @@ Parameters: `to` (the target agent's name, its `AGENTMUX_AGENT_ID`, or its UID) 
 | `HELD for <to> (not_running)` | A known agent of this instance that isn't running and couldn't be started (held before the cloud relay is tried). This AgentMux keeps the message for up to 24 hours and delivers it when the agent starts. Don't resend it. |
 | `HELD for <to> (needs_login)` | The agent is signed out, or its sign-in gate refused a start. This AgentMux keeps the message for up to 24 hours and delivers it after a confirmed sign-in. |
 | `HELD for <to> (usage_limit, until …)` | The agent's account is out of quota. This AgentMux keeps the message for up to 24 hours and delivers it when the agent can work again: after an account move, the reset or a clean turn. A message that must not wait (an `urgent` or `high` priority, or one naming a task waiting on the agent, `#12`) is still held when the limit has a known reset time, and also starts one small probe turn on the agent, at most once every 15 minutes; if that turn is clean, the held messages are sent. |
+| `HELD for <to> (peer_offline)` | The agent runs on another machine on your network that is not answering now. This AgentMux keeps the message for up to 24 hours and delivers it when that machine is seen again; the cloud relay would drop it after 30 minutes. Don't resend it. |
 | `HELD for <to> (idle)` | The agent's session has been idle for about an hour, so a message that could wait is kept for up to 24 hours and delivered when the agent is next active. Send it again with `urgent: true` only if it is work for the agent or can't wait. A message that names a task waiting on the agent (`#12`) is never held. |
 | `Message delivery failed (needs_login)` or `(unavailable)` | The agent could not start because it is not signed in, or its account is out of quota, and the message could not be kept. |
 | An error, `Message delivery failed: <reason>` | For example `agent not found: <name>`, an ambiguous name (two running agents share it; the error lists each one's UID so you can retry by UID), `identity mismatch`, `rate limit exceeded`, or `hold full`. |
@@ -145,7 +146,7 @@ The server tries these steps in order and stops at the first that answers (`crat
 |---|---|---|
 | 1. This instance | Two running agents of this instance share the target name | Refused: `Message delivery failed: <reason>`, listing each one's UID |
 | | Target running in this instance | `Delivered`, in-process |
-| | Target registered in this instance, but its agent is starting up, restarting or stopping | `QUEUED for <to> — their agent is starting up, restarting or stopping` |
+| | Target registered in this instance, but its agent cannot take it yet (starting up, restarting, stopping, or in the one turn a container agent handles at a time) | `QUEUED for <to> — their agent cannot take it yet` |
 | | Target registered in this instance, but it can't start because it isn't signed in | `HELD for <to> (needs_login)`, delivered once it signs in. No other step is tried. |
 | | Target running here, but its account is out of quota | `HELD for <to> (usage_limit, until …)`, delivered when it can work again. No other step is tried. |
 | | Target running here, a routine message, and its session idle for about an hour | `HELD for <to> (idle)`, delivered when it is next active (unless sent with `urgent: true`) |
@@ -165,7 +166,7 @@ Messages are limited to 10,000 bytes after sanitization (longer ones are truncat
 
 ## Observing message flow
 
-The [Audit](/audit/) pane shows a feed of the last 50 audit events (deliveries, actions and registrations), and the [Swarm](/subagent-watcher/#registration-badge) flags an agent that another instance also claims. The same data is available at `GET /agentmux/reactive/agents` and `GET /agentmux/reactive/audit`, which need the instance auth key. The audit log keeps the last 100 events in memory only, with message lengths and hashes but not message text.
+The [Atlas](/atlas/) draws each message as a line from its sender to its receiver while it happens, coloured by what became of it (delivered, held or queued, refused), from ids and times only, never the text. The [Audit](/audit/) pane shows a feed of the last 50 audit events (deliveries, actions and registrations), and the [Swarm](/subagent-watcher/#registration-badge) flags an agent that another instance also claims. The same data is available at `GET /agentmux/reactive/agents` and `GET /agentmux/reactive/audit`, which need the instance auth key. The audit log keeps the last 100 events in memory only, with message lengths and hashes but not message text.
 
 ## Security
 
@@ -186,6 +187,7 @@ Every delivered message is wrapped in a marker the receiving server computes. Th
 with `HELD_FOR=`, `INSTANCE=`, `INSTANCE_STATUS=`, `SIG=`, `ESCALATE=`, `FILES=` and `REPLY=none` added when they apply. In short:
 
 - **`TRUST`** says whether the sender's identity was proven: `host-verified`, `channel-verified`, `lan-verified` or `wan-verified` (a check passed), `unverified` (a check was possible and failed), `self-declared` (nothing to check against), or `network-claimed` (arrived over LAN or WAN without proof).
+- **`SIG`** reports the muxreview signature of a notice separately from `TRUST`: `verified`, `expired` (a genuine signature that failed only the age rules, such as a notice that arrived late) or `invalid`. An expired notice keeps `TIER=sensitive` and the stop, but the Needs-you card and the message tags word it "signature expired (arrived late)" in a muted tone, not "Sender not proven".
 - **`TIER=sensitive`** is forced by the server when a signature check fails, when the sender declares it, when the text or a file name contains a credential or destructive keyword, or when the message is a transcript request.
 - **`ESCALATE=required`** on a sensitive message tells the receiving agent to stop and ask a human, and that a confirming reply from another agent is not enough. **`ESCALATE=none`** means no check failed and the sender was verified, so the sensitive tag is informational.
 

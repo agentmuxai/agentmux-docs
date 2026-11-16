@@ -95,6 +95,10 @@ While you are signed in to MuxBus Cloud, this computer tells the cloud it is onl
 
 Your devices see this computer go offline at once when you quit AgentMux, sign out of MuxBus Cloud or turn the setting off. Dev builds, headless installs and isolated homes never publish, whatever the setting says, and Settings says why.
 
+### The cloud tier in the Swarm
+
+The same list works the other way. While you are signed in to MuxBus Cloud, the [Swarm](/subagent-watcher/#agents-on-other-instances) and the [Atlas](/atlas/) list your account's other machines that publish and are not on this network, with the badge **cloud**. Each row shows the agent's state, where it runs (native or in a container) and, unless that machine turned off **Share what my agents are working on**, its summary line. A cloud row has no provider, seat or account, and it is display only: a broadcast or a stop can't reach it, and clicking it doesn't focus a pane. A machine not heard from for 3 minutes shows as stale, and one not heard from for 10 minutes is left out. A machine that is also a LAN peer, or another channel of this computer, is listed once, as that. Two machines with one name and one channel are told apart by the instance id each LAN peer advertises. `Presence` `who` reports the same agents' states.
+
 ### Swarm summary lines
 
 The [Swarm](/subagent-watcher/) shows agents running in this computer's other AgentMux instances (other channels) and on LAN peers, each with its status. By default it also shows each agent's one-line summary of what it is working on. Your signed-in devices see the same lines, over the cloud and on the local network.

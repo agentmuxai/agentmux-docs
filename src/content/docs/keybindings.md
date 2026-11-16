@@ -96,9 +96,27 @@ The keys zoom the focused pane. `Ctrl`+scroll (`⌘`+scroll on macOS) zooms the 
 |---|---|---|
 | Save | ⌘S | Ctrl+S |
 | Save as (scratch documents) | ⇧⌘S | Ctrl+Shift+S |
+| Rename file (an untitled document is saved under the name) | F2 | F2 |
 | Find and replace | ⌘F | Ctrl+F |
 | Toggle markdown preview | ⇧⌘V | Ctrl+Shift+V |
 | Switch between the file tree and the editor | ⇧⌘E | Ctrl+Shift+E |
+
+F2 renames the file of the document tab in front, in its tab ([Editor → Document tabs](/pane-types/#document-tabs)). With the file tree focused, F2 renames the row you are on instead.
+
+### Hex viewer
+
+These keys work in an Editor tab that shows a file as [Hex](/pane-types/#hex-viewer), while the grid has the focus.
+
+| Action | macOS | Windows / Linux |
+|---|---|---|
+| Go to an offset | ⌘G | Ctrl+G |
+| Find bytes or text | ⌘F | Ctrl+F |
+| Copy the selection (hex, or text when the text column has the cursor) | ⌘C | Ctrl+C |
+| Select everything | ⌘A | Ctrl+A |
+| Show or hide the data inspector | I | I |
+| Move between the hex and text columns | Tab, Shift+Tab | Tab, Shift+Tab |
+| Move the cursor | Arrow keys, Home and End (start and end of the row), PgUp, PgDn, ⌘Home and ⌘End (start and end of the file) | Arrow keys, Home and End (start and end of the row), PgUp, PgDn, Ctrl+Home and Ctrl+End (start and end of the file) |
+| Extend the selection | Shift with any of those keys | Shift with any of those keys |
 
 ## Files
 
@@ -142,6 +160,10 @@ Set shortcuts in Settings → **Keyboard shortcuts** (see [Settings](/settings/#
 - `platform` (optional): `mac` or `other` (Windows and Linux). Both when omitted.
 
 An entry that can't be used is skipped and the rest still apply.
+
+**Export and Import…** in Settings → **Keyboard shortcuts** use this same list. An imported entry that names no `platform` and uses a key the system takes before AgentMux on only one platform is imported for the other platform only. An entry whose key is refused on every platform it applies to is skipped, and the import preview says why.
+
+When an agent changes your shortcuts, a notification names the agent and the change and offers **Undo** (for a minute) and **Show**. **Show** opens Settings → **Keyboard shortcuts** scrolled to that command's row and marks it for a moment; **Undo** does nothing if you have changed your shortcuts since. In the Help pane, each shortcut you have unbound shows **Not set** with a **Set…** button that opens the same row, and **Customize** opens the section.
 
 To open the [Connectors](/connectors/) or [Memory](/memory/) pane from a shortcut, bind `app:connectors` or `app:memory`.
 

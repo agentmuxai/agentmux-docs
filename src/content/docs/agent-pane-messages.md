@@ -136,6 +136,8 @@ Incoming jekts don't sit in the conversation: the pane holds them in a **Message
 
 A jekt that is `sensitive`, or whose sender nothing proved (a trust level that doesn't end in `-verified`), keeps its row in the conversation and doesn't go only to the panel, and a sensitive jekt that needs your confirmation shows a card above the message box and marks the pane as waiting for you. Search in the pane (`Ctrl+F`) opens the panel when a match is inside a message only the panel holds.
 
+A message that carries an id has **Open in Audit**, which opens the [Audit](/audit/) at that message's row. The unread count also shows on the pane's Swarm row and on its tab. A notice whose signature was genuine but arrived after its window reads "signature expired (arrived late)" in a muted tone on the **Needs you** card and in the message tags, not "Sender not proven".
+
 The command palette has **Agent: Show messages panel**, **Agent: Open messages panel** and **Agent: Hide messages panel**. Hiding it for a pane puts that pane's incoming jekts back in its conversation. The choice is kept with the pane.
 
 ### System notes
