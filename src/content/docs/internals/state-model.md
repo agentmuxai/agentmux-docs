@@ -400,28 +400,26 @@ export function isUsableFocusRingColor(color: string | null | undefined): boolea
 
 ### 4.5 Tab Color System
 
-Tabs get no color at creation; a user picks one from the shared 16-color palette (`PALETTE` in `frontend/app/theme/palette.ts`, read from `schema/color-palette.json`), the same hues panes, agents, widgets and browser profiles use:
+Tabs get no color at creation; a user picks one from the shared 14-color palette (`PALETTE` in `frontend/app/theme/palette.ts`, read from `schema/color-palette.json`): 12 hues, then Black and White, the same colors panes, agents, widgets and browser profiles use:
 
 | Name | Hex |
 |---|---|
-| Crimson | `#e8777f` |
-| Red | `#e87b64` |
-| Orange | `#e28247` |
-| Amber | `#d48d24` |
-| Yellow | `#bb9c12` |
-| Lime | `#9aa932` |
-| Green | `#75b255` |
-| Jade | `#47b777` |
-| Teal | `#00b89e` |
-| Cyan | `#00b4be` |
-| Sky | `#00aedd` |
-| Azure | `#53a3f2` |
-| Indigo | `#8297f5` |
-| Violet | `#ae88e7` |
-| Magenta | `#ce7cc8` |
-| Pink | `#e276a0` |
+| Rose | `#e47696` |
+| Red | `#e8796e` |
+| Orange | `#e38149` |
+| Amber | `#cd9219` |
+| Yellow | `#a7a425` |
+| Green | `#77b154` |
+| Jade | `#33b981` |
+| Teal | `#00b5b3` |
+| Sky | `#00afdc` |
+| Blue | `#61a0f4` |
+| Violet | `#9e8eef` |
+| Magenta | `#cd7dc9` |
+| Black | `#000000` |
+| White | `#ffffff` |
 
-The stored hex only names a hue: a window tab is drawn in the pane-tab pill tones for that hue (`frontend/app/tab/tab.tsx`), so picking a tab color never recolors a pane border. An older stored hex snaps to the nearest slot.
+The stored hex only names a slot: a window tab is drawn in the pane-tab pill tones for that slot (`frontend/app/tab/tab.tsx`), so picking a tab color never recolors a pane border. A stored hex that is not in the table is read as the nearest hue, and a grey as Black or White.
 
 Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts`). The startup tab is intentionally left without a color (`tabbar.tsx`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
