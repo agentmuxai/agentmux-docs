@@ -82,7 +82,7 @@ export default defineConfig({
 							items: [
 								{ label: 'Introduction', slug: 'getting-started' },
 								{ label: 'Installation', slug: 'installation' },
-								{ label: 'Headless server', slug: 'headless-server' },
+								{ label: 'AgentMux Headless', slug: 'headless-server' },
 								{ label: 'Quickstart', slug: 'quickstart' },
 								{ label: 'First Agent Setup', slug: 'first-agent' },
 							],

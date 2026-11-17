@@ -204,9 +204,9 @@ The switches are in **Settings → Notifications & Tray**, under **System tray**
 
 On Linux the icon needs a StatusNotifier host; GNOME needs the "AppIndicator and KStatusNotifierItem Support" extension, which Ubuntu ships. If the tray can't start, closing the last window always quits AgentMux, and a login start opens a normal window instead of staying hidden.
 
-## Server package (no desktop app)
+## AgentMux Headless (no desktop app)
 
-On a Linux or macOS machine with no screen, or where agents should run with no window open, install the server package instead: AgentMux without the desktop app, whose window is a browser on the machine's own address. It is managed with the `agentmux` command (`setup`, `doctor`, `start`, `open` and more). See [Headless server](/headless-server/).
+On a machine with no screen, or where agents should run with no window open, install AgentMux Headless instead: AgentMux without the desktop app, whose window is a browser on the machine's own address. It is for Windows (x64), macOS (Apple Silicon) and Linux, installs for you only, and is managed with the `agentmux` command (`setup`, `doctor`, `start`, `open` and more). See [AgentMux Headless](/headless-server/).
 
 ## Updating
 
