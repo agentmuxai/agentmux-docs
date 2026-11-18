@@ -799,7 +799,7 @@ The task queue behind the operator's Kanban (the Kanban pane): work any agent on
 | `name` | `string` | board_create, board_edit: the board's display name |
 | `slug` | `string` | board_create, board_edit: the board's slug, lowercase letters, digits and hyphens, up to 24 (made from the name when absent; a changed slug keeps the old one working for 90 days) |
 | `agents` | `array of string` | board_create, board_edit: the agents (by id) that see the board; empty for all agents |
-| `readable` | `boolean` | board_create, board_edit: whether AgentMux Cloud may read the board (for boards shared through the cloud) |
+| `readable` | `boolean` | board_create, board_edit: whether AgentMux Cloud may read the board (for boards shared through AgentMux Cloud) |
 | `archived` | `boolean` | boards: include the archived boards |
 | `drop_deps` | `boolean` | move with board: remove the task's dependencies, which stay inside one board |
 #### The queue behind `Tasks`: leases and attempts
