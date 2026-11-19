@@ -161,7 +161,9 @@ With more than one Vault, **Vault for browser sign-ins** lets each browser profi
 
 Each entry lists its standing permissions under its label: **Agents may fill it on** the sites you allowed always, **Agents may run commands with it** for the agents you allowed always, **Agents may sign in with it** for the agent and site pairs you allowed always, and **Read by a setting** for a setting you let read it. The × next to one revokes it; the next use asks again. A setting that names a Vault entry (Voice input's Groq key, chosen in Settings) reads only the one entry you chose for it: choosing another entry takes the setting off the first, and the Vault's Activity says so. The right to make accounts on a site is kept in **Settings ▸ Browser**, not on an entry (see [Standing powers](/browser-pane/#standing-powers)).
 
-The Vault's **Activity** records every change and every use: saving, revealing, copying, generating, capturing, rotating and restoring, each fill and command with its outcome, expiry reminders, imports and exports. **See agents' use in Audit** opens the [Audit](/audit/) pane, which ends with **Secrets**: the agents' uses of entries (not yours), and every standing permission with a way to stop it.
+The Vault's **Activity** records every change and every use: saving, revealing, copying, generating, capturing, rotating and restoring, each fill, sign-in and command with its outcome, expiry reminders, imports and exports. The section lists the newest 200 lines. **History** (the book button) on an entry lists that entry's own lines, newest first, with **All**, **Changes** and **Uses** to choose from.
+
+**See agents' use in the Audit** opens the [Audit](/audit/) pane, which ends with **Secrets**: the 50 most recent times an agent filled a web form from an entry, ran a command with one, or had the Vault generate one, and every standing permission with a way to stop it. Everything else agents do with an entry, and everything you do, is in Activity and in the entry's History.
 
 ## Export and import
 
@@ -198,8 +200,8 @@ Nothing is added until you press **Import**: first a preview lists what will com
 
 ## Where it is stored
 
-- **One Vault key** in the OS credential store: Windows Credential Manager, the macOS Keychain, or your desktop's keyring. It is made with your first entry.
-- **Each entry** is one row in `shared/identity-store.db`, with its secret parts encrypted together with that key (ChaCha20-Poly1305, tied to the entry's id). No column holds a value, and Activity never records one.
+- **One Vault key**, made with your first entry. The desktop app keeps it in the OS credential store: Windows Credential Manager, the macOS Keychain, or your desktop's keyring. A [headless server](/headless-server/) keeps it in a file only the server's own account can read, unless you set the server up to use the machine's keychain.
+- **Each entry** is one row in `shared/identity-store.db`. Its secret parts are encrypted together with that key (ChaCha20-Poly1305, tied to the entry's id); its id, kind, label, plain details and tags are stored as they are. No column holds a value, and Activity never records one.
 
 The Vault is shared by every AgentMux on this computer, installed and development builds alike, and an update keeps it. It is not synced anywhere: a `.vault` export is how it moves to another computer. On macOS, the keychain may ask whether AgentMux may use the Vault key; the note in the Vault says when. See [Identity & credential storage](/security/identity-credential-storage/#the-vault) for what protects it.
 
@@ -211,7 +213,7 @@ The Vault is shared by every AgentMux on this computer, installed and developmen
 
 ## See also
 
-- [Audit](/audit/): what agents did with your entries, and where they may use them without asking
+- [Audit](/audit/): agents' recent fills, commands and generated values, and where they may use entries without asking
 - [Identity & credential storage](/security/identity-credential-storage/): every secret AgentMux keeps, and how
 - [Identity & Accounts](/identity/): the accounts agents run as, which are not Vault entries
 - [Model routes](/model-routes/): the API key a route needs, and how an agent spends it

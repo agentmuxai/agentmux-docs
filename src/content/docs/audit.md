@@ -60,7 +60,7 @@ Which agents are registered to receive messages is shown in the [Swarm](/subagen
 
 ## Secrets
 
-Below the feed is **Secrets**: every use of a [Vault](/vault/) entry by an agent (filling a web form, running a command), with the entry, where it went and the outcome, and every standing permission ("may be used without asking") with a × to stop it. It never shows a value, and it doesn't list your own saves, reveals or copies; those are in the Vault's own Activity. **Open the Vault** goes to the Vault's Activity, which links back here. Showing this block doesn't read the Vault's entries, so it never makes the OS ask for the Vault key.
+Below the feed is **Secrets**. It lists the 50 most recent times an agent filled a web form from a [Vault](/vault/) entry, ran a command with one, or had the Vault generate one, each with the entry, where it went and the outcome, and every standing permission ("may be used without asking") with a × to stop it. It never shows a value. An agent's sign-ins, rotations, captures and imports, and your own saves, reveals and copies, are in the Vault's own Activity and in each entry's **History** there. **Open the Vault** goes to the Vault's Activity, which links back here. Showing this block doesn't read the Vault's entries, so it never makes the OS ask for the Vault key.
 
 ## See also
 
