@@ -105,7 +105,7 @@ The [Vault](/vault/) holds the secrets you keep for agents to use: ID numbers, c
 - **Activity** records who did what to which entry, and where; never a value.
 - A `.vault` export, the Vault's own format, is an [age](https://age-encryption.org) file encrypted to a passphrase you choose. A `.kdbx` export is a KeePass database protected by a password, and the CSV and JSON exports are not encrypted. Only you export or import, from the Vault; no agent route starts either or chooses the file.
 
-Only you write the Vault, through the host process: AgentMux's server refuses Vault writes on every route an agent can reach, and no route returns a value to an agent. A value reaches a web page or a command only after you allow it for that site, or for that agent's commands. Reveal and Copy confirm it's you with Windows Hello each time.
+Only you write the Vault, through the host process: AgentMux's server refuses Vault writes on every route an agent can reach, and no route returns a value to an agent. A value reaches a web page or a command only after you allow it for that site, or for that agent's commands. Reveal and Copy confirm it's you each time: with Windows Hello on Windows, and with Touch ID or your Mac's password on macOS. On Linux they are off for now.
 
 The Vault is kept off agents' screens. An agent's `UI` `screenshot` blacks out the Vault, and its `UI` `window` capture of any AgentMux window is refused while the Vault section is on screen in any AgentMux on the computer. The note that says so can be written only by the host, so an agent can't clear it; if AgentMux can't be asked, the capture is refused.
 

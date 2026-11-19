@@ -34,7 +34,7 @@ The Vault has its own row of sections:
 | **API keys** | API key or token | The key | Service, environment variable (`STRIPE_API_KEY`), expiry, notes |
 | **Logins** | Login | Password, one-time code seed | Site, username, browser profile, expiry, notes |
 | **Notes** | Secret note | The text | Expiry |
-| **Kept by AgentMux** | Read-only: secrets AgentMux keeps for itself in the same OS credential store (account keys, the MuxBus sign-in), with where each is managed | | |
+| **Kept by AgentMux** | Read-only: secrets AgentMux keeps for itself (account keys, the MuxBus sign-in), with where each is managed. They are kept where the Vault key is: in the OS credential store in the desktop app, and on a headless server in files only the server's own account can read (see [Where it is stored](#where-it-is-stored)) | | |
 | **Activity** | Every change to the Vault and every use of an entry: when, who, what, which entry, where. Never a value | | |
 
 A **Payment card** keeps the whole card: the form has the number, an **Expiry month** and **Expiry year** choice, the security code, the name on the card and the billing ZIP or postal code. The brand is worked out from the number each time you save, and **Default card** marks your default; turning it on for one card turns it off for the others. An expiry shows in the list as "expires in 12 days", turns to the warning colour at 14 days or fewer, and reads "expired on 2026-10-31" after the date.
@@ -120,7 +120,7 @@ The eye button on an entry opens **Show or copy**, with **Reveal** and **Copy** 
 - **Reveal** shows the value for 15 seconds. It hides sooner on **Hide**, when the AgentMux window loses focus, when you close the dialog, and when you leave the Vault section.
 - **Copy** puts the value on the clipboard without showing it, and clears it 30 seconds later if the clipboard still holds it. On Windows and macOS the copy is kept out of clipboard history.
 
-On macOS, the same buttons ask Touch ID, or your Mac's password. On Linux, Reveal and Copy are off for now: there is no standard way to confirm it is you without administrator rights, which the Vault never asks for.
+On Linux, Reveal and Copy are off for now: there is no standard way to confirm it is you without administrator rights, which the Vault never asks for.
 
 The Vault opens with a note, **What the Vault may ask you**, listing what your OS may ask and when. Dismiss it with **Got it**; the ⓘ button in the Vault's header brings it back.
 
