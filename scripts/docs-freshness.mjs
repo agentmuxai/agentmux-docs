@@ -83,7 +83,10 @@ export function issueBody({ deployed, head, decision, commits }) {
  * is the GitHub REST call; `write` false only reports.
  */
 export async function syncIssue({ api, repo, behind, body, write = true, log = console.log }) {
-    const found = await api("GET", `/repos/${repo}/issues?state=open&creator=${encodeURIComponent(ISSUE_AUTHOR)}&per_page=100`);
+    // No `creator` filter in the query: whether GitHub matches a bot's login there is not something to depend on (an
+    // empty answer every day would open a new issue every day). The title, the author and "not a pull request" below
+    // decide, and this repository has few open issues.
+    const found = await api("GET", `/repos/${repo}/issues?state=open&per_page=100`);
     const ours = found.filter((i) => !i.pull_request && i.title === ISSUE_TITLE && i.user?.login === ISSUE_AUTHOR);
     // The oldest is the one kept: a second one (a manual copy, a race) is left alone rather than closed on a guess.
     const issue = ours.sort((a, b) => a.number - b.number)[0];

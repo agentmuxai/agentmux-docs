@@ -132,6 +132,14 @@ describe("syncIssue keeps one issue", () => {
         assert.equal(calls.length, 2);
     });
 
+    it("finds its issue in a plain list of the open issues, asking GitHub for no creator", async () => {
+        const { api, calls } = fakeApi([ours({ number: 11, title: "Something else", user: { login: "someone" } }), ours({ number: 7, body: "same" }), ours({ number: 12, pull_request: {} })]);
+        assert.equal(await syncIssue({ api, repo: "o/r", behind: true, body: "same", log: quiet }), "unchanged");
+        assert.doesNotMatch(calls[0].path, /creator/);
+        assert.equal(calls[0].path, "/repos/o/r/issues?state=open&per_page=100");
+        assert.equal(calls.length, 1);
+    });
+
     it("keeps the oldest of several and closes none of them on a guess", async () => {
         const { api, calls } = fakeApi([ours({ number: 9, body: "x" }), ours({ number: 4, body: "x" })]);
         await syncIssue({ api, repo: "o/r", behind: true, body: "new", log: quiet });
