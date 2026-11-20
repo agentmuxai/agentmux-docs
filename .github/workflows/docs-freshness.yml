@@ -1,0 +1,47 @@
+name: Docs freshness
+
+# A merge to main publishes nothing (deploy.yml runs only on demand), so the live site can fall behind without
+# anything saying so. Once a day this reads the commit the last successful deploy built, counts the changes since that
+# alter what the site shows, and keeps one issue open while the gap is more than the limits below: it updates the
+# issue as the gap changes and closes it when a deploy catches the site up. It only reads, apart from that one issue;
+# it never deploys and changes nothing about when the site is deployed. The logic is scripts/docs-freshness.mjs.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what it would do and change nothing"
+        type: boolean
+        default: false
+
+concurrency:
+  group: docs-freshness
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'agentmuxai/agentmux-docs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    env:
+      # The site is behind when the oldest unpublished change is more than MAX_DAYS days old, or there are more than
+      # MAX_COMMITS of them.
+      MAX_DAYS: "7"
+      MAX_COMMITS: "15"
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history: the deployed commit can be any number of commits back.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Compare the live site with main, and keep the one issue
+        run: node scripts/docs-freshness.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
