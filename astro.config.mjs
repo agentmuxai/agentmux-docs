@@ -125,6 +125,7 @@ export default defineConfig({
 							label: 'Configuration',
 							items: [
 								{ label: 'Settings reference', slug: 'settings' },
+								{ label: 'settings.json reference', slug: 'settings-json-reference' },
 								{ label: 'Configuration guide', slug: 'config' },
 								{ label: 'Main menu & command palette', slug: 'main-menu' },
 								{ label: 'Keybindings', slug: 'keybindings' },
