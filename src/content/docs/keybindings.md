@@ -210,6 +210,15 @@ The pane also has these keys of its own (`browser_pane_shortcut_for`):
 
 In the address bar, `Enter` opens the address. Text that isn't an address is searched on Google.
 
+## Keys the desktop takes first (Linux)
+
+A Linux desktop can take a key combination before AgentMux sees it, and then the shortcut does nothing in AgentMux. Pressing every default Linux shortcut through the keyboard on a stock install:
+
+- **GNOME on Ubuntu** takes none of them.
+- **openbox**, with its stock configuration, takes **Alt+Shift+↑/↓/←/→** (it sends the window to another desktop), so **Resize pane** does not work there. The other defaults reach AgentMux.
+
+If a shortcut does nothing, check your desktop's keyboard settings first. Then either give the command a different key in Settings → **Keyboard shortcuts** (see [Your own shortcuts](#your-own-shortcuts)) or remove the desktop's binding. Dragging a pane border still resizes (see [Resizing panes](#resizing-panes)).
+
 ## macOS menu bar
 
 The native macOS menu bar adds the standard system shortcuts: `⌘Q` (quit), `⌘H` (hide), `⌥⌘H` (hide others), and in the Edit menu `⌘Z`, `⇧⌘Z`, `⌘X`, `⌘C`, `⌘V` and `⌘A`. Its other items (New Tab, Zoom In and so on) show no shortcut in the menu, on purpose: a menu shortcut takes the key before the app sees it, which would override the rules above (for example ⌘W in the Files pane closes a folder tab, not the pane). The shortcuts in the tables above apply.
