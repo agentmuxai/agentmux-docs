@@ -16,7 +16,7 @@ AgentMux runs on Windows, macOS, and Linux. This page is the canonical answer to
 | Frontend / SolidJS renderer | ✅ ships | ✅ runs in any CEF | ✅ runs in any CEF |
 | **WRR (Window Reality Reconciliation)** | ✅ Win32 event hooks | ❌ not planned (by design) | ❌ not planned (by design) |
 | Browser pane (CefBrowserView) | ✅ ships (child-window panes by default; overlay panes with `AGENTMUX_PANE_BACKEND=views`) | ✅ ships (overlay panes) | ✅ ships (overlay panes) |
-| Server package (`agentmux` command, no desktop app; see [Headless server](/headless-server/)) | ❌ | ✅ Apple Silicon | ✅ x86_64 and arm64 |
+| AgentMux Headless (`agentmux` command, no desktop app; see [AgentMux Headless](/headless-server/)) | ✅ x86_64 | ✅ Apple Silicon | ✅ x86_64 and arm64 |
 | Terminal pane (PTY) | ✅ ConPTY | ✅ posix\_openpt | ✅ posix\_openpt |
 | Shell-integration scripts (bash / zsh / fish / pwsh) | ✅ all four | ✅ all four | ✅ bash + zsh + fish (pwsh optional) |
 | Native window drag (title-bar + floater header) | ✅ ships | ✅ ships | ✅ ships (patched libcef.so) |

@@ -1,25 +1,39 @@
 ---
-title: Headless server
-description: "Run AgentMux as a server with no desktop app: install the server package, set it up, start it at login, and sign a browser in with the agentmux command."
+title: AgentMux Headless
+description: "Run AgentMux with no desktop app, on Windows, macOS or Linux: install AgentMux Headless, set it up, start it at login, and sign a browser in with the agentmux command."
 ---
 
 :::caution[Alpha Software]
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-The **server package** is AgentMux without the desktop app: your agents, tasks and memory run in a server on a machine, and the window is a browser on that machine's own loopback address. It is for a Linux or macOS machine that has no screen of its own, or where you want the agents to keep running with no window open. A release has the package for Linux (x86_64 and arm64) and macOS (Apple Silicon). Windows has none.
+**AgentMux Headless** is AgentMux without the desktop app: your agents, tasks and memory run in a server on a machine, and the window is a browser on that machine's own loopback address. It is for a machine that has no screen of its own, or where you want the agents to keep running with no window open. A release has it for Windows (x64), macOS (Apple Silicon) and Linux (x86_64 and arm64). The desktop app is **Standard**; the two of the same version run side by side.
 
-The server runs on its own **channel**, `headless`, with its own data folder, settings, ports and agents, so it can run beside a desktop AgentMux of the same person without sharing anything with it.
+Headless runs on its own **channel**, `headless`, with its own data folder, settings, ports and agents, so it can run beside a desktop AgentMux of the same person without sharing anything with it.
 
 ## Install
 
-Install it from a terminal with the release's install script, which checks the download against the release's signed manifest and installs into `~/.agentmux/server`:
+Install it from a terminal with the release's install script, which checks the download against the release's signed manifest.
+
+**macOS and Linux** install into `~/.agentmux/headless`:
 
 ```bash
-curl -fsSL https://agentmux.ai/install.sh | sh -s -- --server
+curl -fsSL https://agentmux.ai/install.sh | sh -s -- --headless
 ```
 
-Add `--setup` to also run `agentmux setup` with its defaults and a login service (see [setup](#setup)). The script links the command as `agentmux-server` in `~/.local/bin`, and as `agentmux` too when nothing of that name is there already. On a machine where `agentmux` is the desktop app's command, run this one as `agentmux-server`; the commands below are the same under either name.
+Add `--setup` to also run `agentmux setup` with its defaults and a login service (see [setup](#setup)). The script links the command as `agentmux-headless` in `~/.local/bin`, and as `agentmux` too when nothing of that name is there (the desktop app's launcher has that name and is not replaced). Examples below say `agentmux`; where something else has the name, read `agentmux-headless`. An Intel Mac has no Headless package.
+
+**Windows** (PowerShell) installs for you only, with no administrator rights:
+
+```powershell
+& ([scriptblock]::Create((irm https://agentmux.ai/install.ps1))) -Headless
+```
+
+It puts the program in `%LOCALAPPDATA%\AgentMux\Headless\<version>`, makes `%LOCALAPPDATA%\AgentMux\Headless\current` a link to it, and adds `%LOCALAPPDATA%\AgentMux\Headless\current\bin` to your user PATH. Open a new PowerShell window so the PATH is read, then run `agentmux setup`. The package is not code-signed. Started from a PowerShell window, the programs ran without a Windows prompt in our check; double-clicking one in File Explorer may show a Windows security warning. Nothing is written outside your profile.
+
+**Update** by running the same command again: it installs the new version beside the old one, moves the link and removes the old folder. `agentmux update` prints the command for your system. Then run `agentmux restart` to run the new version.
+
+**Uninstall** with `agentmux uninstall`: it removes the login service or task, the program folder and its links (on Windows, the PATH entry too). Your data folders stay unless you add `--remove-data` (it asks first, or take `--yes`); the shared folder your desktop app uses is never touched.
 
 ## Commands
 
@@ -35,6 +49,8 @@ Add `--setup` to also run `agentmux setup` with its defaults and a login service
 | `agentmux logout` | Signs every browser out. |
 | `agentmux logs` | Shows the server's log. |
 | `agentmux version` | Shows the version. |
+| `agentmux update` | Prints the command that installs the current release over this one. |
+| `agentmux uninstall` | Removes what the install script put in place (see [Install](#install)). |
 | `agentmux run` | Runs the server in this terminal, which is what a service runs. |
 
 `status`, `doctor` and `version` take `--json`. `--channel <name>` before or after any command works on another server channel. Exit codes are 0 for done, 1 when the thing asked is not so (the server is not running, a check failed), 2 for a command used wrongly and 3 when the command could not do it.
@@ -48,7 +64,7 @@ Add `--setup` to also run `agentmux setup` with its defaults and a login service
 `agentmux setup` asks, in your terminal:
 
 - **The web port** the browser opens (default 7380; the next port is used too).
-- **Where secrets live**: `file` (owner-only files, for a server with no keychain; the default) or `keychain` (this machine's keychain, as the desktop app uses).
+- **Where secrets live**: `file` (owner-only files, for a machine with no keychain; the default) or `keychain` (this machine's keychain, as the desktop app uses).
 - **Whether to start AgentMux at every login**, as a user service (see [Start at login](#start-at-login)).
 - **Whether to sign a browser in now.**
 
@@ -64,7 +80,9 @@ Models sign in where their command-line tools do: run the tool (for example `cla
 
 ## Start at login
 
-With `--service`, `setup` installs a **user service**, one that needs no root: a systemd user unit on Linux (`agentmux.service` in `~/.config/systemd/user`) and a launchd agent on macOS (in `~/Library/LaunchAgents`). It starts the server at every login and starts it again if it stops with an error. A server on another channel gets a service of its own, with the channel in its name.
+With `--service`, `setup` installs a **user service**, one that needs no root, on Linux and macOS: a systemd user unit on Linux (`agentmux.service` in `~/.config/systemd/user`) and a launchd agent on macOS (in `~/Library/LaunchAgents`). It starts the server at every login and starts it again if it stops with an error. A server on another channel gets a service of its own, with the channel in its name.
+
+On Windows, `setup` registers a **per-user Scheduled Task** that starts Headless when you sign in: it runs as you, with no administrator rights and no stored password, through a small program that shows no console window. It is not a Windows service, which would start before you sign in, as another account. `agentmux setup --no-service` removes the task. `setup` refuses to register it when the program folder or the channel's data folder can be opened by other accounts, and says which folder and what to change.
 
 On Linux the service runs only while you are logged in. To keep it running with no one logged in, run `loginctl enable-linger $USER` once; `setup` prints the line. `agentmux setup --no-service` removes the service. With a service installed, `agentmux stop` stops the server through the service, and `agentmux status` shows `installed (starts at every login)`.
 
@@ -89,7 +107,7 @@ A signed-in browser stays signed in until it has had no request for 12 hours, an
 
 `agentmux doctor` prints one line per check, `ok`, `warn` or `FAIL`, with what to do under each one that is not ok. It exits with 1 when any check fails.
 
-- **platform**: Linux or macOS, on x86_64 or arm64.
+- **platform**: Windows on x86_64, macOS or Linux on x86_64 or arm64 (the packages that exist).
 - **install**: the server program and the web UI are where the command expects them.
 - **folders**: the channel's folders are writable.
 - **disk**: a failure under 200 MiB free, a warning under 1 GiB.
@@ -105,10 +123,10 @@ A signed-in browser stays signed in until it has had no request for 12 hours, an
 
 ## Where things are
 
-The server's data, settings and agents are in `~/.agentmux/channels/headless/` (another channel has its own folder there). `agentmux status` prints the exact data folder. The server's log is `server.log` in the channel's folder, which `agentmux logs` reads.
+The server's data, settings and agents are in `~/.agentmux/channels/headless/` (on Windows, `%USERPROFILE%\\.agentmux\\channels\\headless\\`; another channel has its own folder there). `agentmux status` prints the exact data folder. The server's log is `server.log` in the channel's folder, which `agentmux logs` reads.
 
 ## See also
 
-- [Installation](/installation/): the desktop app on Windows, macOS and Linux
+- [Installation](/installation/): the desktop app (Standard) on Windows, macOS and Linux
 - [Running multiple instances](/multi-instance/): channels and data folders
 - [Environment variable contract](/internals/env-vars/)
