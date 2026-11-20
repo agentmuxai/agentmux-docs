@@ -29,7 +29,7 @@ Add `--setup` to also run `agentmux setup` with its defaults and a login service
 & ([scriptblock]::Create((irm https://agentmux.ai/install.ps1))) -Headless
 ```
 
-It puts the program in `%LOCALAPPDATA%\AgentMux\Headless\<version>`, makes `%LOCALAPPDATA%\AgentMux\Headless\current` a link to it, and adds `%LOCALAPPDATA%\AgentMux\Headless\current\bin` to your user PATH. Open a new PowerShell window so the PATH is read, then run `agentmux setup`. The package is not code-signed, so Windows may ask before it lets the programs run the first time. Nothing is written outside your profile.
+It puts the program in `%LOCALAPPDATA%\AgentMux\Headless\<version>`, makes `%LOCALAPPDATA%\AgentMux\Headless\current` a link to it, and adds `%LOCALAPPDATA%\AgentMux\Headless\current\bin` to your user PATH. Open a new PowerShell window so the PATH is read, then run `agentmux setup`. The package is not code-signed. Started from a PowerShell window, the programs ran without a Windows prompt in our check; double-clicking one in File Explorer may show a Windows security warning. Nothing is written outside your profile.
 
 **Update** by running the same command again: it installs the new version beside the old one, moves the link and removes the old folder. `agentmux update` prints the command for your system. Then run `agentmux restart` to run the new version.
 
