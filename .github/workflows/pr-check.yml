@@ -34,7 +34,7 @@ jobs:
         run: npm ci
 
       - name: Deploy script tests
-        run: node --test scripts/publish-html.test.mjs scripts/check-third-party.test.mjs
+        run: node --test scripts/publish-html.test.mjs scripts/check-third-party.test.mjs scripts/docs-freshness.test.mjs
 
       - name: Checkout the docs reference checker (agentmux scripts)
         # The checker lives in agentmux (scripts/check-doc-references.mjs), not in the src/agentmux pin,

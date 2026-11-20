@@ -48,6 +48,12 @@ How it behaves:
   `cancel-in-progress: true`). Only the latest run has to succeed.
 - **It takes about 4–7 minutes** (median 4.7 over the 37 successful runs from 2026-10-05 to
   2026-10-20). The page is live when the run is green: its last step checks the live site.
+- **A daily check says when the site lags.** `.github/workflows/docs-freshness.yml` (logic in
+  `scripts/docs-freshness.mjs`) compares the commit the last successful deploy built with main, and keeps one issue
+  open, opened by the Actions bot, while the oldest merged change that alters the site is more than 7 days old or more
+  than 15 such changes are not live. It updates the issue as the gap changes and closes it when a deploy catches the
+  site up. It only reads and writes that one issue; it never deploys. Run it by hand with
+  `gh-agent workflow run docs-freshness.yml -R agentmuxai/agentmux-docs -f dry_run=true` to see what it would say.
 - **PRs still build and check links.** `pr-check.yml` runs `build:typedoc` + `build` (not
   `build:full`) and skips `/api/rust/` in its link check, so a broken `cargo doc` shows up
   only in the deploy run, which then fails before uploading anything.
