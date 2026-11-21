@@ -142,7 +142,7 @@ The chevron at the right of a tile opens the same panel. Besides the choices abo
 | **Shut down** | Shuts the agent down. Shown for a running agent, with a pane or without one. See [Closing and shutting down](/closing-and-shutting-down/). |
 | **Delete** | Deletes the agent, after asking. |
 
-The pane's own right-click menu has **Seat…**, **Bundles…** and **Personal memory** for the agent in that pane. See [Pane types → Subsections](/pane-types/#subsections).
+The pane's own right-click menu has **Seat…** and **Personal memory** for the agent in that pane (the bundles it starts with are picked with **Bundles…** in its **My Agents** panel). See [Pane types → Subsections](/pane-types/#subsections).
 
 ### Environment variables
 

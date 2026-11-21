@@ -31,7 +31,7 @@ Memory opens on **Global**. The pane title names the section, for example "Memor
 
 Links elsewhere in the app open Memory on the right section:
 
-- An agent pane's right-click menu has **Personal memory**, which opens **Personal** on that agent. Its **Bundles…** dialog links to **Memory → Bundles**.
+- An agent pane's right-click menu has **Personal memory**, which opens **Personal** on that agent. The **Bundles…** dialog in its My Agents panel links to **Memory → Bundles**.
 
 ## Global
 
@@ -47,7 +47,7 @@ Entries you remove are listed under **Removed**, with who removed each (you, or 
 
 Claude Code agents also get their memory again whenever Claude Code starts a new session, including after `/clear` and after a compaction, but not when a session is resumed. AgentMux delivers it through Claude Code's `SessionStart` hook: Global Memory, AgentMux's Operator Config entries and the agent's Personal Memory, split into up to eight parts of at most 9,000 characters each (`crates/bashwrap/src/sessionstart.rs`, `crates/srv-core/src/backend/memory/delivery.rs`). If the hook doesn't deliver, for example when AgentMux had to start a fresh session because the previous one couldn't be resumed, AgentMux sends the same memory as a hidden message instead.
 
-Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries at most 72,000 characters. Global Memory comes first and is never cut by the limits below. Personal Memory follows, newest file first (by the file's `modified` line, else the time it was last changed), so the oldest files are the ones left out. Each Personal Memory file goes in at most 8,000 characters: a longer one is cut, with a line saying how much more there is and which file to read. A file that still doesn't fit is left out whole and named, with its description, in a note at the end that lists up to 25 files. On the card, an entry that went out in part is marked "cut" and one that didn't go out at all "not sent". After a compaction, one more note asks the agent to trim its Personal Memory when it is over about 40,000 characters, when a file is over the 8,000-character limit, or when a project file hasn't been touched for 7 days; AgentMux never deletes memory itself. When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
+Each delivery shows in the agent pane as a card, such as "Given to the agent · new session · 6 items" or "Memory re-delivered after compaction · 3 items", with one row per item: its name, whether it is an AgentMux system entry, a Workspace entry or Personal Memory, and its size. On a new session the card also lists the files Claude Code read by itself at startup, such as `CLAUDE.md` files and the skills list; when one of them already carries the Global Memory, the hook doesn't send it again, and those entries say "in startup file". One delivery carries at most 72,000 characters. Global Memory comes first and is never cut by the limits below. Personal Memory follows as an index: one line per file with its name and a short description, so the agent knows what it has and opens a file when it applies. A long index shortens its descriptions and then drops them; past about a thousand files it lists as many names as fit, says how many more there are and how to list them, and the card shows those files as not listed. A file whose frontmatter says `deliver: always` goes in full instead, up to 5 files and 6,000 characters together; one over that limit is listed in the index, with a line saying why. When Personal Memory is over about 40,000 characters, or a project file hasn't been touched for 7 days, a note asks the agent to trim it; AgentMux never deletes memory itself. When Personal Memory grows large for the agent's context window, the card suggests consolidating it. The card lists what the agent was given, not the text itself (`frontend/app/view/agent/components/ContextDeliveryCard.tsx`). It's a [context delivery](/glossary/#context-delivery), not a message you sent.
 
 Every change to Global Memory is also written to a Global Memory record that keeps each entry's versions and the order of entries (`crates/srv-core/src/backend/memory/global_record.rs`). Channels that share your main accounts share one Global Memory; an isolated channel (for example a development build) keeps its own.
 
@@ -184,14 +184,14 @@ The app-wide view of all bundles. A bundle packages instructions and skills; an 
 
 ![Memory → Bundles: New Bundle and Import Bundle, then every bundle: the Global Memory entries (marked GLOBAL), your own bundles, and the blank vanilla-CLI bundle](../../assets/screenshots/memory/memory-bundles.png)
 
-Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** panel or its pane's right-click menu) picks which bundles that agent starts with; it doesn't create or edit them.
+Bundles are created and edited here only. An agent's **Bundles…** dialog (in its **My Agents** panel) picks which bundles that agent starts with; it doesn't create or edit them.
 
 ## Per agent
 
 Memory is app-wide, and each of its sections has a way in for one agent:
 
 - **Personal Memory**: right-click an agent's pane and choose **Personal memory**. Memory opens on **Personal** with that agent selected.
-- **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** panel or its pane's right-click menu, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
+- **Skills** and **Bundles**: **Bundles…**, in an agent's **My Agents** panel, picks the bundles it starts with. A skill's page lists the agents it is bound to, each with **Unbind**, and binds another with **Bind to agent**, as an MCP server's page in [Connectors](/connectors/#mcp-servers) does.
 
 ## Portable bundles
 

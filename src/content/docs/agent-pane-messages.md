@@ -160,12 +160,12 @@ A CLI notice is AgentMux talking about the agent's program, not the agent. One r
 
 | Kind | What it says |
 |---|---|
-| Install | "Installing Claude Code 2.1.285…", then "Installed … (14 s)" or "Couldn't install …" |
-| Version changed | "Claude Code updated: 2.1.218 → 2.1.285", with a warning when the running version isn't the one AgentMux pins |
+| Install | "Installing Claude Code <version>…", then "Installed … (14 s)" or "Couldn't install …" |
+| Version changed | "Claude Code updated: <old version> → <new version>", with a warning when the running version isn't the one AgentMux pins |
 | Compaction failed | "Claude Code couldn't compact the conversation", with the reason |
 | AgentMux tools (MCP health) | "AgentMux tools didn't connect. Reconnecting (try 1 of 2)…", then "…are connected again" or "…couldn't repair them" |
 | Container start | "Downloading the agent image… 42%", "Starting the container…", "Container ready (12 s)" or "Couldn't start the container" |
-| Container image | "This container uses the 0.59.41 image" with an **Update container** button, then "Container removed. The next message starts it from the 0.60.2 image"; or, when AgentMux moved an idle agent's container itself, "Updated the container to the 0.60.2 image" |
+| Container image | "This container uses the <version> image" with an **Update container** button, then "Container removed. The next message starts it from the <version> image"; or, when AgentMux moved an idle agent's container itself, "Updated the container to the <version> image" |
 | Container limits | "Container limits: Memory limit 16 GB, 6 CPUs, set by Agent1" when a limit changes, "Docker did not take the new container limits", or "A process in this container was stopped: it ran out of its 8 GB memory limit" with a **Raise the limit** button. See [CPU and memory limits](/container-agents/#cpu-and-memory-limits) |
 | Container caches | "This agent's build caches hold 24.0 GB" with a **Container settings** button, once the agent's caches reach 20 GiB. See [Build caches](/container-agents/#build-caches) |
 | Agent ready | "Ready: send a message to start", when a container agent is up and nothing is on its way |
@@ -235,7 +235,7 @@ The agent pane reads each provider's output with a provider-specific reader in t
 | **Gemini CLI** | Yes | No | Yes (the tool's own name) | |
 | **Kimi Code** | Yes | Yes | Yes | |
 | **Antigravity** | Yes | No | Yes | |
-| **OpenClaw**, **GitHub Copilot CLI**, **Pi**, **Kilo**, **Cline**, **Goose**, **Grok Build**, **DSH** (ACP) | Yes | Yes | Yes | |
+| **OpenClaw**, **GitHub Copilot CLI**, **Pi**, **Kilo**, **Cline**, **Goose**, **Grok Build**, **DeepSeek Harness** (ACP) | Yes | Yes | Yes | |
 | **OpenCode** (ACP) | Yes | Yes | Yes | Token use is read from the prompt's answer |
 | **Muse Code** | Yes | Yes (reasoning appears once it completes, not while it streams) | Yes | |
 | **Aider**, **Crush** | A terminal | No | No | No translator: the pane shows the program's own terminal output, and none of the rows above except the ones AgentMux adds itself (banners, notes) |
@@ -250,7 +250,7 @@ Press `Ctrl+F` (`⌘F`) in an agent pane to open the find bar in the pane's top 
 
 A pane shows its whole conversation by default (the **Full** view). Its **View** hides the routine work that has finished, so a long run reads as the replies and what needs you. It changes only what the list shows: the rows, the pane's [History](/pane-types/#agent-history), search and copy stay complete (`frontend/app/view/agent/virtualization/verbosity.ts`).
 
-Open the **View** popover from the pane's right-click menu (**View…**), with **Agent view…** in the command palette, or from the view chip in the strip above the message box (beside **Shell**). The chip appears only when the pane doesn't follow a default of Full: it reads **Standard**, **Replies** or **Custom**, with **· this pane** when the pane keeps its own view. The popover offers:
+Open the **View** popover from the eye button in the composer's control row, or with **Agent view…** in the command palette. The eye's label shows the view when the pane doesn't follow a default of Full: **Standard**, **Replies** or **Custom**, with **· this pane** when the pane keeps its own view. The popover offers:
 
 | Preset | What it does |
 |---|---|

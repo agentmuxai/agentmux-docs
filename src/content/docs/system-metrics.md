@@ -199,7 +199,7 @@ Each metric type has a CSS variable for theming (`frontend/app/theme.scss`):
 
 ## Local machine only
 
-Sysinfo monitors only the machine AgentMux runs on: the backend runs a single, local collector. Remote-host monitoring, which earlier releases offered through the now-retired `wsh` helper (see `docs/specs/archive/SPEC_RETIRE_WSH_2026_04_12.md` in the main repo), is not supported.
+Sysinfo monitors only the machine AgentMux runs on: the backend runs a single, local collector. Remote-host monitoring is not supported.
 
 The pane header still shows a connection selector. Leave it on the local connection: choosing any other connection leaves the pane blank.
 

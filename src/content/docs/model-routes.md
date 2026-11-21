@@ -50,39 +50,39 @@ The pane's header and footer show the model that really answers, and hovering th
 
 ## Spend caps
 
-A route agent has two caps, counted per UTC day. The day turns at UTC midnight, and a day's figures survive a restart of AgentMux.
+An agent on a model route, or on an Anthropic API-key account, has two caps, counted per UTC day. The day turns at UTC midnight, and a day's figures survive a restart of AgentMux.
 
 | Cap | Default | Covers |
 |---|---|---|
-| **Per agent** | $20 a day | what that agent uses through its route |
-| **Per route** | $100 a day | what every agent on the route uses together |
+| **Per agent** | $50 a day (change the default for every agent with `model:agent_spend_cap_usd` in settings.json; an agent's own cap wins) | what that agent uses through its route |
+| **Per route** | $500 a day | what every agent on the route uses together (the OpenRouter route, and the Anthropic API-key route) |
 
-The figure is the provider's own charge for each response when it carries one, otherwise the model's price from the table above. An agent on your plan has no spend and no cap. An agent on the DeepSeek Harness uses its own key and reports no cost, so nothing is counted for it.
+The figure is the provider's own charge for each response when it carries one, otherwise the model's price from the table above. An agent on a login (a plan) has plan limits and no cap. An agent on the DeepSeek Harness uses its own key and reports no cost, so nothing is counted for it.
 
 ### What you see as an agent spends
 
 | Used | What happens |
 |---|---|
 | **50%** of the agent's cap | its leader gets one note |
-| **80%** | a line above the composer: **$16 of $20 used today: the agent stops at its cap.** The chip below turns to a warning tone. |
+| **80%** | a line above the composer: **$40 of $50 used today: the agent stops at its cap.** The chip below turns to a warning tone. |
 | **100%** | AgentMux refuses the agent's next request, ends the turn in flight (the agent's process stays up), shows the card below, and tells the leader |
 
 Each of these happens once per agent per UTC day. An agent whose cap is **none** has no 50% note, and the route's cap still applies.
 
-**The chip.** An agent on a route shows what it used today on its card in the [Swarm](/pane-types/#swarm): **$4.20 of $20 today** (**$4.20 today** with no cap). It warns from 80% and turns to an error at the cap; hover for the explanation. An agent with no figure for today shows no chip. `Agents list` carries the same figures for a tool call.
+**The chip.** An agent on a route shows what it used today on its card in the [Swarm](/pane-types/#swarm): **$4.20 of $50 today** (**$4.20 today** with no cap). It warns from 80% and turns to an error at the cap; hover for the explanation. An agent with no figure for today shows no chip. `Agents list` carries the same figures for a tool call.
 
-**The card.** At its own cap the agent's pane shows **Stopped: this agent used $20 of its $20 today.** with *Its requests are refused until you raise the cap, or the UTC day ends.* and three buttons:
+**The card.** At its own cap the agent's pane shows **Stopped: this agent used $50 of its $50 today.** with *Its requests are refused until you raise the cap, or the UTC day ends.* and three buttons:
 
-- **Raise to $40** doubles the cap (at least $5 more) and takes the stop off. The agent carries on when you next message it.
+- **Raise to $100** doubles the cap (at least $5 more) and takes the stop off. The agent carries on when you next message it.
 - **Reset today** sets today's figure to zero.
 - **Dismiss** takes the card off the pane. The stop stays.
 
-When the route's cap is the one used, the card reads **Stopped: the cap for OpenRouter (DeepSeek V4.1 Flash) is used today ($100 of $100).** and *Every agent on the route is stopped until the route's cap is raised in Settings or the UTC day ends.* It has only **Dismiss**. The stop also ends at the next UTC midnight, without anyone raising anything.
+When the route's cap is the one used, the card reads **Stopped: the cap for OpenRouter (DeepSeek V4.1 Flash) is used today ($500 of $500).** and *Every agent on the route is stopped until the route's cap is raised in Settings or the UTC day ends.* It has only **Dismiss**. The stop also ends at the next UTC midnight, without anyone raising anything.
 
 ### Set a cap
 
-- **An agent's cap:** use **Raise to** on the card, or ask its leader. A leader sets it with `Agents` `update` and `spend_cap_usd` (a number of dollars, at least $0.01; `0` or `none` for no cap) and zeroes today's figure with `reset_spend_today`. An agent may lower its own cap, never raise or lift it, and can't reset its figure.
-- **The route's cap:** in **Settings ▸ Advanced ▸ Agent panes**, **Model route daily cap** is the most all agents together may use through OpenRouter in a UTC day, in dollars; `0` is no cap. The field writes `model:spend_cap_usd:openrouter`, which you can also set in settings.json (`"none"` works there too). AgentMux reads it at each request, so a raise lets the next one through. The card an agent shows when the route's cap is used says to raise it in **Settings (Advanced)**.
+- **An agent's cap:** use **Spend cap…** in the agent's row menu in the My Agents list, **Raise to** on the card, or ask its leader. A leader sets it with `Agents` `update` and `spend_cap_usd` (a number of dollars, at least $0.01; `0` or `none` for no cap) and zeroes today's figure with `reset_spend_today`. An agent may lower its own cap, never raise or lift it, and can't reset its figure.
+- **The route's cap:** in **Settings ▸ Advanced ▸ Agent panes**, **OpenRouter daily cap** is the most all agents together may use through OpenRouter in a UTC day, in dollars, and **Anthropic API key daily cap** is the same for agents on an Anthropic API-key account; `0` is no cap. The fields write `model:spend_cap_usd:openrouter` and `model:spend_cap_usd:anthropic`, which you can also set in settings.json (`"none"` works there too). AgentMux reads it at each request, so a raise lets the next one through. The card an agent shows when the route's cap is used says to raise it in **Settings (Advanced)**.
 
 ## When the key itself runs out
 

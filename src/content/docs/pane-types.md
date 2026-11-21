@@ -30,19 +30,20 @@ To see what each one looks like, see the [widget gallery](/widget-gallery/).
 
 | Pane | Icon | View ID | Description |
 |------|------|---------|-------------|
-| **Agent** | sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. |
+| **Agent** | wand-magic-sparkles | `agent` | AI agent session with streaming output. Hosts Identity and Memory subsections via the cog → settings panel. |
 | **Browser** | globe | `browser` | A real Chromium browser in a pane, with profiles, Incognito tabs, downloads and controls over agents that drive it — see [Browser pane](/browser-pane/) |
-| **Terminal** | square-terminal | `term` | Full terminal with real PTY via xterm.js |
+| **Terminal** | terminal | `term` | Full terminal with real PTY via xterm.js |
 | **Sysinfo** | chart-line | `sysinfo` | Live system metrics graphs |
 | **Connectors** | plug | `connectors` | Accounts (sign-ins to providers and services), MCP servers and Remotes — see [Connectors](/connectors/) |
 | **Files** | folder-open | `files` | File browser with places, drives, remote hosts, previews and drag and drop — see [Files](#files) |
 | **Memory** | brain | `memory` | Global and Personal Memory, Skills and Bundles — see [Memory](/memory/). |
 | **Editor** | file-code | `editor` | CodeMirror 6 editor with syntax highlighting + LSP diagnostics (TypeScript / JavaScript) + a file-tree explorer rooted at $HOME (with drives and mounts), and viewers for images, PDFs, audio and video — see [Editor](#editor) and [Media](#media) |
-| **Swarm** | bee | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, the agents of other instances and of your account's other machines, a fleet toolbar and the Supervisor — see [Swarm](/subagent-watcher/) |
+| **Swarm** | people-group | `swarm` | Live tree of your agents, with or without a pane, with their subagents, todos and background commands, the agents of other instances and of your account's other machines, a fleet toolbar and the Supervisor — see [Swarm](/subagent-watcher/) |
 | **Atlas** | map | `atlas` | Every agent on every machine as a map, with who reports to whom and the messages, tasks and pull requests passing between them — see [Atlas](/atlas/) |
 | **Drone** | diagram-project | `drone` | Visual DAG-of-blocks automation engine (Agent / API / Condition / Variables / Response blocks) |
 | **Help** | circle-question | `help` | Built-in documentation |
 | **History** | clock-rotate-left | `history` | Every agent's kept conversation, what was typed to each agent, and where the history is stored — see [History](/history/) |
+| **Reviews** | code-pull-request | `reviews` | Every task's pull request and where its review stands, grouped by the Kanban task each belongs to, with the pull requests that wait on a person first |
 | **Audit** | list-check | `audit` | Messages between agents, fleet and pane actions, agent registrations, and what agents did with your secrets — see [Audit](/audit/) |
 | **Kanban** | table-columns | `kanban` | The tasks agents are working on, what waits for them and what needs you — see [Kanban](/kanban/) |
 | **Vault** | lock | `vault` | Your secrets, which agents use by name without seeing them — see [The Vault](/vault/) |
@@ -58,10 +59,10 @@ These views exist in the codebase but are **not** opened directly from the widge
 |---|---|
 | **Identity** | App-wide: **Connectors** → **Accounts**. An agent's own account is the login email in its composer strip (see [Composer strip](#composer-strip)). View registration (`view: "identity"`, the pane tab `identityPaneTab`) exists for `pane.open` RPC and right-click menu paths. |
 | **Global and Personal Memory** | App-wide: **Memory** → **Global** and **Personal**. For one agent, right-click its pane and choose **Personal memory** to open Memory → Personal on that agent. These are notes, not the Bundle editor. |
-| **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel or its pane's right-click menu) picks which bundles it starts with, in order; it doesn't edit bundles. |
+| **Bundles** | App-wide: **Memory** → **Bundles**. Per agent, **Bundles…** (in its My Agents panel) picks which bundles it starts with, in order; it doesn't edit bundles. |
 | **MCP Servers** | App-wide: **Connectors** → **MCP servers**, where each server lists the agents it is bound to. |
 | **Skills** | App-wide: **Memory** → **Skills**, where each skill lists the agents it is bound to. |
-| **DevTools** | AgentMux logo menu in the top tab bar → Dev Tools. Toggles Chromium DevTools — does not open a pane. Was a widget-bar entry until PR #936. |
+| **DevTools** | AgentMux logo menu in the top tab bar → DevTools (only while Dev mode is on). Toggles Chromium DevTools — does not open a pane. |
 
 The agent pane's header has no button for these. What belongs to one agent is reached from [Subsections](#subsections) below.
 
@@ -116,7 +117,7 @@ Dropping files from your file manager onto a terminal pane **copies** them into 
 
 ## Browser
 
-The browser pane embeds a native [CefBrowserView](https://bitbucket.org/chromiumembedded/cef/) at the OS-window level. It is **not** an iframe — the pane HWND sits as a child window of the AgentMux frame, which is why links, popups, and DRM content all work like a regular Chromium tab. The [Browser pane](/browser-pane/) page covers what you see and use: the toolbar, profiles and Incognito, downloads, zoom, and what you can allow or stop when an agent drives a page.
+The browser pane embeds a Chromium view (CEF), not an iframe, so links, popups and DRM content work like a regular Chromium tab. The [Browser pane](/browser-pane/) page covers what you see and use: the toolbar, profiles and Incognito, downloads, zoom, and what you can allow or stop when an agent drives a page.
 
 | Control | Action |
 |---|---|
@@ -129,15 +130,15 @@ Header state syncs from the backend's `browser-pane-nav-state` event:
 - **Favicon** — fetched from the page; a generic `globe` icon stands in when the site has none or its icon fails to load
 - **History** — back/forward enabled state, per-pane
 
-When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/internals/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (DOM clicks don't bubble out of the embedded HWND, so the explicit IPC is necessary — this is the same pattern the [debugging](/internals/debugging/#reducer-dispatch-ring) page describes.)
+When you click inside the pane, the host fires `browser-pane-clicked` over the JS bridge, which the [reducer stack](/internals/reducer-stack/) routes through `refocusNode(blockId)` so keyboard shortcuts and split commands target the clicked pane. (Clicks inside the embedded page don't reach the window's DOM, so the explicit IPC is necessary. This is the same pattern the [debugging](/internals/debugging/#reducer-dispatch-ring) page describes.)
 
 ### IPC commands
 
 The host exposes the browser pane's lifecycle via these CEF commands (invoked through `invokeCommand` from the renderer):
 
-- `browser_pane_create` — instantiate the CefBrowserView; called on first mount
+- `browser_pane_create` — create the browser view; called on first mount
 - `browser_pane_navigate` — load a URL
-- `browser_pane_resize` — propagate Solid layout changes to the HWND
+- `browser_pane_resize` — propagate layout changes to the page view
 - `browser_pane_reload` — reload the current page
 - `browser_pane_focus` — explicit focus handoff after a click
 - `browser_pane_close` — tear down on pane close
@@ -152,20 +153,14 @@ On macOS and Linux a browser pane is an overlay in the window's own compositor. 
 
 A new browser pane opens its configured URL, otherwise your Home page, otherwise `https://agentmux.ai`. To get a literally blank pane, pass `meta.url = "about:blank"` explicitly. (Spec: `SPEC_BROWSER_PANE_DEFAULT_URL_AND_POPUP_2026_04_21.md`.)
 
-### Address-bar focus + click handoff
+### Address-bar focus and click handoff
 
-The address bar and the embedded CEF pane each compete for keyboard focus across **two independent axes**:
+Keyboard focus has two owners: the page's DOM focus (which element in the AgentMux window is active) and the operating system's focus (which native view receives keystrokes). When they disagree, typed characters land in the wrong place, so the pane keeps them in step:
 
-1. **DOM focus** — `document.activeElement` in the main webview. Owned by Chromium, updated on every focus/blur. The "DOM is the source of truth for where typing goes" rule from the [browser-pane state catalog](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/browser-pane-state-catalog.md) applies to this axis only.
-2. **Win32 OS focus** — which HWND receives keystrokes. Owned by the OS, set by `SetFocus`/`SetForegroundWindow`. The pane HWND is a child of the main window; clicking the pane intercepts the click at WndProc level *before* the renderer's DOM ever sees it.
+- **Click into the page.** The host sends `browser-pane-clicked`; the pane first blurs whatever AgentMux input held DOM focus (for example the address bar), then calls `refocusNode(blockId)`. Without the blur, the stale active element would send keyboard focus back to the window.
+- **Click into the address bar.** The input's `onMouseDown` handler sends `main_window_focus` before the focus event, so keystrokes move to the AgentMux window at the start of the click, not after.
 
-When these two axes disagree, you get the classic "click X, type, characters land in Y" bug. Two specific paths matter:
-
-**Click into the page (e.g. google search):** The pane HWND captures the click via WndProc, `SetFocus`s itself, and emits `browser-pane-clicked` over IPC. The renderer's `BrowserViewModel` handler explicitly **blurs whatever main-window input held DOM focus** before calling `refocusNode(blockId)` — otherwise the subsequent `giveFocus()` flow sees the address bar's stale `activeElement` and tells the host to bounce OS focus back to the main window. (Diag log: `[browser-pane:diag] pane-click blur active=input.browser-address-bar`.)
-
-**Click into the address bar:** The `<input>` `onMouseDown` handler fires `main_window_focus` IPC *before* the focus event, so OS keyboard focus moves to the main webview HWND at click-start. Without this, the address bar's `onFocus` fires too late — DOM focus moves but OS focus stays on the pane HWND, and keystrokes still route to Chromium. Buttons in the same nav bar happen to work without an explicit IPC because CEF/Chromium internally calls `SetFocus(parent)` for native `<button>` controls; `<input>` doesn't get the same treatment when the parent webview lacks focus.
-
-`onMouseDown` (not `onMouseEnter`) is the click-to-focus trigger on both sides — hover-focus loops were the original failure mode the design corrects.
+`onMouseDown`, not `onMouseEnter`, is the click-to-focus trigger on both sides; hover-focus loops were the failure mode this design corrects.
 
 ## Editor
 
@@ -405,7 +400,7 @@ Activity is tracked per-pane and aggregated across panes, so the indicator refle
 
 ### Rendering performance
 
-The agent message list is **virtualized**: only the rows in view, 5 rows of overscan on each side, and the trailing 50 rows (the streaming buffer) are mounted in the DOM, regardless of session length. A 2000-message session no longer means a 2000-element layout tree.
+The agent message list is **virtualized**: only the rows in view, 5 rows of overscan on each side, and the trailing 50 rows (the streaming buffer) are mounted in the DOM, regardless of session length. A 2000-message session doesn't mean a 2000-element layout tree.
 
 The virtualization is **hybrid** — the trailing 50 rows (the streaming buffer) are always mounted in normal flex flow, never recycled. Older rows are virtualized by custom code: each row sits at an absolute position computed by the pane's layout slice from measured heights (per-row `ResizeObserver` measurement), and only the rows in view plus a small overscan are mounted. This split eliminates measurement lag during token streams, which would otherwise cause visible jitter as text grew.
 
@@ -504,20 +499,22 @@ This is separate from **manual** pane/tab coloring: right-click a **pane header*
 
 The palette: Rose, Red, Orange, Amber, Yellow, Green, Jade, Teal, Sky, Blue, Violet, Magenta, then Black and White. Black and White stay visible in both themes: a Black pane has a graphite ring in the dark theme and a White pane a silver ring in the light theme. As a swatch, a browser profile badge or a pane backdrop they are plain black and plain white.
 
-![A pane's right-click menu with Pane Color open, showing an earlier set of colors](../../assets/screenshots/chrome/chrome-pane-color-submenu.png)
+A pane header's menu also has a **Backdrop** submenu (and the command palette has **Backdrop…**): it sets the pane's background surface, laid out like Pane Color (**None**, the 12 hues, then Black and White). A pick applies at once and the menu stays open, so you can try backdrops one after another; **None** clears it.
+
+![A pane's right-click menu with Pane Color open, showing the swatches](../../assets/screenshots/chrome/chrome-pane-color-submenu.png)
 
 ### Subsections
 
 The agent pane has no drawer of its own. What belongs to one agent is reached from the agent's **My Agents** row and from the pane's right-click menu, and the rest lives in the app-wide panes.
 
-**The pane's right-click menu** has **Agent History**, **Quick Fork** and **View…**. For an agent with a saved definition it adds **Seat…**, **Bundles…** and **Personal memory**, and a container agent also has **Container limits…**. A quick-launch pane, which has no saved agent, has none of these, and neither does an agent's History tab.
+**The pane's right-click menu** has **Agent History** and **Quick Fork**. For an agent with a saved definition it adds **Seat…**, **Personal memory**, the checkbox **Starts agents without asking** (and **Uses Google without asking** once you have given that), and a container agent also has **Container limits…**. It ends with **Shut down**, the one act that ends the agent (closing the pane keeps it running). What the pane shows is chosen with the eye button in the composer's control row. A quick-launch pane, which has no saved agent, has none of the saved-agent items, and neither does an agent's History tab.
 
-**My Agents** (the agent picker): each row's menu (the chevron at the right of the row) has **Rename**, **Duplicate**, **View History**, **Seat…**, **Bundles…**, **Environment…** and **Delete**. See [My Agents](/first-agent/#my-agents).
+**My Agents** (the agent picker): each row's menu (the chevron at the right of the row) has **Rename**, **Duplicate**, **View History**, **Seat…**, **Bundles…**, **Environment…**, **Spend cap…**, **Shut down** (while the agent is running) and **Delete**. See [My Agents](/first-agent/#my-agents).
 
 | What | Where |
 |---|---|
 | **Seat** (role, lead and area, and **Import roster…**) | **Seat…**, from the My Agents panel or the pane's right-click menu. See [Seats](/first-agent/#seats). |
-| **Bundles** the agent starts with, in order | **Bundles…**, from either menu; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
+| **Bundles** the agent starts with, in order | **Bundles…** in the My Agents panel; saved on each change. See [An agent's bundles](/bundles/#an-agents-bundles). |
 | **Environment** variables it starts with | **Environment…** in the My Agents panel. See [Environment variables](/first-agent/#environment-variables). |
 | **Personal Memory** | **Personal memory** in the pane's right-click menu opens [Memory → Personal](/memory/#personal) on this agent. There you can browse its files, see history and diffs, revert, and add a **New file** or **Create MEMORY.md**. |
 | **Account** | The login email in the composer strip (see [Composer strip](#composer-strip)). Which agents use an account is in [Connectors → Accounts](/connectors/#accounts). |
@@ -529,7 +526,7 @@ Bundles themselves are edited only in [Memory → Bundles](/memory/#bundles). Th
 
 ## Swarm
 
-The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network, then your account's other machines that are not on this network (the cloud tier, display only). Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection: select agents, then send one message to all of them from **Broadcast**, or stop them or set their Supervisor mode from **Supervisor**. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own, and the [Atlas](/atlas/) draws the same agents as a map. A row whose agent ended its turn with a [Browser](/browser-pane/) request still open (a click to allow, a hand-off) shows the **question** chip and "Waiting for you in a browser pane", and counts in the status bar's list of what waits on you. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), once counted in the toolbar's Stats panel, are in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
+The Swarm pane lists every agent on this AgentMux instance, with or without a pane, as a tree. Under each agent you see its todo list, subagents, workflow runs, shells, cron jobs, long-running commands and background commands; a subagent's own background commands appear under that subagent. Agents that are stopped are listed too, with **Start** and **Open**, and below them come the agents of other AgentMux instances on this machine and your network, then your account's other machines that are not on this network (the cloud tier, display only). Click an agent to focus its pane. The pane has two sections, **Supervisor** and **Broadcast**, as tabs along its top; both show the same list and one selection: select agents, then send one message to all of them from **Broadcast**, or stop them or set their Supervisor mode from **Supervisor**. Subagent activity expands inline in the tree rather than in a pane of its own. The work agents are doing is on the [Kanban](/kanban/), a pane of its own, and the [Atlas](/atlas/) draws the same agents as a map. A row whose agent ended its turn with a [Browser](/browser-pane/) request still open (a click to allow, a hand-off) shows the **question** chip and "Waiting for you in a browser pane", and counts in the status bar's list of what waits on you. See [Swarm](/subagent-watcher/). The model requests AgentMux makes on its own (session titles, names, prompt suggestions, narration), are in the token popover's **AgentMux internal** row (see [The token pill](/window/#the-token-pill)).
 
 ![An agent mid-turn beside Swarm, which shows it working, with its message and current step](../../assets/screenshots/agent/swarm-agent-working.png)
 
@@ -543,21 +540,7 @@ The Drone pane builds and runs automations as a graph of blocks: variables, agen
 
 ![The Sysinfo widget showing CPU, memory and network](../../assets/screenshots/widgets/widget-sysinfo-small.png)
 
-Live system metrics displayed as time-series line plots. Supports multiple plot types:
-
-| Plot Type | Metrics |
-|-----------|---------|
-| CPU | Overall CPU usage % |
-| Mem | Memory used (GB) |
-| CPU + Mem | Both on one view |
-| Net | Total network throughput (MB/s) |
-| Net (Sent/Recv) | Sent and received separately |
-| Disk I/O | Total disk throughput |
-| Disk I/O (R/W) | Read and write separately |
-| All CPU | Per-core CPU usage (up to 32 cores) |
-| CPU + Mem + Net | All three combined |
-
-Data streams via WebSocket events from the backend. Supports remote connections — view system metrics from SSH-connected hosts.
+Live system metrics for the machine AgentMux runs on, plotted over time. See [System Metrics](/system-metrics/) for the plots, how to open the pane and the settings that control it. It monitors only this machine, not remote connections.
 
 ## Voice input
 
@@ -673,7 +656,7 @@ Right-click a pane's header for its menu: **Paste** (in a pane that takes typed 
 
 **Minimizing a pane merges its tabs into a neighbour.** When you minimize a pane in a split, its tabs join a minimized pane next to it, if there is one: the nearest one before it (above or to the left) with no expanded pane in between, else the nearest after it, with a landing animation on the tabs that arrive. In a row, minimized panes stacked over the same pane count as next to each other. If there is none, the tabs are dealt out one by one to the tab's open panes as background tabs, round robin: the first goes to the nearest expanded pane (after it, to the right or below, else before it; if that neighbour is itself a split, the pane nearest to the one you minimized), the next to the following pane, and so on round again. Either way the minimized pane's own space goes to the others, and the pane you minimized is gone as a pane. Only your own minimize does this (the header button, the shortcut, the pane menu and the command palette), not an agent's, a layout loading or a restore, and not a locked pane, a floating pane or the last expanded one.
 
-To get the old header chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, drag its pill out onto a pane's body; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
+To get a header-sized chip instead, `Shift`+click **Minimize** or choose **Minimize to Header** in the pane menu: the pane shrinks to a chip the size of its header, stacked over its neighbour in a row. To get a merged tab back as its own pane, drag its pill out onto a pane's body; there is no undo for the merge itself. Minimized panes count as hidden, so a row of them costs little.
 
 The header's buttons, from left to right, are **Minimize** (when the tab has more than one pane), **Maximize** and **Close**. A pane that is alone in its tab has no **Maximize**, since it already fills the tab. Maximize is an outline window. Restore, on a maximized or a minimized pane, is a tiled layout: a frame with the pane's own tile filled in. Close is an X that turns red while you hover it. A maximized pane can be minimized directly. A click on the pill of a minimized pane's tab expands it; dragging pills between minimized panes doesn't.
 
@@ -741,7 +724,7 @@ If the operating system doesn't give AgentMux a dropped file's path, the file's 
 
 Press `Esc` while dragging a window tab or a pane tab out of the window to cancel the drag, on Windows, macOS and Linux. To move a window tab into another AgentMux window instead, drop it on that window's tab strip: the tab joins that window. Dropped anywhere else, it tears off, as in Chrome.
 
-Drag a tab below the tab bar to move it into a **new window** of its own, in a new workspace. The window runs in the same AgentMux processes as the one it came from (same backend, settings, agents and browser profile); it is not a separate instance. Supported on Windows, macOS (v0.40+), and Linux (v0.41+, Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-its-own-window) for the full gesture.
+Drag a tab below the tab bar to move it into a **new window** of its own, in a new workspace. The window runs in the same AgentMux processes as the one it came from (same backend, settings, agents and browser profile); it is not a separate instance. Supported on Windows, macOS and Linux (Wayland). See [Multi-instance & dev mode](/multi-instance/#tearing-a-tab-into-its-own-window) for the full gesture.
 
 ### Floating panes
 
