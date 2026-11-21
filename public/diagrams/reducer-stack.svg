@@ -41,7 +41,7 @@
   <rect class="bp" x="30" y="172" width="820" height="92" rx="8"/>
   <text class="t"  x="440" y="202" text-anchor="middle">Host (agentmux-cef) — Layer 2 — FFI + UI thread</text>
   <text class="s"  x="440" y="223" text-anchor="middle">pending_window_creations · active_drag · tear_off_hooks</text>
-  <text class="s"  x="440" y="242" text-anchor="middle">browsers · window_pool (scaffolding — deliberately retained)</text>
+  <text class="s"  x="440" y="242" text-anchor="middle">browsers · window_pool</text>
   <text class="cp" x="440" y="258" text-anchor="middle">launcher → host pipe/socket</text>
 
   <!-- Arrow up: Launcher → Host -->
@@ -63,7 +63,7 @@
   <rect class="bs" x="30" y="474" width="820" height="92" rx="8"/>
   <text class="t"  x="440" y="504" text-anchor="middle">Srv (agentmux-srv) — Layer 3 — app domain</text>
   <text class="s"  x="440" y="525" text-anchor="middle">workspaces · tabs · blocks · layouts · agents · identity</text>
-  <text class="s"  x="440" y="544" text-anchor="middle">saga coordinator (Path A — chosen E.5)</text>
+  <text class="s"  x="440" y="544" text-anchor="middle">sagas: plain async steps through SagaCtx</text>
   <text class="cs" x="440" y="560" text-anchor="middle">persist subscriber (idempotent SQLite write-back)</text>
 
   <!-- Arrow up: Persistence → Srv -->

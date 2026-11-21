@@ -93,5 +93,3 @@ Test files sit next to these. `streaming-buffer.ts` (`partitionForVirtualization
 ## Reference
 
 - Spec: `docs/specs/SPEC_AGENT_PANE_VIRTUALIZATION_REDESIGN.md` (in main repo)
-- PRs: #783 (foundation), #784 (virtualization layer), #786 (Show capture follow-up + reactive block components), #787 (perf probe)
-- Issue: #782

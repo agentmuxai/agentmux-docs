@@ -28,11 +28,11 @@
   <!-- Inner left: virtualized region -->
   <rect class="virt" x="40" y="80" width="280" height="250" rx="8"/>
   <text class="ls" x="55" y="105">virtualized region</text>
-  <text class="s"  x="55" y="124">height = virtualizer.getTotalSize()</text>
+  <text class="s"  x="55" y="124">height = sum of the row heights</text>
   <text class="s"  x="55" y="141">position: relative</text>
   <text class="s"  x="55" y="158">rows: position absolute</text>
   <text class="s"  x="55" y="175">         translateY(start)</text>
-  <text class="s"  x="55" y="196">measureElement on each row</text>
+  <text class="s"  x="55" y="196">each row is measured once mounted</text>
   <text class="s"  x="55" y="220">Only DOM-mounts rows within</text>
   <text class="s"  x="55" y="237">the visible scroll viewport.</text>
   <text class="s"  x="55" y="254">Rows above/below are unmounted</text>

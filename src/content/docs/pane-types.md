@@ -230,9 +230,9 @@ Press `Ctrl+F` (`⌘F`) to open the find bar, which also does find-and-replace. 
 
 Results highlight in the editor and the gutter shows match density. Press `Enter` / `Shift+Enter` to step through matches; press `Escape` to close.
 
-### Language-server diagnostics (Phase 1)
+### Language-server diagnostics
 
-The editor speaks the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) for real, type-aware diagnostics. Phase 1 (shipped) covers **TypeScript and JavaScript** via [`typescript-language-server`](https://github.com/typescript-language-server/typescript-language-server); completion, hover, go-to-definition, and additional languages land in follow-up phases — see [`SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md).
+The editor speaks the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) for real, type-aware diagnostics. It covers **TypeScript and JavaScript** via [`typescript-language-server`](https://github.com/typescript-language-server/typescript-language-server); completion, hover, go-to-definition, and additional languages land in follow-up phases — see [`SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_EDITOR_LSP_AND_THEMES_2026-05-26.md).
 
 **Language servers are not bundled.** AgentMux follows the VS Code model: open a supported file, the editor looks for the server on your `PATH`, and either uses it or prompts you to install it.
 
@@ -335,7 +335,7 @@ Keyboard shortcuts are listed in [Keybindings → Files](/keybindings/#files).
 
 ## Media
 
-There is no separate Media pane any more. Images, audio and video open in the [Editor](#editor), as tabs like any other file. The Editor picks a viewer for each file from its content, and from its extension only where the content leaves it open (`frontend/app/view/editor/viewers/viewer-choice.ts`). PDFs get a PDF viewer, files of a kind with no viewer of its own (an archive, a font, an Office document) a card with the file's details, and other binary files hex. **Show As** in a tab's menu switches a file to any viewer that can show it.
+Images, audio and video open in the [Editor](#editor), as tabs like any other file. The Editor picks a viewer for each file from its content, and from its extension only where the content leaves it open (`frontend/app/view/editor/viewers/viewer-choice.ts`). PDFs get a PDF viewer, files of a kind with no viewer of its own (an archive, a font, an Office document) a card with the file's details, and other binary files hex. **Show As** in a tab's menu switches a file to any viewer that can show it.
 
 | Viewer | Files | What it does |
 |---|---|---|
@@ -366,7 +366,7 @@ Click a byte to put the cursor there, drag or `Shift`+click to select, and use t
 
 ### Following a folder
 
-The Media pane's job was watching a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), and showing each new file as it lands. The Editor does this per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv-core/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
+To watch a folder where something writes images or video, such as a local generation pipeline (a ComfyUI-style image or video workflow), the Editor follows it per tab. An image, audio or video tab has a **Follow newer files in this folder** button in its toolbar. While it is on, the Editor watches the file's folder for image, video and audio files, and a newer one replaces the tab's file (`frontend/app/view/editor/viewers/follow-folder.ts`, `crates/srv-core/src/backend/media_file_watcher.rs`). A file dropped with no path on disk can't follow its folder.
 
 ### Opening it programmatically
 

@@ -79,11 +79,6 @@
   <text class="elp" x="308" y="275" text-anchor="end">SubmitTimeoutElapsed (30s)</text>
   <text class="elp" x="308" y="288" text-anchor="end">→ errored</text>
 
-  <!-- Arrow: Streaming → Done (stalled, purple) -->
-  <path class="ep" d="M538,234 L538,290 L620,290 L620,340" marker-end="url(#ap)"/>
-  <text class="elp" x="543" y="268">StreamStalled (60s)</text>
-  <text class="elp" x="543" y="281">→ errored</text>
-
   <!-- Arrow: Streaming → Disconnected -->
   <path class="e" d="M458,234 L458,260 L425,260 L425,340" marker-end="url(#a)"/>
   <text class="el" x="430" y="278">stream</text>

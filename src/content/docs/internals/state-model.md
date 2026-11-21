@@ -180,7 +180,7 @@ Models the per-agent-pane lifecycle. Does **not** model focus, highlight, or pan
 
 #### TurnPhase discriminated union
 
-<img src="/diagrams/state-model-turnphase.svg" alt="TurnPhase state machine: Idle → Submitting → Streaming → Interrupting, each with arrows to terminal Done (steel-blue) or Disconnected. Purple arrows show timeout/error transitions: SubmitTimeoutElapsed (30s), StreamStalled (60s), InterruptTimeoutElapsed (5s)." style="max-width:100%" />
+<img src="/diagrams/state-model-turnphase.svg" alt="TurnPhase state machine: Idle → Submitting → Streaming → Interrupting, each with arrows to terminal Done (steel-blue) or Disconnected. Purple arrows show timeout/error transitions: SubmitTimeoutElapsed (30s) and InterruptTimeoutElapsed (5s)." style="max-width:100%" />
 
 **Selectors** (`types.ts`):
 
