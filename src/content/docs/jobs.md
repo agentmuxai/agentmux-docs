@@ -13,7 +13,7 @@ The **Jobs** pane lists everything that runs by itself: scheduled jobs, [Drone](
 
 Open it with **Open Jobs** in the command palette (`open:jobs`). The pane's title reads **Jobs**, and **Jobs · N failing** when N jobs are failing.
 
-An agent creates a job with the `Schedule` tool (action `create`, with `cron`), and you create one yourself with **New job**. A Drone graph appears in the list once it has run, and a cloud job once you approve its template.
+An agent creates a job with the `Schedule` tool (action `create`, with `cron`) and also lists, pauses, resumes, deletes, reads the history of and runs jobs once with it. You create one yourself with **New job**. A Drone graph appears in the list once it has run, and a cloud job once you approve its template.
 
 ## The list
 
@@ -63,7 +63,7 @@ Pinning a key lets no event in by itself: an event also has to match the key of 
 
 ## Creating and editing a job
 
-**New job** opens the editor. **Start from** offers a template or a blank job. Ten starter templates ship with AgentMux: backup verification, a daily digest, a dependency scan, documentation drift, a nightly build, an event-triggered job, a PR review, a stale sweep, a weekly report and a weekly status. Four [Drone templates](/drone/#drone-templates) ship beside them. A template runs only once you have approved it (**Review and approve** in the template list; **Clone to a job** then starts a job from it). When the template has a newer version, a job made from it shows **Update available** (or **Update to approve**) in the list. Open the job and choose **Update to <version>**, or **Review <version>** if you haven't approved that version yet, to see what changes before you accept it. The editor asks for:
+**New job** opens the editor. **Start from** offers a template or a blank job. Ten starter templates ship with AgentMux: backup verification, a daily digest, a dependency scan, documentation drift, a nightly build, an event-triggered job, a PR review, a stale sweep, a weekly report and a weekly status. Seven [Drone templates](/drone/#drone-templates) ship beside them. A template runs only once you have approved it (**Review and approve** in the template list; **Clone to a job** then starts a job from it). When the template has a newer version, a job made from it shows **Update available** (or **Update to approve**) in the list. Open the job and choose **Update to <version>**, or **Review <version>** if you haven't approved that version yet, to see what changes before you accept it. The editor asks for:
 
 - **Name**, and **Owner**: its leader gets the failure alerts. **You (no agent)** keeps them with you.
 - **Runs**: **On a schedule** (a cron expression, minute hour day-of-month month weekday, and an IANA **Time zone** such as Europe/Berlin; the days of the week are numbered as in standard cron: `0` and `7` are Sunday, `1` is Monday and `1-5` is Monday to Friday), **Every** (minutes; an agent job runs at most every 15 minutes), **Once** (at a time in your time zone) or **By hand**.

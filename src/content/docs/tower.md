@@ -21,7 +21,6 @@ AgentMux is **alpha software** and under heavy active development. Many features
 
 - **Machine:** **This computer**, your SSH and WSL remotes, and AgentMux computers you've paired. **Pair another AgentMux computer…** takes a pairing link (`agentmux://pair?…`); **Forget this computer** removes a paired one.
 - **Tower view:** **Memory** (AgentMux's own memory), **Agents** (each agent and what it runs), **Processes** (every process on the machine) or **Panes** (each window, tab and pane with what it costs). Tower opens on **Memory**. **Memory** and **Panes** show this computer's AgentMux only.
-- **Show CPU as:** **% of machine**, the share of the whole machine, as Windows Task Manager shows it; or **% of a core**, the share of one core, as `top` shows it, which can pass 100%.
 
 ## Memory
 
@@ -67,12 +66,16 @@ Pick another machine in **Machine**:
 - An **SSH or WSL remote** runs no AgentMux agents, so Tower shows its processes. SSH hosts must run Linux or macOS; others are listed greyed out as not supported.
 - A **paired AgentMux computer** has agents of its own: Tower shows that computer's agents and processes. That computer shares its processes only if its user turned on **Share this computer's processes with paired devices** in the Tower pane's settings menu there (`tower:sharewithpaired`, off by default). What it shares is names only, never a command line, and leaves out the processes of an agent hidden from paired devices.
 
+### Over days
+
+Under the Memory figures, **Over days** charts the record AgentMux keeps: one line an hour, each point the hour's median. Choose what the chart follows (**AgentMux**, **Core**, **Panes**, **Agents**, **Window JS heap**, **Window elements** or **Window rows**) and its span (**1 day**, **7 days** or **30 days**). Under the chart, a line counts the times the server restarted and the stalls the window or the server had in that span. The chart fills in as AgentMux keeps running.
+
 ## What Tower doesn't do
 
 - It's read-only: it can't end, suspend or reprioritise a process.
 - It never shows a process's command line.
 - It never asks for administrator rights, so other users' processes can't be measured.
-- It looks back only a little. The Memory view keeps the last hour. In the Agents view, the selected entry's CPU and memory are charted over the last 10 minutes; those charts are kept in the pane and start empty when you reopen it. The Processes and Panes views show current values.
+- It looks back only a little. The Memory view's live charts keep the last hour; **Over days** reaches back as far as the hourly record goes. In the Agents view, the selected entry's CPU and memory are charted over the last 10 minutes; those charts are kept in the pane and start empty when you reopen it. The Processes and Panes views show current values.
 
 ## See also
 

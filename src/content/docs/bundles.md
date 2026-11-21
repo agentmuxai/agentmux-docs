@@ -36,7 +36,7 @@ You pick bundles in these places, all with the same control: each picked bundle 
 
 **At launch,** in list order:
 
-- **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv-core/src/backend/storage/agent_bundles.rs`). The instructions are no longer sent as the agent's first message. A bundle deleted since it was picked is skipped.
+- **Instructions:** each picked bundle with instructions becomes a section of the agent's startup file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), headed `# [Bundle] <name>`, after the Global Memory sections (`crates/srv-core/src/backend/storage/agent_bundles.rs`). They are not sent as a message. A bundle deleted since it was picked is skipped.
 - **Skills** from every bundle in the list are added to the agent's own. When two bundles name the same skill, the first one wins.
 - **The provider** stays the agent's own. A picked bundle doesn't change which harness runs.
 

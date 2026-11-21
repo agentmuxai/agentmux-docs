@@ -62,7 +62,7 @@ The same list is in the app: press F1, or open the Help pane. A terminal keeps e
 | Action | macOS | Windows / Linux |
 |---|---|---|
 | Find in pane | ⌘F | Ctrl+F, Ctrl+Shift+F (in a terminal) |
-| Zoom in | ⌘=, ⇧⌘= | Ctrl+=, Ctrl+Shift+= |
+| Zoom in | ⌘=, ⇧⌘=, ⌘Num+ | Ctrl+=, Ctrl+Shift+=, Ctrl+Num+ |
 | Zoom out | ⌘-, ⌘Num- | Ctrl+-, Ctrl+Num- |
 | Reset zoom | ⌘0, ⌘Num0 | Ctrl+0, Ctrl+Num0 |
 | Reset zoom on all panes | ⇧⌘0 | Ctrl+Shift+0 |
@@ -156,7 +156,7 @@ Set shortcuts in Settings → **Keyboard shortcuts** (see [Settings](/settings/#
 
 - `key`: modifiers `ctrl`, `shift`, `alt`, `meta` and `mod` (⌘ on macOS, Ctrl elsewhere), then a key: a letter, a digit, punctuation, or a name such as `Enter`, `Tab`, `ArrowLeft`, `F6`, `PageUp`. Two keys separated by a space make a chord.
 - `command`: the command to run. Prefix it with `-` to unbind it: every key, or just the `key` you give.
-- `when` (optional): `textInputFocus`, `terminalFocus`, `docTabsHost`, `viewType == <pane>` or `viewType != <pane>`, each optionally negated with `!`, joined with `&&`.
+- `when` (optional): `textInputFocus`, `textInputFilled` (the focused field holds text), `terminalFocus`, `docTabsHost`, `viewType == <pane>` or `viewType != <pane>`, each optionally negated with `!`, joined with `&&`.
 - `platform` (optional): `mac` or `other` (Windows and Linux). Both when omitted.
 
 An entry that can't be used is skipped and the rest still apply.
@@ -182,6 +182,7 @@ In the message box at the bottom of an Agent pane (`frontend/app/view/agent/comp
 | `Esc` | Clear the draft. With an empty box, send any queued messages right away, or, if nothing is queued, interrupt the agent's running turn. |
 | `Cmd + Z` (macOS), `Ctrl + Z` (Windows / Linux) | Bring back a draft cleared with `Esc` |
 | `↑` / `↓` | Step through messages you sent before. On an empty box, `↑` first pulls back the most recently queued message. |
+| `Ctrl + R` | Search the messages sent to this agent (a pane with an agent of its own): type to filter, `Enter` to use one, `Shift + Del` to forget one, `Esc` to close |
 | `Tab` or `→` | Accept the suggested next prompt (empty box only) |
 | `↑` / `↓`, `Tab`, `Enter`, `Esc` | In the `/` command list: move, fill in, run, dismiss |
 

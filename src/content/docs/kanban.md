@@ -36,7 +36,7 @@ The Kanban can keep several boards, such as one per project. The **board picker*
 
 ## Columns
 
-The columns follow a piece of work from request to shipped.
+The columns, called **stages**, follow a piece of work from request to shipped. A new board has the eight below; you can rename, recolour, merge, add and remove them (see [Stages](#stages)).
 
 | Column | What is in it |
 |---|---|
@@ -56,6 +56,19 @@ AgentMux notices when a task's pull request merges, and, from the repository's p
 **Collapse a column** with the control in its header: it folds to a thin strip with the column's name written down it and its count, held tasks and the age of its oldest task. Click the strip to open the column again. The choice is kept with the pane, so it survives a restart.
 
 A card shows its number (`#12`, or `work#12` on another board), title, the agent on it with a live status dot, checklist progress (`3/7`), its pull request once linked, how many times it has been taken when more than once, its repository, who asked for it ("from you, via Agent1") and how long since it last moved.
+
+### Stages
+
+Each board keeps its own stages. Edit them in **Settings › Kanban › Kanban stages** (choose the **Board** first):
+
+- A board has **2 to 8** stages. **Add stage** adds one; **Remove stage** asks which stage should show its tasks instead.
+- Give a stage a **Stage name** (up to 24 characters, unique on the board) and a **Colour** from the theme's eight stage colours.
+- Each stage **Shows** one or more of the eight built-in columns above (Backlog, In Research, Spec'd, In progress, Needs you, Review, Merged, Released); every column is shown by exactly one stage, so merging two stages gives one stage that shows both. A task lands in the stage that shows its column.
+- The stage that shows **Needs you** shows only that, so it always stays a stage of its own and keeps its name.
+- Drag a stage, or use the move buttons (**Move <name> earlier** and **Move <name> later**), to reorder. **Apply** saves, **Discard** drops the edit, and **Reset to default** returns to the eight. **Use for all my boards** copies the stages to your other boards. **Recent changes** lists who changed them and when.
+- An archived board's stages can't be changed.
+
+Where this page says a column, a board with custom stages shows the stage that shows it.
 
 ## What agents do
 
@@ -113,17 +126,17 @@ An untracked card has **Track**, which turns the agent's current work into a tas
 
 ## Pull requests
 
-When an agent opens a pull request while it holds exactly one task, AgentMux records the branch on that task and links the PR once GitHub lists it. A task in Review whose PR merges is accepted, with "PR #12 merged" in its history. AgentMux reads GitHub without a sign-in for this, so it works for public repositories; tasks of other repositories wait for your **Accept**.
+When an agent opens a pull request while it holds exactly one task, AgentMux records the branch on that task and links the PR once GitHub lists it. A task in Review whose PR merges is accepted, with "PR #12 merged" in its history. AgentMux reads GitHub without a sign-in for this, so it works for public repositories; tasks of other repositories wait for your **Accept**. A task with a pull request or a branch has **Open the PR** and **Open PRs** in its drawer; **Open PRs** shows the task's pull requests in the [Reviews](/pane-types/) pane.
 
 ## Settings
 
-These are `settings.json` keys. `kanban:reminders` also has a switch in the Kanban's toolbar and in Settings › Advanced; the others have no control yet.
+These are `settings.json` keys. `kanban:reminders` also has a switch in the Kanban's toolbar and in Settings › Advanced. `kanban:closeonmerge` and `kanban:reviewlimit` are in **Settings › Kanban** (**Close a task when its PR merges** and **Review limit**).
 
 | Key | Default | What it does |
 |---|---|---|
 | `kanban:reminders` | off | `true` turns on the idle reminder for every agent |
 | `kanban:closeonmerge` | on | `false` stops accepting a reviewed task when its PR merges |
-| `kanban:reviewlimit` | none | A whole number: past it, the Review header turns amber. Nothing is blocked |
+| `kanban:reviewlimit` | `0` | A whole number: past it, the header of the stage that shows Review turns amber. `0` is no limit. Nothing is blocked |
 | `fleet:quota_mode` | `off` | `tight` limits what an unnamed `Tasks` `claim` takes (see [Quota mode](#quota-mode)); `Message` `quota_mode` sets it |
 | `fleet:quota_min_priority` | `1` | While quota mode is `tight`, the lowest priority an unnamed claim takes |
 
