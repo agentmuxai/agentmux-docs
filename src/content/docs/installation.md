@@ -140,7 +140,7 @@ This needs no install step. It isn't covered by the one-time sandbox fix describ
 
 ### Display server
 
-When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwise it uses X11. If you enable window transparency (`window:transparent`), it runs through XWayland instead, because native Wayland has no equivalent of the X11 window-opacity property it uses. To force a backend, set `AGENTMUX_OZONE_PLATFORM=wayland` or `AGENTMUX_OZONE_PLATFORM=x11`. The logic is in `crates/cef/src/app/mod.rs` (the Linux Ozone branch).
+When `WAYLAND_DISPLAY` is set, AgentMux runs as a native Wayland client. Otherwise it uses X11. Window transparency (`window:transparent`) works on native Wayland too and applies live. To force a backend, set `AGENTMUX_OZONE_PLATFORM=wayland` or `AGENTMUX_OZONE_PLATFORM=x11`. The logic is in `crates/cef/src/app/mod.rs` (the Linux Ozone branch).
 
 ### GPU
 
@@ -168,11 +168,11 @@ The first window opens a starter layout of three panes:
 
 New windows start with the same layout (`crates/srv-core/src/backend/wcore/mod.rs`, `default_three_pane_tree`), and so do new tabs (`frontend/app/tab/tab-presets.ts`, `DEFAULT_TAB_PRESET`). Your windows make up **Default Workspace**, which AgentMux saves as you work and reopens at the next launch. See [Workspaces](/workspaces/).
 
-The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order (`crates/srv-core/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower and Audit. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
+The **widget bar** at the top right opens panes. By default it pins **Agent**, **Swarm**, **Memory**, **Connectors**, **Files**, **Browser**, **Settings** and **Help**, in that order (`crates/srv-core/src/config/widgets.json`). The rest are under **more**: Kanban, Terminal, Editor, Messengers, Sysinfo, Drone, Vault, History, Toolchain, Tower, Audit, Atlas and Reviews. Right-click a widget to pin it to the bar or unpin it. As the title bar gets narrower, the bar first drops its labels and then moves widgets that no longer fit under **more**.
 
 ![The top bar: the AgentMux logo menu, a window tab, the widget bar (Agent, Swarm, Memory, Connectors, Files, Browser, Settings, Help and more) and the window buttons](../../assets/screenshots/chrome/chrome-top-bar.png)
 
-The **AgentMux logo menu** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools, Online Docs and Exit (`frontend/app/window/logo-menu.tsx`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
+The **AgentMux logo menu** has New Tab, New Window, Theme, Opacity, Workspaces (**New Workspace…**, **Open Workspace**, **Import…**, **Export…**, **Rename workspace…**, **Delete workspace…**; see [Workspaces](/workspaces/)), Command Palette, DevTools (only while Dev mode is on, `app:devmode`, off by default in an installed app), Online Docs, Reload Window and Exit (`frontend/app/window/logo-menu-state.ts`). Settings, Connectors, Memory and Toolchain open from the widget bar and the command palette.
 
 ![The AgentMux logo menu open: New Tab, New Window, Theme, Opacity, Workspaces, Command Palette, DevTools, Online Docs and Exit](../../assets/screenshots/chrome/chrome-logo-menu.png)
 

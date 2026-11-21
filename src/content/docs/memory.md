@@ -70,7 +70,7 @@ Each entry has a **reach**: `fleet` or `machine`. A `fleet` entry is sent to eve
 
 ## Personal
 
-<a id="native-memory"></a>**Personal Memory** is the set of free-form `.md` files an agent reads and writes about itself: notes, running context, anything it wants to keep between turns. It is a different thing from a [bundle](/bundles/): a bundle is a reusable *definition* you give an agent; Personal Memory is a scratchpad an already-running agent keeps for itself. ("Native memory" is the name of its storage in the code; earlier releases labelled it "Brain".)
+<a id="native-memory"></a>**Personal Memory** is the set of free-form `.md` files an agent reads and writes about itself: notes, running context, anything it wants to keep between turns. It is a different thing from a [bundle](/bundles/): a bundle is a reusable *definition* you give an agent; Personal Memory is a scratchpad an already-running agent keeps for itself. ("Native memory" is the name of its storage in the code.)
 
 This section is the app-wide view of every agent's Personal Memory. Pick an agent, then a file, to see its content, history and diffs, and to revert to an earlier version. From an agent's pane, right-click and choose **Personal memory** to open this section on that agent.
 

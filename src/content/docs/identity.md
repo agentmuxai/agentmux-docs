@@ -21,7 +21,7 @@ An **Account** is a single credential pointer — one provider, one kind, one se
 | `openai`, `google`, `slack` | API key or OAuth | provider-specific |
 | `custom` | Free-form key/value | Any provider-specific token |
 
-`AccountProvider` is `"github" | "openai" | "aws" | "anthropic" | "google" | "slack" | "custom" | "agentmux"` today, with `custom` covering anything that doesn't fit a named slot. An agent can bind **at most one Account per provider** — a conflict (e.g. trying to bind a second `github` account) is a surfaced validation error at resolve time, not a silent pick.
+`AccountProvider` is `"github" | "openai" | "aws" | "anthropic" | "google" | "slack" | "custom" | "agentmux" | "xai" | "kimi"`, with `custom` covering anything that doesn't fit a named slot. An agent can bind **at most one Account per provider** — a conflict (e.g. trying to bind a second `github` account) is a surfaced validation error at resolve time, not a silent pick.
 
 **Connectors → Accounts** lists them, grouped by service:
 
@@ -89,8 +89,6 @@ Each time the agent's process is spawned, AgentMux:
 4. Spawns the agent process with those env vars set.
 
 To change an agent's account later, click the login email in its composer strip and pick another (see [Changing an agent's account](#changing-an-agents-account)).
-
-Earlier versions had a Launch Agent dialog with one account dropdown per provider and an inline [Pre-Launch Auth panel](/auth/#pre-launch-oauth-panel). Nothing in the current agent picker opens it.
 
 ## Persistence
 

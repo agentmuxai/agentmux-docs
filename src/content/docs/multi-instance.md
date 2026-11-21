@@ -13,7 +13,7 @@ This page explains how that works from a user's perspective. For the underlying 
 |---|---|---|---|
 | **Installed** | Inno Setup installer | `stable` | Runtime (DB, cache, logs): `~/.agentmux/channels/stable/versions/<v>/`. Shared (agents, settings): `~/.agentmux/channels/stable/`. See [Data layout → Per-channel contents](/internals/data-layout/#per-channel-contents) for the full split. |
 | **Portable** (released `.7z`) | Extracted release `.7z`, run from `<extracted-folder>/agentmux.exe` | `stable` | Same as installed — both bind to the `stable` channel. |
-| **Portable** (local `task package`) | A portable you built yourself from source | `local-<branch>-<hash>-<build-id>` (per build) | `~/.agentmux/channels/local-<branch>-<hash>-<build-id>/versions/<v>/` (version-scoped like any release; **each rebuild gets its own channel** — `--fresh` is now a no-op since every build is already isolated) |
+| **Portable** (local `task package`) | A portable you built yourself from source | `local-<branch>-<hash>-<build-id>` (per build) | `~/.agentmux/channels/local-<branch>-<hash>-<build-id>/versions/<v>/` (version-scoped like any release; **each rebuild gets its own channel**, so every build starts isolated) |
 | **Dev** (`task dev`) | `task dev` from a checked-out source tree | `dev-<branch>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
 Dev mode lives under `~/.agentmux/dev/` (outside `channels/`) and adds a per-clone segment so two checkouts of the same branch can run side-by-side. See [Multiple `task dev` sessions](#multiple-task-dev-sessions-from-different-clones) below.
@@ -31,7 +31,7 @@ Three axes of isolation, often confused:
 - Process tree, dynamic backend port, IPC socket/pipe, process-isolation container (Job Object on Windows / process group on Linux + macOS)
 - Renderer JS contexts (in-memory state in the running window(s))
 
-**Per-version** (one runtime-state set per (channel, version) pair, shared by all instances of the same release on the same channel, isolated from other versions of the same channel — shipped in v0.41.1):
+**Per-version** (one runtime-state set per (channel, version) pair, shared by all instances of the same release on the same channel, isolated from other versions of the same channel):
 
 - **Runtime SQLite stores** — workspaces, tabs, blocks, layouts, sagas, filestore (`objects.db`, `sagas.db`, `filestore.db`)
 - **Logs** — host log files (rotated daily). Sidecar logs are *not* per-version — see [shared](#whats-shared) below.
@@ -46,12 +46,12 @@ Three axes of isolation, often confused:
 
 - **Agent definition registry** — `shared/agents/definitions/`, the canonical agent definitions, shared across all channels
 - **Agent instances registry** — `shared/agents/registry/`, cross-channel agent instances plus each agent's `session_id` for resume
-- **Provider auth and Accounts** — `shared/providers/<provider>/` for a plain agent spawn's *ambient* credentials, and `shared/identities/<id>/<provider>/` plus the shared `store.db` for the accounts in Connectors → Accounts. Since 2026-10-03 both are shared by every channel, including `dev-<branch>` and per-build `local-*` channels; `AGENTMUX_ISOLATED_AUTH=1` gives one channel its own, empty account list for testing logins. See [Auth flows](/auth/).
+- **Provider auth and Accounts** — `shared/providers/<provider>/` for a plain agent spawn's *ambient* credentials, and `shared/identities/<id>/<provider>/` plus the shared `store.db` for the accounts in Connectors → Accounts. Both are shared by every channel, including `dev-<branch>` and per-build `local-*` channels; `AGENTMUX_ISOLATED_AUTH=1` gives one channel its own, empty account list for testing logins. See [Auth flows](/auth/).
 - **Agent working folders** — `~/.agentmux/agents/<slug>/`, one per agent, shared by every channel
 
 So agents, accounts and auth follow you everywhere: a brand-new per-build `local-*` channel, or a `dev-<branch>` channel, still shows all your agents and stays logged in. An agent bound to an Account keeps working across a channel switch because the binding itself (`db_agent_identity_links`) lives in a separate, always-global identity store — see [Identity & Accounts → Persistence](/identity/#persistence) for that split.
 
-So: the **same release** on the **same channel** is one instance. Launching it again (e.g. a second portable of v0.41.1 `stable` from another folder) opens a new window in the instance that's already running, in its open [workspace](/workspaces/). Two instances of **different releases** on the same channel (e.g. v0.40.2 and v0.41.1, both `stable`) share the channel-wide settings but have separate runtime DBs and caches, and so separate [workspaces](/workspaces/). Two instances on **different channels** (e.g. installed `stable` + a `dev-<branch>` build) share no channel- or version-scoped state — but the account-wide databases, agent registries, agent working folders and auth are common to both. See [Data structure → Shared across builds](/internals/data-structure/#shared-across-builds).
+So: the **same release** on the **same channel** is one instance. Launching it again (e.g. a second portable of the same `stable` release from another folder) opens a new window in the instance that's already running, in its open [workspace](/workspaces/). Two instances of **different releases** on the same channel (both `stable`) share the channel-wide settings but have separate runtime DBs and caches, and so separate [workspaces](/workspaces/). Two instances on **different channels** (e.g. installed `stable` + a `dev-<branch>` build) share no channel- or version-scoped state — but the account-wide databases, agent registries, agent working folders and auth are common to both. See [Data structure → Shared across builds](/internals/data-structure/#shared-across-builds).
 
 This means installing a new patch release of `stable` doesn't disturb your existing My Agents or auth state — both versions share the `stable` channel's agents/config, the new version starts with a fresh runtime-DB sub-dir and the schema migrates forward in place. Switching between `task dev` branches *does* fully isolate, because each branch gets its own `dev-<branch>` channel. Dev mode uses a single directory (no per-version split) because Dev builds aren't released versions.
 
@@ -130,7 +130,7 @@ What happens on a successful tear-off:
 
 A torn-off window is **not** a new instance. It runs in the same AgentMux processes as the window it came from — the same backend, data directory, settings, agents and browser profile — so it is always on the same channel and version. To run a second, isolated instance, start one on another channel (see [Running multiple instances at once](#running-multiple-instances-at-once) above).
 
-**Platform support:** Windows ✅, macOS ✅ (v0.40+), Linux ✅ Phase A (v0.41+, Wayland). There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
+**Platform support:** Windows, macOS and Linux (Wayland). There is no menu item or keyboard shortcut for tear-off today — drag is the only invocation path.
 
 **Moving a tab between windows:** drop the dragged tab on another AgentMux window's tab strip and it joins that window (see [Pane Management](/pane-types/#tab-tear-off)). This works between windows of the same instance only; a tab can't be dropped into a different instance, such as one on another channel.
 
@@ -138,21 +138,21 @@ A torn-off window is **not** a new instance. It runs in the same AgentMux proces
 
 ## Running different versions side-by-side
 
-Different AgentMux versions (e.g. 0.40.x and 0.41.x) can run simultaneously without interfering. On macOS this takes **two** isolation layers, not one.
+Different AgentMux versions can run simultaneously without interfering. On macOS this takes **two** isolation layers, not one.
 
-**Launcher layer (all platforms).** Each version has its own single-instance domain — the launcher's IPC socket/pipe hash includes the build version, so two binaries on the same channel produce distinct sockets/pipes and don't activate each other's window (Windows v0.41.1 / macOS + Linux v0.42.x, shipped in [#1227](https://github.com/agentmuxai/agentmux/pull/1227)). Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Settings live at the channel level (shared across all versions of that channel) and agents + auth are account-wide under `~/.agentmux/shared/`, so your agents and settings are available in both. Before this shipped, launching an older portable while a newer one ran would silently focus the wrong window on Windows/Linux (and hang on macOS — see the identity layer next).
+**Launcher layer (all platforms).** Each version has its own single-instance domain: the launcher's IPC socket/pipe hash includes the build version, so two binaries on the same channel produce distinct sockets/pipes and don't activate each other's window. Runtime databases, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<semver>/`, so two concurrent releases can't collide on SQLite writes or corrupt each other's caches. Settings live at the channel level (shared across all versions of that channel) and agents + auth are account-wide under `~/.agentmux/shared/`, so your agents and settings are available in both.
 
-**macOS identity layer (LaunchServices).** macOS routes a launch by `CFBundleIdentifier` through LaunchServices *before* the launcher runs, so the socket hash alone isn't enough. Until the channel-scoped bundle id ([#1568](https://github.com/agentmuxai/agentmux/pull/1568)) every build shared one id (`ai.agentmux.cef`), so double-clicking a second version made macOS try to re-activate the already-running one and hang with *"AgentMux is not responding."* Now the bundle id **follows the channel** — `ai.agentmux.cef.<channel>` (the default release channel is `ai.agentmux.cef.stable`; a local `task package` build is `ai.agentmux.cef.local-<branch>-<hash>-<build-id>`). So:
+**macOS identity layer (LaunchServices).** macOS routes a launch by `CFBundleIdentifier` through LaunchServices *before* the launcher runs, so the socket hash alone isn't enough. Every release is the same app, `ai.agentmux.stable`, so macOS keeps its privacy grants (Screen Recording, Accessibility, folders) across updates; any other build (a local `task package` build, for example) has its own bundle id, `ai.agentmux.<channel>.<version>`. So:
 
-- **Different channels** (e.g. a `local-<branch>-<hash>-<build-id>` build vs `stable`) are **distinct macOS apps** — double-click-launchable side by side.
-- **Two stable releases** still share `ai.agentmux.cef.stable`, so launching a second one re-activates the running release instead of starting a separate process. To run two stable releases at once on macOS, launch the second with `open -n /path/to/AgentMux.app`, or use the in-app status-bar instance chip → **"+ Open another window."**
-- **Re-activating a running AgentMux opens a new window** — both Finder double-click / `open` *and* a Dock-icon click now forward to the running host and spawn a fresh window ([#1692](https://github.com/agentmuxai/agentmux/pull/1692), building on [#1572](https://github.com/agentmuxai/agentmux/pull/1572)). This works reliably; the earlier *"AgentMux is not responding"* hang is fixed.
+- **Different channels** (e.g. a `local-<branch>-<hash>-<build-id>` build vs `stable`) are **distinct macOS apps**: double-click-launchable side by side.
+- **Two stable releases** share `ai.agentmux.stable`, so launching a second one re-activates the running release instead of starting a separate process. To run two stable releases at once on macOS, launch the second with `open -n /path/to/AgentMux.app`, or use the in-app status-bar instance chip → **"+ Open another window."**
+- **Re-activating a running AgentMux opens a new window**: both Finder double-click / `open` and a Dock-icon click forward to the running host and spawn a fresh window.
 
 This is independent of tear-off: it applies whenever two different versions launch at the same time, regardless of how they were launched.
 
 ## Browser state
 
-Browser state (cookies, local storage, IndexedDB, service workers, cached JS, DevTools settings) lives on disk in the version-scoped CEF cache (`channels/<channel>/versions/<v>/cef-cache/`, v0.41.1+). It's shared between instances of the same (channel, version) running simultaneously, and isolated from other versions on the same channel as well as other channels entirely. See [What's per-instance vs per-version vs per-channel](#whats-per-instance-vs-per-version-vs-per-channel).
+Browser state (cookies, local storage, IndexedDB, service workers, cached JS, DevTools settings) lives on disk in the version-scoped CEF cache (`channels/<channel>/versions/<v>/cef-cache/`). It's shared between instances of the same (channel, version) running simultaneously, and isolated from other versions on the same channel as well as other channels entirely. See [What's per-instance vs per-version vs per-channel](#whats-per-instance-vs-per-version-vs-per-channel).
 
 If you need to wipe browser state for a single version: delete that version's `cef-cache/` and the browser pane comes up fresh on the next launch. ([Data layout](/internals/data-layout/) has the exact path.)
 
@@ -164,7 +164,7 @@ You're probably running `task dev` from a different branch — or a different cl
 **"What survives a version upgrade?"**
 - **Settings** live at the channel level (`channels/<ch>/config/`, or `channels/settings.json` for stable) and **agent working folders** at `~/.agentmux/agents/<slug>/`, so both carry over from one version to the next automatically.
 - **Agent definitions, the agent instances registry, and ambient provider auth** live account-wide under `~/.agentmux/shared/` (`shared/agents/definitions/`, `shared/agents/registry/`, `shared/providers/<provider>/`), so they survive not just upgrades but channel switches too — including a brand-new per-build `local-*` channel. Explicitly-bound Accounts are the exception to the auth half of this — see the [Account-wide](#whats-per-instance-vs-per-version-vs-per-channel) bullet above.
-- **Session history and block state (`objects.db`, `sagas.db`), CEF cache, host logs, and IPC artifacts** are version-scoped (`channels/<ch>/versions/<v>/...`, v0.41.1+) — a fresh release starts with its own runtime sub-dir. On first launch of a new version, AgentMux copies the newest older version's databases and browser sign-ins into the new sub-dir so your conversation history isn't lost (one-time copy; the prior version's dir stays intact so you can fall back). If both versions then run concurrently, their runtime state diverges from that point.
+- **Session history and block state (`objects.db`, `sagas.db`), CEF cache, host logs, and IPC artifacts** are version-scoped (`channels/<ch>/versions/<v>/...`) — a fresh release starts with its own runtime sub-dir. On first launch of a new version, AgentMux copies the newest older version's databases and browser sign-ins into the new sub-dir so your conversation history isn't lost (one-time copy; the prior version's dir stays intact so you can fall back). If both versions then run concurrently, their runtime state diverges from that point.
 - **Host and sidecar logs** are per version too; `muxlog srv` and `muxlog host` find them for whichever instance you ask about.
 
 **"Are running portables sharing state?"**

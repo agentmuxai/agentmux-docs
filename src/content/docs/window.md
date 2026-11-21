@@ -40,7 +40,7 @@ No two tabs in a window share a name, ignoring case. A new, renamed or moved tab
 
 ### Closing a tab
 
-A tab's close button (×) asks first, because the tab's panes close with it. Tick **Don't ask again** (or turn on **Skip tab close confirmation** in [Settings → Window & Panes](/settings/#window--panes)) to close tabs straight away from then on.
+A tab's close button (×) closes the tab at once. To have it ask first, because the tab's panes close with it, turn on **Confirm before closing a tab** in [Settings → Window & Panes](/settings/#window--panes); the question's **Don't ask again** turns that back off.
 
 ![The Close tab dialog: "This tab and all its panes will be closed", with Don't ask again, Cancel and Close tab](../../assets/screenshots/chrome/chrome-close-tab-confirm.png)
 

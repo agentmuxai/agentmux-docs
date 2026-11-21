@@ -72,7 +72,7 @@ AgentMux logo menu → **Workspaces**:
 | **Rename workspace…** | Renames the open workspace. Double-clicking the heading of the instance panel's window list does the same. |
 | **Delete workspace…** | Lists the other workspaces; choose one, then confirm ("Delete “Reviews”?", "Its 3 windows and their tabs and panes are deleted. Its agents stay in My Agents, with their conversations."). The open workspace can't be deleted: open another one first. |
 
-The command palette has **New Workspace…**, **Open Workspace…** (the same list in a dialog), **Rename Workspace…**, **Export Workspace…** and **Import Workspace…**, under **Workspace**. See [Main menu & command palette](/main-menu/).
+The command palette has **New Workspace…**, **Open Workspace…** (the same list in a dialog), **Rename Workspace…**, **Delete Workspace…**, **Export Workspace…** and **Import Workspace…**, under **Workspace**. See [Main menu & command palette](/main-menu/).
 
 ## Switching workspaces
 
@@ -88,7 +88,7 @@ The next launch opens the workspace that was open last. **New Window** opens a w
 
 **Export…** writes the open workspace to a `*.agentmux-workspace.json` file. The Save dialog starts in `~/.agentmux/shared/workspaces/`. The file holds every window, in the order of the list, each with its name and whether it was closed, but not the references that resume an agent's conversation on this computer. It's a snapshot: later changes to the workspace aren't written to it. If something in it is worth checking before you share the file, the notice that confirms the export lists it.
 
-**Import…** opens an exported workspace, or a `*.agentmux-layout.json` file saved with the **Save layout…** of earlier versions, as a new workspace. Before it opens anything it shows a preview: the windows and tabs, each tab's panes, anything that can't be reproduced exactly here, and every terminal command the file would run, with **Run these commands** (ticked only for a file this AgentMux saved in its own folders; for any other file it says "This file wasn't saved by this AgentMux. Check these commands before running them."). **Import** then switches to the new workspace, named after the file ("Ops", or "Ops 2" when you already have an "Ops").
+**Import…** opens an exported workspace, or a `*.agentmux-layout.json` layout file, as a new workspace. Before it opens anything it shows a preview: the windows and tabs, each tab's panes, anything that can't be reproduced exactly here, and every terminal command the file would run, with **Run these commands** (ticked only for a file this AgentMux saved in its own folders; for any other file it says "This file wasn't saved by this AgentMux. Check these commands before running them."). **Import** then switches to the new workspace, named after the file ("Ops", or "Ops 2" when you already have an "Ops").
 
 Every pane of an imported workspace is new. The agent panes of the windows that open start their agents; an agent pane in a window that was closed shows the agent picker when you reopen it. An agent never gets a second pane from an import: if it already has one in the windows that open, the pane in the imported workspace shows the agent picker, and a notice says where the agent already is.
 

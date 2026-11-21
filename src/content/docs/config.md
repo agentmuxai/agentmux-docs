@@ -1,5 +1,6 @@
 ---
-title: "Configuration"
+title: "Configuration
+"
 ---
 
 :::caution[Alpha Software]
@@ -10,14 +11,9 @@ AgentMux stores its configuration in a JSON settings file. You can edit it direc
 
 ## Settings File Location
 
-Settings live under the channel's data dir, so every version that binds to the same channel reads and writes the same `settings.json`:
+**Open raw settings.json** at the bottom of the Settings pane, or **Open Settings File** in the command palette, opens the file the running AgentMux reads. Where it is depends on the channel: the `stable` channel keeps one `settings.json` for every stable version, in the `channels` folder under AgentMux's data folder (beside the channel folders, not inside one); every other channel, such as a `task dev` build or a locally-packaged build, keeps its own in that channel's `config` folder. The [settings.json reference](/settings-json-reference/#opening-the-file) has the overrides.
 
-| Mode | Path |
-|---|---|
-| Installed / Portable | `~/.agentmux/channels/<channel>/config/settings.json` (default channel: `stable`) |
-| Dev (`task dev`) | `~/.agentmux/dev/<branch>/<clone-id>/config/settings.json` |
-
-The `<channel>` segment is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE`. `task dev` does this by default: it runs on a home of its own, so its `dev/...` folder sits under that home and not under your real `~/.agentmux` (see [Which home `task dev` uses](/multi-instance/#which-home-task-dev-uses)). See [Settings Reference](/settings/) and [Multi-instance & dev mode](/multi-instance/) for the full layout.
+A build's channel is `stable` by default for Installed and downloaded Portable builds, `local-<branch>` for locally-packaged builds, or whatever `AGENTMUX_CHANNEL=<name>` overrides to. Dev mode keys on the git branch plus a per-clone hash so two checkouts of the same branch don't collide. Override the `~/.agentmux/` root with `AGENTMUX_HOME_OVERRIDE`. See [Multi-instance & dev mode](/multi-instance/) for the full layout.
 
 ## Core Settings
 
@@ -81,9 +77,8 @@ AgentMux respects these environment variables:
 | `AGENTMUX_HOME_OVERRIDE` | Override the `~/.agentmux/` root (used by tests and by `task dev`) |
 | `AGENTMUX_RUNTIME_MODE` | Set by the launcher; consumers read it to know they're running installed/portable/dev |
 | `AGENTMUX_DATA_DIR`, `AGENTMUX_CONFIG_DIR`, `AGENTMUX_LOG_DIR`, … | Per-instance paths exported by the launcher; never set these manually |
-| `CLAUDE_API_KEY` | API key for Claude agent panes |
-| `OPENAI_API_KEY` | API key for Codex agent panes |
-| `GEMINI_API_KEY` | API key for Gemini agent panes |
+
+Provider API keys are not settings or environment variables here: you add them as accounts in [Connectors → Accounts](/connectors/#accounts) (see [Auth flows](/auth/)).
 
 ## MCP Server Configuration
 
