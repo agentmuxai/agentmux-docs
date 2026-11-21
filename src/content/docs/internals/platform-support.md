@@ -46,10 +46,10 @@ The architecture is designed cross-platform from the start:
 
 - The four-process topology ([architecture overview](/internals/architecture/)) doesn't change per OS — same launcher / host / sidecar / renderer split.
 - Path resolution ([multi-instance](/multi-instance/)) uses `~/.agentmux/` everywhere; the channel + version sub-dir layout (`channels/<ch>/versions/<v>/`) is identical across OSes.
-- Persistence ([SQLite + JSONL](/internals/persistence/)) is byte-identical. A backup taken on Windows can be restored on macOS or Linux.
+- Persistence ([SQLite + JSONL](/internals/persistence/)) uses the same files and schemas on every OS.
 - Reducer state, sagas, and the frontend slice migration ([reducer stack](/internals/reducer-stack/)) are pure logic with no OS-specific code.
 - [MuxAPI](/internals/muxapi/) — every command in the catalog is OS-independent at the wire level.
-- **Version isolation** — each release version has its own single-instance domain (the launcher's IPC socket/pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Agent definitions and settings are channel-wide under `channels/<channel>/`, so upgrading doesn't reset your agents or settings.
+- **Version isolation** — each release version has its own single-instance domain (the launcher's IPC socket/pipe hash includes the build version). Runtime DBs, CEF cache, host logs, and IPC artifacts are version-scoped under `channels/<channel>/versions/<v>/`. Settings are channel-wide under `channels/<channel>/`, and agent definitions are machine-wide under `shared/agents/definitions/`, so upgrading doesn't reset your agents or settings.
 
 ## Per-OS notes
 
@@ -68,10 +68,10 @@ The architecture is designed cross-platform from the start:
 
 ### Linux
 
-- Ships as an **AppImage** (`task package:linux`) — one self-contained file, no installer. System requirements: glibc 2.35+ and FUSE (for the compressed SquashFS mount; pre-installed on most desktop distros — see [Installation → Linux](/installation/#linux) for the `--appimage-extract` fallback if FUSE is absent).
+- Ships as an **AppImage** (`task package:linux`) — one self-contained file, no installer. System requirements: glibc 2.34+ and FUSE (for the compressed SquashFS mount; pre-installed on most desktop distros — see [Installation → Linux](/installation/#linux) for the `--appimage-extract` fallback if FUSE is absent).
 - **Launch flow:** `AppRun` → `linux-apprun.sh` → `agentmux-launcher` (the AppImage entry point). The launcher supervises the sidecar and host as a process group. On first launch the AppImage extracts itself to `~/.local/share/agentmux/extracted/<version>/` for faster subsequent starts.
 - **Single-instance IPC:** Unix domain socket at `$XDG_RUNTIME_DIR/agentmux/<hash>.sock` (fallback: `/tmp/agentmux-<uid>/<hash>.sock`). The full reducer + saga coordinator runs on Linux — same feature set as Windows.
-- **Display server:** native Wayland when the session sets `WAYLAND_DISPLAY` (since CEF 148); otherwise Chromium's X11 default. Set `AGENTMUX_OZONE_PLATFORM=wayland` or `x11` to pin a backend.
+- **Display server:** native Wayland when the session sets `WAYLAND_DISPLAY`; otherwise Chromium's X11 default. Set `AGENTMUX_OZONE_PLATFORM=wayland` or `x11` to pin a backend.
 - **Window drag:** requires the patched `libcef.so` bundled in all release AppImages (`CefWindow::BeginWindowDrag()` dispatches `xdg_toplevel.move` / `_NET_WM_MOVERESIZE`).
 - **Wayland app\_id:** `agentmux`. Desktop file: `agentmux.desktop` (auto-registered by the AppImage on first launch).
 - **WRR:** Windows-only by design — no Linux equivalent is planned (Wayland exposes no portable per-window event API); the launcher runs without drift detection, with the orphan reconciler as the safety net.
@@ -99,8 +99,7 @@ This recipe relies on Windows Error Reporting. macOS and Linux equivalents are d
 
 Cross-platform parity priority order (subject to change):
 
-1. **Window transparency on Linux** — root cause identified (views::SolidBackground), fix in progress.
-2. **Native crash-reporting hookup** — replace the Windows-WER-only path with per-OS native handlers feeding into a unified diagnostics view.
+1. **Native crash-reporting hookup** — replace the Windows-WER-only path with per-OS native handlers feeding into a unified diagnostics view.
 
 WRR equivalents on macOS/Linux are deliberately **not** on this list — WRR is Windows-only by design, with the orphan reconciler as the cross-platform safety net ([#1569](https://github.com/agentmuxai/agentmux/issues/1569); see [WRR](/internals/wrr/)).
 

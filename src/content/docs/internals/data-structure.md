@@ -5,7 +5,7 @@ description: Every database and file AgentMux keeps on disk — where it lives, 
 
 This page is the map of everything AgentMux stores: eight SQLite databases, a set of JSON records and logs, and the folders that hold them. [Data layout](/internals/data-layout/) explains how channels, versions and dev builds pick their folders. [Persistence](/internals/persistence/) explains how srv's reducer loads and writes `objects.db`.
 
-Checked against `agentmux` main on 2026-10-20. Every database is opened by `agentmux-srv`, the running server or its `migrate` subcommand: it is the only crate that links SQLite. The launcher and the CEF host never open one.
+Every database is opened by `agentmux-srv`, the running server or its `migrate` subcommand: it is the only crate that links SQLite. The launcher and the CEF host never open one.
 
 ## Four scopes
 
@@ -58,7 +58,7 @@ A `task dev` build has no version level: its per-version folders are at `~/.agen
 
 | Database | Path | Scope | Schema version | What it holds |
 |---|---|---|---|---|
-| `objects.db` | `versions/<v>/data/db/` | Per version | 44 | Windows, workspaces, tabs, blocks, layouts; agents and their per-agent rows and keys |
+| `objects.db` | `versions/<v>/data/db/` | Per version | 45 | Windows, workspaces, tabs, blocks, layouts; agents and their per-agent rows and keys |
 | `filestore.db` | `versions/<v>/data/db/` | Per version | 1 | Per-block files: terminal scrollback, agent output and its index |
 | `sagas.db` | `versions/<v>/data/db/` | Per version | 1 | Multi-step commands, for undo after a crash |
 | `store.db` | `shared/` | Machine-wide | 12 | Accounts, bundles and Global Memory, drones, cron jobs, MuxBus sign-in metadata, native memory |
@@ -69,7 +69,7 @@ A `task dev` build has no version level: its per-version folders are at `~/.agen
 
 All eight use WAL journaling except the lock files. srv opens each with one writer connection; `filestore.db` also keeps a small pool of read-only readers and checkpoints its WAL from a background thread.
 
-**Isolated auth.** With `AGENTMUX_ISOLATED_AUTH=1`, srv replaces `shared/store.db` with `<instance>/identity-store.db`, a separate file with the **`store.db` schema** despite its name, at `channels/<ch>/identity-store.db` or `dev/<branch>/<clone-id>/identity-store.db`. `shared/identity-store.db` itself is never redirected. Channels created before 2026-10-03, when isolation was the default, have one of these files too; srv [adopts](#how-data-reaches-a-new-version) their contents into `shared/store.db` once.
+**Isolated auth.** With `AGENTMUX_ISOLATED_AUTH=1`, srv replaces `shared/store.db` with `<instance>/identity-store.db`, a separate file with the **`store.db` schema** despite its name, at `channels/<ch>/identity-store.db` or `dev/<branch>/<clone-id>/identity-store.db`. `shared/identity-store.db` itself is never redirected.
 
 ## `objects.db`
 
@@ -171,7 +171,7 @@ Triggers keep a revision counter and an incarnation id per file, so readers can 
 | Per version | One zone per block (its oid): `term` (terminal scrollback), `output` (agent output), and per-block state and index files |
 | Shared transcripts | `agent:<id>:current` and `agent:<id>:archive:<time>` (conversations), `agent-uid:<uid>:memory` (memory record), `agent-uid:<uid>:bundle`, `global-memory:<scope>` |
 
-The shared store has the same schema but is stamped version 2 rather than 1. The number is a lock: builds that bundle SQLite older than 3.51.3, whose WAL-reset bug can corrupt a database several processes write, refuse to open it and run without it.
+The shared store has the same schema but is stamped version 2 rather than 1, and 3 or 4 once compressed history is written to it. The number is a lock: builds that bundle SQLite older than 3.51.3, whose WAL-reset bug can corrupt a database several processes write, or that can't read the stored frame format, refuse to open it and run without it.
 
 An agent's conversation is written to both: its block's `output` in the per-version store and `agent:<id>:current` in the shared one, so it survives a new version and opens from any channel. The shared file is used by every srv on the computer; one of them, the holder of `filestore.db.owner`, truncates its WAL.
 
@@ -286,14 +286,14 @@ Everything else under `data/` starts empty: attachments, event logs, update down
 
 **Without the launcher** (a headless srv, `task dev:standalone`), srv does the same work itself during startup. It also takes a snapshot of the per-version databases first when `objects.db`'s schema version is older than the build's, except after a copy-forward, since the older version's folder already holds that data.
 
-**Adoption.** Channels created before 2026-10-03 kept their accounts and memory in their own `identity-store.db`. At startup srv copies what it hasn't yet into `shared/store.db` and records it in `shared/adoption-ledger.json`.
+**Adoption.** A channel that has its own `identity-store.db` has its accounts and memory copied into `shared/store.db` at startup, for what isn't there yet, and srv records it in `shared/adoption-ledger.json`.
 
 ## Schema versions and migrations
 
 Two mechanisms change the schema:
 
 - **Schema setup** runs every time a database is opened: it creates missing tables and indexes and adds missing columns. It then stamps `PRAGMA user_version`. A build that finds a **higher** version than its own refuses to open the file (`SchemaTooNew`), so an older build never writes to a newer schema. `wan.db` has no such guard.
-- **Migrations** are numbered data changes, `m0000`–`m0048` ([`crates/srv-core/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv-core/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
+- **Migrations** are numbered data changes, the files `mNNNN_*.rs`, starting at `m0002` ([`crates/srv-core/src/migrations/`](https://github.com/agentmuxai/agentmux/tree/main/crates/srv-core/src/migrations)). Each runs once and is recorded in a `db_migrations` table: global-scope migrations in `shared/store.db`, channel-scope ones in `objects.db`. Rows travel with `objects.db` when it's copied forward, so a migration doesn't run twice on the same data.
 
 Before a batch of migrations, `migrate --prepare` takes `migrations.lock.db` (shared first, then the version's), so only one AgentMux on the computer migrates at a time; the splash shows a row while it waits. It then copies `store.db`, `identity-store.db` and `objects.db` to `shared/backups/pre-migration-<version>-<time>/` with `VACUUM INTO`, leaving out `objects.db` when it was just copied forward. A failed step stops srv from starting: the launcher shows the error, and the next start retries, running only the migrations that haven't completed. Nothing is restored automatically.
 

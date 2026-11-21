@@ -3,8 +3,6 @@ title: Environment variable contract
 description: Every AGENTMUX_* variable in the process tree — who sets it, who reads it, and the security pitfalls.
 ---
 
-**Checked against:** 0.60.10 | **Date:** 2026-11-01
-
 This page covers the variables that matter to the process tree and to a pane's environment, not every `AGENTMUX_*` variable in the code (there are over two hundred; most are test, debug or build switches). Every variable named here exists.
 
 This document is the canonical reference for every `AGENTMUX_*` (and `WAVEMUX_*` alias) environment variable that flows through the AgentMux process
@@ -71,8 +69,7 @@ focused-border colour, pane title, and jekt auto-registration.
 Global settings `cmd_env["AGENTMUX_AGENT_ID"]` and the srv process env are deliberately not consulted.
 
 **Strip logic** (`shell.rs`): if none of the above sources provides
-a value, `AGENTMUX_AGENT_ID` and the `WAVEMUX_AGENT_ID` and
-`WAVEMUX_AGENT_COLOR` are _actively removed_ from the
+a value, `AGENTMUX_AGENT_ID` and the `WAVEMUX_AGENT_ID` are _actively removed_ from the
 PTY child's environment so a parent AgentMux pane's identity does not bleed into
 a new plain terminal pane.
 
@@ -147,7 +144,7 @@ single source of truth; downstream binaries must not recompute paths.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs`) |
 | **Who reads it** | srv for SQLite database location (`objects.db`, `sagas.db`); `DataPaths::from_env()` |
-| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.60.10\data` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\<version>\data` |
 
 **Alias:** srv also publishes `AGENTMUX_DATA_HOME` (`crates/srv/src/bootstrap/stores.rs`). New code
 should read `AGENTMUX_DATA_DIR`.
@@ -178,9 +175,9 @@ DATA_DIR/DATA_HOME above.
 **Note on dual injection:** The launcher sets the canonical per-channel
 log dir; the shell controller re-injects the value into PTY children using
 `dirs::home_dir().join(".agentmux").join("logs")` (a fixed path,
-`shell.rs`). The two values are identical in production but diverge
-in test scenarios. PTY children should use whatever value is in their
-environment.
+`shell.rs`). In a terminal pane the value is that fixed
+folder, which holds the launcher's log; the host and srv logs are in the
+version's `logs/` folder (see [Log discovery](/internals/data-layout/#log-discovery-via-pointer-files)).
 
 **PITFALL:** On Windows with MSIX packaging, `AGENTMUX_DATA_DIR` and
 friends resolve inside the virtual file system, but `AGENTMUX_LOG_DIR` is
@@ -195,7 +192,7 @@ processes cannot see virtualised MSIX writes at their literal path.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs`) |
 | **Who reads it** | CEF host for Chromium profile / cache directory |
-| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.60.10\cef-cache` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\<version>\cef-cache` |
 
 Regenerable; can be deleted without data loss.
 
@@ -217,7 +214,7 @@ Regenerable; can be deleted without data loss.
 |-----------|-------|
 | **Who sets it** | Launcher (`data_paths.rs`) |
 | **Who reads it** | srv and launcher for single-instance lock files, IPC port file, named-pipe path |
-| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\0.60.10\runtime` |
+| **Example** | `C:\Users\<name>\.agentmux\channels\stable\versions\<version>\runtime` |
 
 ---
 
@@ -229,11 +226,11 @@ Regenerable; can be deleted without data loss.
 | **Who reads it** | Identity/OAuth code; provider auth dirs live here so credentials persist across channel/version upgrades |
 | **Example** | `C:\Users\<name>\.agentmux\shared` |
 
-Channel-independent and version-independent. The fix for the
-per-channel OAuth re-authentication regression (each channel had an
-empty auth dir → Claude would spin prompting for login on every new
-channel). Provider credential directories now always live under
-`shared/providers/<provider>/`.
+Channel-independent and version-independent. Provider credential
+directories live under `shared/providers/<provider>/`, so a new channel or
+version needs no new login. With `AGENTMUX_ISOLATED_AUTH=1` a channel keeps
+its own accounts and credential folders instead (see
+[Isolation and update switches](#isolation-and-update-switches)).
 
 ---
 
@@ -375,8 +372,8 @@ cleanup are in [Build Cache Settings](/settings/#build-cache-settings).
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | srv shell controller (`shell.rs`), `shellexec.rs`; baked at compile time via `env!("CARGO_PKG_VERSION")` |
-| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh`, `pwsh.ps1`); `crates/srv/src/bootstrap/stores.rs` reads it from env as a fallback |
-| **Example** | `0.60.10` |
+| **Who reads it** | Shell integration `muxlog` helper to locate pointer files (`bash.sh`, `pwsh.ps1`); `crates/srv-core/src/migrations/prepare.rs` reads it from env as a fallback |
+| **Example** | `<version>` |
 
 Available in every PTY pane shell session. Required by `muxlog` to
 resolve the `current-host-v<AGENTMUX_VERSION>.path` pointer file.
@@ -542,7 +539,7 @@ pane). The host compares its real parent process id to this value (`getppid()` o
 |-----------|-------|
 | **Who sets it** | Launcher on both srv and host (`crates/launcher/src/host_spawn.rs`, `srv_spawner.rs`) |
 | **Who reads it** | CEF host `sidecar.rs`; identifies the srv instance for multi-instance coordination |
-| **Example** | `v0.60.10` |
+| **Example** | `v<version>` |
 
 Formatted as `v<version>`. Not the same as AGENTMUX_VERSION (which is the
 raw semver string without the `v` prefix injected into PTY children).
@@ -658,7 +655,7 @@ Shell integrations prepend nothing to `$PATH` based on its value.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | `shellintegration.rs` at zsh spawn |
-| **ZDOTDIR** | `~/.agentmux/shell/zsh` — causes zsh to load AgentMux's `.zshrc` instead of `~/.zshrc` |
+| **ZDOTDIR** | `~/.agentmux/shell/<instance-hash>/zsh` (one folder per instance) — causes zsh to load AgentMux's `.zshrc` instead of `~/.zshrc` |
 | **AGENTMUX_ZDOTDIR** | Same path — preserved so the integration `.zshrc` can source the real `~/.zshrc` |
 
 The AgentMux zsh `.zshrc` sources `~/.zshrc` explicitly (`zsh.sh`) to
@@ -668,13 +665,13 @@ preserve user configuration.
 
 ## Group 7 — Aliases
 
-### WAVEMUX_AGENT_ID / WAVEMUX_AGENT_COLOR
+### WAVEMUX_AGENT_ID
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | Alias: a read-only fallback for the `AGENTMUX_*` identity variables |
-| **Who reads them** | `shell.rs` reads `WAVEMUX_AGENT_ID` as the lowest-priority fallback for jekt registration only |
-| **Strip logic** | Both are removed from PTY children when no explicit agent identity is configured (`shell.rs`) |
+| **Status** | Alias: a read-only fallback for `AGENTMUX_AGENT_ID` |
+| **Who reads it** | `shell.rs` reads it as the lowest-priority fallback for jekt registration only |
+| **Strip logic** | It is removed from PTY children when no explicit agent identity is configured (`shell.rs`) |
 
 AgentMux never writes them. Use the `AGENTMUX_*` variables in new configurations.
 
@@ -697,12 +694,24 @@ Use `AGENTMUX_DATA_DIR` in new code.
 | Attribute | Value |
 |-----------|-------|
 | **Status** | Alias for `AGENTMUX_CONFIG_DIR` |
-| **Who sets it** | srv `crates/srv/src/bootstrap/stores.rs` |
+| **Who sets it** | srv `crates/srv/src/bootstrap/store_boot.rs` |
 | **Who reads it** | `base.rs`; `config_watcher_fs.rs` |
 
 Use `AGENTMUX_CONFIG_DIR` in new code.
 
 ---
+
+## Group 8 — Isolation and update switches
+
+### Isolation and update switches
+
+| Variable | Read by | Effect |
+|---|---|---|
+| `AGENTMUX_ISOLATED_AUTH` | Every process, through `isolated_auth_enabled()` (`crates/common/src/data_paths/isolation.rs`) | Exactly `1` gives the instance its own accounts, provider credential folders and identity store (`identity-store.db`). Any other value, or unset, shares them across every channel, version and dev build: `shared/` |
+| `AGENTMUX_ISOLATED_SETTINGS` | Host, launcher and srv (same file) | Exactly `1` gives the channel its own `settings.json`; any other value shares one file; unset isolates every channel except `stable` |
+| `AGENTMUX_ISOLATED_MUXBUS` | `crates/common/src/muxbus_reconnect.rs` | Exactly `1` keeps this channel's MuxBus sign-in apart; any other value shares the one sign-in; unset keeps it shared except on a local build channel, where it depends on whether the OS asks again for the sign-in |
+| `AGENTMUX_SETTINGS_DIR` | srv (`config_watcher_fs.rs`) | The folder holding `settings.json`, overriding every other rule. The host sets it to its config folder |
+| `AGENTMUX_NO_AUTO_UPDATE` | srv (the background update check) | Any non-empty value turns off the background update check; `update:auto` in [settings.json](/settings/) turns it off per user |
 
 ## Complete Variable Quick-Reference
 
@@ -712,7 +721,6 @@ Use `AGENTMUX_CONFIG_DIR` in new code.
 | `AGENTMUX_AGENT_SLUG`, `AGENTMUX_AGENT_DISPLAY`, `AGENTMUX_INSTANCE_SLUG` | Identity | srv | Yes |
 | `AGENTMUX_BUILD`, `AGENTMUX_INSTANCE_CHANNEL` | Runtime | srv | Yes |
 | `WAVEMUX_AGENT_ID` | Identity (alias) | user config | Yes (stripped if no identity) |
-| `WAVEMUX_AGENT_COLOR` | Identity (alias) | user config | Yes (stripped if no identity) |
 | `AGENTMUX_INSTANCE_DIR` | Paths | launcher | No |
 | `AGENTMUX_DATA_DIR` | Paths | launcher | No |
 | `AGENTMUX_CONFIG_DIR` | Paths | launcher | No |
