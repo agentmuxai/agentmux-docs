@@ -5,7 +5,7 @@ description: The on-disk layout for AgentMux — per-channel data dirs, per-inst
 
 This page documents the on-disk layout AgentMux uses to isolate state across builds and to make log files discoverable from any context. For the user-facing perspective ("how do I run multiple versions side-by-side?") see [Running multiple instances](/multi-instance/). For every database and file, what it holds and which builds share it, see [Data structure](/internals/data-structure/).
 
-The on-disk layout is keyed by **channel** and, within a channel, by **version** (as of v0.41.1). The channel persists settings across versions — so per-channel config survives upgrades. Agent definitions, accounts, memory and conversations are shared even more broadly: account-wide under `shared/`, by every channel, version and dev build on the computer (see [Account-wide (shared) contents](#account-wide-shared-contents)). The version sub-directory separates each release's own databases (`objects.db`, `filestore.db`, `sagas.db`), browser cache and logs, so two concurrent releases don't share session state or corrupt each other's caches; the shared databases under `shared/` are opened by all of them at once. Across channels (`stable`, `dev-<branch>`, and the per-build `local-<branch>-<hash>-<build-id>` channels) session state, settings and the WAN identity are separate; everything under `shared/` is not. Dev mode adds a further axis — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
+The on-disk layout is keyed by **channel** and, within a channel, by **version**. The channel persists settings across versions — so per-channel config survives upgrades. Agent definitions, accounts, memory and conversations are shared even more broadly: account-wide under `shared/`, by every channel, version and dev build on the computer (see [Account-wide (shared) contents](#account-wide-shared-contents)). The version sub-directory separates each release's own databases (`objects.db`, `filestore.db`, `sagas.db`), browser cache and logs, so two concurrent releases don't share session state or corrupt each other's caches; the shared databases under `shared/` are opened by all of them at once. Across channels (`stable`, `dev-<branch>`, and the per-build `local-<branch>-<hash>-<build-id>` channels) session state, settings and the WAN identity are separate; everything under `shared/` is not. Dev mode adds a further axis — per **clone** — so two checkouts of the same branch don't fight each other on lockfiles, pipes, or data dirs.
 
 ## Channels: what they replace
 
@@ -20,7 +20,7 @@ The on-disk layout is keyed by **channel** and, within a channel, by **version**
 | **Portable** (local `task package` build) | `local-<branch>-<hash>-<build-id>` | `~/.agentmux/channels/local-<branch>-<hash>-<build-id>/versions/<version>/` — version-scoped like any Installed/Portable build. The channel is baked per build (compile-time `AGENTMUX_BUILD_CHANNEL_DEFAULT`), so **each rebuild gets a different channel** and its own isolated data dir — two rebuilds of the same branch do **not** share a session. |
 | **Dev** (`task dev`) | `dev-<branch>` | `~/.agentmux/dev/<branch>/<clone-id>/` |
 
-Dev mode lives outside `channels/` on purpose: branches are short-lived and numerous, so promoting each one to a first-class channel would clutter the namespace. The `<clone-id>` segment was added when [PR #1053](https://github.com/agentmuxai/agentmux/pull/1053) generalized Dev mode to also be per-clone — see [Per-clone isolation in Dev mode](#per-clone-isolation-in-dev-mode) below.
+Dev mode lives outside `channels/` on purpose: branches are short-lived and numerous, so promoting each one to a first-class channel would clutter the namespace. The `<clone-id>` segment makes Dev mode per-clone (so the channel name is `dev-<branch>-<clone-id>`) — see [Per-clone isolation in Dev mode](#per-clone-isolation-in-dev-mode) below.
 
 Each local `task package` build is its own isolated AgentMux instance. The channel string is baked into the binary at compile time (`AGENTMUX_BUILD_CHANNEL_DEFAULT`) as `local-<branch>-<hash>-<build-id>`, so two rebuilds of the *same* branch produce *different* channels — different `<hash>`/`<build-id>` — and therefore different data dirs, CEF caches, and single-instance pipes. Launching a freshly-built binary always runs that build rather than joining a still-running sibling. These per-build channels accumulate on disk; clean up unused `~/.agentmux/channels/local-*` manually when no instance from that build is running. Because agent definitions and auth are account-wide under `shared/` (see [Account-wide (shared) contents](#account-wide-shared-contents)), a fresh per-build data dir still shows every agent, its conversations and memory, and stays logged in — only the pane layout and settings start fresh. A new **release** in the same channel doesn't start fresh at all: on its first start it copies the previous version's databases and browser sign-ins (see [How data reaches a new version](/internals/data-structure/#how-data-reaches-a-new-version)).
 
@@ -66,11 +66,11 @@ channels/<channel>/versions/<v>/data/snapshots/<channel>-pre-v<code-version>-<IS
 
 The snapshot is a `VACUUM INTO` copy of each of the per-version SQLite stores (`objects.db`, `sagas.db`, `filestore.db`) — atomic and WAL-consistent regardless of journal state. Snapshot failure is logged but non-fatal (refusing to boot when the backup can't be written would be worse than booting without one; the safety lock still prevents downgrade corruption). Snapshots don't cover the shared stores. Separately, before running migrations, `store.db`, `identity-store.db` and `objects.db` are copied with `VACUUM INTO` to `~/.agentmux/shared/backups/pre-migration-<version>-<time>/`, kept for 30 days (`objects.db` is left out right after a copy-forward).
 
-To roll back manually if a migration goes wrong, close AgentMux, copy the backup's or the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/`, and remove any `-wal` and `-shm` files beside them. There's no CLI for this yet — it's a planned follow-up.
+To roll back manually if a migration goes wrong, close AgentMux, copy the backup's or the snapshot's `*.db` files back into `channels/<channel>/versions/<v>/data/db/`, and remove any `-wal` and `-shm` files beside them.
 
 ## Per-channel contents
 
-As of v0.41.1, installed and portable release builds split channel contents into **version-scoped** paths (one set per release) and **channel-wide** paths (shared across all versions of the same channel):
+Installed and portable release builds split channel contents into **version-scoped** paths (one set per release) and **channel-wide** paths (shared across all versions of the same channel):
 
 **Version-scoped** — `channels/<channel>/versions/<version>/`
 
@@ -107,11 +107,11 @@ A single tree at `~/.agentmux/`, independent of channel:
 | `~/.agentmux/logs/agentmux-launcher.log` | The launcher's own log; rotates at 50 MB, keeping 3 old files | Launcher |
 | `~/.agentmux/logs/migration-error.log` | The last failed `agentmux-srv migrate` run | srv |
 
-The durable launcher reducer event log (`launcher-events.log`) lives at `channels/<channel>/versions/<v>/data/launcher-events.log` (v0.41.1+). Multiple instances of the **same (channel, version)** running concurrently append to this single file; a different release on the same channel writes to its own version-scoped file.
+The durable launcher reducer event log (`launcher-events.log`) lives at `channels/<channel>/versions/<v>/data/launcher-events.log` Multiple instances of the **same (channel, version)** running concurrently append to this single file; a different release on the same channel writes to its own version-scoped file.
 
 ## Log discovery via pointer files
 
-Host and srv write their logs to the version's `logs/` folder (`$AGENTMUX_LOG_DIR`), with the version and date in each file name. Next to them, each writes a pointer file naming its current log:
+Host and srv write their logs to the version's `logs/` folder, with the version and date in each file name. Next to them, each writes a pointer file naming its current log:
 
 ```
 channels/<channel>/versions/<v>/logs/current-host-v<version>.path
@@ -121,14 +121,15 @@ channels/<channel>/versions/<v>/logs/current-srv-v<version>.path
 Both hold the log's file name, relative to that folder. The host writes a second copy of its pointer three levels up, so the log can be found from outside the version folder: `channels/<channel>/logs/current-host-v<version>.path` for a release, `~/.agentmux/dev/logs/current-host-v<version>.path` for a dev build. That copy holds the **absolute path** to the current log file:
 
 ```
-C:\Users\you\.agentmux\channels\stable\versions\0.59.34\logs\agentmux-host-v0.59.34.log.2026-10-20
+C:\Users\you\.agentmux\channels\stable\versions\<version>\logs\agentmux-host-v<version>.log.<date>
 ```
 
-Inside a terminal or agent started by AgentMux, `$AGENTMUX_LOG_DIR` and `$AGENTMUX_VERSION` are set, so the recipe is:
+Inside a terminal or agent started by AgentMux, `$AGENTMUX_VERSION` is set. `$AGENTMUX_LOG_DIR` there is the shared `~/.agentmux/logs`, which holds the launcher's log, not the version's folder, so the recipe uses the version's folder directly (here for the stable channel):
 
 ```bash
-tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-host-v$AGENTMUX_VERSION.path")"
-tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-srv-v$AGENTMUX_VERSION.path")"
+LOGS=~/.agentmux/channels/stable/versions/$AGENTMUX_VERSION/logs
+tail -F "$LOGS/$(cat "$LOGS/current-host-v$AGENTMUX_VERSION.path")"
+tail -F "$LOGS/$(cat "$LOGS/current-srv-v$AGENTMUX_VERSION.path")"
 ```
 
 ### `muxlog` helper
@@ -137,7 +138,7 @@ The shell-integration scripts shipped to AgentMux's own terminals expose a `muxl
 
 ```bash
 muxlog host          # tail the current host log
-muxlog srv           # tail the sidecar log
+muxlog srv           # tail the srv log
 muxlog host '\[fe\]' # filter the host log to frontend [fe] lines
 muxlog host cat      # full file contents (instead of tailing)
 ```

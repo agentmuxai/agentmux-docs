@@ -34,8 +34,7 @@ Stores every:
 - **Client** — per-CEF-session client record
 
 It also holds the agent domain: one `db_agents` row per agent (definition
-and latest launch state — the separate definition and instance tables were
-merged), the agent's content, skills, keys and input history, and **drone
+and latest launch state), the agent's content, skills, keys and input history, and **drone
 runs**. Accounts, bundles, drone definitions and the Skills and MCP catalogs
 live in the shared stores; `objects.db` keeps fallback copies of those tables
 for when the shared stores can't be opened. The full table list is in
@@ -45,7 +44,7 @@ The schema is a single flat table set built by `run_object_schema`
 (`crates/srv-core/src/backend/storage/migrations.rs`), which adds missing tables
 and columns every time the file is opened. Data changes go through numbered
 migrations (`crates/srv-core/src/migrations/`), recorded in `db_migrations`. A
-`PRAGMA user_version` stamp (currently 44) acts as a downgrade tripwire.
+`PRAGMA user_version` stamp (currently 45) acts as a downgrade tripwire.
 
 This is where "I closed the app and reopened it; my tabs are back" comes from. If you delete `objects.db`, the next launch copies it forward again from the newest older version of the same channel, if there is one, and otherwise comes up with a single window showing the starting panes, in a new Default Workspace.
 
@@ -140,7 +139,7 @@ success.
 
 ### Resume across channels
 
-The instances registry carries a `session_id` (added in schema v1→v2, see
+The instances registry carries a `session_id` (see
 [`registry/schema.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/registry/schema.rs))
 so a cross-channel agent's **conversation can resume** rather than starting cold
 when it's opened from a different channel or version.
@@ -159,13 +158,13 @@ Deleting `filestore.db` keeps your workspace structure, which is in `objects.db`
 
 ## `sagas.db` — sidecar saga coordinator
 
-Per [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md) (Path A — chosen during Phase E.5), srv's sagas run multi-step workspace, tab and block commands such as tear-off, redock and delete (see [How sagas fit](/internals/reducer-stack/#how-sagas-fit)). `sagas.db` records each saga's lifecycle and each step's command and outcome ([`crates/srv/src/sagas/log.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/sagas/log.rs)).
+srv's sagas (see [`SPEC_PHASE_E_SAGAS_2026-04-30.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_PHASE_E_SAGAS_2026-04-30.md)) run multi-step workspace, tab and block commands such as tear-off, redock and delete (see [How sagas fit](/internals/reducer-stack/#how-sagas-fit)). `sagas.db` records each saga's lifecycle and each step's command and outcome ([`crates/srv/src/sagas/log.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/sagas/log.rs)).
 
 After a crash, srv doesn't resume an interrupted saga, it undoes it. At startup, before the API server accepts requests, `compensate_unresolved` ([`crates/srv/src/sagas/recovery.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/sagas/recovery.rs)) walks each unresolved saga's succeeded steps in reverse and dispatches their inverse commands. A step with no inverse it can derive is logged for review, and the saga is marked `failed_compensation`.
 
 ## Launcher sagas aren't persisted
 
-The launcher's two sagas, `pool_respawn` and `window_cleanup` (`crates/launcher/src/saga/`), keep their state in an in-memory registry. Both narrate cleanup the host does on its own, and srv rebuilds windows from its own state after a crash, so an interrupted launcher saga leaves nothing to recover. Their transitions are in the launcher log, prefixed `[saga]`. Older versions kept a `launcher-sagas.db`; the launcher deletes it at startup.
+The launcher's two sagas, `pool_respawn` and `window_cleanup` (`crates/launcher/src/saga/`), keep their state in an in-memory registry. Both narrate cleanup the host does on its own, and srv rebuilds windows from its own state after a crash, so an interrupted launcher saga leaves nothing to recover. Their transitions are in the launcher log, prefixed `[saga]`.
 
 ## `launcher-events.log` — Layer 1 event log
 

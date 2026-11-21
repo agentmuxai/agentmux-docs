@@ -58,7 +58,7 @@ task dev
 
 # 6. Run tests (see Building from Source → Tests)
 npx vitest run
-cargo test --workspace -- --test-threads=1
+cargo nextest run --workspace
 
 # 7. Add a changeset, then commit and push
 scripts/changeset.sh patch "fix(term): what changed, for the changelog"
@@ -74,7 +74,8 @@ git push -u origin yourname/feature-name
 agentmux/
 ├── crates/launcher/          # Launcher: spawns the host and the sidecar, owns the Layer 1 reducer
 ├── crates/cef/               # Host: embeds Chromium via CEF, owns the OS window
-├── crates/srv/               # Sidecar: app domain — workspaces / tabs / blocks / agents / sagas
+├── crates/srv/               # srv binary: startup, HTTP and WebSocket server, sagas
+├── crates/srv-core/          # srv's engine: workspaces / tabs / blocks / agents, persistence, migrations
 ├── crates/common/            # Shared library: path resolution, runtime mode, IPC types
 ├── crates/mcp/               # agentmux-mcp: the MCP server that gives agents MuxAPI
 ├── crates/bashwrap/          # Streaming bash wrapper + CLI hook helper
@@ -99,7 +100,7 @@ agentmux/
 | RPC commands the frontend calls | `crates/srv/src/server/app_api/mod.rs` (high-level) or the per-domain handler files |
 | Window / pool / OS state | `crates/launcher/src/reducer/` + `docs/specs/` |
 | Browser pane behavior | `frontend/app/view/browser/` + `crates/cef/src/browser_pane/` |
-| Persistence | `crates/srv/src/persist*.rs`, `crates/srv/src/sagas/`, `crates/launcher/src/event_log.rs` |
+| Persistence | `crates/srv-core/src/persist*.rs`, `crates/srv/src/sagas/`, `crates/launcher/src/event_log.rs` |
 | Reducer-stack work | [`docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/MASTER_REDUCER_STACK_STATUS_2026-05-05.md) and [Discussion #707](https://github.com/agentmuxai/agentmux/discussions/707) — append PRs and analyses there, don't fork threads |
 
 ## Style

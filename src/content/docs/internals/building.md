@@ -13,7 +13,7 @@ Build AgentMux from source on Windows, macOS, or Linux. AgentMux is a Rust deskt
 | Tool | Version | Purpose |
 |------|---------|---------|
 | **Node.js** | 24 LTS (`>=24.11.0`) | Frontend build (Vite + SolidJS) |
-| **Rust** | 1.77+ | Backend, host, and launcher |
+| **Rust** | 1.99.1 (pinned by `rust-toolchain.toml`; rustup installs it on first use) | Backend, host, and launcher |
 | **[Task](https://taskfile.dev/)** | Latest | Build orchestration |
 | **CMake** | 3.20+ | Required by `cef-dll-sys` (CEF C wrapper) |
 | **Ninja** | 1.10+ | Required by `cef-dll-sys` |
@@ -88,7 +88,7 @@ By default `task dev` runs on a data home of its own, not on your real `~/.agent
 | Frontend (TypeScript / SolidJS) | Auto-reloads via Vite HMR |
 | Rust sidecar (`crates/srv/`) | `task build:backend`, then restart `task dev` |
 | Rust host (`crates/cef/`) | `task build:host`, then restart `task dev` |
-| Launcher (`crates/launcher/`) | `task package` (portable / installed builds). Note: `task dev` now runs through the launcher on all platforms as of v0.41.0 — launcher changes are exercised by `task dev`, not just package builds. |
+| Launcher (`crates/launcher/`) | `task package` (portable / installed builds). `task dev` also runs through the launcher on every platform, so launcher changes are exercised by `task dev`, not just package builds. |
 
 ## Build Commands
 
@@ -100,7 +100,6 @@ By default `task dev` runs on a data home of its own, not on your real `~/.agent
 | `task build:backend` | Build `agentmux-srv` |
 | `task build:frontend` | Build frontend only |
 | `task package` | Package a **local** Windows portable (a folder plus a `.7z`) — ephemeral labeled build, see below |
-| `task package -- --fresh` | …with a throwaway data dir (clean-slate session) instead of the branch's persistent one |
 | `task package:linux` | Local Linux AppImage to `~/Desktop` (`package:linux:deb`, `:rpm` and `:tarball` make the other formats) |
 | `task package:macos` | Local signed macOS `.app` + `.dmg` to `~/Desktop` (notarized when a `notarytool` profile is set up) |
 | `task package:msix` | Windows MSIX built from a portable (`-- -Sign` for a self-signed test package) |
@@ -117,7 +116,7 @@ Run `task --list` to see every task. Each `package` task runs only on its own pl
 agentmux-<version>+g<sha>[.dirty].<stamp>-x64-portable
 ```
 
-Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10) — ignored for version precedence, so a local label can never collide with or reorder a release version. The `<sha>` ties the build back to its source commit, `.dirty` marks a build made from uncommitted changes, and `<stamp>` (a UTC build timestamp) makes every build's folder unique — so a running instance can never lock the next build's output folder. The data dir is keyed on a per-build channel `local-<branch>-<hash>-<build-id>` baked at compile time, so **each build is its own isolated instance** (its own data dir, cef-cache, and single-instance pipe) — two rebuilds of one branch do **not** share a data dir or session. Agents and auth are account-wide (under `~/.agentmux/shared/`), so a fresh per-build data dir still shows every agent and stays logged in; only pane layout and memories start fresh. (`--fresh` is now a no-op, since every build is already isolated.) Full rationale: [`SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md).
+Everything after `+` is [semver build metadata](https://semver.org/#spec-item-10) — ignored for version precedence, so a local label can never collide with or reorder a release version. The `<sha>` ties the build back to its source commit, `.dirty` marks a build made from uncommitted changes, and `<stamp>` (a UTC build timestamp) makes every build's folder unique — so a running instance can never lock the next build's output folder. The data dir is keyed on a per-build channel `local-<branch>-<hash>-<build-id>` baked at compile time, so **each build is its own isolated instance** (its own data dir, cef-cache, and single-instance pipe) — two rebuilds of one branch do **not** share a data dir or session. Agents and auth are account-wide (under `~/.agentmux/shared/`), so a fresh per-build data dir still shows every agent and stays logged in; only pane layout and memories start fresh. Full rationale: [`SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_LOCAL_BUILD_VERSIONING_2026_05_28.md).
 
 ## Tests
 
@@ -135,7 +134,8 @@ cargo nextest run --workspace                       # Rust tests, all crates (wh
 agentmux/
 ├── crates/launcher/     # Launcher — spawns the host and the sidecar, owns OS-level facts
 ├── crates/cef/          # CEF host — embeds Chromium, owns the OS window
-├── crates/srv/          # Sidecar — RPC engine, SQLite persistence, sagas
+├── crates/srv/          # srv binary — startup, HTTP and WebSocket server, sagas
+├── crates/srv-core/     # srv's engine — RPC, SQLite persistence, reducer, agents, migrations
 ├── crates/common/       # Shared library (path resolution, runtime mode, IPC types)
 ├── crates/mcp/          # agentmux-mcp — the MCP server agents use for MuxAPI
 ├── crates/bashwrap/     # Streaming bash wrapper and CLI hook helper
@@ -167,7 +167,7 @@ See [Architecture overview](/internals/architecture/) for the full topology and 
 
 ### Frontend
 
-Open Chromium DevTools from the **AgentMux logo menu** in the top tab bar → **Dev Tools**, or use the keyboard shortcut. Reload the renderer with `Ctrl+R` / `Cmd+R`.
+Open Chromium DevTools from the **AgentMux logo menu** in the top tab bar → **DevTools**, from the command palette, or with right-click → Inspect Element. These exist only while **Dev mode** is on (Settings ▸ Advanced ▸ Developer, `app:devmode`), which is off by default in an installed app; a `task dev` build has it on. Reload the renderer with `Ctrl+R` / `Cmd+R`.
 
 ### Backend Logs
 
@@ -204,7 +204,7 @@ task dev
 
 ### Schema directory missing after clean
 
-`dist/schema/` is wiped by `task clean` but automatically recreated by the `copy:schema` dependency in `dev`, `start`, and `package` tasks.
+`dist/schema/` is wiped by `task clean` but automatically recreated by the `copy:schema` dependency in the `dev` and `package` tasks.
 
 ## See Also
 

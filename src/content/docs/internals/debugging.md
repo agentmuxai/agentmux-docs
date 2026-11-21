@@ -14,14 +14,15 @@ This page is the practical "something's off, where do I look first" reference. A
 | Launcher (early-startup) | `~/.agentmux/logs/agentmux-launcher.log` | `tail -F ~/.agentmux/logs/agentmux-launcher.log` |
 | Launcher reducer events | `<data-dir>/data/launcher-events.log` | `tail -F` directly (JSONL) |
 
-Host and sidecar log to the per-version `logs/` folder (`$AGENTMUX_LOG_DIR`); only the launcher logs to the shared `~/.agentmux/logs/`.
+Host and srv log to the per-version `logs/` folder; only the launcher logs to the shared `~/.agentmux/logs/`, which is what `$AGENTMUX_LOG_DIR` holds inside a terminal pane.
 
 ### Pointer files
 
 Daily log rotation means the active filename changes at UTC midnight. Rather than guessing, both host and sidecar write a **pointer file** to the active log filename:
 
 ```bash
-tail -F "$AGENTMUX_LOG_DIR/$(cat "$AGENTMUX_LOG_DIR/current-host-v$AGENTMUX_VERSION.path")"
+LOGS=~/.agentmux/channels/stable/versions/$AGENTMUX_VERSION/logs   # the stable channel's version folder
+tail -F "$LOGS/$(cat "$LOGS/current-host-v$AGENTMUX_VERSION.path")"
 ```
 
 Both pointers (`current-host-v<version>.path`, `current-srv-v<version>.path`) sit in the version's `logs/` folder and hold the log's file name. The host also writes a copy holding the absolute path to `channels/<channel>/logs/` (`~/.agentmux/dev/logs/` for dev builds). Both pointers are rewritten on each launch and on every rotation.
@@ -83,7 +84,7 @@ muxlog host --level error,warn                 # only problems, then follow
 | `muxlog bridge` | the startup handshake — `Loading URL`, `Injected IPC …`, `backend-ready`, `window.api`, `Bootstrap failed` — correlated in time, so a reconnect loop is obvious at a glance |
 | `muxlog swarm` | subagent/swarm lifecycle — spawn, `display_name` resolution, status transitions, and the `parent_block_id`/`session_id`/`workflow_id` each event carries; sidecar-only |
 | `muxlog auth` | provider auth/identity lifecycle — login flow (`auth.start`/`auth.spawn`/`auth.cancel`), OAuth config-dir wiring, credential import, and the logout side (`identity.unlink:`, `identity.delete:`) |
-| `muxlog phases [<block-id>]` | **New 2026-08-18.** Merged, chronological turn-phase timeline for one agent pane — combines the frontend's `[wave-turn]` transition log (host) with the backend's `[health] turn_active flip` log (srv) into a single, correctly-ordered stream instead of two files to cross-reference by hand. Defaults to your own pane via `$AGENTMUX_BLOCKID` (already set in every agent's shell env); pass an explicit block id for a different pane. Host/srv logs are resolved by checking which log actually **contains** this pane's lines, not just "most recently active," so it stays correct with several instances — or several retained dev builds of the same branch — running at once. |
+| `muxlog phases [<block-id>]` | Merged, chronological turn-phase timeline for one agent pane — combines the frontend's `[wave-turn]` transition log (host) with the backend's `[health] turn_active flip` log (srv) into a single, correctly-ordered stream instead of two files to cross-reference by hand. Defaults to your own pane via `$AGENTMUX_BLOCKID` (already set in every agent's shell env); pass an explicit block id for a different pane. Host/srv logs are resolved by checking which log actually **contains** this pane's lines, not just "most recently active," so it stays correct with several instances — or several retained dev builds of the same branch — running at once. |
 
 Every generic option (`--grep`, `--level`, `--target`, `-a`, `--raw`) composes on top of a recipe's own per-recipe filter.
 
@@ -194,7 +195,7 @@ So:
 
 ## Inspecting elements and opening DevTools
 
-DevTools is still the right tool for DOM/CSS inspection and network activity — just not for frontend app logs (those are the host log, above). Two ways to reach it, both routed through the same `toggle_devtools`/`inspect_element_at` CEF IPC commands ([`crates/cef/src/commands/window/meta.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/window/meta.rs)):
+DevTools is still the right tool for DOM/CSS inspection and network activity — just not for frontend app logs (those are the host log, above). Two ways to reach it, both available only while **Dev mode** is on (Settings ▸ Advanced ▸ Developer, `app:devmode`; off by default in an installed app, on in a `task dev` build) and both routed through the same `toggle_devtools`/`inspect_element_at` CEF IPC commands ([`crates/cef/src/commands/window/meta.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/window/meta.rs)):
 
 - **Right-click → Inspect Element** — opens DevTools focused on the exact element under the cursor. Works on regular panes (agent, terminal, editor, etc.) everywhere, and on browser panes on **Windows and macOS**; browser-pane right-click delivery isn't implemented on Linux yet (see [Browser pane](/browser-pane/)), so this path isn't available there for embedded browser content specifically — the AgentMux logo-menu / Command Palette toggle below still works on any platform. This is a frontend-owned menu entry, not CEF's built-in one: AgentMux's own unified context menu (`ContextMenuModel.showContextMenu`) renders every right-click surface in the app, and on browser panes CEF's native Chromium context menu (which has its own competing "Inspect") is deliberately suppressed so this one custom menu owns the whole surface — see [`docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_BROWSER_PANE_UNIFIED_CONTEXT_MENU_2026_08_15.md) in the app repo.
 - **Toggle DevTools without a specific element** — AgentMux logo menu → DevTools on Windows/Linux, the native View menu (⌥⌘I) on macOS, or the Command Palette's "Toggle DevTools" command. See [Main Menu](/main-menu/) and [Keybindings](/keybindings/).
@@ -221,7 +222,7 @@ For a working scripted reference (target discovery + a plain `WebSocket` JSON-RP
 
 Every slice in the [reducer stack](/internals/reducer-stack/) routes through `command-source.ts`'s `recordDispatch(...)` helper, which appends a structured record (slice name, key, command, emitted events, source, timestamp) to an in-memory ring buffer. The diagnostics panel surfaces this.
 
-When a question like "what mutated this state?" comes up, filter the ring for the relevant key — the answer is one entry. This was the discriminator in the SolidJS reactive-leak storm crashes that earlier attempts (PRs #708, #721, #722) chased the wrong way.
+When a question like "what mutated this state?" comes up, filter the ring for the relevant key — the answer is one entry. It is the first thing to read for a SolidJS reactive-leak storm.
 
 ## WRR drift diagnostics
 
@@ -258,7 +259,7 @@ Renderer crashes come up as Crashpad reports. The host log captures the crash ev
 <data-dir>/cef-cache/Crashpad/reports/
 ```
 
-For renderer-storm crashes (the screen flashes, panes blink, eventually CEF gives up): check the dispatch ring **first**, not the Crashpad stack. A reactive dependency leak in a shared utility produces the same symptoms as a real C++ crash but is diagnosed entirely from the ring. See PRs #708 / #721 / #722 for the specific `recordDispatch` pattern that caused it; instrument **effect-run count** before you fan out into hosts.
+For renderer-storm crashes (the screen flashes, panes blink, eventually CEF gives up): check the dispatch ring **first**, not the Crashpad stack. A reactive dependency leak in a shared utility produces the same symptoms as a real C++ crash but is diagnosed entirely from the ring. Instrument **effect-run count** before you fan out into hosts.
 
 ## Shell-integration env block
 
@@ -266,7 +267,7 @@ Terminals opened inside AgentMux get an `AGENTMUX_*` env block. The `muxlog` hel
 
 ```bash
 echo "$AGENTMUX_BLOCKID"      # which block this terminal is in
-echo "$AGENTMUX_LOG_DIR"      # where to look for host/srv logs
+echo "$AGENTMUX_LOG_DIR"      # the shared folder with the launcher's log
 echo "$AGENTMUX_VERSION"      # which version this terminal was launched against
 echo "$AGENTMUX_AGENT_ID"     # agent identity, if an agent owns the pane
 ```

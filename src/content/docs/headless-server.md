@@ -41,7 +41,7 @@ It puts the program in `%LOCALAPPDATA%\AgentMux\Headless\<version>`, makes `%LOC
 |---|---|
 | `agentmux setup` | The first-run choices, then starts the server and offers to sign a browser in. |
 | `agentmux doctor` | Checks the machine for the server and says what to do about each problem. |
-| `agentmux start` | Starts the server in the background and waits until it answers. |
+| `agentmux start` | Starts the server in the background and waits until it answers. It works without `setup`: with nothing kept, it uses port 7380 and keeps secrets in owner-only files. |
 | `agentmux stop` | Asks the server to shut down. `--force` ends it at once if it has not left after 30 seconds. |
 | `agentmux restart` | Stops it, then starts it. Run it after an install to run the new version. |
 | `agentmux status` | Says whether the server is running, its version, address, data folder and whether the login service is installed. |
@@ -51,9 +51,9 @@ It puts the program in `%LOCALAPPDATA%\AgentMux\Headless\<version>`, makes `%LOC
 | `agentmux version` | Shows the version. |
 | `agentmux update` | Prints the command that installs the current release over this one. |
 | `agentmux uninstall` | Removes what the install script put in place (see [Install](#install)). |
-| `agentmux run` | Runs the server in this terminal, which is what a service runs. |
+| `agentmux run` | Runs the server in this terminal, which is what the login service (the Scheduled Task on Windows) runs. |
 
-`status`, `doctor` and `version` take `--json`. `--channel <name>` before or after any command works on another server channel. Exit codes are 0 for done, 1 when the thing asked is not so (the server is not running, a check failed), 2 for a command used wrongly and 3 when the command could not do it.
+`status`, `doctor` and `version` take `--json`. `doctor` takes no `--port`: it checks the port `setup` kept (7380 when there is none). `--channel <name>` before or after any command works on another server channel. Exit codes are 0 for done, 1 when the thing asked is not so (the server is not running, a check failed), 2 for a command used wrongly and 3 when the command could not do it.
 
 `start` and `run` take `--port` (1024 to 65534), `--secret-store`, `--public-origin`, `--srv-bin` and `--web-dir`; their defaults are what `setup` kept. When a login service is installed, `start` and `restart` refuse these flags, because the service starts the server from the saved settings: change them with `agentmux setup` instead.
 
@@ -119,11 +119,11 @@ A signed-in browser stays signed in until it has had no request for 12 hours, an
 - **libraries** (Linux): `libdbus-1.so.3` and `libxcb.so.1`, which the agent tools use.
 - **shared folder**: another AgentMux of a different version holds the folder this version's data needs, so the server did not start. Close that AgentMux and run `agentmux start`, or update one of the two so both are the same version.
 - **version**: the running server is not the installed version; `agentmux restart` runs the installed one.
-- **service**: whether a login service is installed and runs this install of the command.
+- **service**: whether a login service (on Windows, the per-user Scheduled Task) is installed and runs this install of the command.
 
 ## Where things are
 
-The server's data, settings and agents are in `~/.agentmux/channels/headless/` (on Windows, `%USERPROFILE%\\.agentmux\\channels\\headless\\`; another channel has its own folder there). `agentmux status` prints the exact data folder. The server's log is `server.log` in the channel's folder, which `agentmux logs` reads.
+The server's data, settings and agents are in `~/.agentmux/channels/headless/` (on Windows, `%USERPROFILE%\\.agentmux\\channels\\headless\\`; another channel has its own folder there). `agentmux status` prints the exact data folder. Agent definitions, accounts and the rest of the account-wide data are in `shared/` under `~/.agentmux`, the same folder the desktop app uses, so a headless server on the same account shows the same agents. To run it fully apart from the desktop app, start it with `AGENTMUX_HOME_OVERRIDE` set to an empty folder. The server's log is `server.log` in the channel's folder, which `agentmux logs` reads.
 
 ## See also
 
