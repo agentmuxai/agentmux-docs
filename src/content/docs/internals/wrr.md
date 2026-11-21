@@ -44,6 +44,7 @@ Without compensation, the open-transient corrective logic for `HiddenSinceOpen` 
 The reducer's `state.just_promoted_labels` set bridges that microsecond gap: the promote handler inserts into it, the next `ReportWindowOpened` for the same label drains it and starts the new mirror with `foregrounded_since_open: true`. This is `apply_hwnd_visibility_changed`'s gate.
 
 The full forensic write-up is in [`docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md).
+
 ## Order tolerance
 
 WRR commands assume the IPC is **out-of-order tolerant**. The host's actual emit order at promote time is `ReportPoolWindowRemoved → ReportPoolWindowPromoted → ReportWindowOpened`, but a fuzzed sequence, replayed log, or buffered burst can reorder them.
