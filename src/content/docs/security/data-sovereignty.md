@@ -20,7 +20,6 @@ AgentMux doesn't upload any of this. But your prompts and your agents' work do l
 
 - **No telemetry, analytics or usage pings.** The frontend's telemetry hooks have no backend: the server accepts `TelemetryUpdate` and discards it. The `telemetry:*` settings only control the local system-stats graph.
 - **No crash reporting.** Crash dumps stay on disk.
-- **No update or version check on its own.** AgentMux contacts `github.com` for the latest release only when you click **Check for update** or an agent asks through the `App` tool. See [Update model](/security/update-model/).
 - **No license check.** AgentMux is open source under Apache 2.0.
 - **No Chromium background traffic.** The embedded Chromium is started with background networking, component updates, domain reliability reporting and field trials disabled (`crates/cef/src/app/mod.rs`).
 
@@ -57,6 +56,7 @@ What AgentMux doesn't change:
 
 | Call | Destination | What is sent | When |
 |---|---|---|---|
+| AgentMux update check and download | `github.com` (the releases page and API, then the release file and its signed manifest) | An ordinary HTTPS request for the latest release | A minute after start and about every six hours, with the download in the background; switch off with `update:auto` and `update:autodownload`. See [Update model](/security/update-model/) |
 | Claude model list | `https://api.anthropic.com/v1/models` | Your Claude login token | At each launch, if a Claude login is found in `~/.agentmux/shared/providers/claude/` or in `CLAUDE_CODE_OAUTH_TOKEN` (`crates/srv-core/src/backend/model_catalog.rs`) |
 | Background model calls | Anthropic, through the Claude agent's own CLI | Excerpts of that agent's conversation | See [Background model calls](#background-model-calls) |
 | Link favicons | `https://www.google.com/s2/favicons?domain=<host>` | The hostname of each result | Whenever an agent's web-search or web-fetch results are shown |
@@ -71,7 +71,7 @@ MuxBus Cloud is AgentMux's hosted relay for agent-to-agent messages across machi
 
 ### Background model calls
 
-For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-4-5-20251001`, `invoke_haiku` and `AMBIENT_MODEL` in `crates/srv-core/src/ambient/cli.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
+For a Claude agent that belongs to an agent definition, AgentMux runs extra, short model calls through that agent's own Claude CLI and account (model `claude-haiku-5-5`, `invoke_haiku` and `AMBIENT_MODEL` in `crates/srv-core/src/ambient/cli.rs`). These calls send excerpts of the agent's conversation to Anthropic, the same provider the agent already uses. The purposes defined in code are:
 
 - a running **continuity summary** of the conversation, written after the first completed turn and refreshed once three new user turns have accumulated, or after ten minutes with at least one new turn (`crates/srv-core/src/backend/continuity_state.rs`). Set `agent:continuity` to `off` on an agent pane to stop it;
 - activity summaries, agent-definition summaries, names for subagents and dispatches, next-prompt suggestions, and narration.
@@ -82,8 +82,7 @@ Obvious secrets are redacted from the continuity-summary prompt, but it is still
 
 | Feature | Destination |
 |---|---|
-| Checking for an AgentMux update (**Check for update** in the instance panel, or an agent's `App` tool) | `github.com` (the releases page and API) |
-| Downloading an AgentMux update | `github.com` release downloads: the file and its signed manifest |
+| Checking for an AgentMux update on request (**Check for update** in the instance panel, or an agent's `App` tool) | `github.com` (the releases page and API) |
 | Installing an agent CLI | `registry.npmjs.org`; your own npm configuration is ignored |
 | Toolchain pane version check | `registry.npmjs.org/<package>/latest`, when the pane opens (cached 6 hours) or on request |
 | Installing jq or ripgrep from the tool catalog | GitHub release downloads |
@@ -112,7 +111,7 @@ MCP servers are programs your agents run. What they connect to is up to them. Ag
 | Voice engine | Groq (inactive without a key) | Where audio is sent |
 | Messaging bridges | Off | Discord, Telegram, Slack, WhatsApp |
 | Crash reporting | Not applicable: it doesn't exist | — |
-| Update check | Never on its own | Only **Check for update** or an agent's `App` tool contacts `github.com` |
+| Update check and download | On (`update:auto`, `update:autodownload`) | `github.com`: the releases page and API, then the release file and its signed manifest |
 
 ## Offline and air-gapped use
 

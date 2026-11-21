@@ -45,7 +45,7 @@ A few things need more than the auth key. The browser-password broker and host r
 
 **Mitigation:** run code you don't trust outside AgentMux panes. A process's environment is also readable by other processes running as the same user (for example `/proc/<pid>/environ` on Linux), so the key is not secret from anything else running as you.
 
-Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` and `MUXBUS_COGNITO_DOMAIN` from every agent's environment on every spawn path, even when they come from a saved `cmd:env` (`crates/srv-core/src/backend/account_login_guard.rs`); the server makes every cloud call with its own stored login. That login is still on disk, so an agent that goes looking for it can read it like any other file of yours. This keeps it out of agents' hands by default; it isn't an OS boundary.
+Agents don't receive your MuxBus Cloud login. AgentMux removes `MUXBUS_TOKEN` and the variable that names the sign-in service's domain from every agent's environment on every spawn path, even when they come from a saved `cmd:env` (`crates/srv-core/src/backend/account_login_guard.rs`); the server makes every cloud call with its own stored login. That login is still on disk, so an agent that goes looking for it can read it like any other file of yours. This keeps it out of agents' hands by default; it isn't an OS boundary.
 
 ### Container agents
 
@@ -82,7 +82,7 @@ An agent (its UID) runs in at most one place at a time, so two copies don't driv
 
 - **This machine.** Before an agent's CLI process starts, its pane claims a lease on the agent's UID in a lease store shared by every AgentMux instance on the machine, and holds it while the process runs. A pane whose agent is running in another instance is refused, with a message naming that instance's channel and version; the user can choose **Take over**, which asks the other instance to stop its copy (`POST /agentmux/agent/release`, full auth key only). Registering the agent for messages is refused the same way (HTTP 409 from `/agentmux/reactive/register`).
 - **LAN** (LAN discovery on). The instance asks each peer `GET /agentmux/agent/holding?uid=<uid>` before starting the agent, and again every 30 seconds while it runs. A peer on another host that says it holds the agent refuses the start. If both hosts are already running it, the one that started later stops its copy (starts within 10 seconds of each other go to the lower hostname).
-- **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay (`/agents/lease`, keyed by agent name) before it pulls the agent's messages, and renews it every 20 seconds. While another instance holds the lease, the relay answers this instance's pulls with 409 and the local copy is stopped (`crates/srv-core/src/muxbus/wan_lease.rs`).
+- **WAN** (signed in to MuxBus Cloud). The instance claims the agent's lease on the relay, keyed by agent name, before it pulls the agent's messages, and keeps renewing it. While another instance holds the lease, the relay refuses this instance's pulls and the local copy is stopped (`crates/srv-core/src/muxbus/wan_lease.rs`).
 
 This is coordination, not a security boundary. Each tier fails open: an unreachable peer or relay doesn't stop an agent from starting. The LAN answers come from peers found by unauthenticated mDNS, so a device on the LAN can claim to hold an agent it doesn't run.
 
@@ -114,15 +114,23 @@ What this is for: agents run as your OS user with a shell, so these checks stop 
 
 ## Sensitive operations
 
-Some operations are too sweeping for one agent's say-so. An agent asks for them through the `Sensitive` tool, or through the tool that does the thing: `App` `upgrade`, `Widget` `install`, a `Desktop` grant, or an `App` `disk` cleanup. Four operations run this way today: an AgentMux upgrade, a widget install, control of a desktop app, and clearing idle agents' build folders. The other operations the `Sensitive` tool lists can't be run yet, so they are never approved. When your own message in a turn asks an agent to upgrade AgentMux, `App` `upgrade` doesn't need the request; you still confirm in AgentMux's own dialog.
+Some operations are too sweeping for one agent's say-so. An agent asks for them through the `Sensitive` tool, or through the tool that does the thing: `App` `upgrade`, `Widget` `install`, a `Desktop` grant, or an `App` `disk` cleanup. These operations run this way (table below): closing AgentMux, an AgentMux upgrade, a widget or job-template install or approval, control of a desktop app, using a Vault entry or allowing one for good, trusting a new key for an agent, pairing a device, letting agents browse again after a pause, answering an app's or page's prompt for an agent, and clearing idle agents' build folders. When your own message in a turn asks an agent to upgrade AgentMux, `App` `upgrade` doesn't need the request; you still confirm in AgentMux's own dialog.
 
 The request goes to the **super agent**, the one agent whose [seat](/first-agent/#seats) is **Super agent**. It can check the facts first, then approves or denies. If it approves, a banner appears in the agent panes: "*agent* asked: *what will happen*. Approved by *name*. Starts in 12 s." It has two buttons worded for the operation:
 
 | Operation | Stops it | Skips the wait | Countdown |
 |---|---|---|---|
+| Close AgentMux | **Keep open** | **Close now** | 2 minutes |
 | Upgrade AgentMux | **Don't upgrade** | **Upgrade now** | 2 minutes |
 | Install a widget | **Don't install** | **Install now** | 30 seconds |
 | Let an agent control the desktop | **Don't allow** | **Allow now** | 30 seconds |
+| Use a Vault entry, or allow one for good | **Don't allow** | **Allow now** | 30 seconds |
+| Trust a new key for an agent | **Don't trust** | **Trust now** | 30 seconds |
+| Install a job template | **Don't install** | **Install now** | 30 seconds |
+| Approve a job template | **Don't approve** | **Approve now** | 30 seconds |
+| Pair a device | **Don't pair** | **Pair now** | 30 seconds |
+| Let agents browse again | **Keep paused** | **Resume now** | 30 seconds |
+| Answer a prompt for an agent | **Don't answer** | **Answer now** | 30 seconds |
 | Clear idle agents' build folders | **Keep them** | **Clear now** | 30 seconds |
 
 If you do nothing, it happens when the countdown ends. A chime plays (the sound setting is `notify:sound:agent.shutdown.pending`) and an OS notification names what will happen and who asked.

@@ -9,8 +9,10 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 | Listener | Process | Bind | Protocol | Authentication | When |
 |---|---|---|---|---|---|
-| AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ephemeral ports | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
+| AgentMux server (web and ws ports) | `agentmux-srv` | `127.0.0.1`, two ports from the range 29700 to 29799 (the next two free ones; if fewer than two are free, the OS chooses) | HTTP, WebSocket | `X-AuthKey` (instance auth key). Public: `GET /`, `/webhook/whatsapp` | Always |
 | AgentMux server, LAN listeners | `agentmux-srv` | The same two ports on every non-loopback interface address | HTTP | Only a short list of LAN-peer routes, each taking the `lan_key` or the auth key; a request for a remote operation also needs a valid signature. Public: `GET /`, `/health`, `/webhook/whatsapp` | LAN discovery on (default **off**) |
+| Mobile viewer | `agentmux-srv` | A third port of the same range, on every non-loopback interface address | HTTPS (self-signed certificate the device pins by the fingerprint in the pairing QR) | A per-device viewer token handed out once against a pairing code shown on this screen, stored hashed and revocable; never the LAN key or the auth key | LAN discovery on |
+| Container gateway | `agentmux-srv` | Linux only: the gateway address of Docker's `agentmux-agents` network, never `0.0.0.0` | HTTP | Only a live container token, only from that network's subnet; the instance key and the LAN key are refused | A container agent is running |
 | mDNS | `agentmux-srv` | UDP 5353, multicast | mDNS / DNS-SD | None | LAN discovery on |
 | UDP discovery responder | `agentmux-srv` | `0.0.0.0:47891` UDP | JSON | None; answers only private, link-local and loopback source addresses | LAN discovery on |
 | Dev proxy | `agentmux-srv` | `127.0.0.1:8090` | HTTP reverse proxy | None | Always (skipped if the port is taken) |
@@ -23,11 +25,11 @@ This page is for IT teams, network admins and security reviewers who need to kno
 
 `agentmux-mcp`, the MCP server each agent runs, talks to its agent over stdio and opens no listener.
 
-**With LAN discovery off, nothing listens on a non-loopback address.** Every TCP listener binds `127.0.0.1`, and the pipes and sockets are local by construction. Loopback is shared by every account on the machine, though: other OS users can reach the loopback listeners too. That matters most for the [remote-debugging port](#chromium-remote-debugging-port), when it is on.
+**With LAN discovery off, nothing listens on a network address of this computer, apart from the Linux container gateway.** Every other TCP listener binds `127.0.0.1`, and the pipes and sockets are local by construction. The container gateway is the address of Docker's own `agentmux-agents` bridge, reachable only from the containers on that bridge, and it accepts only a container agent's token. Loopback is shared by every account on the machine, though: other OS users can reach the loopback listeners too. That matters most for the [remote-debugging port](#chromium-remote-debugging-port), when it is on.
 
 ## The AgentMux server
 
-`agentmux-srv` binds two ports on `127.0.0.1`, both chosen by the OS at each launch, and serves the same API on both. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv-core/src/backend/lan/listeners.rs`); no setting changes it.
+`agentmux-srv` binds two ports on `127.0.0.1`, taken from the range 29700 to 29799 (the next two free ones, so several instances on one machine each get their own; if fewer than two are free, the OS chooses), and serves the same API on both. The range is fixed so a firewall rule can name it. The bind address is fixed in code (`STARTUP_BIND_ADDR` in `crates/srv-core/src/backend/lan/listeners.rs`); no setting changes it.
 
 Authentication (`auth_middleware` in `crates/srv/src/server/auth.rs`):
 
@@ -60,13 +62,13 @@ While LAN discovery is on and at least one LAN listener is bound, the server adv
 
 - instance name `agentmux-<hostname>-<port>`, host name `<hostname>.local.`;
 - the server's web port and the machine's IP addresses;
-- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.57.6`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
+- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.60.36`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
 
 It also listens on UDP port 47891. A datagram `{"type":"agentmux_discover","v":1}` from a private, link-local or loopback address gets a unicast reply:
 
 ```json
-{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.57.6",
-  "hostname": "<hostname>", "version": "0.57.6", "port": <web port>, "auth_key": "<lan_key>" }
+{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.60.36",
+  "hostname": "<hostname>", "version": "0.60.36", "port": <web port>, "auth_key": "<lan_key>" }
 ```
 
 Neither channel has confidentiality or authentication. Anyone on the broadcast domain learns the machine's hostname, AgentMux version, server port and `lan_key`, and can then send messages to its agents. The `lan_key` is regenerated at each launch.
@@ -132,7 +134,7 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | `api.anthropic.com/v1/models` | At each launch, when a Claude login token is found |
 | `muxbus.agentmux.ai`, `muxbus-ws.agentmux.ai` | Only after you sign in to MuxBus Cloud |
 | `registry.npmjs.org` | Installing an agent CLI; checking CLI versions in the Toolchain pane |
-| `github.com`, `api.github.com` | Only when you ask for an update check (**Check for update**, or an agent's `App` tool), and when you download a release |
+| `github.com`, `api.github.com` | Update checks (in the background by default, or when you choose **Check for update** or an agent asks through the `App` tool) and release downloads |
 | `github.com` release downloads | Installing jq or ripgrep from the tool catalog; Crush's npm install script fetches its binary there |
 | `github.com` release downloads (goose, and the pinned `uv`), `x.ai` (Grok Build), `storage.googleapis.com` (Antigravity), `lookaside.facebook.com` (Muse Code), `pypi.org` (Aider and Kimi Code CLI) | Made by AgentMux when you install one of these harnesses |
 | `www.google.com/s2/favicons` | Showing an agent's web-search or web-fetch results |
@@ -142,7 +144,7 @@ The launcher, the CEF host and the server talk over local IPC (`crates/launcher/
 | Groq, Hugging Face, Discord, Telegram, Slack, WhatsApp, OAuth providers, key-validation endpoints | Only when you configure or use those features |
 | LAN peers | Only with LAN discovery on |
 
-There is no telemetry endpoint, crash-report upload or license check, and no update check unless you (or an agent) ask for one.
+There is no telemetry endpoint, crash-report upload or license check, and no update check beyond the background one for new AgentMux releases (see [Update model](/security/update-model/)).
 
 The server's own HTTPS requests (models, updates, connected accounts) check a server's certificate against your operating system's trusted certificates, not a list bundled with AgentMux. On Linux the server reads them once, when it starts. When none are found (no `ca-certificates` package, and `SSL_CERT_FILE` or `SSL_CERT_DIR` point at nothing), the server still starts, a warning goes to its log, and those requests fail with a message that says to install the `ca-certificates` package or point `SSL_CERT_FILE` at a bundle, then restart AgentMux. `agentmux doctor` reports the same under **certificates**. The `.deb` and `.rpm` packages require `ca-certificates`.
 
@@ -152,9 +154,9 @@ The live connections to MuxBus Cloud, Slack (Socket Mode) and Discord (gateway) 
 
 **Workstation, LAN discovery off:** no inbound rule is needed. Every listener is loopback or local IPC.
 
-**LAN discovery on:** the server's ports are chosen at each launch, so allow the program rather than fixed ports. Windows Firewall prompts for this the first time you turn LAN discovery on. Peers need:
+**LAN discovery on:** the server's ports come from the fixed range 29700 to 29799, so one rule on that range covers every instance (each takes the next free ports: the web and ws ports and, for paired devices, a viewer port). Windows Firewall prompts for the program the first time you turn LAN discovery on. Peers need:
 
-- inbound TCP to the server's two ports (they change at every launch);
+- inbound TCP to the instance's ports in 29700 to 29799;
 - inbound UDP 5353 (mDNS) and, for probe-based discovery, UDP 47891.
 
 Restrict these to your LAN subnet or to known peers.

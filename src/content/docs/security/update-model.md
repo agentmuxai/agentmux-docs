@@ -1,19 +1,20 @@
 ---
 title: "Update model"
-description: "How AgentMux updates only when you ask, how releases are published and signed, and how agent CLIs and tools get installed."
+description: "How AgentMux checks for and installs updates, how releases are published and signed, and how agent CLIs and tools get installed."
 ---
 
-AgentMux never checks for a newer version of itself on its own. This page covers how an update happens when you ask for one, how releases reach you, what is and isn't signed on each platform, and how agent CLIs and helper tools are installed, which is a separate flow.
+AgentMux checks GitHub for a newer version of itself in the background, downloads and verifies it, and installs it only when you restart. This page covers how an update happens, how releases reach you, what is and isn't signed on each platform, and how agent CLIs and helper tools are installed, which is a separate flow. Two settings turn the background steps off (below).
 
-## Updates happen only when you ask
+## How an update happens
 
-- **Nothing checks at startup or on a timer.** A check is a request to GitHub for the latest release. It happens when you choose **Check for update** in the instance panel, or when an agent asks through the `App` tool (`version` or `upgrade`), at most every 30 seconds between them.
-- **You choose the download.** **Download** fetches the release file for your install from `github.com`, checks it (below) and unpacks it. **Upgrade & restart** installs it only when you choose it, once your agents have finished their turns. See [Window → Maintenance and updating](/window/#maintenance-and-updating).
+- **A check is a request to GitHub for the latest release.** By default AgentMux makes one a minute after it starts and then about every six hours (a failed check waits 15 minutes, doubling up to a day). You can also choose **Check for update** in the instance panel, or an agent can ask through the `App` tool (`version` or `upgrade`); the manual and agent checks run at most every 30 seconds between them. A `task dev` build, a headless server and an install started with `AGENTMUX_NO_AUTO_UPDATE` never check by themselves.
+- **The download is background by default, and installing is not.** When a check finds a newer release, AgentMux fetches the release file for your install from `github.com`, checks it (below) and unpacks it. Nothing is installed until you choose to: **Restart to update** (the status bar chip, or the tray) or **Upgrade & restart** (the instance panel) installs it once your agents have finished their turns. See [Window → Maintenance and updating](/window/#maintenance-and-updating).
+- **You can turn the background steps off.** `update:auto` (default `true`) is the background check; with it off, AgentMux asks GitHub only when you or an agent does. `update:autodownload` (default `true`) is the background download; with it off, a found release waits for you to choose **Download**. Both are in the [settings.json reference](/settings-json-reference/).
 - **An agent can ask, not do.** `App` `upgrade` goes to the [super agent](/security/trust-model/#sensitive-operations) as a sensitive request, and you can veto its 2-minute countdown. The only release it can install is the one AgentMux found itself: an agent can't name a file or a URL.
 - **Which installs update themselves.** The Windows installer and portable builds, the AppImage, the Linux portable `.tar.xz`, a `.deb` or `.rpm` (through its install helper, which asks for your password through your desktop's own prompt) and a macOS app in a folder you can write to. Any other install opens the release page, and you install it yourself. A build run from source never upgrades.
 - **Microsoft Store** installs are updated by the Store. The panel's **Update in the Store** button asks the Store to do it.
 
-Consequences: nothing can push code to your machine through AgentMux, and nothing brings you security fixes unless you ask. To hear about new releases, watch the GitHub releases feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
+Consequences: nothing can run new code from AgentMux's updater without your restart, and nothing is installed over your agents' running turns. Security fixes reach you through the same path: the next background check finds the release, and you restart into it. To hear about releases yourself, watch the GitHub releases feed: `https://github.com/agentmuxai/agentmux/releases.atom`.
 
 ## How releases are published
 
@@ -36,7 +37,7 @@ Start-at-login is a separate, opt-in setting in the app. On Windows it creates a
 | Windows installer and portable `.7z` | **No.** Neither the installer nor the executables are Authenticode-signed, so Windows SmartScreen may warn. |
 | Windows MSIX on GitHub Releases | **No**, so Windows won't install it directly. The Microsoft Store signs the copy it distributes. |
 | macOS DMG | **Yes**, with a Developer ID certificate and the hardened runtime. Notarization is attempted on every build. If Apple doesn't accept it, the build logs a warning and still ships a signed but un-notarized DMG. |
-| Linux AppImage, `.deb`, `.rpm`, `.tar.xz` | **No.** No GPG signatures, and no package repository. |
+| Linux AppImage, `.deb`, `.rpm`, `.tar.xz` | **No.** No GPG signatures on the files. |
 
 ## Signed releases
 
@@ -72,21 +73,21 @@ Every AgentMux version and channel on the machine shares that folder.
 
 | Provider | npm package | Pinned version |
 |---|---|---|
-| Claude Code | `@anthropic-ai/claude-code` | 2.1.288 |
+| Claude Code | `@anthropic-ai/claude-code` | 2.1.321 |
 | Codex | `@openai/codex` | 0.154.0 |
-| Gemini | `@google/gemini-cli` | 0.62.0 |
-| Qwen Code | `@qwen-code/qwen-code` | 0.24.7 |
-| OpenClaw | `openclaw` | 2026.9.8 |
+| Gemini | `@google/gemini-cli` | 0.67.0 |
+| Qwen Code | `@qwen-code/qwen-code` | 0.27.1 |
+| OpenClaw | `openclaw` | 2026.11.2 |
 | Pi | `pi-acp`, with `@earendil-works/pi-coding-agent` | 0.0.34, with 1.0.4 |
 | Mux Code | `@agentmuxai/muxcode` | 0.8.0 |
-| Copilot | `@github/copilot` | 1.0.91 |
-| Kilo Code CLI | `@kilocode/cli` | 7.8.8 |
-| Cline CLI | `cline` | 3.0.71 |
-| OpenCode | `opencode-ai` | 1.19.0 |
-| DeepSeek Harness | `@deepseek-ai/dsh` | 0.2.0-rc.2 (a prerelease) |
+| Copilot | `@github/copilot` | 1.0.108 |
+| Kilo Code CLI | `@kilocode/cli` | 7.8.27 |
+| Cline CLI | `cline` | 3.0.74 |
+| OpenCode | `opencode-ai` | 1.19.5 |
+| DeepSeek Harness | `@deepseek-ai/dsh` | 0.2.2-rc.1 (a prerelease) |
 | Crush | `@charmland/crush` | 0.98.1 |
 
-The pins live in `crates/srv-core/src/backend/providers.rs` and change with AgentMux releases.
+The pins are in one file per harness under `crates/srv-core/src/backend/providers/` and change with AgentMux releases.
 
 What this does and doesn't guarantee:
 
@@ -106,10 +107,10 @@ Six harnesses aren't on npm: Kimi Code CLI, Antigravity, goose, Grok Build, Aide
 |---|---|---|
 | Kimi Code CLI | PyPI `kimi-cli`, installed with `uv` | 1.52.0 |
 | Antigravity | Google's release of `agy` | 1.5.2 |
-| goose | GitHub releases of `aaif-goose/goose` | 1.54.0 |
-| Grok Build | xAI's release of `grok` | 1.0.52 |
+| goose | GitHub releases of `aaif-goose/goose` | 1.58.0 |
+| Grok Build | xAI's release of `grok` | 1.0.77 |
 | Aider | PyPI `aider-chat`, installed with `uv` | 0.86.2 |
-| Muse Code | Meta's release of `muse` | 1.4.7-R6101.1 |
+| Muse Code | Meta's release of `muse` | 1.4.14-R7309.1 |
 
 AgentMux runs its own copy at the pinned version, never one you installed yourself, unless you switch on **Use the CLI on my PATH** for that CLI in the Toolchain pane. It turns off self-update where the CLI allows it, so the pinned version doesn't change under a running agent: Grok Build gets `GROK_DISABLE_AUTOUPDATER=1`, Muse Code `MUSE_NO_AUTO_UPDATE=1`, and Aider `--no-check-update`. On Windows, AgentMux runs Muse Code's native binary rather than its launcher, which would otherwise update itself.
 
@@ -117,7 +118,7 @@ AgentMux's maintainers track every pin against its upstream releases on npm, PyP
 
 ## Tool catalog
 
-The tool catalog (`crates/srv-core/src/config/tool-catalog.json`) holds jq 1.7.1 and ripgrep 14.1.1. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`crates/srv-core/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
+The tool catalog (`crates/srv-core/src/config/tool-catalog.json`) holds jq 1.8.2 and ripgrep 15.2.0. Both ship bundled with AgentMux, and both can be reinstalled from their GitHub release URLs. Each download is checked against the SHA-256 in the catalog, and a mismatch aborts the install (`crates/srv-core/src/backend/tool_store.rs`). The catalog is part of the app; it is not fetched at runtime.
 
 ## Default MCP servers
 
@@ -130,17 +131,17 @@ AgentMux's default MCP server catalog (git, fetch, sequential-thinking, memory, 
 
 ## What we don't promise
 
-- **No automatic security updates.** A fix ships as a release; you ask for it, and install it on your own schedule.
+- **No silent installs.** A fix ships as a release; AgentMux can find and download it in the background, but you restart into it on your own schedule.
 - **No staged rollouts** and **no telemetry-driven rollback.** Everyone who downloads a version gets the same files, and we learn about breakage only when you report it on GitHub Issues.
 
 ---
 
 **Source-of-truth references**:
-- `crates/srv-core/src/backend/update/check.rs`, `crates/srv-core/src/backend/update/download.rs`, `crates/srv-core/src/backend/update/install.rs` — checking, downloading and installing an update
+- `crates/srv-core/src/backend/update/check.rs`, `crates/srv-core/src/backend/update/auto.rs`, `crates/srv-core/src/backend/update/download.rs`, `crates/srv-core/src/backend/update/install.rs` — checking, downloading and installing an update
 - `crates/common/src/update_manifest.rs`, `crates/srv-core/src/backend/update/signature.rs` — the signed manifest
 - `.github/workflows/release.yml`, `.github/workflows/build-windows.yml`, `.github/workflows/build-macos.yml`, `scripts/package-macos.sh` — builds, signing, notarization
 - `packaging/windows/agentmux.iss` — Windows installer
 - `crates/launcher/src/autostart/mod.rs` — start-at-login
-- `crates/srv-core/src/backend/providers.rs`, `crates/srv-core/src/backend/cli_install.rs`, `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs` — agent CLI installs, pins and the install folders the vendors' installers use
+- `crates/srv-core/src/backend/providers/`, `crates/srv-core/src/backend/cli_install.rs`, `crates/srv/src/server/cli_handlers.rs`, `crates/srv/src/server/install_handlers.rs` — agent CLI installs, pins and the install folders the vendors' installers use
 - `crates/srv/src/server/system_install_handlers.rs` — one-click Node.js, Git and Python installs
 - `crates/srv-core/src/backend/tool_store.rs`, `crates/srv-core/src/config/tool-catalog.json` — SHA-256-checked tool downloads

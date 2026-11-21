@@ -138,7 +138,7 @@ If your change touches the reducer stack or a saga:
 - Test inputs MUST replay the production emit order; out-of-order tests give false confidence
 - Property test inputs MUST pass the SUT's filter — add an anti-vacuity assertion before the property loop
 
-These rules are written into the AgentA team's working memory because they each cost real PR rounds. The reducer-stack maintainers will push back hard on changes that don't follow them.
+These rules each cost real PR rounds. The reducer-stack maintainers will push back hard on changes that don't follow them.
 
 ## Version management
 
