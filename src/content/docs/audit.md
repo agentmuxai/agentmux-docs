@@ -54,7 +54,7 @@ A row has a button for each agent it names, only where it can work:
 - **Sender's history** and **Receiver's history** on a jekt, **Actor's history** and **Target's history** on an action, **In history** on a start, an end or a registration: opens that agent's [History](/history/) at the moment of the entry, in the conversation it happened in, so you read what was said around it. For a start or end, History opens at the exact point the session began or ended.
 - **Sender's pane**, **Receiver's pane**, **Actor's pane**, **Target's pane** or **In its pane**: shows the agent's live pane, while it has one.
 
-The feed refreshes every 5 seconds while you are at the newest entries and the pane is shown. Once you page back, the list stays where it is until you change a filter. A stopped or hidden Audit doesn't refresh.
+The feed refreshes while you are at the newest entries and the pane is shown: when AgentMux writes a row (at most twice a second while agents are busy), after a reconnect, and at least every 30 seconds. Once you page back, the list stays where it is until you change a filter. A stopped or hidden Audit doesn't refresh.
 
 Which agents are registered to receive messages is shown in the [Swarm](/subagent-watcher/): an agent that another AgentMux instance on the same machine also claims, or whose messages were refused for an identity mismatch, carries a badge on its row, and the row menu has **Stop receiving messages** for it.
 

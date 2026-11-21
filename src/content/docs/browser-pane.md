@@ -242,7 +242,7 @@ A hidden pane stays awake while:
 - its page asks before leaving (the "Leave site?" question);
 - its page's title or icon changed in the last 30 minutes, as a chat or an inbox does;
 - it shows a local development server, has a popup window open, or is waiting for you;
-- an agent has used it within `browser:hibernateafter` minutes (never less than 10).
+- an agent has used it within `browser:hibernateafter` minutes (at least 1).
 
 An agent's pane that the agent has left alone for that long goes to sleep like any other, and the agent's next `Browser` call wakes it. See **Hibernate hidden browser panes** in [Browser settings](/settings/#browser-settings).
 

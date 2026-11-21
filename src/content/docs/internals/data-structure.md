@@ -202,8 +202,8 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `shared/agents/reactive/<agent>/<channel>.json` | JSON | Where each running agent can be reached; removed when it stops |
 | `shared/identities/<id>/<provider>/` | Provider's own files | One provider login folder per account: credentials, settings, conversation files, Personal Memory (`projects/<path>/memory/`) |
 | `shared/providers/<provider>/` | Provider's own files | The default login folder per provider |
-| `shared/cli/<provider>/<version>/` | npm install | Provider CLIs AgentMux installed; unused ones are pruned after 30 days |
-| `shared/backups/pre-migration-<version>-<time>/` | SQLite copies | `store.db` and `objects.db` before migrations ran; kept 30 days |
+| `shared/cli/<provider>/<version>/` | npm install | Provider CLIs AgentMux installed; `toolchain.prune` lists, and removes when asked, those unused for 30 days |
+| `shared/backups/pre-migration-<version>-<time>/` | SQLite copies | `store.db`, `objects.db` and `identity-store.db` before migrations ran; kept 30 days |
 | `shared/adoption-ledger.json` | JSON | Which older per-channel stores have been adopted |
 | `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `workspaces/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, layout files, exported workspaces (where **Export…** starts), sign-in refresh locks |
 | `shared/browser-bookmarks.json`, `browser-profiles.json`, `browser-start-page.json` | JSON | Browser pane bookmarks, named profiles, start page |
