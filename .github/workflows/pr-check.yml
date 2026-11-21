@@ -67,6 +67,14 @@ jobs:
           node .ci-agentmux-scripts/scripts/gen-ipc-catalog.mjs
           --code src/agentmux --page src/content/docs/internals/ipc-catalog.md --check
 
+      - name: MCP tool reference (generated from the tool definitions in the pinned code)
+        # The tools and parameters of internals/muxapi.md are written by scripts/gen-muxapi-tools.mjs
+        # from crates/mcp/src/tool_schemas.rs in the pinned src/agentmux, between markers. Fails when the
+        # page differs from the pin: a pin bump that changes a tool, or a hand edit inside the markers.
+        # Fix it with: node scripts/gen-muxapi-tools.mjs. Prose that belongs with a tool goes in
+        # scripts/muxapi-notes/.
+        run: node scripts/gen-muxapi-tools.mjs --check
+
       - name: Build
         # The TypeScript reference (typedoc) plus the site, not build:full:
         # the Rust reference needs a Rust toolchain and stays a deploy.yml
