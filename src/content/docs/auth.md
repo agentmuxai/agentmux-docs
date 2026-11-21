@@ -43,9 +43,9 @@ AgentMux checks whether a CLI is signed in by running its own status command (fo
 
 ## OAuth providers
 
-Five providers use a browser login: Claude Code, Codex CLI, Gemini CLI, OpenClaw and GitHub Copilot CLI. OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
+Seven providers use a login of their own: Claude Code, Codex CLI, Gemini CLI, OpenClaw, GitHub Copilot CLI, Grok Build (`grok login`, with a SuperGrok or X Premium+ account) and Muse Code (`muse login`, with a Meta account). OpenClaw's login is OpenAI's "Sign in with ChatGPT" flow, because OpenClaw uses Codex as its backing model. OpenClaw also needs its own Gateway daemon running; `openclaw onboard` sets that up.
 
-All five are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv-core/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv-core/src/identity/resolver/inject.rs`).
+All seven are account-backed: an agent using one of them must have an account bound for that provider (see [Connectors → Accounts](/connectors/#accounts)), or AgentMux refuses to start the CLI (`provider_class` in `crates/srv-core/src/identity/resolver/provider.rs`, enforced in `inject_identity_env` in `crates/srv-core/src/identity/resolver/inject.rs`).
 
 AgentMux does not pass an API-key environment variable to these CLIs as a fallback.
 
@@ -72,7 +72,7 @@ When an agent pane launches, AgentMux runs the CLI's auth check. If it fails, th
 
 **Log in** goes through `frontend/app/view/agent/flows/run-provider-login.ts` (`runProviderLogin`):
 
-1. For the five account-backed providers (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI and OpenClaw), AgentMux first allocates an account directory and points the login there. If the agent already has an account bound for the provider, that account's directory is reused.
+1. For the seven account-backed providers (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, OpenClaw, Grok Build and Muse Code), AgentMux first allocates an account directory and points the login there. If the agent already has an account bound for the provider, that account's directory is reused.
 2. It runs the login command and waits about 15 seconds for a login link in the CLI's output. If it finds one, it opens it in your browser and shows the link in the pane with a box for pasting an authorization code, which is passed to the running login command. Claude Code and OpenClaw run the login in a pseudo-terminal. AgentMux then waits up to 5 minutes for the login to finish.
 3. If the CLI prints no link, AgentMux opens a terminal window for the login. For the account-backed providers it waits up to 5 minutes for the CLI's auth check to succeed in the account directory. For the other providers it can't detect completion: finish the login in the terminal, then log in again from the pane.
 4. On success, the account is saved and linked to the agent.
@@ -98,9 +98,9 @@ This is `DataPaths::provider_auth_dir` in `crates/common/src/data_paths.rs`. The
 
 On Linux and macOS, AgentMux keeps its data root `~/.agentmux`, which holds both kinds of credential directory, readable only by your user account. It creates the folder with mode 0700, and on startup it removes group and other access from an existing one (`ensure_owner_only_dir` in `crates/common/src/data_paths.rs`). On Windows your user profile's permissions already restrict it to you.
 
-Every provider except the five account-backed ones runs on the ambient directory, apart from Antigravity and Aider, which read no config-dir variable. The five account-backed providers need a bound account; choosing **(ambient credentials)** in the create dialog for one of them leaves the agent unable to start until you sign in or bind an account.
+Every provider except the seven account-backed ones runs on the ambient directory, apart from Antigravity and Aider, which read no config-dir variable. The seven account-backed providers need a bound account: without one the agent can't start until you sign in or bind an account.
 
-**Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI or OpenClaw is saved as an account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
+**Account directories.** An OAuth login made through AgentMux for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, OpenClaw, Grok Build or Muse Code is saved as an account with its own directory, `<identities>/<account_id>/<provider>/`, where `<provider>` is the `authDirName`. When an agent is bound to such an account, AgentMux points the CLI's config-dir variable there instead of at the ambient directory. Where `<identities>` lives depends on the channel, as described next.
 
 ### Isolated auth by channel
 
@@ -110,19 +110,15 @@ Accounts are shared by every channel by default (`crates/common/src/data_paths.r
 - **`AGENTMUX_ISOLATED_AUTH=1`** isolates one channel: it gets its own account list (`<channel dir>/identity-store.db`) and account directories (`<channel dir>/identities/`), and starts with no accounts. Use it to test the login and re-login paths from an empty store. Any other value, or no value, means shared.
 - **The ambient directory is never isolated.** It stays account-wide on every channel.
 
-Until 2026-10-03 every channel except `stable` was isolated by default. Accounts that such channels created in their own store are copied into the shared store once, at startup (see [Data structure → How data reaches a new version](/internals/data-structure/#how-data-reaches-a-new-version)). See [Identity & Accounts](/identity/#persistence) for how an agent's link to an account survives a channel switch, and [Multi-instance & dev mode](/multi-instance/) for channels in general.
-
-### History
-
-Earlier builds kept provider credentials per instance, so switching channels or versions meant signing in again. agentmux#1291 (June 2026) moved them to the account-wide `shared/providers/` directory.
+See [Identity & Accounts](/identity/#persistence) for how an agent's link to an account survives a channel switch, and [Multi-instance & dev mode](/multi-instance/) for channels in general.
 
 ## Connectors: Accounts
 
-The **Accounts** section of [Connectors](/connectors/) (**Connectors → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. If that sign-in stops working (its refresh was refused, or the cloud moved to a new sign-in service), the panel and the host popover in the status bar show your email with a **Sign in again** button, and AgentMux stops reconnecting with the old sign-in until you do (`frontend/app/view/accounts/AgentMuxConnectPanel.tsx`, `frontend/app/statusbar/HostPopover.tsx`). Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
+The **Accounts** section of [Connectors](/connectors/) (**Connectors → Accounts**) manages accounts. It shows a tile per service: **AgentMux**, **GitHub**, **Google**, **AWS**, **OpenAI**, **Anthropic**, **xAI**, **Moonshot**, **Slack** and **Custom** (`frontend/app/view/accounts/accounts-catalog.ts`, `SERVICE_CATALOG`). Clicking **AgentMux** opens its own sign-in panel for AgentMux Cloud. If that sign-in stops working (its refresh was refused, or the cloud moved to a new sign-in service), the panel and the host popover in the status bar show your email with a **Sign in again** button, and AgentMux stops reconnecting with the old sign-in until you do (`frontend/app/view/accounts/AgentMuxConnectPanel.tsx`, `frontend/app/statusbar/HostPopover.tsx`). **xAI** and **Moonshot** are text only: Grok Build and Kimi Code sign in inside the agent, so there is nothing to connect from here. Clicking any other tile offers **Connect with OAuth**, **Add API key / token**, or both:
 
-- **Anthropic → Connect with OAuth** runs the Claude Code login inside AgentMux.
+- **Anthropic → Connect with OAuth** runs the Claude Code login inside AgentMux, and **OpenAI → Connect with OAuth** runs Codex's own login with a ChatGPT account.
 - **GitHub → Connect** uses AgentMux's own GitHub App through AgentMux Cloud, so it needs an AgentMux Cloud sign-in: without one the tile says **Sign in to AgentMux Cloud to connect GitHub** and offers the sign-in. If you save an OAuth app of your own for GitHub (its client ID), Connect uses GitHub's device flow with it, and needs no sign-in. **Google** and **Slack** use a PKCE browser login with an OAuth app of your own: paste its client ID and client secret (`frontend/app/view/accounts/oauth-catalog.ts`). A connected GitHub account reads "Connected as @login" in its details and asks to reconnect if you revoke it on GitHub. A Google account can give agents Gmail, Calendar and Drive, service by service: see [Connectors → Google](/connectors/#google-calendar-drive-and-gmail).
-- **AWS**, **OpenAI** and **Custom** offer only **Add API key / token**.
+- **AWS** and **Custom** offer only **Add API key / token**.
 - **Add API key / token** opens the Add Account form. Keys are stored in your OS keychain by default. **Validate & Save** checks the key against the service first; this is available for GitHub, OpenAI and Anthropic keys. **Save without validating** skips the check.
 
 The Add Account form:
@@ -148,13 +144,9 @@ These mappings are in `crates/srv-core/src/identity/resolver/provider.rs` (`prov
 These are independent layers:
 
 - **The ambient directories** are account-wide, provider-scoped and always global. Every instance on the machine shares them.
-- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later from the account chip in the agent's composer strip. They override the ambient directory for that agent, and the five account-backed providers require one. Like the ambient directories, they are shared by every channel unless [`AGENTMUX_ISOLATED_AUTH=1`](#isolated-auth-by-channel) isolates one.
+- **[Accounts](/identity/)** are bound per agent: a new agent takes the provider's first account, and you change it later from the account chip in the agent's composer strip. They override the ambient directory for that agent, and the seven account-backed providers require one. Like the ambient directories, they are shared by every channel unless [`AGENTMUX_ISOLATED_AUTH=1`](#isolated-auth-by-channel) isolates one.
 
 Two agents in the same instance can use different accounts for the same provider.
-
-## Pre-launch OAuth panel
-
-The agent **launch dialog** contains a sign-in panel, **Connect to &lt;provider&gt;**, which creates an account and selects it. Nothing in the current agent picker opens that dialog: creating an agent from a template uses the panel under its card in the agent picker, which has no sign-in step, and relaunching an agent from **My Agents** launches it directly. Sign-in happens in the agent pane instead, as described in [Signing in from an agent pane](#signing-in-from-an-agent-pane).
 
 ## Manual login
 
@@ -165,7 +157,7 @@ export KIMI_SHARE_DIR=~/.agentmux/shared/providers/kimi
 kimi login
 ```
 
-Agents using that provider without a bound account then pick up the login. This doesn't work for the five account-backed providers: a login in the ambient directory doesn't satisfy their account requirement, so use **Log in** in the agent pane or Connectors → Accounts. This is rarely needed; **Log in** in the agent pane covers the usual case.
+Agents using that provider without a bound account then pick up the login. This doesn't work for the seven account-backed providers: a login in the ambient directory doesn't satisfy their account requirement, so use **Log in** in the agent pane or Connectors → Accounts. This is rarely needed; **Log in** in the agent pane covers the usual case.
 
 ## See also
 
