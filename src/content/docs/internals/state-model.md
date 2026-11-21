@@ -560,7 +560,7 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 │              → "view" intent to srv (layoutIntents.ts)                      │
 │              → NodeModel.isFocused() memo                                   │
 │              → "block-focused" CSS class                                    │
-│              → CSS border resolution (color cascade)               │
+│              → CSS border resolution (color cascade)                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐

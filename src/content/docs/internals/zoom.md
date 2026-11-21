@@ -128,12 +128,12 @@ Agent panes apply CSS `zoom` to the whole view root, which would also scale the 
 ## See also
 
 - Spec: [`docs/specs/zoom-architecture.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/zoom-architecture.md) — the original design that established the universal framework, plus follow-ups for chrome zoom + pane-header zoom routing.
-- Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (debounced mirror, reset-deletes, cross-channel restore).
+- Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (background mirror, reset-deletes, cross-channel restore).
 - Source:
   - [`frontend/app/store/zoom.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.ts) (one implementation for every platform)
   - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) (Ctrl+/-/0 bindings)
   - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) (Ctrl+Wheel routing)
-  - [`crates/srv/src/server/service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) (`schedule_agent_zoom_mirror` — debounced `term:zoom` → `ui:zoom` mirror)
+  - [`crates/srv/src/server/service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) (`schedule_agent_zoom_mirror` — background `term:zoom` → `ui:zoom` mirror)
   - [`crates/srv/src/server/app_api/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/app_api/mod.rs) (`parse_seed_zoom`; `agent.open` itself, which seeds `term:zoom` from saved `ui:zoom`, is in `crates/srv/src/server/app_api/agent_open.rs`)
   - [`crates/srv-core/src/backend/storage/content.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/content.rs) (per-agent content store + global def-registry mirror)
   - [`frontend/app/view/agent/styles/_control-bar.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/styles/_control-bar.scss) (zoom-invariant busy bar via `--agent-pane-zoom`)
