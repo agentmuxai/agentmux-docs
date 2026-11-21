@@ -16,7 +16,7 @@ Two modules own everything LAN-facing:
 | Item | File | Role |
 |---|---|---|
 | `LanListenerSupervisor` | `crates/srv-core/src/backend/lan/listeners.rs` | Binds and drops the LAN-facing listeners, and decides whether mDNS may advertise |
-| `STARTUP_BIND_ADDR` | `crates/srv-core/src/backend/lan/listeners.rs` | `127.0.0.1:0`: the server's startup listeners are always loopback-only |
+| `LAN_PORT_RANGE` | `crates/srv-core/src/backend/lan/ports.rs` | `29700..=29799`: the startup listeners take the next two free ports of this range (the OS chooses only when fewer than two are free), and the listeners are always loopback-only |
 | `SERVICE_TYPE` | `crates/srv-core/src/backend/lan/discovery.rs` | `_agentmux._tcp.local.`, the mDNS service advertised and browsed |
 | `LanInstance` | `crates/srv-core/src/backend/lan/discovery.rs` | One peer: `instance_id`, `hostname`, `version`, `address`, `port`, `auth_key` (the peer's `lan_key`), `agents`, `install_id` (the install's WAN instance id as the peer advertises it, an identifier and never proof), `first_seen`, `last_seen`, `other_ttl_secs` |
 | `LanDiscovery` | `crates/srv-core/src/backend/lan/discovery.rs` | The running daemon: owns the `ServiceDaemon`, the peer map, and three background tasks |
@@ -27,11 +27,11 @@ The mDNS implementation is the [`mdns-sd`](https://crates.io/crates/mdns-sd) cra
 
 ## The LAN listeners
 
-The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `crates/srv/src/bootstrap/network.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address:
+The server binds its web and ws ports on `127.0.0.1` at startup, whatever the setting says (`bind_listeners_and_network` in `crates/srv/src/bootstrap/network.rs`). LAN reachability is added by `LanListenerSupervisor`, which binds the **same two ports** again on each non-loopback interface address (and a third port of the range for the mobile viewer, see [Network exposure](/security/network-exposure/)):
 
 - `lan_bind_addresses()` returns every IPv4 address and every IPv6 address except link-local (`fe80::/10`), from all interfaces;
 - each address gets both ports or neither; a failed bind is logged and skipped;
-- the listeners serve the same router as loopback: the full server API, with its normal authentication;
+- the listeners serve the LAN router, not the loopback one: only the routes a LAN peer calls (each behind the LAN key or the auth key, and a remote operation also needs a valid signature), plus `/health` and the WhatsApp webhook. Nothing that requires the full auth key is served off the machine;
 - a sweep every 20 seconds (`RECONCILE_INTERVAL_SECS`) re-reads the interface list, so a DHCP renewal, Wi-Fi/Ethernet switch or VPN change is picked up without a toggle.
 
 The startup listeners are deliberately never a wildcard `0.0.0.0` bind. On Linux a wildcard socket on the port makes the per-address binds fail with `EADDRINUSE`, and on Windows and macOS it leaves two sockets on one port.
@@ -67,7 +67,7 @@ A peer is kept until its `last_seen` is older than its own advertised record TTL
 
 `mdns-sd` requires the host name passed to `ServiceInfo::new()` to end in `.local.`. `mdns_host_record()` builds it from the same instance label the service uses (`agentmux-<host>-<port>`, with any character that is not a letter, digit, `-` or `_` replaced by `_`), so it is one label under `.local.` and unique per instance:
 
-- `narko` on port 29700 → `agentmux-narko-29700.local.`;
+- `studio` on port 29700 → `agentmux-studio-29700.local.`;
 - two instances on one host get different records, so they never conflict and `mdns-sd` never renames the host;
 - a fully qualified hostname (`box.corp.example`) cannot add dots to the label.
 
@@ -144,7 +144,7 @@ The Swarm and the Atlas also list your account's other machines that are not on 
 
 ## Remote operations and fleet sync
 
-The same peer list carries typed requests between machines (`crates/srv/src/server/remote_ops/`). The door is `POST /agentmux/remote/op`, one of the `lan_key` routes, but it is opened by a signature, not by the key (`receive.rs`). It checks, in order, that the call came with the `lan_key`, that `network:remote_ops` is not `false`, the shape and size of the request, that the audience is this instance's `lan_key`, that the timestamp is within 60 seconds and after this srv started, that the requesting agent's key is pinned here, the signature, and the certificate that names the hosting install. Then it looks the operation up (`lookup` in `mod.rs`): `app.version`, `app.health`, `app.activity`, `app.logs.tail`, `app.history_reclaim`, `agents.start`, `agents.open`, `agents.stop`, `agents.set_seat`, `agents.env_get`, `agents.env_set`, `tasks.enqueue`, `tasks.list`, `identity.accounts`, `identity.switch`, `identity.signin.start`, `.notice` and `.finish`, and `memory.global.put`, `.remove` and `.list`. A change, and a read of personal data, also needs an install this instance trusts (`lan_continuity::instance_trust`). An operation runs for at most 25 seconds, and the nonce store answers a repeated request with the first answer. The sending half is `send.rs` (`POST /api/v1/agent/remote/op`): it resolves the `host` to one LAN peer, signs with the asking agent's LAN key and writes `remote.request` to the audit trail.
+The same peer list carries typed requests between machines (`crates/srv/src/server/remote_ops/`). The door is `POST /agentmux/remote/op`, one of the `lan_key` routes, but it is opened by a signature, not by the key (`receive.rs`). It checks, in order, that the call came with the `lan_key`, that `network:remote_ops` is not `false`, the shape and size of the request, that the audience is this instance's `lan_key`, that the timestamp is within 60 seconds and after this srv started, that the requesting agent's key is pinned here, the signature, and the certificate that names the hosting install. Then it looks the operation up (`lookup` in `mod.rs`): `app.version`, `app.health`, `app.activity`, `app.logs.tail`, `app.history_reclaim`, `app.upgrade`, `app.disk.report`, `app.disk.cleanup`, `audit.query`, `agents.start`, `agents.open`, `agents.stop`, `agents.set_seat`, `agents.rename`, `agents.update`, `agents.env_get`, `agents.env_set`, `tasks.enqueue`, `tasks.list`, `identity.accounts`, `identity.switch`, `identity.signin.start`, `.notice` and `.finish`, `google.status`, `google.grant`, and `memory.global.put`, `.remove` and `.list`. A change, and a read of personal data, also needs an install this instance trusts (`lan_continuity::instance_trust`). An operation runs for at most 25 seconds, and the nonce store answers a repeated request with the first answer. The sending half is `send.rs` (`POST /api/v1/agent/remote/op`): it resolves the `host` to one LAN peer, signs with the asking agent's LAN key and writes `remote.request` to the audit trail.
 
 `crates/srv/src/server/remote_ops/fleet_sync.rs` keeps fleet-scoped Global Memory in step over the same transport. Every 15 seconds it fingerprints what this machine holds for the fleet and, for each proven peer whose last sync saw another fingerprint (or that has just appeared, which is how a machine that was offline catches up), lists what the peer holds and sends what it lacks or has older. A peer is synced again after 10 minutes in any case, and a peer that failed is left alone for 5 minutes. The merge rule (newest `updated_at` wins, a larger content hash on a tie, a removal being a write) is in `crates/srv-core/src/backend/memory/fleet.rs`.
 
@@ -157,7 +157,7 @@ With the setting off (the default), nothing LAN-facing starts. With it on, the l
 
 ## Why it's opt-in
 
-Turning LAN discovery on exposes the full server API on the network, broadcasts a key that lets anyone on the LAN send messages to agents, and makes Windows Firewall prompt. Keeping it off by default means a fresh install does none of that; the toggle makes the firewall prompt an expected consequence of a user's choice.
+Turning LAN discovery on exposes the LAN routes on the network, broadcasts a key that lets anyone on the LAN send messages to agents, and makes Windows Firewall prompt. Keeping it off by default means a fresh install does none of that; the toggle makes the firewall prompt an expected consequence of a user's choice.
 
 ## Source
 

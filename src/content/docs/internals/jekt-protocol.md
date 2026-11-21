@@ -250,7 +250,7 @@ Only installs signed in to the **same** MuxBus Cloud account can verify each oth
 | | |
 |---|---|
 | Material | the base material, with `reagent_msg_id` and `reagent_ts_secs` |
-| Keys | built into AgentMux. Only `reagent-v1` is trusted. A signature that is valid only under the `reagent-v1-dev` key **fails**. |
+| Keys | built into AgentMux. Only `reagent-v1` is trusted; a signature that does not verify under it **fails**. |
 | Window | signed at most 600 seconds before MuxBus Cloud accepted the message, and delivered within 6 hours 10 minutes of being signed; with no acceptance time from MuxBus Cloud, 600 seconds before delivery. A message held for an install that was off is judged by when it was accepted. |
 | Repeat | a signed message is delivered once to each agent. A second copy, even under another delivery, is dropped. |
 | Applies | to `wan` jekts carrying all four `reagent_*` fields |

@@ -210,7 +210,7 @@ On a machine with no screen, or where agents should run with no window open, ins
 
 ## Updating
 
-AgentMux never checks for updates on its own. To update, click the version in the status bar to open the instance panel, then choose **Check for update**. When a release is out, **Download** fetches the file for your install and checks it against the release's signed manifest (see [Update model](/security/update-model/#signed-releases)). **Upgrade & restart** then waits for your agents to finish their turns, installs it and starts AgentMux again. Your tabs come back and your agents resume. See [Window → Maintenance and updating](/window/#maintenance-and-updating) for the buttons and what each one does.
+AgentMux checks for updates in the background and downloads a newer release when it finds one; the status bar then offers **Restart to update**. You can also click the version in the status bar to open the instance panel and choose **Check for update**; with the background steps off (`update:auto`, `update:autodownload`), **Download** then fetches the file for your install. Either way the file is checked against the release's signed manifest (see [Update model](/security/update-model/#signed-releases)). **Upgrade & restart** waits for your agents to finish their turns, installs it and starts AgentMux again. Your tabs come back and your agents resume. See [Window → Maintenance and updating](/window/#maintenance-and-updating) for the buttons and what each one does.
 
 AgentMux can install the update itself for:
 
