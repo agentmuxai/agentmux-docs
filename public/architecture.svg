@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">
   <title>AgentMux four-process architecture</title>
-  <desc>agentmux-launcher (1 per channel, enforced via single-instance named-pipe lock) spawns agentmux-cef (1 per launcher) and agentmux-srv (1 per launcher, dynamic port). The host embeds Chromium via CEF (1 main renderer + N renderer subprocesses, one per browser pane). The main renderer loads the SolidJS frontend, which talks to the srv sidecar over a WebSocket. Multiple AgentMux instances may run side-by-side; each gets its own complete 4-process stack keyed on data-dir channel.</desc>
+  <desc>agentmux-launcher (1 per channel, enforced by a single-instance lock) spawns agentmux-cef (1 per launcher) and agentmux-srv (1 per launcher, dynamic port). The host embeds Chromium via CEF (1 main renderer + N renderer subprocesses, one per browser pane). The main renderer loads the SolidJS frontend, which talks to the srv sidecar over a WebSocket. Multiple AgentMux instances may run side-by-side; each gets its own complete 4-process stack keyed on data-dir channel.</desc>
 
   <defs>
     <style>
@@ -42,9 +42,9 @@
   <g>
     <rect class="box" x="40" y="40" width="280" height="110"/>
     <text class="title" x="180" y="72" text-anchor="middle">agentmux-launcher</text>
-    <text class="sub"   x="180" y="96" text-anchor="middle">~325 KB shim · spawns host + srv</text>
+    <text class="sub"   x="180" y="96" text-anchor="middle">small shim · spawns host + srv</text>
     <text class="card"  x="180" y="125" text-anchor="middle">×1 per channel</text>
-    <text class="sub"   x="180" y="142" text-anchor="middle" style="font-size:12px;">(single-instance via named-pipe lock)</text>
+    <text class="sub"   x="180" y="142" text-anchor="middle" style="font-size:12px;">(single instance per channel and version)</text>
   </g>
 
   <!-- Row 1: cef host (right) -->
@@ -85,7 +85,7 @@
     <rect class="sidecar" x="40" y="490" width="880" height="90"/>
     <text class="title"    x="480" y="520" text-anchor="middle">agentmux-srv  ·  sidecar</text>
     <text class="bullet"   x="180" y="548" text-anchor="middle">RPC engine (websocket)</text>
-    <text class="bullet"   x="430" y="548" text-anchor="middle">saga coordinator · event bus</text>
+    <text class="bullet"   x="430" y="548" text-anchor="middle">reducer · event bus</text>
     <text class="bullet"   x="700" y="548" text-anchor="middle">SQLite persistence</text>
     <text class="card-side" x="480" y="570" text-anchor="middle">×1 per launcher · dynamic port · Rust + Tokio + Axum</text>
   </g>

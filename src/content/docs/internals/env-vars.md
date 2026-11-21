@@ -5,7 +5,7 @@ description: Every AGENTMUX_* variable in the process tree — who sets it, who 
 
 This page covers the variables that matter to the process tree and to a pane's environment, not every `AGENTMUX_*` variable in the code (there are over two hundred; most are test, debug or build switches). Every variable named here exists.
 
-This document is the canonical reference for every `AGENTMUX_*` (and `WAVEMUX_*` alias) environment variable that flows through the AgentMux process
+This document is the canonical reference for every `AGENTMUX_*` (and the `WAVEMUX_AGENT_ID` alias) environment variable that flows through the AgentMux process
 tree.
 
 ---
@@ -459,7 +459,7 @@ and Claude's bash output does not stream to the drone/log pane.
 | Attribute | Value |
 |-----------|-------|
 | **Who sets it** | The launcher generates a UUID v4 per run (`srv_spawner.rs`) and sets it on both srv and host |
-| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment (security hardening, PR #801). Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP` (`crates/srv-core/src/backend/pane_env.rs`), and `crates/srv-core/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
+| **Who reads it** | srv reads it at startup (`config.rs`) and removes it from its own process environment. Panes and agent processes get it again by design: it is on `PANE_ENV_KEEP` (`crates/srv-core/src/backend/pane_env.rs`), and `crates/srv-core/src/backend/shellintegration/lib/muxclient.mjs` and `agentmux-bashwrap` (`mps_client.rs`) read it, with `AGENTMUX_LOCAL_URL`, to authenticate to the instance's loopback API |
 | **Example** | `550e8400-e29b-41d4-a716-446655440000` (UUID v4) |
 
 **SECURITY:** srv removes the key from its own environment so that children it spawns by other paths don't inherit the bearer token. A pane is different: the shell helpers (`muxsh`, `muxlog`, `muxopen` and the rest) need it, so a pane's process holds an authenticated handle to the instance that spawned it. Anything started from a pane can use it. The allow-list comments in `pane_env.rs` call this the largest remaining coupling.
