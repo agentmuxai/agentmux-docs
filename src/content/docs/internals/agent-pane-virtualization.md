@@ -15,7 +15,7 @@ The renderer (`frontend/app/view/agent/virtualization/`) keeps only the rows in 
 
 The virtualized region is custom, not a virtualization library. Its rows sit at absolute positions taken from the layout slice (`frontend/app/store/agent-pane-layout/`), a reducer that holds each row's measured and estimated height and computes every position as a prefix sum of those heights, so neighbouring rows never overlap. Each mounted row reports its height to the slice through a `ResizeObserver`. The streaming buffer (the trailing 50 rows) is rendered with a normal `<Index>` so token deltas to active streaming nodes update in place — no recycling, no measurement lag. As rows age past the buffer, they transition into the virtualized region by which point their measurement has stabilized.
 
-Why `<Index>` and not `<For>` for the streaming buffer: each token replaces a node's object reference (immutable update preserves id but produces a fresh value), and `<For>` reconciles by reference, which would unmount and remount the streaming row on every token. `<Index>` keys by position and exposes the item as a Solid signal, so the same `DocumentRow` stays mounted while its `props.node()` re-reads.
+Why `<Key by=id>` and not `<For>` or `<Index>` for the streaming buffer: each token replaces a node's object reference (immutable update preserves the id but produces a fresh value), and `<For>` reconciles by reference, which would unmount and remount the streaming row on every token. `<Index>` keys by position, so a row's own state (its expanded state, its last status) would leak into whatever node later takes that position. `<Key by={n => n.id}>` ties each DOM slot to one node id for its lifetime and exposes the item as a Solid signal, so the same `DocumentRow` stays mounted while its `props.node()` re-reads.
 
 ### 2. Scroll state in data, not DOM
 
@@ -73,7 +73,6 @@ You may notice:
 |---|---|
 | `state.ts` | `AgentViewState` factory — single source of truth for scroll + streaming state |
 | `anchor.ts` | Pure scroll-anchor math (capture, restore, near-top/near-bottom) |
-| `streaming-buffer.ts` | `partitionForVirtualization(nodes)` splits the document into virtualized + streaming halves |
 | `renderers.ts` | Per-kind size estimators and streaming-capability flags |
 | `disclosure.ts` | `rowDisclosure`: whether a row is open, shared by the rows, the slice and the estimators |
 | `expansion-source.ts` | `currentExpansion`: maps that answer onto the layout slice's `Expansion` |
@@ -86,9 +85,8 @@ You may notice:
 | `scroll-memo.ts` | Remembers where each pane was scrolled across a reload of its window |
 | `zoom-anchor-adapter.ts` | Keeps the text under the pointer in place when the pane zoom changes |
 | `verbosity.ts` | The view presets and switches that hide routine rows (a view-layer filter) |
-| `perf-probe.ts` | Dev-mode per-kind timing + estimator-miss detection + layout-shift attribution |
 
-Test files sit next to these.
+Test files sit next to these. `streaming-buffer.ts` (`partitionForVirtualization(nodes)`, which splits the document into virtualized and streaming halves) and `perf-probe.ts` (dev-mode timing and estimator-miss detection) are in `frontend/app/agent-model/`.
 
 `frontend/app/devtools/agent-pane-perf-section.tsx` — the diagnostics-panel section that polls `agentPerfStore.snapshot()` at 1 Hz and renders the per-kind table.
 

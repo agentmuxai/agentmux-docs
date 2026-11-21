@@ -13,15 +13,16 @@ AgentMux is a desktop application built around a small set of long-running proce
 
 | Process | Role | Crate |
 |---|---|---|
-| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host; **owns the sidecar lifecycle**; durable event log; single-instance enforcement per (channel, version) — the I1 isolation invariant keys the IPC socket/pipe on `hash(data_dir + version)`. On Windows: sets DLL search path; sets up the launcher side of WRR (Window Reality Reconciliation); the Win32 hooks that feed it live in the host (`crates/cef/src/wrr/win_event.rs`). On Linux: AppImage entry point (A0, v0.42.x); Unix-socket IPC server + full reducer + saga coordinator (A1, v0.42.x). `task dev` on all platforms runs through the launcher (v0.41.0+). | `agentmux-launcher` |
+| **launcher** | Resilience and lifecycle layer on all platforms: spawns the host; **owns the sidecar lifecycle**; durable event log; single-instance enforcement per (channel, version) — the I1 isolation invariant keys the IPC socket/pipe on `hash(data_dir + version)`. On Windows: sets DLL search path; sets up the launcher side of WRR (Window Reality Reconciliation); the Win32 hooks that feed it live in the host (`crates/cef/src/wrr/win_event.rs`). On Linux: AppImage entry point; Unix-socket IPC server + full reducer + saga coordinator. `task dev` on all platforms runs through the launcher (v0.41.0+). | `agentmux-launcher` |
 | **host** | Embeds Chromium via CEF; owns the windows (CEF Views top-level windows — `browser_view_create` + `window_create_top_level`, [`crates/cef/src/app/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/app/mod.rs)), the browser panes, the JS bridge, and IPC fan-out to the renderer. New windows and tear-off floating panes are served from a hidden, pre-warmed pool (see below). | `agentmux-cef` |
 | **sidecar** | App-domain server: workspaces, tabs, blocks, layouts, agents, identity. Persists to SQLite. Spawned and supervised by the launcher (which owns its lifecycle); listens on a dynamic local port and serves the host + frontend over a WebSocket. Users never run it directly. | `agentmux-srv` |
 | **renderer** | A Chromium renderer process. A window's renderer runs the SolidJS frontend for that window, shared by all its tabs and non-browser panes. **Not a singleton** — every OS window gets its own renderer, and every [browser pane](/browser-pane/) inside a window adds another, running that pane's web page. See [Windows, tabs, panes and renderers](/internals/renderers/). Stateless — projects what the sidecar/host expose, dispatches user actions back through them. | `frontend/` |
 
-The Rust workspace has eight crates (`Cargo.toml`, `[workspace] members`). The three above, plus five that aren't long-running processes of the instance:
+The Rust workspace has nine crates (`Cargo.toml`, `[workspace] members`). The three above, plus six that aren't long-running processes of the instance:
 
 | Crate | What it is |
 |---|---|
+| `agentmux-srv-core` | The sidecar's engine, as a library: the RPC handlers, SQLite storage and migrations, the reducer, agents, memory, identity and the jekt layer. `agentmux-srv` (the binary) starts it and serves HTTP and WebSocket. |
 | `agentmux-common` | Shared library: path resolution (`DataPaths`), runtime mode, the IPC `Command`/`Event` types the launcher and sidecar reducers share, jekt signing. |
 | `agentmux-mcp` | The MCP server each agent's CLI spawns over stdio. It advertises the [MuxAPI](/internals/muxapi/) tools and forwards each call to the sidecar. |
 | `agentmux-bashwrap` | The streaming bash wrapper for agents' shell calls. It is also the program Claude Code's `PreToolUse`, `PreCompact` and `SessionStart` hooks run, and `ssh`'s askpass when AgentMux runs ssh for an agent. |
@@ -34,7 +35,7 @@ The Rust workspace has eight crates (`Cargo.toml`, `[workspace] members`). The t
 
 Each process owns one concern, end-to-end:
 
-- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports. The host observes Win32 (`SetWinEventHook` and the window procedure) and reports to the launcher. On Linux (v0.42.x+), the launcher is the AppImage entry point and runs the full reducer + saga coordinator over Unix-domain-socket IPC. WRR is **Windows-only by design** (not a roadmap gap — see [WRR](/internals/wrr/)); on macOS/Linux the cross-platform safety net for orphaned/crashed windows is the host's orphan reconciler.
+- **The launcher** is the resilience and lifecycle layer. It is the only process that survives an unexpected OS-level event (a window minimize, a monitor disconnection, a focus theft). On Windows, its WRR layer reconciles AgentMux's own model against what Win32 actually reports. The host observes Win32 (`SetWinEventHook` and the window procedure) and reports to the launcher. On Linux, the launcher is the AppImage entry point and runs the full reducer + saga coordinator over Unix-domain-socket IPC. WRR is **Windows-only by design** (not a roadmap gap — see [WRR](/internals/wrr/)); on macOS/Linux the cross-platform safety net for orphaned/crashed windows is the host's orphan reconciler.
 - **The host** is the only process with a CEF context. Windows are CEF Views top-level windows: the host calls `browser_view_create` + `window_create_top_level` and lets CEF Views handle resize, snap, and the frameless title bar natively. On Win32 the Views `window_handle()` can come back NULL, so window operations resolve the real `HWND` by enumeration. Browser panes, drag/drop, OS focus, and renderer crashes all live or die in the host. Crashing the host kills the user-facing window; the launcher restarts it.
 - **The sidecar** is the only process that owns durable state. The launcher spawns it (so its lifecycle survives a host crash); closing the host doesn't lose data — when the host comes back, it reads from the sidecar.
 - **The renderer** is intentionally state-poor. It's the projection of what the other processes hold; restarting the renderer (e.g. on hot reload) doesn't lose anything.
@@ -83,17 +84,17 @@ Every running instance resolves its paths through `agentmux-common::DataPaths` (
 
 | Mode | Channel root | Runtime dirs |
 |---|---|---|
-| **Installed** | `~/.agentmux/channels/<channel>/` (default `stable`) | `~/.agentmux/channels/<channel>/versions/<v>/` (v0.41.1+) — per-version runtime DB, cache, logs, IPC |
+| **Installed** | `~/.agentmux/channels/<channel>/` (default `stable`) | `~/.agentmux/channels/<channel>/versions/<v>/` — per-version runtime DB, cache, logs, IPC |
 | **Portable** (released `.7z`) | Same as installed | Same as installed |
 | **Portable** (local `task package`) | `~/.agentmux/channels/local-<branch>/` | No version sub-dir — local builds aren't versioned releases. |
 | **Dev** (`task dev`) | n/a | `~/.agentmux/dev/<branch>/<clone-id>/` — one dir per (branch × clone) pair. |
 
 Inside each channel dir, state is split into **channel-wide** and **version-scoped** paths:
 
-- **Channel-wide** (`channels/<channel>/`): `config/` (settings + per-provider auth dirs) and `agents/` (agent definitions). These survive version upgrades.
-- **Version-scoped** (`channels/<channel>/versions/<v>/`, v0.41.1+): `data/` (SQLite + launcher event log), `logs/` (host and sidecar logs), `cef-cache/` (cookies, IndexedDB, JS cache), `runtime/` (currently unused). These are isolated per release so concurrent versions on the same channel don't share session state or caches; the machine-wide stores under `shared/` are opened by every version.
+- **Channel-wide** (`channels/<channel>/`): `config/` (settings). These survive version upgrades; agent definitions, accounts and provider auth dirs are machine-wide, under `shared/`.
+- **Version-scoped** (`channels/<channel>/versions/<v>/`): `data/` (SQLite + launcher event log), `logs/` (host and sidecar logs), `cef-cache/` (cookies, IndexedDB, JS cache), `runtime/` (the single-instance lock and IPC files). These are isolated per release so concurrent versions on the same channel don't share session state or caches; the machine-wide stores under `shared/` are opened by every version.
 
-This is a two-step evolution: channels (mid-2026) collapsed the old per-version `~/.agentmux/versions/<v>/` layout into per-channel dirs so agents and settings survived upgrades. Then v0.41.1 reintroduced a *version-scoped* sub-dir for the runtime hazards (concurrent SQLite writers, shared CEF cache, single-instance pipe collisions) while keeping agents and settings channel-wide. See [Data layout](/internals/data-layout/), [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md), and [`SPEC_VERSION_ISOLATION_2026_06_01`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_VERSION_ISOLATION_2026_06_01.md) for the design.
+See [Data layout](/internals/data-layout/), [`SPEC_DATA_CHANNELS_2026_05_24`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_DATA_CHANNELS_2026_05_24.md), and [`SPEC_VERSION_ISOLATION_2026_06_01`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_VERSION_ISOLATION_2026_06_01.md) for the design.
 
 Account-wide state lives outside `channels/`: the shared databases and agent registries under `~/.agentmux/shared/`, agent working folders under `~/.agentmux/agents/`, and the launcher's `~/.agentmux/logs/agentmux-launcher.log`. Pre-migration snapshots auto-save in each version's `data/snapshots/<channel>-pre-v<ver>-<iso>.bak/` (newest 5 kept). See [Data structure](/internals/data-structure/) for the full map.
 

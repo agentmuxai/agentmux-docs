@@ -7,7 +7,7 @@ AgentMux has one shared error system across all four processes. The Rust crates 
 
 ## Why this exists
 
-Before the catalog, RPC handlers returned bare strings (`Result<T, String>`), file I/O errors bubbled up as raw `rusqlite::Error` text, and the renderer pasted whatever JSON it received into the UI. A "no space left on device" condition during a portable build surfaced as `sqlite error: disk I/O error` in the agent picker — accurate, but unactionable. The catalog turns that into:
+Without a catalog, a "no space left on device" condition would surface as a raw `sqlite error: disk I/O error` in the agent picker — accurate, but unactionable. The catalog turns that into:
 
 > **Device out of space**
 > Couldn't write to `C:/Users/.../objects.db` — no space left on the disk.
@@ -49,9 +49,9 @@ The `From<std::io::Error>` impl routes by `ErrorKind` + raw OS code so call site
 ```json
 {
   "code": "AMX-IO-001",
-  "message": "device out of space writing /home/x/.agentmux/instances/v0.33/cli/claude",
+  "message": "device out of space writing /home/x/.agentmux/shared/cli/claude/<version>",
   "details": {
-    "path": "/home/x/.agentmux/instances/v0.33/cli/claude",
+    "path": "/home/x/.agentmux/shared/cli/claude/<version>",
     "source_msg": "No space left on device (os error 28)"
   }
 }
@@ -113,7 +113,7 @@ The contract: codes are *forever stable* once shipped. Renaming the Rust variant
 ## See also
 
 - Design spec: [`docs/specs/SPEC_ERROR_CATALOG_2026_05_17.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_ERROR_CATALOG_2026_05_17.md) — full audit, migration plan, open questions.
-- [Modal system (modal-v2)](/internals/modal-system/) — the universal chrome `<ErrorBanner>` integrates with.
+- [Modal system](/internals/modal-system/) — the universal chrome `<ErrorBanner>` integrates with.
 - Source:
   - [`crates/common/src/errors.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/common/src/errors.rs)
   - [`frontend/app/errors/catalog.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/catalog.ts), [`translate.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/translate.ts), [`ErrorBanner.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/errors/ErrorBanner.tsx)

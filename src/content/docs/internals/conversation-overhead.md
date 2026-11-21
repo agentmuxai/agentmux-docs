@@ -22,7 +22,7 @@ Before the provider CLI process starts, AgentMux assembles and writes a `CLAUDE.
 | Global Memory | Global bundles (ordered) | `# [Workspace] <name>` sections every agent gets, after Operator Config's `# [AgentMux System]` ones |
 | The agent's bundles | Bundles picked for the agent (ordered) | `# [Bundle] <name>` sections, after Global Memory ([An agent's bundles](/bundles/#an-agents-bundles)) |
 | Skills index | Installed skills | `# Available Skills` section listing callable skills |
-| Template vars | Runtime | `{{AGENT}}`, `{{AGENT_DISPLAY}}`, `{{AGENT_ID}}`, `{{DATE}}` substituted at write time. `{{WORKING_DIR}}` is a supported placeholder but is not currently wired up on this path — see the note below. |
+| Template vars | Runtime | `{{AGENT}}`, `{{AGENT_DISPLAY}}`, `{{AGENT_SLUG}}`, `{{AGENT_ID}}`, `{{DATE}}`, `{{WORKING_DIR}}` substituted at write time. |
 
 Source: `crates/srv-core/src/backend/agent_config.rs` `build_config_files()`, `crates/srv/src/server/app_api/agent_open.rs` `write_agent_config_files()` (single call site: the `agent.open` RPC handler — fires once per agent-pane open, confirmed no other caller exists).
 
@@ -104,14 +104,14 @@ AgentMux does **not** accumulate or re-send conversation history. History owners
 
 In both cases AgentMux itself never holds or replays the conversation history.
 
-Context compaction (summarizing the conversation when the context window fills up) happens inside the CLI. It starts automatically when the CLI decides the window is nearly full, or when you click **Compact** in the agent pane, which sends `/compact`. AgentMux doesn't decide when auto-compaction happens: the CLI never reports its own context-window size, so AgentMux learns/seeds it from observed usage and applies a fixed buffer to estimate when compaction is imminent.
+Context compaction (summarizing the conversation when the context window fills up) happens inside the CLI. It starts automatically when the CLI decides the window is nearly full, or when you click **Compact** in the agent pane, which sends `/compact`. The CLI decides when auto-compaction happens, but AgentMux sets the point: for a Claude agent it writes Claude Code's `autoCompactWindow` from the `agent:compactat` setting (600,000 tokens by default; `0` leaves Claude Code's own point, its window minus 33,000), and it asks the running CLI where it will compact, so the context meter's countdown follows the real point.
 
 After a compaction the agent pane shows two rows:
 
 - **Context compacted**, with the token count before and after.
 - **Agent given a summary of the conversation**, with a one-line excerpt. Claude Code writes this summary and gives it to the agent; AgentMux only displays it, and sends nothing extra. Click the card to read the full summary. It's a [context delivery](/glossary/#context-delivery), not a message you sent.
 
-Compaction threshold for Claude Code CLI: `contextWindow - 33,000` tokens. Source: `frontend/app/store/agent-pane-state/context-window.ts` — `const COMPACTION_BUFFER = 33_000`.
+When the CLI hasn't said where it compacts, the pane estimates it as `contextWindow - 33,000` tokens. Source: `frontend/app/store/agent-pane-state/context-window.ts` — `const COMPACTION_BUFFER = 33_000`.
 
 ## Provider summary
 

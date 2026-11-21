@@ -33,7 +33,7 @@ No parameters besides `action`. Returns what is reachable from here, as JSON (`h
 ```json
 {
   "host": {
-    "version": "0.57.6",
+    "version": "<version>",
     "hostname": "desk",
     "local_url": "http://127.0.0.1:52011",
     "addressable": [
@@ -52,7 +52,7 @@ No parameters besides `action`. Returns what is reachable from here, as JSON (`h
     ]
   },
   "lan": [
-    { "instance_id": "v0.57.6", "hostname": "lab-pc", "version": "0.57.6", "address": "192.0.2.10",
+    { "instance_id": "v<version>", "hostname": "lab-pc", "version": "<version>", "address": "192.0.2.10",
       "port": 51873, "auth_key": "…", "agents": ["reviewer"],
       "first_seen": 1758690000, "last_seen": 1758700000, "other_ttl_secs": 4500 }
   ],
@@ -107,12 +107,8 @@ For what every agent should know and nobody needs to answer, `Message` `bulletin
 | WAN | 25 MB | 50 MB |
 
 - **LAN:** files travel only from a sender whose LAN signature verifies (`TRUST=lan-verified`). From any other LAN sender they are refused, and `Message` `send` says so. A verified message with files for an agent that is signed out or out of quota is held with its files for up to 24 hours and delivered with them.
-- **WAN:** files go only to an agent running now on an AgentMux 0.59.28 or later; otherwise nothing is sent. Each file is encrypted before it leaves the sender's computer. From 0.59.29, when the recipient's AgentMux is also 0.59.29 or later, each file's key is sealed to the AgentMux that runs the recipient, so the cloud relay can read the message text but not the files. A recipient on 0.59.28 receives files whose keys the relay can read, like the message text.
+- **WAN:** files go only to an agent running now on an AgentMux that can receive them; otherwise nothing is sent. Each file is encrypted before it leaves the sender's computer. Each file's key is sealed to the AgentMux that runs the recipient, so the cloud relay can read the message text but not the files.
 - **Trust:** files from a verified sender are delivered, and Claude agents see images and PDFs inline. Files from a sender with no proof of identity are listed by path but never shown inline. When a signature check actively fails, the files are withheld.
-
-:::note
-Sending files between two computers through the cloud relay, including sealed keys, hasn't yet had its final end-to-end test.
-:::
 
 ## Host and Channel tiers
 

@@ -1,6 +1,6 @@
 ---
 title: Clipboard & export
-description: How copy/paste, save-to-file, and open-in-editor are wired across panes in AgentMux — the CEF clipboard bridge, and where the surfaces (keyboard, context menu, action bar) plug in.
+description: How copy and paste are wired across panes in AgentMux — the CEF clipboard bridge, and where the surfaces (keyboard and context menu) plug in.
 ---
 
 AgentMux routes all clipboard interaction through **one** path: a thin frontend wrapper that calls into the host process via CEF IPC. CEF's Chromium blocks `navigator.clipboard.readText()` without a Permissions-Policy header, and `writeText()` works today but is fragile — the wrapper exists so every pane in the app behaves the same way regardless.
@@ -29,17 +29,9 @@ Errors propagate: `writeText` and `readText` reject when the underlying CEF IPC 
 
 An audit on 2026-05-18 found one direct call, in a sign-in panel that has since been removed, and routed it through the wrapper. New code must follow suit. If you need clipboard from a pane, the wrapper is your only API.
 
-## Surfaces: keyboard, context menu, action bar
+## Surfaces: keyboard and context menu
 
-A given copy action shows up in three places (one user-visible command, three discovery paths):
-
-| Surface | How it fires |
-|---|---|
-| Keyboard | `Ctrl+C` (general), `Ctrl+Shift+C` (terminals), `Ctrl+S` (save) |
-| Right-click | Context menu items: Copy, Copy All, Save Selection As… |
-| Action bar | Hover-revealed `[ Copy | Save ]` on long-output regions (terminals, log viewers) |
-
-The intent of putting one command in three places: discoverability without re-implementing the action.
+A copy action is reached from the keyboard (`Ctrl+C` in general, `Ctrl+Shift+C` in terminals) and from a right-click menu with Copy items. Each pane wires its own, as described below.
 
 ## What is selectable
 
@@ -54,20 +46,6 @@ The terminal pane ([`termwrap.ts`](https://github.com/agentmuxai/agentmux/blob/m
 3. **`onContextMenu` on the container** — show Copy / Copy All via `ContextMenuModel.showContextMenu`.
 
 Selection within xterm is managed by xterm.js itself, not by the browser — `xterm.css` sets `user-select: none` on the canvas. Use `terminal.getSelection()` to read it; never `window.getSelection()` on a terminal pane.
-
-## Save to file (Phase γ)
-
-For long-output surfaces (install logs, terminal scrollback, agent transcripts), one extra action:
-
-- **Save Selection As…** — writes the selection (or the whole content if nothing is selected) to a path picked via the OS save dialog. Default location: `~/.agentmux/clips/<timestamp>-<label>.txt`.
-
-Backend RPC: `RpcApi.WriteFile({ path, content, overwrite })`. The backend handler is planned; it does not exist yet.
-
-Cleanup: clips older than 7 days are pruned on startup. Capped at 1 MB per file.
-
-> **As of 2026-05-18 Phase γ has not shipped yet.** Track the roadmap in [`SPEC_UNIFIED_CLIPBOARD_2026_05_18.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/SPEC_UNIFIED_CLIPBOARD_2026_05_18.md) §4.
->
-> "Open in editor" was originally scoped here but cut after design review — selecting text for copy/paste doesn't imply moving the whole buffer into an editor. If that capability is needed later, it can chain `RpcApi.OpenExternalCommand(path)` after the save.
 
 ## Adding clipboard to a new pane
 

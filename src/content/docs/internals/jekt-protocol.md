@@ -12,7 +12,6 @@ A **jekt** is a message one agent sends another through AgentMux. This page is t
 | | |
 |---|---|
 | **Version** | 1 |
-| **Describes** | AgentMux 0.59.39 (`agentmux` main at `b986cf27f`, 2026-10-22), plus the one-delivery rule and the reply line (agentmux #5346) and the declared tier over MuxBus Cloud (#5348) |
 | **Status** | Living. It describes the current release. A change to any rule here ships with a change to this page. |
 | **Scope** | The send request, delivery between instances, signatures, trust and tier evaluation, the delivered marker, and the receiving agent's obligations. Not in scope: how the MuxBus Cloud relay stores and routes messages internally. |
 
@@ -118,6 +117,9 @@ A jekt for a known agent of this instance that can't take it now is stored and d
 | Reason | When | Delivered |
 |---|---|---|
 | `not_running` | The agent isn't running. AgentMux starts it first when it can; the answer then says `not_running, starting`, and the message follows as soon as the agent is up | When the agent starts |
+| `not_running, capacity` | The agent isn't running and a limit would refuse its start (the answer says which, and what has to be freed) | When it can be started |
+| `api_offline` | The agent is between turns and its model API is offline, so a message would start a turn that fails | When the API answers |
+| `peer_offline` | The agent runs on another machine on your network that is not answering now | When that machine is seen again |
 | `needs_login` | The agent is signed out, or its sign-in gate refused a start | After a confirmed sign-in |
 | `usage_limit` | The agent's account is out of quota. The answer carries the reset time when the provider gave one | When the agent can work again: an account move, the reset, or a clean turn. A message that must not wait (an `urgent` or `high` priority, or one naming a task waiting on the agent, `#12`) is still held when the limit has a known reset time, and also starts one small probe turn on the agent, at most once every 15 minutes; if that turn is clean, the held messages are sent. |
 | `idle` | A **routine** message reaches a Claude session that has been quiet for 55 minutes (`jekt:cold_hold_minutes`; `0` turns this off), so starting a turn on a cold context would cost more than the message says | When the agent is next active |
@@ -138,7 +140,7 @@ The `Message` tool returns exactly one of these:
 | `QUEUED for <to> — their agent is starting up, restarting or stopping` | The recipient's instance has it and delivers it when the agent is up. Don't resend. |
 | `QUEUED for <to> via the cloud relay (unconfirmed, expires in 30 min)` | Only MuxBus Cloud has it. **The same answer is given for a name that exists nowhere**; it adds a note when the relay says no agent of that name has signed in from your account. |
 | `HELD for <to> (not_running, starting)` | The agent was stopped and is being started now. Don't resend. |
-| `HELD for <to> (not_running)` / `HELD for <to> (needs_login)` / `HELD for <to> (usage_limit, until …)` | Held (Section 4.4). Don't resend. |
+| `HELD for <to> (not_running)` / `(not_running, capacity)` / `(api_offline)` / `(peer_offline)` / `(needs_login)` / `(usage_limit, until …)` | Held (Section 4.4). Don't resend. |
 | `HELD for <to> (idle)` | Held because the session is cold (Section 4.4). Send again with `urgent: true` only if it can't wait. |
 | `HELD for <to> (quota)` | Held because quota mode is tight and the agent has no turn in flight (Section 4.4). Send again with `urgent: true` only if it can't wait. |
 | `Message delivery failed (needs_login)` / `(unavailable)` / `(not_found)` | The agent could not start because it is not signed in, its account is out of quota, or no agent of that name was reachable, and the message could not be kept. |
@@ -369,7 +371,7 @@ These rules are for the agent that receives a jekt. AgentMux computes the labels
 Not normative. These are known differences between the protocol as built and what it should be; each is a candidate for a later version.
 
 - **No version field.** A future version should add one to the marker line.
-- **`PRIORITY` does nothing.** It is shown and stored, but changes neither order nor interruption.
+- **`PRIORITY` changes little.** It is shown and stored, and changes neither order nor interruption; the values `urgent` and `high` only make a message skip the idle hold (Section 4.4).
 - **Cross-channel failures are not enforced** as `sensitive` (they only block `ESCALATE=none`). Enforcement is planned once every instance publishes its keys.
 - **A missing sender renders as `FROM=unknown`** with a reply line, though `unknown` is not an agent.
 - **No threads.** A reply is a new jekt; nothing links it to the one it answers.
