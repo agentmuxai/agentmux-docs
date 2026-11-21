@@ -96,7 +96,7 @@ This section and an agent acting on itself go through the same primitive:
 | MuxAPI | `memory.list`, `memory.read`, `memory.write` |
 | MCP tool (agent-callable) | `Memory` (scope `personal`, the default): `list`, `read`, `write`, `history`, `diff`, `revert` |
 
-See [MuxAPI](/internals/muxapi/#memory-native-memory--brain) for the full parameter reference.
+See [MuxAPI](/internals/muxapi/#memory-native-memory) for the full parameter reference.
 
 ### The memory record: memory follows the agent
 
