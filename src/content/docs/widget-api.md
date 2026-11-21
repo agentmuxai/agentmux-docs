@@ -46,12 +46,12 @@ A widget is a folder named for its id, holding `widget.json` and the widget's fi
 | `description` | no | At most 300 characters. |
 | `author`, `homepage` | no | Shown in the prompt. `homepage` must be an `https://` link. |
 | `icon` | no | A [Font Awesome](https://fontawesome.com/icons) icon name. |
-| `defaultHue` | no | The pane color's hue, 0 to 359. It is snapped to the nearest of the 16 shared palette colors. |
+| `defaultHue` | no | The pane color's hue, 0 to 359. It is snapped to the nearest of the 12 palette hues. |
 | `kind` | no | `sandboxed` (the default) or `trusted`. |
 | `entry` | no | The page a pane loads when it names none: `index.html` by default. |
 | `permissions` | no | What it asks for (below). An unknown permission makes the package invalid. |
 | `contributes.panes` | yes | At least one. Each: `name` (lowercase letters, digits and `-`), `label`, and optionally `icon`, `entry`, `defaultMeta` (a new pane's initial state, keys written `widget:<id>:<key>`) and `singleton` (`true`: clicking the widget again brings back the pane that is already open instead of opening another; Shift-click still opens a new one. Default `false`). |
-| `contributes.commands` | no | Up to 20 entries in the command palette (see Commands and status bar items). Each: `id` (lowercase letters, digits and `-`), `title` (at most 60 characters), and optionally `icon`, `pane` (the pane it runs in, by `name`; the first one by default) and `keywords` (more words the palette's search matches). |
+| `contributes.commands` | no | Up to 20 entries in the command palette (see Commands and status bar items). Each: `id` (lowercase letters, digits and `-`), `title` (at most 60 characters), and optionally `icon`, `pane` (the pane it runs in, by `name`; the first one by default) and `keywords` (more words the palette's search matches, at most 200 characters). An `icon` is a Font Awesome name of at most 60 characters. |
 | `contributes.statusItems` | no | Up to 4 items in the status bar. Each: `id`, `text` (at most 40 characters), and optionally `icon`, `tooltip` (at most 120 characters), `command` (one of the widget's command ids, run on a click; without one, a click shows the widget's first pane) and `alignment` (`right`, the default, or `left`). |
 
 Each pane is a view named `ext:<id>/<name>`, for example `ext:acme.pr-dashboard/main`, and an entry in the widget bar's **more** menu.
@@ -181,7 +181,7 @@ The widget's page itself can't make network requests: `fetch` and the like are b
 
 | Method | Permission | |
 |---|---|---|
-| `am.tasks.list()` | `tasks:read` | The [Kanban](/kanban/)'s unfinished tasks and those finished in the last 7 days: each one's `num` (`#12`), `title`, `state` (`open`, `held`, `claimed`, `blocked`, `review`, `done`, `failed` or `cancelled`), `agent` (the one on it, else the one it waits for; empty for anyone), `repo`, `pr`, `checklist` (`{ done, total }`), `createdAt` and `updatedAt`. Never a task's prompt, the user's words or its result |
+| `am.tasks.list()` | `tasks:read` | The [Kanban](/kanban/)'s unfinished tasks and those finished in the last 7 days: each one's `num` (`#12`), `title`, `ref` (`#12` on the default board, `work#12` on another), `board` (the board's slug), `state` (`open`, `held`, `claimed`, `blocked`, `review`, `done`, `failed` or `cancelled`), `agent` (the one on it, else the one it waits for; empty for anyone), `repo`, `pr`, `checklist` (`{ done, total }`), `createdAt` and `updatedAt`. Never a task's prompt, the user's words or its result |
 
 ## Events
 

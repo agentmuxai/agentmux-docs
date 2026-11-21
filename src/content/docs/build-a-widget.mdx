@@ -134,7 +134,7 @@ Put `widget.json` in `public/` so it lands in `dist/`, then install `dist/widget
 
 ## Sign it
 
-Signing lets the install prompt say who published your widget, and warns your users if a later widget with your publisher name is signed by someone else. The SDK's `agentmux-widget` command does it (SDK 1.2.0 and later):
+Signing lets the install prompt say who published your widget, and warns your users if a later widget with your publisher name is signed by someone else. The SDK's `agentmux-widget` command does it:
 
 ```bash
 npx -p @agentmuxai/widget-sdk agentmux-widget keygen ~/.agentmux-widget-key.json   # once
