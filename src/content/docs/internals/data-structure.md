@@ -205,7 +205,7 @@ Source: [`wan_identity.rs`](https://github.com/agentmuxai/agentmux/blob/main/cra
 | `shared/cli/<provider>/<version>/` | npm install | Provider CLIs AgentMux installed; unused ones are pruned after 30 days |
 | `shared/backups/pre-migration-<version>-<time>/` | SQLite copies | `store.db` and `objects.db` before migrations ran; kept 30 days |
 | `shared/adoption-ledger.json` | JSON | Which older per-channel stores have been adopted |
-| `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `workspaces/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, layout files saved by earlier versions, exported workspaces (where **Export…** starts), sign-in refresh locks |
+| `shared/history/`, `audit/jekt-audit.jsonl`, `lan/instances/`, `layouts/`, `workspaces/`, `muxbus-locks/` | JSON, JSONL, locks | Session metadata cache, message audit log, LAN instances, layout files, exported workspaces (where **Export…** starts), sign-in refresh locks |
 | `shared/browser-bookmarks.json`, `browser-profiles.json`, `browser-start-page.json` | JSON | Browser pane bookmarks, named profiles, start page |
 | `agents/<slug>/` | Folder | An agent's working folder: its startup instructions file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, …), `.mcp.json`, `.claude/` settings and skills. AgentMux clears Rust build caches inside these folders; see [Build Cache Settings](/settings/#build-cache-settings) |
 | `widgets/<id>/` | Folder | Installed widgets: `widget.json`, signature, files |

@@ -9,7 +9,7 @@ AgentMux has **one** modal system. Don't invent ad-hoc `.foo-modal-header` / `.f
 
 ## The system
 
-Source: [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx) + [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss). No `modal-v2`, no `modal-v3`, no namespacing — just `modal`.
+Source: [`frontend/app/element/modal.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.tsx) + [`frontend/app/element/modal.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/element/modal.scss). The classes are plain `modal`, with no namespacing.
 
 ### Chrome classes
 

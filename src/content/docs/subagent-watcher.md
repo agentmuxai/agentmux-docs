@@ -150,7 +150,7 @@ Each row shows `$`, the description, a status and the elapsed time, which stops 
 - **stopped**, removed after 3 seconds;
 - **failed**, removed after 15 seconds.
 
-AgentMux reads these statuses from the task reports Claude Code writes to the agent's output stream, including for commands a subagent started, so a finished command no longer stays **running**. Right-click a row for **Copy description**.
+AgentMux reads these statuses from the task reports Claude Code writes to the agent's output stream, including for commands a subagent started, so a finished command is not left **running**. Right-click a row for **Copy description**.
 
 ### Clear completed
 

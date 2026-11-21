@@ -21,7 +21,7 @@ AgentMux keeps the last copy that opened cleanly as well. If the latest save doe
 
 **After an update:** the first launch of a new version copies the workspaces of the newest older version on the same channel, once. From then on each version keeps its own. Two versions running side by side never share workspaces. See [Running multiple instances](/multi-instance/).
 
-When a window opens with the default layout because nothing was restored, AgentMux can offer the newest layout another build saved in the last 14 days, in a notice such as "Restore the layout from 0.60.4 (closed 03:28 today): 3 tabs, 8 agents?" with **Restore** and **Not now**. It never offers a build that is running at that moment.
+When a window opens with the default layout because nothing was restored, AgentMux can offer the newest layout another build saved in the last 14 days, in a notice such as "Restore the layout from <version> (closed 03:28 today): 3 tabs, 8 agents?" with **Restore** and **Not now**. It never offers a build that is running at that moment.
 
 **Quitting doesn't close windows.** Every window that was open when you quit opens again at the next launch, with its tabs and panes. After a crash, the next launch reopens the workspace from its last save.
 

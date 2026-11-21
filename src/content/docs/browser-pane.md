@@ -150,7 +150,7 @@ A saved credential goes into the [Vault](/vault/) as a **Login** entry that belo
 
 When a saved credential matches a later request, AgentMux asks before using it, in a small separate window: "Use saved sign-in?" with **Approve** and **Deny**. This means an agent controlling the pane never sees the password. The request is denied if you don't answer within 60 seconds. If the site asks again within 15 seconds of an automatic sign-in, it has turned the password down: the manual dialog appears instead, and the entry is kept, marked "the site refused it: check the password", and not offered again until you save a new password for that user.
 
-Each sign-in appears in the Vault with the other logins, where you can change or delete it, and each use is in the Vault's Activity as "signed in", with the site. Sign-ins saved by an earlier version were kept in the operating system's keychain; AgentMux moves the ones it had noted into **Personal** at its next start, marked "moved from the old sign-in store: check the profile", and deletes the keychain copies. A sign-in it never noted can't be listed from the keychain: enter it once more and it is saved in the Vault.
+Each sign-in appears in the Vault with the other logins, where you can change or delete it, and each use is in the Vault's Activity as "signed in", with the site. A sign-in that is not in the Vault can't be listed: enter it once and it is saved there.
 
 ## Sign-ins on web pages
 

@@ -3,11 +3,7 @@ title: IPC catalog
 description: Every inter-process channel in AgentMux — transport, direction, authentication, and the bearer-token leak surface.
 ---
 
-**Checked against:** 0.60.10  
-**Host command list checked:** 2026-11-01  
-**Security sweep:** 2026-06-12 (the findings in section 16 date from it)  
-
-This document catalogs every inter-process channel in AgentMux, their wire contracts, authentication models, and security properties observed in the Sweep 2026-06-12. It is intended as both a developer reference and a security audit anchor point.
+This document catalogs every inter-process channel in AgentMux, their wire contracts, authentication models, and security properties. It is intended as both a developer reference and a security audit anchor point.
 
 ---
 
@@ -476,7 +472,7 @@ WebSocket at `ws://127.0.0.1:<srv_port>/ws`.
 
 `?authkey=<auth_key>` query parameter on the WebSocket upgrade URL (`crates/srv/src/server/auth.rs`). This is the only route that accepts the authkey via query string; all other routes require the `X-AuthKey` header.
 
-**Gap (audit C3):** The query-string authkey is visible in browser history, server access logs, and `Referer` headers on cross-origin navigations. Acceptable for WebSocket (where the browser API does not permit custom headers) but represents a key leak risk if the URL is ever logged or forwarded.
+**Gap:** The query-string authkey is visible in browser history, server access logs, and `Referer` headers on cross-origin navigations. Acceptable for WebSocket (where the browser API does not permit custom headers) but represents a key leak risk if the URL is ever logged or forwarded.
 
 ### Protocol
 
@@ -547,7 +543,7 @@ Or type-tagged messages for ping/bus/setblocktermsize/blockinput:
 
 ### CORS
 
-`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs`). External origins rejected. This is a narrowing from the previous `CorsLayer::permissive()` that accepted any origin (corrected in 2026-05-11 audit C3).
+`http://127.0.0.1:*` and `http://localhost:*` origins accepted (`crates/srv/src/server/routes.rs`). External origins rejected.
 
 ### Wire Format
 
@@ -634,7 +630,7 @@ None. The sequence is parsed from PTY byte stream. Any program running in the te
 | Sub-command | Wire example | Handler action | Security implication |
 |-------------|-------------|----------------|---------------------|
 | `E` | `\033]16162;E;{"AGENTMUX_AGENT_ID":"Alice"}\007` | Calls `RpcApi.SetMetaCommand` to write `{"cmd:env": <payload>}` into the block's persistent metadata (`termosc.ts`). Empty payload clears. | **Env-key injection**: any terminal program can write arbitrary keys into `cmd:env`. Values are then injected into child process environments (`shell.rs`). No key allow-list or value range is enforced. |
-| `X` | `\033]16162;X;{"muxbus_url":"https://...","muxbus_token":"tok"}\007` | Makes an authenticated `POST /agentmux/reactive/poller/config` to reconfigure the cloud MuxBus poller URL and token (`termosc.ts`). | **Poller injection**: any terminal program can redirect the srv's outbound polling to an attacker-controlled endpoint. Pre-audit C1/C2 this route was unauthenticated; now requires `X-AuthKey`. |
+| `X` | `\033]16162;X;{"muxbus_url":"https://...","muxbus_token":"tok"}\007` | Makes an authenticated `POST /agentmux/reactive/poller/config` to reconfigure the cloud MuxBus poller URL and token (`termosc.ts`). | **Poller injection**: any terminal program can redirect the srv's outbound polling to an attacker-controlled endpoint. The route requires `X-AuthKey`. |
 | `A` | `\033]16162;A;{}\007` | Sets `shell:state = "ready"` in block RT info | State metadata injection |
 | `C` | `\033]16162;C;{"cmd64":"<b64>"}\007` | Sets `shell:state = "running-command"`, decodes `cmd64` → `shell:lastcmd` | Last-command display |
 | `D` | `\033]16162;D;{"exitcode":0}\007` | Sets `shell:lastcmdexitcode` | Exit code display |
@@ -790,24 +786,21 @@ The variables srv puts in a pane's environment, who sets them and which are kept
 
 ## 16. Security Findings Cross-Reference
 
-This section maps the sweep findings to the specific code locations documented above.
+This section maps the security findings to the specific code locations documented above.
 
 | Finding | Location | Impact | Mitigation status |
 |---------|----------|--------|-------------------|
 | **`ipc_token` leaks via ipc-port file** | `crates/cef/src/lib.rs` writes `port:token` to `<data_dir>/ipc-port-<hash>` | Any process that can read data dir obtains both port and token; can drive Channel A and G fully | File permissions not explicitly restricted (unlike `authkey.dev`). The launcher reads it for single-instance forwarding. |
-| **`ipc_token` leaks via renderer URL query** | Frontend's load-time URL (not in scope of this sweep's source read; reported by sweep) | Token in browser history, `Referer`, process arguments | Not mitigated in code seen |
+| **`ipc_token` leaks via renderer URL query** | Frontend's load-time URL (its source is not read in this catalog) | Token in browser history, `Referer`, process arguments | Not mitigated in code seen |
 | **`authkey.dev` leaks both tokens (dev mode)** | `dev_authfile.rs`; written when `AGENTMUX_DEV=1` | Full API access with both `ipc_token` and `auth_key` | File is chmod 0600 / owner DACL. Dev-only. |
 | **`get_auth_key` IPC command returns srv auth key** | `ipc.rs` | Any renderer holding `ipc_token` can obtain `auth_key` (srv-side token) | No separate gate; design intentional (renderer needs both) |
 | **`get_env` returns any env var** | `platform.rs`; `ipc.rs` | Renderer can extract `AWS_SECRET_ACCESS_KEY`, `GITHUB_TOKEN`, etc. from the host process environment. Requires `ipc_token`. | No allowlist or blocklist enforced |
 | **`/agentmux/browser/eval` runs arbitrary JS** | `routes.rs` | Any caller with `ipc_token` can execute JS in any open browser pane (including cross-origin pages). | Auth: `ipc_token` required. No script length or content restriction. |
 | **OSC 16162 `E` injects env keys into block meta** | `termosc.ts` | Any program in the PTY can write arbitrary keys into `cmd:env`. Those keys are injected into future child process environments by `shell.rs`. | No key allowlist. No value validation. |
-| **OSC 16162 `X` reconfigures srv poller** | `termosc.ts` | Any terminal program can set the srv's outbound polling URL/token (pre-audit C1/C2: unauthenticated; post-audit: authed with `auth_key`) | Auth added in 2026-05-11 audit. `auth_key` required from renderer. |
+| **OSC 16162 `X` reconfigures srv poller** | `termosc.ts` | Any terminal program can set the srv's outbound polling URL/token | `auth_key` required from the renderer. |
 | **`CorsLayer::permissive()` on host IPC server** | `ipc.rs` | Any Origin accepted on `http://127.0.0.1:<ipc_port>`. Web pages from the renderer's browsed sites can make preflight-free requests if they guess/obtain the port and token. | Not mitigated. Srv has been narrowed to loopback-only origins (`crates/srv/src/server/routes.rs`); host has not. |
 | **CDP port unauthenticated, when on** | `crates/cef/src/cdp_port.rs`, `crates/cef/src/lib.rs` | Any local process can enumerate targets, execute JS, capture screens, intercept network. | Off in release builds unless `AGENTMUX_CDP_PORT` opts in; on in dev builds. Web origins refused via `--remote-allow-origins`. No auth. `no_sandbox: 1` widens blast radius. |
 | **No CSP on any route** | `ipc.rs`, `crates/srv/src/server/mod.rs` | XSS in the main window or a browser pane has no Content-Security-Policy barrier. | Not mitigated. |
 | **`no_sandbox: 1` in CEF settings** | `crates/cef/src/lib.rs` | Renderer processes run without OS sandbox. Renderer compromise can access host filesystem and processes directly. | Required for current platform support; documented limitation. |
-| **WS authkey in query string** | `crates/srv/src/server/auth.rs` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Restricted to `/ws` route only by the audit C3 fix. |
+| **WS authkey in query string** | `crates/srv/src/server/auth.rs` | `auth_key` in URLs, logs, `Referer`. Intentional WS-only exception (browser WS API cannot set custom headers). | Accepted on the `/ws` route only. |
 
----
-
-*Document generated by AgentY (sweep 2026-06-12). Sources verified by direct code reads; no features invented.*
