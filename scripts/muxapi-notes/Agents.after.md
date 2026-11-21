@@ -16,7 +16,7 @@
 | `requested` | Only what the pane was started with, or last asked for, is known. Not yet confirmed. |
 | `unknown` | Nothing says. The row says why, and no model is guessed. |
 
-A model or effort change waits for the end of the turn: until then the row shows the model the agent still runs and, as `pending_switch`, the one it will switch to.
+A model or effort change waits for the end of the turn. Until then the `model` facts (below) show the model the agent still runs, `pending_switch: true`, and, when the change is to another model, `pending_label`, the one it will switch to. A change of effort alone sets `pending_switch` and no `pending_label`. A call with no `fields` does not show a pending change.
 
 ##### Narrowing, paging and more facts
 
@@ -30,7 +30,7 @@ All of these are optional and combine with AND:
 | `limit`, `offset` | One page. The answer says `total`, `returned` and whether it was cut. |
 | `fields`, `detail` | Add a `facts` object to each row. `fields` is a comma list of groups, or `all`; `detail` is `basic`, `facts` (every group but `host`) or `full`. |
 
-The groups are `model` (id, label, effort, source), `runtime` (harness, native or container, image, permission mode, whether its pane is shown), `turn` (active, since, duration, last activity), `context` (tokens, window, percent, the point it compacts at, how often it has compacted), `account` (its label), `usage` (how much of each usage window of its account is used), `spend`, `task` (the Kanban tasks it holds), `session` and `host` (this AgentMux's name and version). A fact nothing says is left out, never filled in. A reading that has gone stale is marked `stale: true`, not dropped.
+The groups are `model` (id, label, effort, source, and a pending change), `runtime` (harness, native or container, image, permission mode, whether its pane is shown), `turn` (active, since, duration, last activity), `context` (tokens, window, percent, the point it compacts at, how often it has compacted), `account` (its label), `usage` (how much of each usage window of its account is used), `spend`, `task` (the Kanban tasks it holds), `session` and `host` (this AgentMux's name and version). A fact nothing says is left out, never filled in. A reading that has gone stale is marked `stale: true`, not dropped.
 
 "Which agents are not on Sonnet, and what are they doing" is one call: `Agents` `status` with `model: "!sonnet"`.
 
@@ -39,7 +39,7 @@ The groups are `model` (id, label, effort, source), `runtime` (harness, native o
 The same agents, one compact line each, for a glance at a whole fleet:
 
 ```
-Worker-1 | host-a | working (turn 4m) | Sonnet 5.5 high | ctx 62% | Work | 5h 60% 7d 44% | #1234
+Worker-1 | working (turn 4m) | Sonnet 5.5 high | ctx 62% | Work | 5h 60% 7d 44% | #1234
 ```
 
 With the counts by state and by model, and with `group_by` (`model`, `state`, `host`, `account`, `provider` or `runtime`) the agents grouped. It takes the same filters and `limit` as `list`. A model that is only requested, or has a change waiting, ends in `?`.
@@ -48,7 +48,7 @@ With the counts by state and by model, and with `group_by` (`model`, `state`, `h
 
 `host` on `list` and `status` asks another machine instead of this one: the name of a LAN peer as `list` shows it, or `all` for this machine and every peer at once, each asked in parallel with a 3 second wait. The peer answers a read-only operation, `agents.status`, so it must be a machine that has pinned your key and whose install this machine trusts, as for the other actions that take a `host`. Without `host` the answer is this machine only.
 
-Every row then says which host it is from, and a `hosts` block says for each machine whether it answered (`ok`, `unreachable`, `needs_upgrade` or `refused`), its version, and when its answer is from. A machine that does not answer, or runs a build too old to know the question, is listed by what the LAN poll already says of it (name, state, provider, kind) with `facts: "liveness_only"`: no model, never a guess. An agent that is reachable only through the cloud relay is not readable at the field level.
+Every row then says which host it is from (in a `status` line, the host's name comes right after the agent's name), and a `hosts` block says for each machine whether it answered (`ok`, `unreachable`, `needs_upgrade` or `refused`), its version, and when its answer is from. A machine that does not answer, or runs a build too old to know the question, is listed by what the LAN poll already says of it (name, state, provider, kind) with `facts: "liveness_only"`: no model, never a guess. An agent that is reachable only through the cloud relay is not readable at the field level.
 
 ##### What is not in the answer
 
