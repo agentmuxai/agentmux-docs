@@ -35,7 +35,7 @@ my-bundle/
 |---|---|
 | Instructions | The bundle's instructions, plus one override per provider. A provider's override replaces the default when the bundle runs on that provider. |
 | Context files | Files the bundle carries, such as `AGENTS.md` or `CLAUDE.md` for a project. |
-| Skills | Only skills in the Agent Skills format. A skill in AgentMux's older prompt format is skipped and the export says which. |
+| Skills | Only skills in the Agent Skills format. A slash-command skill (the **Slash command (/trigger)** type) is skipped and the export says which. |
 | Widgets | Sandboxed widgets only. See [Widgets in a bundle](#widgets-in-a-bundle). |
 | Personal Memory | The memory files of **one agent**. Only an agent-scoped export writes them. |
 | Project instructions | The instruction files the agent was reading in its repository, recorded for reference. An import lists them and never installs them. |
@@ -106,8 +106,6 @@ A bundle can carry the [widgets](/widgets/) its agents use. `bundle.json` lists 
 - **Account requirements**, when the archive lists any, matched against your accounts. An unmatched one is shown as unresolved.
 
 A warning on the review (a path that isn't safe, a missing file, an entry left out) can be dismissed with **Dismiss warnings**; the import itself never installs what it flagged. An archive is refused as a whole when it is over 100 MB, when one entry is over 10 MB uncompressed, or when its entries total over 50 MB uncompressed.
-
-AgentMux also imports archives written by earlier AgentMux releases.
 
 Personal Memory travels differently from the rest. The review's Import never writes it into a bundle, and says so. An agent-scoped import (`bundle.import_for_agent`) writes the `memory/` files into one agent, and only an agent that has no Personal Memory yet: it refuses rather than overwrite.
 

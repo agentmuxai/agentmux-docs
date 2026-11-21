@@ -226,7 +226,7 @@ A started run is replayed from a step with `replaydronerun`: a new run starts fr
 
 ## Drone templates
 
-AgentMux ships four Drone templates. A template runs only once you approve it, and its prompt names its trigger, the size of its graph and how many blocks start an agent, every call that writes outside AgentMux, its outputs and secrets, and its default caps. Its graph is checked when it is read: at most 100 blocks and 300 edges, and no **Drone** or **Run** block. A template's text can hold `{{param.<name>}}` placeholders, filled from the parameters you give.
+AgentMux ships seven Drone templates. A template runs only once you approve it, and its prompt names its trigger, the size of its graph and how many blocks start an agent, every call that writes outside AgentMux, its outputs and secrets, and its default caps. Its graph is checked when it is read: at most 100 blocks and 300 edges, and no **Drone** or **Run** block. A template's text can hold `{{param.<name>}}` placeholders, filled from the parameters you give.
 
 To use one, approve it, make its drone with `jobs.templates.make_drone` (the template's `id`, optional `version`, `params` and `name`; it saves an ordinary drone you can edit and starts nothing), then make a job whose action is that drone.
 
@@ -236,6 +236,13 @@ To use one, approve it, make its drone with `jobs.templates.make_drone` (the tem
 | **Check and file a task** | Every 6 hours, UTC | An agent checks **What to check** and answers OK or describes the problem. Only a problem files a Kanban task for **Who gets the task** (empty is the backlog), and a problem still there on the next check adds a line to the same task. $1 per run |
 | **Two-agent hand-off** | By hand | One agent does **First agent's work**, a second does **Second agent's work** from the first one's answer, and the result goes to **Who to tell** as a message. $3 per run |
 | **After an upgrade: health check** | Five minutes after AgentMux starts on a new version | Checks that this computer's agents are running, that cloud messages reach it and that the LAN peers answer. All well: one line to **Who to tell**. Otherwise a Kanban task for **Who gets the task** that names what is not up, and a notification. A restart that is not an upgrade starts nothing. $1 per run |
+| **Triage a failed nightly** | Every 15 minutes, polling GitHub | For each new failed scheduled workflow run of **Repository**, an agent reads the failed job's log and names the cause, the suspect commit and how sure it is. Unless it is unsure, a Kanban task goes to **Who gets the task** (one task per workflow, with a line for each red night) and **Who to tell** gets one line. Polling uses no agent tokens: the agent runs only on a failure. Needs a **Vault entry** with a GitHub token that can read the repository. $1 per run |
+| **Flag a flaky job's first failure** | Every 10 minutes, polling GitHub | When the workflow you name (**The flaky workflow**) fails on its first attempt in a pull request, **Who to tell** gets one line with the run's link and a note to re-run it. It starts nothing itself, and a run is told once. Needs a **Vault entry** with a GitHub token. $1 per run |
+| **A merged pull request whose task is still claimed** | Every 10 minutes, polling GitHub | Thirty minutes after a pull request merged, if a Kanban task with its link is still claimed, **Who to tell** gets one line naming the task and who holds it. Needs a **Vault entry** with a GitHub token. $1 per run |
+
+## The `Drone` tool for agents
+
+Agents have a `Drone` MCP tool: `list` (the drones, each with its id, name, block count and whether the agent may fire it), `get` (what one drone does, which blocks write outside AgentMux and which credentials it reads), `fire` (start a run with an `input` object as the run's payload; it is recorded as the agent) and `runs` (the latest runs, up to 50, with status and output). An agent can't fire a drone that writes outside AgentMux, reads a Vault credential, runs a command or calls another drone: a person runs those from the Drone pane, and `list` says which and why.
 
 ## See also
 
