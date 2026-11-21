@@ -71,7 +71,7 @@ With discovery on, each AgentMux found on your network is a row in the popover. 
 | **Agents** | How many agents it has, with **Show in Swarm** |
 | **Last seen** | How long ago the peer was last seen |
 
-A peer whose agent sent a message that was refused because its key changed has a warning on its row, with **Review in Settings › Devices › Paired devices**. Accepting a new key stays in Settings, beside its explanation. The pill doesn't change a peer's trust by itself, and has no control to send to or quarantine a peer: agents send with the `Message` tool.
+A peer whose agent sent a message that was refused because its key changed has a warning on its row, with **Review in Settings › Devices › Pinned senders**. Accepting a new key stays in Settings, beside its explanation. The pill doesn't change a peer's trust by itself, and has no control to send to or quarantine a peer: agents send with the `Message` tool.
 
 ## Pairing the mobile app
 
