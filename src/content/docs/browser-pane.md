@@ -120,7 +120,7 @@ Choosing an entry opens a **new tab in the same pane**, at the current page (or 
 
 - **Personal** is the identity every tab starts with: your saved sign-ins. Its tabs carry no dot.
 - **A profile** keeps its own sign-ins, cookies and site data on disk, apart from Personal and the other profiles, so one site can be open as two accounts side by side. Create one from **New profile…**. A new profile opens at your Home page, since it is signed in nowhere. Rename, recolour, delete and allow agents to use them in **Settings ▸ Browser**. Deleting a profile closes its tabs and signs it out; if it has saved sign-ins, you choose **Move them to Personal** or **Delete them too**.
-- **An agent's browser pane** (`Browser` `open`) browses as your Personal profile by default for an agent on your computer, and in a fresh Incognito jar for a container agent. The answer to `open` says which one the pane got, and its `profile` argument picks another.
+- **An agent's browser pane** (`Browser` `open`) browses with a profile of the agent's own by default, named after the agent and kept between panes, restarts and upgrades (the same for an agent on your computer and a container agent). The answer to `open` says which one the pane got, and its `profile` argument picks another: `personal` for your own sign-ins (not for a container agent), `incognito` for a fresh jar that is gone when the pane closes, or a profile you have let agents use in Settings ▸ Browser.
 - **An Incognito tab** has its own cookie jar, separate from your normal browsing and from every other Incognito tab. Nothing is saved, and it's gone when the tab closes.
 
 An agent can browse as a profile only if you switch on **Agents may use it** for that profile in Settings ▸ Browser.

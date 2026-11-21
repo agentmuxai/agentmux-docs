@@ -15,7 +15,7 @@ Connectors is a regular pane (icon: `plug`), opened from the widget bar like any
 
 | Section | What it manages |
 |---|---|
-| **Accounts** | Sign-ins to providers and services: Claude, Codex, GitHub, Google (Gmail, Calendar and Drive), AWS, OpenAI, Anthropic, Slack, AgentMux Cloud and a custom bearer token. Each account card says how many agents use it. |
+| **Accounts** | Sign-ins to providers and services: AgentMux, GitHub, Google (Gmail, Calendar and Drive), AWS, OpenAI, Anthropic, xAI, Moonshot, Slack and a custom bearer token. Each account card says how many agents use it. |
 | **MCP servers** | The MCP server catalog: global servers plus any agent-private ones |
 | **Remotes** | The SSH hosts and WSL distributions AgentMux can open terminals, files and agents on. See [Remotes](#remotes). |
 

@@ -58,9 +58,9 @@ A new container agent sends its starter prompt by itself once you sign in.
 
 ### The image follows AgentMux
 
-A container keeps the image it was made from, so after you upgrade AgentMux it can run an older one. When it does, and the agent is idle, AgentMux removes the container and starts the next one from the current image, and the pane says "Updated the container to the 0.60.9 image". Your workspace and Personal Memory are kept. Tools you installed inside the container are installed again.
+A container keeps the image it was made from, so after you upgrade AgentMux it can run an older one. When it does, and the agent is idle, AgentMux removes the container and starts the next one from the current image, and the pane says "Updated the container to the <version> image". Your workspace and Personal Memory are kept. Tools you installed inside the container are installed again.
 
-If a turn is running, or you want it now, the pane shows "This container uses the 0.59.41 image" with an **Update container** button (the same as `Agents` `update_container`). It refuses while a turn is running. It does nothing for an agent pinned to a version or running its own image, and says so.
+If a turn is running, or you want it now, the pane shows "This container uses the <version> image" with an **Update container** button (the same as `Agents` `update_container`). It refuses while a turn is running. It does nothing for an agent pinned to a version or running its own image, and says so.
 
 ## CPU and memory limits
 
@@ -142,10 +142,10 @@ Claude Code in a container signs in with the account bound to the agent. On a Ma
 Everything a Native agent can do with AgentMux's tools, except what is listed below. The differences that show:
 
 - **Panes and files.**
-  - A file it shows you in an Editor or Media pane opens as a read-only snapshot of the copy in its workspace; its title says `(read-only snapshot, <time>)`, and it doesn't change when the agent changes the file. A snapshot is capped (10 MB for an editor, 50 MB for a media file) and is removed when its pane closes. A folder, a terminal, a pane on another machine and a path outside the workspace can't be opened this way.
+  - A file it shows you in an Editor pane opens as a read-only snapshot of the copy in its workspace; its title says `(read-only snapshot, <time>)`, and it doesn't change when the agent changes the file. A snapshot is capped (10 MB for an editor, 50 MB for a media file) and is removed when its pane closes. A folder, a terminal, a pane on another machine and a path outside the workspace can't be opened this way.
   - It can open a folder of its workspace in a [Files pane](/pane-types/#files). That pane is read-only and confined to the folder: it lists, navigates and previews files and opens them in the Editor, and a link that leads out of the folder is refused.
   - **Browser** `set_files` uploads files from its own `/workspace` (at most 10 files and 25 MB in all).
-  - A browser pane it opens browses in a fresh Incognito jar by default, never your Personal profile, and the answer says which one the pane got. See [Profiles and Incognito](/browser-pane/#profiles-and-incognito).
+  - A browser pane it opens browses with a profile of the agent's own by default, named after the agent and kept between panes and restarts, and never your Personal profile; the answer says which one the pane got. See [Profiles and Incognito](/browser-pane/#profiles-and-incognito).
 - **Dev servers.** An agent that registers its dev server with the command that starts it (`RegisterDevServer` with `command`, and `dir` if it isn't `/workspace`) has AgentMux start the server and keep it up: when the container next runs a turn and nothing is listening, AgentMux runs the command again and registers the route with the container's new address, so `http://<project>-<agent>.localhost:8090` keeps working. A registration without a command lasts only as long as the container. See [`RegisterDevServer`](/internals/muxapi/#registerdevserver). Where the workspace is a file-sharing mount that sends no change events (Docker Desktop on Windows and macOS), AgentMux sets `CHOKIDAR_USEPOLLING`, `CHOKIDAR_INTERVAL` and `WATCHPACK_POLLING` so hot reload sees the agent's edits; a variable the agent's environment sets already is left alone.
 - **Widgets.** It can install a widget it built under `/workspace`; each file is checked as it is copied out. The install is reviewed like any widget an agent installs. See [Widgets](/widgets/).
 - **Seats and environment.** It can set seats (`Agents` `set_seat`) and read or change an agent's environment (`env_get`, `env_set`), its own or another agent's, under the same rules a Native agent meets. See [Seats](/first-agent/#seats).

@@ -7,7 +7,7 @@ description: Reusable sets of instructions and skills, managed in Memory → Bun
 AgentMux is **alpha software** and under heavy active development. Many features described in these docs may be incomplete, unstable, or not yet implemented. Expect breaking changes between releases. We welcome bug reports and feedback on [GitHub Issues](https://github.com/agentmuxai/agentmux/issues) or [Discord](https://discord.com/invite/96erama9Ar).
 :::
 
-A **Bundle** is a reusable set of what an agent starts with: instructions (a system prompt, the "Soul"), per-provider instruction overrides and skills. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** panel or its pane's right-click menu. You can import a bundle from an [Agent Bundle Format (ABF)](/abf/) file.
+A **Bundle** is a reusable set of what an agent starts with: instructions (a system prompt, the "Soul"), per-provider instruction overrides and skills. You manage bundles in [Memory → Bundles](/memory/#bundles). An agent takes [several, in order](#an-agents-bundles), picked when you create it and changed later from **Bundles…** in its **My Agents** panel. You can import a bundle from an [Agent Bundle Format (ABF)](/abf/) file.
 
 ## What goes in a bundle
 
@@ -32,7 +32,7 @@ You pick bundles in these places, all with the same control: each picked bundle 
 | Where | When it's saved |
 |---|---|
 | The new-agent panel's **Bundles** field | When you click **Create and start**. It starts empty. |
-| **Bundles…** in the agent's **My Agents** panel, or in its pane's right-click menu | On each change. |
+| **Bundles…** in the agent's **My Agents** panel | On each change. |
 
 **At launch,** in list order:
 
@@ -53,7 +53,7 @@ Bundles are managed **app-wide only**:
 
 ![Editing a bundle: name, description, the provider it's suggested for, instructions, and instructions for Codex that replace the bundle's own](../../assets/screenshots/memory/memory-bundle-edit.png)
 
-**Bundles…** (in an agent's **My Agents** panel, or in the right-click menu of its pane) picks which bundles that agent starts with, and links to **Memory → Bundles**, but doesn't edit bundles itself.
+**Bundles…** (in an agent's **My Agents** panel) picks which bundles that agent starts with, and links to **Memory → Bundles**, but doesn't edit bundles itself.
 
 :::caution[Bundles are not Personal Memory]
 The **Global** and **Personal** sections of [Memory](/memory/), and the **Personal memory** item in an agent pane's right-click menu, do **not** open the Bundle editor described on this page. They open **Global Memory** and **Personal Memory**, different primitives covered on the [Memory](/memory/#personal) page.
