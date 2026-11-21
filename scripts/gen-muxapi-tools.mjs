@@ -25,7 +25,7 @@ const AREAS = [
     { title: "Browser panes", tools: ["Browser"] },
     { title: "Terminals and commands", tools: ["Terminal"] },
     { title: "Other agents", tools: ["Agents", "Message", "Presence", "Stop", "Sensitive"] },
-    { title: "Work and schedules", tools: ["Tasks", "Schedule"] },
+    { title: "Work and schedules", tools: ["Tasks", "Schedule", "Drone"] },
     { title: "Memory, secrets and accounts", tools: ["Memory", "Skills", "Vault", "Identity"] },
     { title: "Widgets and AgentMux itself", tools: ["Widget", "App", "Desktop", "RegisterDevServer"] },
     { title: "Google", tools: ["Google", "Calendar", "Drive", "Gmail"] },
