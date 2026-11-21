@@ -62,13 +62,13 @@ While LAN discovery is on and at least one LAN listener is bound, the server adv
 
 - instance name `agentmux-<hostname>-<port>`, host name `<hostname>.local.`;
 - the server's web port and the machine's IP addresses;
-- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v0.60.36`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
+- TXT record: `version`, `hostname`, `instance_id` (`v` plus the version, for example `v<version>`), and `auth_key`, which holds the **`lan_key`**, not the full auth key.
 
 It also listens on UDP port 47891. A datagram `{"type":"agentmux_discover","v":1}` from a private, link-local or loopback address gets a unicast reply:
 
 ```json
-{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v0.60.36",
-  "hostname": "<hostname>", "version": "0.60.36", "port": <web port>, "auth_key": "<lan_key>" }
+{ "type": "agentmux_discover_response", "v": 1, "instance_id": "v<version>",
+  "hostname": "<hostname>", "version": "<version>", "port": <web port>, "auth_key": "<lan_key>" }
 ```
 
 Neither channel has confidentiality or authentication. Anyone on the broadcast domain learns the machine's hostname, AgentMux version, server port and `lan_key`, and can then send messages to its agents. The `lan_key` is regenerated at each launch.

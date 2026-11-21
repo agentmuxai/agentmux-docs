@@ -415,15 +415,15 @@ The stored hex only names a slot: a window tab is drawn in the pane-tab pill ton
 
 Tab color is stored in `tab.meta["tab:color"]` (a MuxObject meta field, `srv-types.d.ts`). The startup tab is intentionally left without a color (`tabbar.tsx`). Tab color feeds **the tab bar indicator**, not the pane border directly — tab colors are a separate visual affordance from the pane focus ring.
 
-### 4.6 The 2026-06-12 Border Fix
+### 4.6 The focus border rules
 
-The focus border was broken by two bugs addressed in `docs/specs/pane-highlight-fix-plan.md`:
+Three rules keep the focus border correct (design notes in `docs/specs/pane-highlight-fix-plan.md`):
 
-1. **Wrong metric bug:** The pane count read the tab's `blockids` (frozen at window-init, includes non-visible blocks) and when it reached 1 applied `block-no-highlight` with `!important`, suppressing the border. Fix: remove `block-no-highlight` entirely. Files: `blockframe.tsx`, `blocktypes.ts`, `block.scss`.
+1. **The border does not depend on a pane count.** A pane keeps its focus border whatever the tab's `blockids` hold; no class (such as the removed `block-no-highlight`) suppresses it when a tab has one pane.
 
-2. **No-bootstrap bug:** `validateFocusedNode` was a no-op when both `treeState.focusedNodeId` and `focusedNodeIdStack` were `undefined` (fresh tab). Fix: auto-focus `leafOrder[0]` in the bootstrap case (now the first non-picker leaf, via `defaultFocusLeaf`). File: `layoutFocus.ts` (code now present at this location).
+2. **A fresh tab gets a focused node.** `validateFocusedNode` bootstraps focus when both `treeState.focusedNodeId` and `focusedNodeIdStack` are `undefined`: it focuses `leafOrder[0]`, the first non-picker leaf (`defaultFocusLeaf`, `layoutFocus.ts`).
 
-3. **LayoutModel memory leak:** `deleteLayoutModelForTab` did not call `model.dispose()` on tab drag-out, leaving a live reactive root. Fix: call `model.dispose()` after the tab moves to the other workspace. Files: `frontend/layout/lib/layoutModelHooks.ts` (`deleteLayoutModelForTab` now calls `model.dispose()`), called on drag-out from `frontend/app/drag/CrossWindowDropOverlay.tsx`.
+3. **A tab dragged out disposes its model.** `deleteLayoutModelForTab` (`frontend/layout/lib/layoutModelHooks.ts`) calls `model.dispose()` after the tab moves to the other workspace, so no reactive root outlives it. It is called on drag-out from `frontend/app/drag/CrossWindowDropOverlay.tsx`.
 
 ---
 

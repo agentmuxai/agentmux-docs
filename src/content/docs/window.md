@@ -36,7 +36,7 @@ Right-click a window tab to colour it or rename it: pick one of the 14 palette c
 
 No two tabs in a window share a name, ignoring case. A new, renamed or moved tab whose name is taken gets a counter: "Tab 4 (2)", "Report (2)". A new tab is named with the next free "Tab N". A name that ends in a year, such as "Report (2024)", keeps it, and the counter goes after it: "Report (2024) (2)".
 
-![A window tab's menu: tab colours (an earlier set), Clear color, Rename and Close menu](../../assets/screenshots/chrome/chrome-tab-menu.png)
+![A window tab's menu: tab colours, Clear color, Rename and Close menu](../../assets/screenshots/chrome/chrome-tab-menu.png)
 
 ### Closing a tab
 

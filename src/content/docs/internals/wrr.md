@@ -43,7 +43,7 @@ Without compensation, the open-transient corrective logic for `HiddenSinceOpen` 
 
 The reducer's `state.just_promoted_labels` set bridges that microsecond gap: the promote handler inserts into it, the next `ReportWindowOpened` for the same label drains it and starts the new mirror with `foregrounded_since_open: true`. This is `apply_hwnd_visibility_changed`'s gate.
 
-The full forensic write-up is in [`docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md). The PR that closed the gap end-to-end is #709.
+The full forensic write-up is in [`docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/ANALYSIS_DRIFT_STORM_RENDERER_CRASH_2026-05-06.md).
 
 ## Order tolerance
 
@@ -51,7 +51,7 @@ WRR commands assume the IPC is **out-of-order tolerant**. The host's actual emit
 
 So `handle_report_pool_window_promoted` checks: if the open already created the mirror (out-of-order), mark it foregrounded directly and don't bother with the bridge set. Otherwise, insert into `just_promoted_labels` and let the open-time path drain it.
 
-Proptests in `crates/launcher/src/reducer/tests.rs` (`both_drain_paths_remove_just_promoted_entry`, `just_promoted_labels_bounded_by_distinct_labels_ever_promoted`) assert the set is always drained — either by the next open for the same label, or by a close. Bug found on PR #709 round 2.
+Proptests in `crates/launcher/src/reducer/tests.rs` (`both_drain_paths_remove_just_promoted_entry`, `just_promoted_labels_bounded_by_distinct_labels_ever_promoted`) assert the set is always drained — either by the next open for the same label, or by a close.
 
 ## Where WRR lives
 
@@ -84,9 +84,9 @@ See [Debugging](/internals/debugging/) for live-tail recipes (`muxlog`, pointer 
 Win32 races aren't reproducible from unit tests. The reducer's coverage relies on:
 
 - **Proptests** that fuzz the order of arrival of `ReportPool*` and `ReportWindow*` commands within a session and assert invariants (no leaked `just_promoted_labels`, no double-mirrors, no drift storm).
-- **Integration tests** that drive the launcher through a real host process, with a real CEF, against a real Chromium, on a real Windows desktop — the only way to catch a regression like the v0.33.655 storm.
+- **Integration tests** that drive the launcher through a real host process, with a real CEF, against a real Chromium, on a real Windows desktop — the only way to catch a drift storm.
 
-The bug pattern in PR #709 — a regression that only surfaced under specific monitor configurations — is the canonical reminder that **proptests + integration is required**, not optional.
+A regression that only surfaces under specific monitor configurations is the canonical reminder that **proptests + integration is required**, not optional.
 
 ## See also
 

@@ -126,7 +126,7 @@ A rule that only matters for one kind of task belongs in a skill. A rule that mu
 
 ### Which agents a skill reaches
 
-**AgentMux comes with one skill**, `disk-cleanup`: measure what AgentMux and builds leave on the disk first, say what is safe to remove, and ask before deleting anything. It is added once, reaches every agent, and is never overwritten: your edits stay, and a delete is final. You can switch off its reach as for any skill, below. The starter skills that earlier versions added are removed, unless you edited, renamed or bound one.
+**AgentMux comes with one skill**, `disk-cleanup`: measure what AgentMux and builds leave on the disk first, say what is safe to remove, and ask before deleting anything. It is added once, reaches every agent, and is never overwritten: your edits stay, and a delete is final. You can switch off its reach as for any skill, below.
 
 **A global skill reaches the agents it is bound to**, directly or through a [bundle](/bundles/) that includes it, and the agents its **reach** covers. A skill bound to nobody, with no reach, reaches nobody: it stays in the catalog and no agent sees it. Binding or unbinding takes effect at the agent's next launch.
 

@@ -9,8 +9,7 @@ no UI automation. It measures the **wall-clock interval from sending a
 command into a PTY until its echo appears in the output stream**, then
 reports p50/p95/p99/max across configurable sample counts.
 
-The benchmark was written to validate the in-flight write fix in PR #926
-and to give agents a repeatable, CI-friendly instrument for catching future
+The benchmark gives agents a repeatable, CI-friendly instrument for catching
 regressions in the terminal render path.
 
 ## Prerequisites
@@ -101,20 +100,20 @@ prompts. The pane is isolated — the benchmark never touches existing tabs.
 | **Quiet** | Shell at prompt, no concurrent output | Baseline echo path, scheduler cost |
 | **Busy** (`--busy`) | `seq 1 50000 > /dev/null &` running during measurement | RAF coalescing contention, in-flight write interactions |
 
-The **busy scenario** is the one most sensitive to xterm.js batching bugs. The
-in-flight write fix (PR #926) specifically targets this path: before the fix,
-keystroke echoes fell through to the RAF queue when a large PTY batch was
-in-flight, adding up to one frame (~16 ms) of jitter.
+The **busy scenario** is the one most sensitive to xterm.js batching bugs. While a
+large PTY batch is in flight, a keystroke echo that falls through to the RAF
+queue adds up to one frame (~16 ms) of jitter, which is what this scenario
+shows.
 
 ## Before/after comparison
 
 Save results before and after a change, then diff with Node:
 
 ```bash
-# Baseline (pre-fix branch or released version)
+# Baseline (the branch before your change, or a released version)
 node tools/tests/bench-term-echo.mjs --busy --output-file before.json
 
-# After applying the fix
+# After your change
 node tools/tests/bench-term-echo.mjs --busy --output-file after.json
 
 # Compare

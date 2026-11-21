@@ -21,7 +21,7 @@ The bug report form asks for:
 - **Platform**, **OS version** and **architecture**
 - Anything else, such as screenshots or logs
 
-To find the version, click the version number (for example `v0.60.36`) at the right end of the status bar. The instance panel that opens starts with these rows (`frontend/app/statusbar/InstancePanel.tsx`):
+To find the version, click the version number (for example `v<version>`) at the right end of the status bar. The instance panel that opens starts with these rows (`frontend/app/statusbar/InstancePanel.tsx`):
 
 | Row | Shows |
 |---|---|

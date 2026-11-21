@@ -27,7 +27,7 @@ Errors propagate: `writeText` and `readText` reject when the underlying CEF IPC 
 
 ### Rule: never call `navigator.clipboard.*` directly
 
-An audit on 2026-05-18 found one direct call, in a sign-in panel that has since been removed, and routed it through the wrapper. New code must follow suit. If you need clipboard from a pane, the wrapper is your only API.
+All code goes through the wrapper. If you need clipboard from a pane, the wrapper is your only API.
 
 ## Surfaces: keyboard and context menu
 
