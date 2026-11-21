@@ -3,10 +3,6 @@ title: Frontend state model
 description: How focus, layout, and pane state flow in the frontend — layout tree, pane-state reducers, and focus-ring resolution.
 ---
 
-**Version:** 0.44.1 | **Main:** 6d282acf | **Date:** 2026-06-12
-
----
-
 ## Table of Contents
 
 1. [Layout Tree — LayoutModel and localTreeStateAtom](#1-layout-tree)
@@ -293,16 +289,11 @@ Frontend       → per-pane ephemeral state
 
 Cross-process dispatch (CPD-1 through CPD-5) is shipped for launcher→host communication.
 
-### 3.3 Frontend Phases 0–1 — Dormant Foundation
+### 3.3 The Agent-Pane Layout Reducer
 
-The "reducer-stack initiative" as it applies to the **pane-state reducer** (`agent-pane-layout`) is tracked in `docs/specs/SPEC_AGENT_PANE_LAYOUT_REDUCER_2026_06_02.md`:
+The pane-state reducer `agent-pane-layout` (Slice #11) is live: every phase of `docs/specs/SPEC_AGENT_PANE_LAYOUT_REDUCER_2026_06_02.md` shipped, and the agent view's rows use it. It unifies three sources of truth for row heights in the agent document virtual list: the size cache, per-component expansion state, and CSS `zoom`.
 
-- **Phase 0:** Pure slice core, store, and tests implemented (`issue #1235`, PRs `#1231/#1233/#1234`). No render-path wiring.
-- **Phase 1:** Render wiring — not yet started.
-
-This slice (Slice #11, agent-pane-layout) unifies three sources of truth for row heights in the agent document virtual list: TanStack's size cache, per-component expansion signals, and CSS `zoom`. Phases 0–1 are the dormant foundation.
-
-The existing `agent-pane-state` reducer (Slice #4) and `agent-document` reducer (Slice #1) are **fully live and wired** with all turn-phase PRs A–G merged. The "dormant" label applies only to the **agent-pane-layout** reducer (Slice #11).
+The `agent-pane-state` reducer (Slice #4) and the `agent-document` reducer (Slice #1) are live too.
 
 ### 3.4 SRV-Side Layout Reducer — Phases 5–7
 
@@ -320,24 +311,25 @@ Phases 5 to 7 of the srv layout reducer are in the code:
 
 ## 4. Focus / Selection Visual Highlight
 
-### 4.1 The 3-Source Color Resolution
+### 4.1 Color Resolution
 
-The focused pane border color is resolved at render time through three cascaded sources, evaluated in priority order:
+The focused pane border color is resolved at render time from the block's own meta, in this order:
 
 ```
-Priority 1 (highest): tab/block meta override
-  └── block.meta["pane-title:color"]   (user-set per-pane color)
-  └── tab.meta["tab:color"]            (user-picked tab color, see §4.5)
+Priority 1 (highest): the pane's own pick
+  └── block.meta["frame:color"]   (a palette slot; the older "frame:hue" number is read as the nearest slot)
+      set by the pane header's "Pane Color" picker
 
-Priority 2: agent environment color
-  └── block.meta["cmd:env"]["AGENTMUX_COLOR"]   (set by AgentX/AgentY env vars)
-  └── falls back to known-agent defaults (AgentA, AgentB, etc.)
+Priority 2: the agent's identity color
+  └── block.meta["frame:activebordercolor"]   (seeded once when the agent launches)
   └── gated by isUsableFocusRingColor() — luminance ≥ 0.03 and alpha ≥ 0.5
 
 Priority 3 (lowest / fallback): theme accent
   └── CSS var(--accent-color)
-  └── always visible; used when sources 1 and 2 fail the usability gate
+  └── always visible; used when the first two fail the usability gate
 ```
+
+There is no tab-level tier: a tab's color (§4.5) colors the tab only. A plain terminal pane gets an identity color only when it really is an agent's block, never from an exported `AGENTMUX_AGENT_ID` alone.
 
 ### 4.2 Resolution Code Path
 
@@ -500,7 +492,7 @@ Blocks are mutated via `RpcApi.SetMetaCommand(TabRpcClient, { oref, meta })`.
 
 **Tabs** are `MuxObj` objects of type `"tab"`. Key meta fields:
 
-- `tab.meta["tab:color"]` — tab bar color (string hex)
+- `tab.meta["tab:color"]` — tab bar color (a palette hex)
 - `tab.layoutstate` — ID of the linked `LayoutState` object
 
 **LayoutState** is a `MuxObj` of type `"layout"`. Persisted fields:
@@ -568,7 +560,7 @@ Each event is applied twice on the normal path: once right after dispatch, by th
 │              → "view" intent to srv (layoutIntents.ts)                      │
 │              → NodeModel.isFocused() memo                                   │
 │              → "block-focused" CSS class                                    │
-│              → CSS border resolution (3-source color cascade)               │
+│              → CSS border resolution (color cascade)                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐

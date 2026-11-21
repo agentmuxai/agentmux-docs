@@ -13,7 +13,7 @@ Three pressures drove it:
 
 1. **Multi-process truth** — the launcher knows OS facts, the host knows CEF facts, the sidecar knows app facts. Without a reducer model, each process develops ad-hoc gossip channels and the shared mental model rots.
 2. **Auditable mutations** — every command leaves a trail. Bug reports become "find the last `dispatch(blockId, MoveBlockToWindow)` for that block_id" instead of "did anyone call `setUrl()` mid-load?".
-3. **Testable invariants** — pure `update(state, command)` functions are unit-testable without a CEF context. The `agent-pane-state` slice has 32 invariants asserted in its test file alone; none of them require a running app.
+3. **Testable invariants** — pure `update(state, command)` functions are unit-testable without a CEF context. The `agent-pane-state` slice's invariants are asserted in unit tests; none of them require a running app.
 
 ## The five layers
 

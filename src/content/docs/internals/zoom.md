@@ -108,7 +108,7 @@ This layer is **block-scoped and ephemeral**: a block is created fresh each time
 To make zoom survive pane close/reopen, the backend mirrors every agent block's `term:zoom` change into a **per-agent content blob** with `content_type = "ui:zoom"`, keyed by the stable `agent.id` (not the ephemeral block). This is the [`SPEC_AGENT_ZOOM_PERSISTENCE`](#see-also) layer.
 
 - **Mirror trigger.** When a `SetMeta` updates `term:zoom` on a block that carries an `agentId` (i.e. an agent pane), [`service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) calls `schedule_agent_zoom_mirror(agent_id, zoom)`. Non-agent blocks are untouched.
-- **Debounced — one write per burst.** The mirror is a 300ms **trailing** debounce backed by a per-agent generation counter. A spin of `Ctrl+Wheel` fires many `term:zoom` writes, but only the last survives the debounce window and commits, so there's no durable-write amplification (each commit also does a single global def-registry re-mirror).
+- **Written at once, off the request path.** Each `term:zoom` change schedules its own write on a background task, so the WebSocket handler never waits on SQLite; the store serialises concurrent writes, and the last write wins.
 - **Reset deletes the row.** The frontend writes `term:zoom = null` when the user returns to 1.0. The mirror reads that `null` and **deletes** the `ui:zoom` row (`agent_content_delete`) rather than storing `1.0`. An agent the user never zoomed (or reset) persists nothing — defaults stay clean. Implementation in [`content.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/content.rs).
 - **Restore on reopen.** When a pane opens, [`app_api/agent_open.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/app_api/agent_open.rs) `agent.open` reads the agent's saved `ui:zoom` and seeds the new block's `term:zoom` from it, clamped to `[0.5, 2.0]` (`parse_seed_zoom`, which also rejects out-of-range and default `1.0` values). Layer 1 then applies it exactly as if the user had just set it.
 - **Global / cross-channel.** Because `ui:zoom` is a per-agent content blob, it is global cross-channel — `agent_content_set`/`agent_content_delete` re-mirror it to the shared definition registry. Reopening the *same agent* in a different window, channel, or server instance restores its zoom, not just within the channel where it was set.
@@ -128,12 +128,12 @@ Agent panes apply CSS `zoom` to the whole view root, which would also scale the 
 ## See also
 
 - Spec: [`docs/specs/zoom-architecture.md`](https://github.com/agentmuxai/agentmux/blob/main/docs/specs/zoom-architecture.md) — the original design that established the universal framework, plus follow-ups for chrome zoom + pane-header zoom routing.
-- Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (debounced mirror, reset-deletes, cross-channel restore).
+- Spec: `SPEC_AGENT_ZOOM_PERSISTENCE` — the durable per-agent `ui:zoom` layer (background mirror, reset-deletes, cross-channel restore).
 - Source:
   - [`frontend/app/store/zoom.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/zoom.ts) (one implementation for every platform)
   - [`frontend/app/store/keymodel.ts`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/store/keymodel.ts) (Ctrl+/-/0 bindings)
   - [`frontend/app/app.tsx`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/app.tsx) (Ctrl+Wheel routing)
-  - [`crates/srv/src/server/service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) (`schedule_agent_zoom_mirror` — debounced `term:zoom` → `ui:zoom` mirror)
+  - [`crates/srv/src/server/service/object_helpers.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/service/object_helpers.rs) (`schedule_agent_zoom_mirror` — background `term:zoom` → `ui:zoom` mirror)
   - [`crates/srv/src/server/app_api/mod.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv/src/server/app_api/mod.rs) (`parse_seed_zoom`; `agent.open` itself, which seeds `term:zoom` from saved `ui:zoom`, is in `crates/srv/src/server/app_api/agent_open.rs`)
   - [`crates/srv-core/src/backend/storage/content.rs`](https://github.com/agentmuxai/agentmux/blob/main/crates/srv-core/src/backend/storage/content.rs) (per-agent content store + global def-registry mirror)
   - [`frontend/app/view/agent/styles/_control-bar.scss`](https://github.com/agentmuxai/agentmux/blob/main/frontend/app/view/agent/styles/_control-bar.scss) (zoom-invariant busy bar via `--agent-pane-zoom`)

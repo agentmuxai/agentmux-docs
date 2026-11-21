@@ -16,7 +16,7 @@ regressions in the terminal render path.
 ## Prerequisites
 
 - A running `task dev` instance (release builds don't expose the auth file).
-- Node.js 20+ with the `ws` package available (it's in the repo's
+- Node.js 24.11 or later with the `ws` package available (it's in the repo's
   `package.json` devDependencies).
 
 ```bash
@@ -37,7 +37,7 @@ Sample output:
 
 ```
 AgentMux terminal echo-latency benchmark
-Instance: v0.34.1  WS: ws://127.0.0.1:57208/ws
+Instance: v<version>  WS: ws://127.0.0.1:57208/ws
 
 Opening terminal pane... block=b3a1...
 
@@ -59,6 +59,9 @@ Results saved to results.json
 | `--count <n>` | `60` | Samples per scenario |
 | `--warmup <n>` | `5` | Warmup samples to discard (not counted) |
 | `--busy` | off | Also run the busy-terminal scenario (concurrent PTY output) |
+| `--stream` | off | Also run the character-stream throughput test |
+| `--stream-len <n>` | `200` | Characters per stream burst |
+| `--char-delay <ms>` | `0` | Delay between characters in the stream test |
 | `--output-file <path>` | none | Write raw JSON results for comparison |
 | `--ws-url <url>` | from authkey.dev | Override WebSocket endpoint |
 | `--auth-key <key>` | from authkey.dev | Override auth key |
@@ -138,21 +141,11 @@ the meaningful one because it exercises the edge the fix addresses.
 | Metric | Target |
 |--------|--------|
 | Quiet P95 | ≤ 20 ms |
-| Busy P95  | ≤ 20 ms (pre-fix was typically 25–40 ms on a loaded instance) |
+| Busy P95  | ≤ 20 ms |
 
-## The fix context
+## How the write path works
 
-`frontend/app/view/term/termwrap.ts` has two paths for writing xterm.js:
-
-- **Fast path** (≤ 512 bytes, no queued data): calls `terminal.write()`
-  directly — minimal latency.
-- **RAF path**: coalesces multiple PTY chunks per frame — prevents cursor
-  flicker from Ink redraws.
-
-Before PR #926, the fast path additionally required that no write was in flight.
-When any large PTY batch was in-flight, echoes missed the fast path and
-waited up to one frame. xterm.js serialises `write()` calls internally, so
-the guard was unnecessary and has been removed.
+`frontend/app/view/term/termwrap.ts` writes PTY output straight to xterm.js (`doTerminalWrite`). xterm.js's own render debouncer is the single frame coalescer: one render per animation frame, with dirty rows merged, so AgentMux runs no frame gate of its own on top. A chunk of 32 bytes or less is a likely echo of a keystroke, so the `term-echo-render` perf mark starts when it arrives and ends in the write callback; that mark is what this benchmark's latency reflects.
 
 ## Related
 

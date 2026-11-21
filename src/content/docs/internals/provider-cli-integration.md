@@ -73,13 +73,10 @@ The construction process:
 
 1. **Start from base args** — `ProviderDefinition.launchArgs` (e.g., `["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages"]` for Claude).
 2. **Strip conflicting flags** — any `--dangerously-skip-permissions`, `--permission-mode`, `--yolo`, `--model`, and `--effort` flags already in the base are removed so runtime values take precedence.
-3. **Append permission mode** — provider-dependent:
-   - Claude/others: `--permission-mode <value>` (e.g., `default`, `bypass-permissions`)
-   - Kimi / Gemini / Qwen: only `--yolo` is supported
-   - Codex: no permission flag (baked into base args)
-4. **Append model and effort** (Claude only):
+3. **Append permission mode** — Claude Code only: `--permission-mode <value>`. The `bypass` mode becomes `--dangerously-skip-permissions`, or, when the CLI runs on the control protocol, the `default` mode with AgentMux answering its permission requests. Kimi, Gemini and Qwen take `--yolo` in their base args; the other harnesses get no permission flag.
+4. **Append model and effort** (Claude Code):
    - `--model <opus|sonnet|haiku>`
-   - `--effort <low|medium|high>` — skipped for Haiku (returns HTTP 400)
+   - `--effort <low|medium|high|xhigh|max>` — left out for a model that takes no effort (Haiku). Antigravity and Codex also take `--model`.
 5. **Codex model special case** — the model value is prepended to the trailing `-` positional arg rather than passed as `--model`.
 
 This means the same agent definition can be launched with different models or effort levels without changing the stored definition — the runtime config overrides are applied at spawn time.
@@ -114,7 +111,7 @@ The following environment variables are injected into the agent's PTY at spawn:
 | `TERM`, `COLORTERM`, `TERM_PROGRAM` | Terminal capability hints |
 | `PATH` | Augmented with AgentMux-managed binary paths |
 
-`AGENTMUX_AUTH_KEY` is **not** placed in the agent PTY environment (stripped at sidecar startup, security PR #801). Only internal tooling that requires it (`agentmux-mcp`, `agentmux-bashwrap`) receives it via their own spawn configuration.
+srv removes `AGENTMUX_AUTH_KEY` from its own environment, but a pane's process gets it again by design (it is on `PANE_ENV_KEEP`), because the shell helpers, `agentmux-mcp` and `agentmux-bashwrap` use it to authenticate to the instance. See [`AGENTMUX_AUTH_KEY`](/internals/env-vars/#agentmux_auth_key).
 
 See [Environment variable contract](/internals/env-vars/) for the full variable list.
 
