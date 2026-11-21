@@ -56,6 +56,7 @@ The families `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `teleme
 | `term:predictiveecho` | boolean | `true` | — | All | Show typed characters locally at once while waiting on a slow or remote shell. |
 | `term:predictiveecho:thresholdms` | number | `0` | — | All | Round-trip latency, in milliseconds, above which predictive echo starts. 0 predicts all the time. |
 | `term:showstatsbadge` | boolean | `true` | — | All | Show the live CPU%/memory usage badge in the top-right corner of terminal panes. |
+| `term:storedoutputmb` | integer | `50` | 0 or more | All | How many megabytes of output a terminal pane keeps. The file is circular: past the cap the oldest output is dropped and the pane says so once. 0 keeps everything. Values above 100,000 count as 100,000. Agent transcripts are not affected. |
 
 ## Drag and drop
 
@@ -263,6 +264,9 @@ The families `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `teleme
 | `agents:commit_limit_pct` | number | `85` | 0 to 100 | Windows | Windows only: memory commit, as a percent of the limit, above which the agent idle longest with no pane is stopped to make room. 0 turns the check off. |
 | `agents:defaultruntime` | string | `"container"` | — | All | Where a new agent runs when nothing else says: container, or native (host also means native). Applies to agents created after the change. |
 | `agents:start_per_minute` | integer | `5` | 0 or more | All | The most agents one sender (an agent, a job) may start in a minute; a start over it is refused. 0 turns the limit off. |
+| `model:agent_spend_cap_usd` | number or string | `50` | — | All | The most one agent may spend through a model route in a UTC day, when it has no cap of its own (Spend cap… in My Agents sets one). When it is reached the agent's requests stop until the day ends or the cap is raised. Dollars a day. A value of 0, "none", "unlimited" or "off" is no cap; a negative or non-numeric value is ignored and the default applies. |
+| `model:spend_cap_usd:openrouter` | number or string | `500` | — | All | The most all agents together may spend through the OpenRouter model route in a UTC day. When it is reached every agent on the route stops until the day ends or the cap is raised. Dollars a day. A value of 0, "none", "unlimited" or "off" is no cap; a negative or non-numeric value is ignored and the default applies. |
+| `model:spend_cap_usd:anthropic` | number or string | `500` | — | All | The most all agents together may spend through Anthropic API keys (the accounts under Connectors ▸ Accounts) in a UTC day. When it is reached every agent on a key account stops until the day ends or the cap is raised. Dollars a day. A value of 0, "none", "unlimited" or "off" is no cap; a negative or non-numeric value is ignored and the default applies. |
 
 ## Swarm supervisor
 
@@ -298,6 +302,7 @@ The families `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `teleme
 | `browser:keepawakesites` | list of strings | `[]` | — | All | Sites whose browser panes never hibernate, by host (example.com) or origin (https://example.com). |
 | `browser:searchsuggestions` | boolean | `true` | — | All | A browser pane's address bar also asks the default search engine for suggestions while you type, sending it each edit before you submit, as Chrome does. On by default. Incognito tabs never ask (Chrome refuses suggest requests from off-the-record profiles). Off: suggestions come only from this computer (history, typed addresses). |
 | `browser:askdownloadlocation` | boolean | `true` | — | All | A download in a browser pane opens the system Save As dialog, so you choose where it goes. On by default. Off: a download saves into your Downloads folder, under a name that doesn't replace a file, and the strip under the address bar shows it. |
+| `browser:downloadagentsave` | boolean | `true` | — | All | Lets a download in an agent's own browser pane save into that agent's workspace without a dialog, in a downloads folder there. A pane in your Personal profile, or one you have taken over, still asks you. Turn it off to be asked for every download. Each download, saved or refused, is a row in the Audit view. |
 
 ## Jobs
 
@@ -307,6 +312,22 @@ The families `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `teleme
 | `jobs:cap:jobdayusd` | number | `20` | 0 or more | All | The most one job may spend in a day, in US dollars. A day ends at your local midnight. A run starts only if the day's spend plus the run's cap still fits; later runs that day are skipped. |
 | `jobs:cap:accountdayusd` | number | `50` | 0 or more | All | The most all job runs on one account may spend in a day, in US dollars. A day ends at your local midnight. Interactive work isn't counted. |
 | `jobs:cap:messagesday` | integer | `24` | 0 or more | All | The most messages one job may send in a day to an agent other than its owner. Further fires that day are skipped. |
+
+## Disk cleanup
+
+| Key | Type | Default | Allowed values | Platform | Description |
+|---|---|---|---|---|---|
+| `buildcache:enabled` | boolean | `true` | — | All | Clears the cargo build caches that agents leave in their workspaces, and warns when a disk runs low. Off turns off everything under buildcache: except the low-disk warning. |
+| `buildcache:orphans` | boolean | `true` | — | All | Removes old incremental build folders, keeping the newest few of each crate and profile. A folder in a clone with a cargo, rustc, linker or test process running is never touched. |
+| `buildcache:orphan_keep` | integer | `3` | 1 or more | All | How many incremental build folders per crate and profile are always kept. A smaller value is read as 1: the newest one is the live one. |
+| `buildcache:orphan_idle_hours` | number | `24` | 0 or more | All | A folder beyond the newest ones is removed only after nothing has written to it for this many hours. |
+| `buildcache:stale_days` | number | `3` | 0 or more | All | A clone nobody has built in for this many days loses its whole target folder, when a task finishes or the disk is low. 0 turns this off. |
+| `buildcache:warn_free_gb` | number | `20` | 0 or more | All | Warns when a disk has less than this many gigabytes free. |
+| `buildcache:warn_free_pct` | number | `10` | 0 to 100 | All | Warns when a disk has less than this percentage free. |
+| `oldversions:clean` | boolean | `false` | — | All | Removes the version folders an upgrade leaves behind, once a day. Off: it only writes what it would remove to the log. A hosted workspace removes by default. |
+| `oldversions:keep_previous` | integer | `1` | 1 or more | All | How many of the newest older versions are kept as the way back. A smaller value is read as 1. |
+| `oldversions:idle_hours` | number | `24` | 0 or more | All | A version folder written to within this many hours counts as in use and is kept. |
+| `oldversions:portables` | boolean | `false` | — | All | Also removes the portable folders the updater unpacked for this channel, once they are older than the running version. |
 
 ## Desktop control
 

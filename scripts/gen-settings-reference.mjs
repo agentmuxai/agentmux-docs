@@ -26,7 +26,7 @@ const END = "<!-- end generated -->";
 export const SECTION_ORDER = [
     "Terminal", "Drag and drop", "Animations", "Window", "Panes and tabs", "Keyboard", "Shell environment", "App",
     "Telemetry", "Connections", "Notifications", "Voice input", "Attachments", "Agents", "Swarm supervisor",
-    "Kanban", "Browser panes", "Jobs", "Desktop control", "Files pane", "Editor", "Network", "Cloud and sharing", "Messaging",
+    "Kanban", "Browser panes", "Jobs", "Disk cleanup", "Desktop control", "Files pane", "Editor", "Network", "Cloud and sharing", "Messaging",
 ];
 const PLATFORM = { windows: "Windows", macos: "macOS", linux: "Linux" };
 const isFamily = (key) => /[*@<]/.test(key);
