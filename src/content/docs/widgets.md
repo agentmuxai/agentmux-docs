@@ -97,8 +97,8 @@ Settings → Widgets lists every widget and its state:
 
 | State | Meaning |
 |---|---|
-| **Approved** | It runs. |
-| **Needs approval** | Installed, never approved. Click **Approve** to see the prompt. |
+| **On** | It runs. |
+| **Waiting for your approval** | Installed, never approved. Click **Approve** to see the prompt. |
 | **Changed since you approved it** | Its files changed. It doesn't run until you approve the new version (**Review and approve**). |
 | **Off** | You turned it off. Its panes show that it's off until you turn it on again. |
 | **Can't be loaded** | Its `widget.json` has an error, shown in the list. |
@@ -111,7 +111,7 @@ A widget can add entries to the command palette (under **Widgets**) and small it
 
 ## Widgets from widgets.json
 
-A widget added with a `module` entry in `widgets.json`, the way it was done before widget packages, is listed as a trusted widget and asks for approval like any other. It keeps working as it did once you approve it.
+A widget added with a `module` entry in `widgets.json` is listed as a trusted widget and asks for approval like any other.
 
 An entry in `widgets.json` that should appear only inside its group's flyout (not on the bar, in **more** or in a pane's **+** menu) sets `"display:grouponly": true`. It is not the same as hiding a widget yourself in Settings ▸ Widgets, which is saved in `settings.json` as `widget:hidden`.
 
@@ -144,7 +144,7 @@ Clicking an entry for a management pane (Vault, History, Audit, Connectors, Memo
 | The Vault | `vault` | `vault:section` | `personal` (default), `cards`, `api-keys`, `logins`, `notes`, `kept`, `activity` |
 | Connectors | `connectors` | `connectors:section` | `accounts` (default), `mcp`, `remotes` |
 | Memory | `memory` | `memory:section` | `global` (default), `personal`, `skills`, `bundles` |
-| Settings | `settings` | `settings:section` | `appearance` (default), `window`, `browser`, `terminal`, `sounds`, `notifications`, `recording`, `devices`, `widgets`, `advanced` |
+| Settings | `settings` | `settings:section` | `appearance` (default), `animations`, `window`, `browser`, `terminal`, `keyboard`, `sounds`, `notifications`, `recording`, `devices`, `widgets`, `agents`, `kanban`, `advanced` |
 
 A widget can open these sections too: see [`am.panes.open`](/widget-api/#opening-a-section).
 

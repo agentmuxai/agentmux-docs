@@ -17,7 +17,7 @@ Start and resume agents. **My Agents** lists yours; **New Agent** offers the har
 
 ## Swarm
 
-A live tree of your agent panes with their subagents, todos and background commands. Empty until an agent is running. See [Swarm](/subagent-watcher/).
+A live tree of your agents with their subagents, todos and background commands, in two sections: **Supervisor** and **Broadcast**. Empty until an agent is running. See [Swarm](/subagent-watcher/).
 
 ![The Swarm widget when it first opens](../../assets/screenshots/widgets/widget-swarm-small.png)
 
@@ -51,17 +51,41 @@ Accounts (sign-ins to providers and services) and MCP servers. Pick a provider t
 
 ![The Connectors widget when it first opens](../../assets/screenshots/widgets/widget-connectors-small.png)
 
-## Remotes
-
-The SSH hosts AgentMux knows: the hosts in `~/.ssh/config` and any you've connected to.
-
-![The Remotes widget when it first opens](../../assets/screenshots/widgets/widget-remotes-small.png)
-
 ## Drone
 
 A visual automation builder: add blocks (Variables, Agent, Message, Task, API, Condition, Wait, Join and more) to the canvas and wire them together. **Message** sends an agent a note and **Task** files a Kanban task; each puts every `{{...}}` value in as quoted data, so text that came from outside can't pass as an instruction. See [Drone](/drone/) for every block.
 
 ![The Drone widget when it first opens](../../assets/screenshots/widgets/widget-drone-small.png)
+
+## Browser
+
+A Chromium tab in a pane, with its own profile, downloads, zoom and the permission prompts for what an agent drives. See [Browser pane](/browser-pane/).
+
+## Kanban
+
+The tasks agents are working on, what waits for them and what needs you, in stages you can rename and recolour. See [Kanban](/kanban/).
+
+## Tower
+
+A read-only task manager: what AgentMux costs in memory, what each agent and pane runs, and every process on the machine. See [Tower](/tower/).
+
+![The Tower widget](../../assets/screenshots/widgets/widget-tower-small.png)
+
+## Atlas
+
+The agents the Swarm lists, drawn as a map of the machines they run on and who reports to whom. See [Atlas](/atlas/).
+
+## Reviews
+
+Every task's pull request and where its review stands, with the ones that wait on a person first.
+
+## Messengers
+
+A group of team chat and messaging apps: Discord, Slack, Telegram, WhatsApp and Teams, each opening as a pane of its own.
+
+## Toolchain
+
+The CLIs and system tools AgentMux uses, with their versions and where they are installed. See [First Agent Setup](/first-agent/#system-prerequisites).
 
 ## Vault, History and Audit
 
@@ -72,12 +96,6 @@ Three panes for overseeing agents, each in the widget bar's **more** menu. The [
 Live graphs of this computer's CPU, memory and network use; it can also show disk I/O and every CPU core. See [Sysinfo](/system-metrics/).
 
 ![The Sysinfo widget when it first opens](../../assets/screenshots/widgets/widget-sysinfo-small.png)
-
-## Media
-
-An image, video and audio viewer. Point it at a folder an agent writes into and it updates as new files arrive.
-
-![The Media widget when it first opens](../../assets/screenshots/widgets/widget-media-small.png)
 
 ## Help
 

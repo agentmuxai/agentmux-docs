@@ -12,7 +12,7 @@ Complete reference for all AgentMux settings. Settings are stored in `settings.j
 
 ## Opening Settings
 
-Settings is a **pane view** with twelve tabs — Appearance, Animations, Window & Panes, Browser, Terminal, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Agents and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
+Settings is a **pane view** with fourteen tabs — Appearance, Animations, Window & Panes, Browser, Terminal, Keyboard shortcuts, Sounds, Notifications & Tray, Recording, Paired devices, Widgets, Agents, Kanban and Advanced (see [The Settings tabs](#the-settings-tabs)) — it's registered as `defwidget@settings` in the widget bar. Each of these opens (or focuses) the Settings pane:
 
 - Click **Settings** in the widget bar. It is pinned by default.
 - Press `Ctrl+,` (`⌘,` on macOS).
@@ -131,7 +131,7 @@ Devices paired with this computer over your local network, each of which you can
 
 **Pinned senders** lists the keys and installs AgentMux has pinned to the names of agents that speak to it from elsewhere: the first key seen for a name on your network, and the first of your installs seen speaking for a name through your cloud account. A message from anything else for a pinned name still arrives, but it fails verification: it is marked sensitive and the receiving agent is told to stop and ask you. Beside each pin it shows what failed (a different key or install, how many times, when). **Accept the new one** pins that key or install instead, for when the agent really was recreated or moved; **Forget** drops the pin, so the next key or install shown is pinned. Both take two presses, only this window can change a pin without a vouch (below), and each change is logged in `logs/pin-changes.log`.
 
-A key that changes for an ordinary reason (a new channel store, a recreated agent) doesn't have to wait for you. For a name pinned from your network, the new key is accepted and the pin moves by itself when the AgentMux install that hosts the agent vouches for it, and this computer already trusts that install: one it has pinned for some agent, or a live install of your signed-in account. The vouch is a short-lived certificate from the hosting install, so an old one can't move a pin back to a retired key, and a moved pin never makes a message count as verified by itself: the message's own signature must still verify under the new key. Both computers need this release; a host that doesn't send a certificate is refused until you accept as before. Each automatic move is logged in `logs/pin-changes.log` with the agent, the old and new key fingerprints and which install vouched. An agent can ask AgentMux to accept a key it was refused, and AgentMux does so only when the same vouch holds; **Forget** and the unconditional **Accept the new one** stay in this window.
+A key that changes for an ordinary reason (a new channel store, a recreated agent) doesn't have to wait for you. For a name pinned from your network, the new key is accepted and the pin moves by itself when the AgentMux install that hosts the agent vouches for it, and this computer already trusts that install: one it has pinned for some agent, or a live install of your signed-in account. The vouch is a short-lived certificate from the hosting install, so an old one can't move a pin back to a retired key, and a moved pin never makes a message count as verified by itself: the message's own signature must still verify under the new key. A host that doesn't send a certificate is refused until you accept. Each automatic move is logged in `logs/pin-changes.log` with the agent, the old and new key fingerprints and which install vouched. An agent can ask AgentMux to accept a key it was refused, and AgentMux does so only when the same vouch holds; **Forget** and the unconditional **Accept the new one** stay in this window.
 
 ![Settings, Paired devices tab](../../assets/screenshots/settings/settings-paired-devices.png)
 
@@ -150,6 +150,10 @@ Then your own widgets: install one from a `widget.json` or a `.zip`, rescan, ope
 **Outdated agent ids**: forks made by older builds got an id that repeats every generation (`loap-loap-2-loap-3`). Updating gives each the id it would get today (`loap-3`). The old id still receives messages and review notices for 30 days and is never given to another agent. Running agents are stopped first, and **Undo** reverses an update. AgentMux tells you once at startup when some agents have such an id (`agent:outdatedidsnotice`). If an agent's new id is already taken, its row says "Not now: *reason* (the next free id is *id*)" with **Use *id*** and **Choose another id**; type an id and click **Use this id**. Update the other agents first.
 
 **Agents may start agents**: off by default. The first time an agent starts another agent, its pane shows a card with a 30 second countdown that goes ahead on its own, with **Stop it**, **Start now** and **Always allow** for that agent. Turn the switch on to skip the card for every agent; the pane still shows a one-line notice (`agent:maystartagents`).
+
+### Kanban
+
+**Kanban stages**: the columns of a board (choose the **Board** first): how many there are (2 to 8), what each is called, its colour and which of the built-in columns it shows. See [Stages](/kanban/#stages). **Close a task when its PR merges** (`kanban:closeonmerge`) accepts a task in review by itself when its pull request merges; turn it off to accept each one yourself. **Review limit** (`kanban:reviewlimit`): past this many tasks, the stage that shows Review turns amber in its header; `0` is no limit and nothing is blocked.
 
 ### Advanced
 
@@ -243,7 +247,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `keybindings` | array | `[]` | Your own keyboard shortcuts, applied over the defaults. See [Keybindings](/keybindings/#your-own-shortcuts). |
 | `app:showoverlayblocknums` | boolean | `true` | Show numbered overlays for the jump-to-pane shortcuts |
 | `tab:confirmclose` | boolean | `false` | Ask before closing a window tab. Off: a tab closes at once. |
-| `pane:colors` | object | `{}` | Color per widget type, keyed by view (`"term"`, `"agent"`, `"browser"`, …): a palette color name (such as `"teal"` or `"violet"`; the 14 are listed under [Pane and tab colors](/pane-types/#pane-and-tab-colors)) replaces that widget's built-in color, `null` gives it none. An older hue number from 0 to 360 is still read, as the nearest palette color. A pane's own **Pane Color** and an agent's color still win. Remove a key to return to the built-in color. Set it in Settings ▸ Appearance ▸ **Widget colors**. |
+| `pane:colors` | object | `{}` | Color per widget type, keyed by view (`"term"`, `"agent"`, `"browser"`, …): a palette color name (such as `"teal"` or `"violet"`; the 14 are listed under [Pane and tab colors](/pane-types/#pane-and-tab-colors)) replaces that widget's built-in color, `null` gives it none. A pane's own **Pane Color** and an agent's color still win. Remove a key to return to the built-in color. Set it in Settings ▸ Appearance ▸ **Widget colors**. |
 | `splash:disabled` | boolean | `false` | Don't show the startup splash screen. Applies at the next launch. For a single run, `AGENTMUX_SPLASH=0` or `AGENTMUX_NO_SPLASH=1` does the same. |
 | `app:showtray` | boolean | `true` | Show the AgentMux icon in the system tray (menu bar on macOS). Applies at the next launch. See [System tray](/installation/#system-tray). |
 | `app:runinbackground` | boolean | `false` | Keep AgentMux running in the tray after its last window closes, instead of quitting. Also shows the tray icon. Applies at the next launch. |
@@ -255,7 +259,7 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `agents:always_available` | boolean | `true` | Closing an agent's pane, its tab or its workspace parks the agent instead of stopping it: it keeps running, and a message or a Job starts a stopped one. `false`: closing a pane stops its agent, as before. See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane). |
+| `agents:always_available` | boolean | `true` | Closing an agent's pane, its tab or its workspace parks the agent instead of stopping it: it keeps running, and a message or a Job starts a stopped one. `false`: closing a pane stops its agent. See [Agents keep running without a pane](/first-agent/#agents-keep-running-without-a-pane). |
 | `agents:idle_stop_minutes` | number | `60` | With `agents:always_available` on, minutes an agent with no pane may be idle before it is stopped (a message starts it again). `0`: never. |
 | `agents:max_running` | number | `24` | With `agents:always_available` on, the most agent processes that run at once. A start over it stops the agent idle longest with no pane, or is refused if none can be. `0`: no limit. |
 | `agents:commit_limit_pct` | number | `85` | On Windows, with `agents:always_available` on: a start is refused, or the agent idle longest with no pane stopped, when memory commitment is over this percentage of the limit. No agent is stopped when stopping one idle agent could not bring it down to the limit: the start is refused and the reason says how much has to be freed. A start that is refused leaves a message for that agent held (`not_running, capacity`) until it can start. `0`: off. |
@@ -295,7 +299,6 @@ Browser profiles, the standing powers you give agents on sites and **Pause all a
 | `kanban:reminders` | boolean | `false` | Remind an idle agent of the tasks waiting in its Kanban backlog: after two minutes idle, one short note naming them, once each time it goes idle (Settings ▸ Advanced ▸ **Remind idle agents of their backlog**, or the Kanban's toolbar). |
 | `kanban:closeonmerge` | boolean | `true` | A task in Review is accepted when its pull request merges. `false` stops that; merges are still recorded for the Merged and Released columns. |
 | `kanban:reviewlimit` | integer | `0` | How many tasks the board may hold in Review before its header says so. Nothing is blocked. `0`: no limit. |
-| `files:icons` | string | `"system"` | Which icons the Files pane shows: `"system"` is the picture the operating system shows for each type, `"app"` is AgentMux's own monochrome glyphs. Where the system has none, the glyph shows. |
 
 ## Messaging and fleet settings
 
@@ -384,7 +387,7 @@ For the [Swarm](/subagent-watcher/) Supervisor, which continues an agent's work 
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `files:icons` | string | `"system"` | What file and folder icons the [Files pane](/pane-types/#files) shows. `"system"`: the icons the operating system shows for each file type, as its own file manager does (Windows; elsewhere the built-in icons stay). `"app"`: always AgentMux's built-in icons. |
+| `files:icons` | string | `"system"` | Which icons the [Files pane](/pane-types/#files) shows for files and folders. `"system"`: the picture the operating system shows for each type, as its own file manager does. `"app"`: AgentMux's own monochrome glyphs. Where the system has none, or an icon can't be made, the glyph shows. |
 
 ## File drop and attachment settings
 
@@ -553,15 +556,7 @@ A folder goes only when it is older than the running version, isn't one of the n
 
 ## Keys AgentMux doesn't read
 
-These keys are still accepted in `settings.json`, so an old file doesn't fail to load, but nothing in the current version reads them. Setting them has no effect.
-
-| Setting | Note |
-|---------|------|
-| `telemetry:enabled` | The Sysinfo sampler runs regardless; see [Telemetry Settings](#telemetry-settings). |
-| `conn:wshenabled`, `conn:askbeforewshinstall` | From the earlier `wsh` remote integration. Installing the remote helper is set with `conn:helper`. |
-| `tab:skipcloseconfirm` | Replaced by `tab:confirmclose`. |
-| `window:zoom`, `window:showmenubar`, `window:nativetitlebar`, `window:confirmclose`, `window:savelastwindow`, `window:dimensions`, `window:maxtabcachesize`, `window:disablehardwareacceleration` | Not read. |
-| `preview:showhiddenfiles`, `tab:preset`, `app:dismissarchitecturewarning` | Not read. |
+These keys are accepted in `settings.json`, so a file that has them still loads, but nothing in AgentMux reads them. Setting them has no effect: `app:dismissarchitecturewarning`, `conn:askbeforewshinstall`, `conn:wshenabled`, `preview:showhiddenfiles`, `tab:preset`, `tab:skipcloseconfirm`, `telemetry:enabled`, `window:confirmclose`, `window:dimensions`, `window:disablehardwareacceleration`, `window:maxtabcachesize`, `window:nativetitlebar`, `window:reducedmotion`, `window:savelastwindow`, `window:showmenubar` and `window:zoom`. The close-confirmation setting that does work is `tab:confirmclose`; installing the remote helper is set with `conn:helper`.
 
 The keys `app:*`, `term:*`, `window:*`, `widget:*`, `blockheader:*`, `telemetry:*`, `conn:*` and `notify:*` are also accepted, as booleans.
 
@@ -597,7 +592,6 @@ AgentMux respects these environment variables:
 | `DSH_HOME` | DeepSeek Harness profiles, sessions and credentials dir |
 | `CRUSH_GLOBAL_DATA` | Crush data dir, which holds its sign-ins and keys |
 | `XDG_CONFIG_HOME` | Muse Code: its config dir, which holds its sign-in |
-| `CLAUDE_API_KEY` | Optional fallback for Claude agent panes (OAuth is the primary path) |
 | `OPENAI_API_KEY` | Optional fallback for Codex agent panes (OAuth is the primary path) |
 | `GEMINI_API_KEY` | Optional fallback for Gemini agent panes (OAuth is the primary path) |
 
@@ -605,7 +599,7 @@ The per-provider `*_HOME` / `*_CONFIG_DIR` variables are set automatically by Ag
 
 ## Data Directories
 
-For installed and portable release builds (v0.41.1+), state is split across **version-scoped** paths (one set per release, isolated so concurrent versions can't collide) and **channel-wide** paths (shared across all versions of the same channel, so they survive upgrades). Dev builds (`task dev`) skip the version-scoping and use a single per-(branch, clone) dir.
+For installed and portable release builds, state is split across **version-scoped** paths (one set per release, isolated so concurrent versions can't collide) and **channel-wide** paths (shared across all versions of the same channel, so they survive upgrades). Dev builds (`task dev`) skip the version-scoping and use a single per-(branch, clone) dir.
 
 | Purpose | Path | Scope |
 |---|---|---|
@@ -614,8 +608,7 @@ For installed and portable release builds (v0.41.1+), state is split across **ve
 | Agent working folders | `~/.agentmux/agents/<slug>/` | Account-wide |
 | SQLite stores (objects, filestore, sagas) | `~/.agentmux/channels/<channel>/versions/<v>/data/db/` | Version-scoped |
 | Launcher event log (JSONL) | `~/.agentmux/channels/<channel>/versions/<v>/data/launcher-events.log` | Version-scoped |
-| Logs — host (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
-| Logs — sidecar (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
+| Logs (rotated daily, 7-day retention) | `~/.agentmux/channels/<channel>/versions/<v>/logs/` | Version-scoped |
 | CEF cache (cookies, local storage, IndexedDB) | `~/.agentmux/channels/<channel>/versions/<v>/cef-cache/` | Version-scoped |
 | Account-wide state (shared databases, provider logins, backups) | `~/.agentmux/shared/` | Account-wide |
 | Dev mode root | `~/.agentmux/dev/<branch>/<clone-id>/` | Per-(branch × clone), no version split |
