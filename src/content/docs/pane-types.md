@@ -410,7 +410,7 @@ Runtime limits for agent panes are controlled by the `term:agentmaxruntimehours`
 
 ### Scrolling past a preview
 
-Some content in the agent pane sits in a capped box with its own scrollbar: a tool call's output, an incoming message, a context delivery card. When you scroll such a box to its top or bottom edge with the mouse wheel, the next 3 wheel notches are held there, and a line shows on that edge; only after that does the wheel scroll the whole pane. A trackpad swipe (or a high-resolution wheel) is held at the edge until the gesture pauses. This stops a box that slides under the pointer from being scrolled past by notches meant for it. Tool output that fits without a scrollbar holds the wheel the same way (`frontend/app/view/agent/components/scroll-handoff.ts`).
+Some content in the agent pane sits in a capped box with its own scrollbar: a tool call's output, an incoming message, a context delivery card. When you scroll such a box to its top or bottom edge with the mouse wheel, the next 2 wheel notches are held there (`agent:previewskidnotches` sets how many), and a line shows on that edge; only after that does the wheel scroll the whole pane. A trackpad swipe (or a high-resolution wheel) is held at the edge until the gesture pauses. This stops a box that slides under the pointer from being scrolled past by notches meant for it. Tool output that fits without a scrollbar holds the wheel the same way (`frontend/app/view/agent/components/scroll-handoff.ts`).
 
 ### Activity dock
 
@@ -735,7 +735,7 @@ Drag a tab below the tab bar to move it into a **new window** of its own, in a n
 | Drag pane header outside the window | Tears the pane into a floating window at the same size as the original pane |
 | Ctrl+click (Cmd+click on macOS) on a link, a widget, a palette entry or a file | Opens the pane that click opens as a floating window, instead of in the current tab |
 | Drag the floating title bar | Move the floating window freely across monitors |
-| Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 180 ms at that speed; release to dock |
+| Drag near a target window (slow to ≤400 px/s) | Dock indicator appears after 300 ms at that speed; release to dock |
 | Maximize button in floater title bar | Expands the floater to the monitor work area; click again to restore |
 | Tack button (thumbtack, "Always on top"), next to Maximize — **Windows only** | Keeps the floater above every AgentMux window. The button lights up in the theme colour while on. It applies only while AgentMux is the active app, so switching to another app lets that app cover it, and two tacked floaters behave normally toward each other. The tack survives a reload of the pane and is dropped when the pane is redocked (`frontend/app/block/floating-ontop.tsx`). |
 | Close button in floater title bar | Closes the pane (same as closing a docked pane) |
@@ -752,7 +752,7 @@ Tear-off works from **every** window, not just the first one you opened — the 
 
 #### Redock into any window
 
-**Redock gesture:** drag the floating pane's title bar close to any open AgentMux window — including secondary windows — and a dock indicator appears once your cursor has stayed near that window for 180 ms at a slow-to-stopped speed (≤400 CSS px/s). The dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock the pane into that window.
+**Redock gesture:** drag the floating pane's title bar close to any open AgentMux window — including secondary windows — and a dock indicator appears once your cursor has stayed near that window for 300 ms at a slow-to-stopped speed (≤400 CSS px/s). The dwell gate prevents accidental docking during fast transits across the screen. Release while the indicator is showing to dock the pane into that window.
 
 Redock resolves correctly into secondary windows because every window — including ones promoted from the prewarm pool — carries a stable backend identity (`backend_window_id`), so the drop target is always unambiguous. The resolution logic lives in [commands/window/motion.rs](https://github.com/agentmuxai/agentmux/blob/main/crates/cef/src/commands/window/motion.rs).
 
