@@ -55,7 +55,7 @@ Everything a recipient relies on is computed by the receiving instance. Nothing 
 | `POST /agentmux/reactive/inject` | the tool above, other instances, scripts | The full request (Section 3.2). Authenticated with the instance auth key or the LAN key ([who may call](/security/reactive-event-bus/#who-may-call-the-bus)). |
 | `POST /agentmux/reactive/inject-files` | the tool, when files are attached | Section 4.6. |
 | WebSocket `bus:inject`, `POST /api/bus/inject` | local callers | Delivered on this instance only, as `host`. |
-| Scheduler (`Schedule`) | AgentMux | Sender `cron`. Never held. |
+| Scheduler (`Schedule`) | AgentMux | Sender `cron`. Never held. A fire this instance's scheduler delivers for a job whose definition has an identified writer is proven (Section 6.4). |
 | Slack, Discord, Telegram and WhatsApp bridges | AgentMux | Sender named after the bridge, delivered locally, no signature. |
 | Widgets (`agents.send`) | widgets with the `agents:send` permission | Sender `widget:<id>`, at most 8 KB. |
 
@@ -271,9 +271,9 @@ The first matching row wins:
 | `channel-verified` | `DELIVERY=channel` and the cross-channel signature verified |
 | `wan-verified` | `DELIVERY=wan` and the same-account WAN signature verified (with `INSTANCE` and `INSTANCE_STATUS`) |
 | `network-claimed` | any other `lan` or `wan` jekt |
-| `host-verified` | `host` or `channel`, and the host check verified |
+| `host-verified` | `host` or `channel`, and the host check verified; or a fire of this instance's own scheduler for a job whose definition has an identified writer (Section 6.4) |
 | `unverified` | `host` or `channel`, and the host check failed |
-| `self-declared` | `host` or `channel`, and there was nothing to check against (bridges, the scheduler, a name with no key here) |
+| `self-declared` | `host` or `channel`, and there was nothing to check against (bridges, a name with no key here, a message that only names itself `cron`, a scheduler fire for a job with no identified writer) |
 
 `SIG=verified`, `SIG=expired` or `SIG=invalid` reports the muxreview signature separately: `expired` is a genuine signature under the trusted key that failed only the age rules in Section 5.5, `invalid` is any other failure. A WAN jekt from muxreview still reads `TRUST=network-claimed`.
 
@@ -295,11 +295,23 @@ Lack of proof alone does not make a jekt sensitive: clean text from a `self-decl
 
 `ESCALATE` appears only when `TIER=sensitive`:
 
-- **`ESCALATE=none`** when no check failed and at least one verified: the host, channel, LAN or muxreview signature, or a WAN signature from an `approved` or `new` install.
+- **`ESCALATE=none`** when no check failed and at least one verified: the host, channel, LAN or muxreview signature, a WAN signature from an `approved` or `new` install, or a proven scheduler fire (Section 6.4).
 - **`ESCALATE=required`** in every other case.
 - **Exception:** a transcript request gets `ESCALATE=required` even from a verified sender when the recipient's own `conversation_visibility` is `ask`, or is `trusted_peers` and the requester has no grant for that tier. Under `private`, the default, the ordinary rule applies.
 
 When a jekt with `ESCALATE=required` is delivered, AgentMux also raises a desktop notification that says only "Open AgentMux to see the sender and trust level before it acts."
+
+### 6.4 Scheduler fires
+
+A fire of a scheduled job that this instance's own scheduler delivers is proven when the job's definition (its prompt, target and trigger) was last written by an identified writer: an agent, by its identity token, or the AgentMux window itself. Such a fire:
+
+- reads `TRUST=host-verified`, keeps the sender `cron`, and names the job and who it runs for in `JOB` and `FOR` (Section 7.1). `FOR` is the writing agent's own name as this instance records it, or `operator` for the AgentMux window;
+- keeps the tier its text earns (Section 6.2): a prompt that matches a keyword, or declares `sensitive`, is `TIER=sensitive`, and with a proven fire it reads `ESCALATE=none`;
+- is recorded and audited with the same trust as the marker.
+
+A job whose definition was last written by a caller nothing identified, or that has no recorded writer, fires as before: `TRUST=self-declared`, and `ESCALATE=required` when sensitive. A new edit by an identified writer restores the proof. Saving a job again from the AgentMux window makes the window its writer.
+
+The proof is a fact the scheduler sets in process. It is never read from a request: a message that names itself `cron` over HTTP or a socket, the scheduler's HTTP fallback, and a fire forwarded to another instance, a LAN peer or the cloud relay all read `self-declared` (or `network-claimed`) at the receiving end. A fire on any delivery tier other than `host` carries no proof.
 
 ## 7. The marker
 
@@ -308,7 +320,7 @@ When a jekt with `ESCALATE=required` is delivered, AgentMux also raises a deskto
 Every jekt is delivered wrapped in this block. `SEP` is 60 × U+2500 `─`.
 
 ```text
-[JEKT:FROM=<from> TO=<to> TIER=<tier> DELIVERY=<delivery>[ HELD_FOR=<n>s] TRUST=<trust>[ INSTANCE=<label> INSTANCE_STATUS=<status>][ SIG=<sig>][ ESCALATE=<escalate>][ FILES=<n>][ REPLY=none] MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
+[JEKT:FROM=<from> TO=<to> TIER=<tier> DELIVERY=<delivery>[ HELD_FOR=<n>s] TRUST=<trust>[ JOB=<job> FOR=<for>][ INSTANCE=<label> INSTANCE_STATUS=<status>][ SIG=<sig>][ ESCALATE=<escalate>][ FILES=<n>][ REPLY=none] MSGID=<id> PRIORITY=<priority> TS=<unix-seconds>]
 SEP
 From: <from> | To: <to> | ts=<unix-seconds>
 [warning line, Section 7.3, followed by a blank line]
@@ -320,7 +332,7 @@ Reply: mcp__agentmux__Message (action "send", to "<from>"), not a built-in SendM
 ```
 
 - The first line is machine-readable: space-separated `KEY=value` pairs in the order shown. A value never contains a space, `=`, `[` or `]`.
-- Optional fields appear only when they apply: `HELD_FOR` on a held replay, `INSTANCE` and `INSTANCE_STATUS` with `TRUST=wan-verified`, `SIG` when a muxreview signature was carried, `ESCALATE` when `TIER=sensitive`, `FILES` when files were sent, `REPLY=none` when the sender asked for no answer (Section 4.7).
+- Optional fields appear only when they apply: `HELD_FOR` on a held replay, `JOB` and `FOR` on a proven scheduler fire (`JOB` is the first 8 characters of the job's id, `~`, and its name, cleaned like any free text and cut to 64 characters; `FOR` is cut to 40), `INSTANCE` and `INSTANCE_STATUS` with `TRUST=wan-verified`, `SIG` when a muxreview signature was carried, `ESCALATE` when `TIER=sensitive`, `FILES` when files were sent, `REPLY=none` when the sender asked for no answer (Section 4.7).
 - `TS` is the delivery time, except on a held replay, where it is the original send time.
 - When the claimed sender is not a valid agent id, `FROM` is `?` followed by the escaped value, and the reply line reads `Reply: not available — the sender is not an agent id`.
 
