@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: agentmuxai/agentmux
-          ref: bc74d911b4738d6ec50fa6cfec34fbf388613638
+          ref: 9329cca4f9f7fce36e0a0a848140e4817b296051
           path: .ci-agentmux-scripts
           sparse-checkout: scripts
 
