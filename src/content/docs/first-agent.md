@@ -44,6 +44,25 @@ For the nine newest harnesses, AgentMux turns off telemetry, self-update and oth
 
 See [Auth flows](/auth/) for each provider's login command and credential location.
 
+## First-class and preview harnesses
+
+Eight harnesses are **first-class**: Claude Code, Codex CLI, GitHub Copilot CLI, Gemini CLI, Grok Build, Kimi Code CLI, Muse Code and Qwen Code. They are the ones AgentMux stands behind, and mostly each lab's own harness. The other eleven are **preview**: Mux Code, OpenClaw, Pi, Antigravity (AGY), Kilo Code CLI, Cline CLI, OpenCode, goose, DeepSeek Harness, Aider and Crush. A preview harness installs and works, but AgentMux does not support it to the same depth. OpenClaw is an orchestrator, a harness that drives other agents, so it is preview to keep it from reading as a peer of the lab harnesses.
+
+In the agent picker the first-class cards come first. The preview cards sit in a collapsed section, **Preview agent CLIs**, with a count; it remembers whether you left it open, and each card in it carries a **Preview** tag. An agent that already runs a preview harness is unaffected. The tier decides the picker, the defaults and these pages, and nothing about containers.
+
+### How each harness is billed
+
+A card's caption starts with how its harness is paid for, by how it signs in, then says what the harness is:
+
+| Harness | Signs in with | The card says |
+|---|---|---|
+| Claude Code, Codex CLI, GitHub Copilot CLI | The lab's own account | The plan: "Your Claude plan", "Your ChatGPT plan" or "Your Copilot plan" |
+| Grok Build, Muse Code | An xAI or Meta account | How it signs in ("xAI sign-in", "Meta sign-in"), nothing about a plan: AgentMux has not confirmed what the account's plan covers |
+| Kimi Code CLI, Qwen Code | Your own key | That the key is the bill: "Your Moonshot key" or "Your own key" |
+| Gemini CLI | A Gemini API key. Its Google sign-in (the `oauth` row above) works only where Google still allows it, which it no longer does for personal Google accounts | That the key is the bill: "Your Gemini key" |
+
+A lab's flat-rate plan usually applies only through the lab's own harness. A different harness signed in to the same plan can be billed per token, as extra usage, instead of from the flat allowance, so a harness signed in to a subscription is not free even when no key is involved. AgentMux does not check this for you: each vendor's terms decide, and they change. The preview harnesses make no billing claim on their cards. [Model routes](/model-routes/) always bill per token, and AgentMux counts what they spend.
+
 ## You don't need to preinstall the agent CLIs
 
 AgentMux manages its own agent CLIs and installs every one of them itself, at the version it was tested with, into `~/.agentmux/shared/cli/<provider>/<version>/`. The npm-based CLIs come from `npm install <package>@<version>` (never a global install). AgentMux uses the public npm registry for it and ignores your own `.npmrc`. Six harnesses aren't on npm. AgentMux downloads the pinned release of Antigravity, goose, Grok Build and Muse Code from the vendor and checks it against a checksum built into AgentMux, and it sets up Aider and Kimi Code CLI in a private Python environment from hash-checked packages. It never runs a vendor's installer script. Every AgentMux version and channel on the machine shares that folder, so a CLI is installed again only when an AgentMux update changes its pinned version. AgentMux always uses that copy, never a CLI you installed yourself, and it keeps each agent's login and settings in its own folders rather than in your `~/.claude`, `~/.codex` and similar. To run your own copy of a CLI instead, switch on **Use the CLI on my PATH** for it in the Toolchain pane (the widget bar's **more** → **Toolchain**). AgentMux then runs the copy it finds on your `PATH`, or in the folder the CLI's own installer uses, and never changes it.
