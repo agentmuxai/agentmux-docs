@@ -58,7 +58,7 @@ A card's caption starts with how its harness is paid for, by how it signs in, th
 |---|---|---|
 | Claude Code, Codex CLI, GitHub Copilot CLI | The lab's own account | The plan: "Your Claude plan", "Your ChatGPT plan" or "Your Copilot plan" |
 | Grok Build, Muse Code | An xAI or Meta account | How it signs in ("xAI sign-in", "Meta sign-in"), nothing about a plan: AgentMux has not confirmed what the account's plan covers |
-| Gemini CLI, Kimi Code CLI, Qwen Code | Your own key | That the key is the bill: "Your Moonshot key" or "Your own key"; Gemini CLI's caption says it takes a Gemini API key |
+| Gemini CLI, Kimi Code CLI, Qwen Code | Your own key | That the key is the bill: "Your Moonshot key", "Your own key" or "Your Gemini key" |
 
 A lab's flat-rate plan usually applies only through the lab's own harness. A different harness signed in to the same plan can be billed per token, as extra usage, instead of from the flat allowance, so a harness signed in to a subscription is not free even when no key is involved. AgentMux does not check this for you: each vendor's terms decide, and they change. The preview harnesses make no billing claim on their cards. [Model routes](/model-routes/) always bill per token, and AgentMux counts what they spend.
 
